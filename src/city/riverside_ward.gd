@@ -51,6 +51,7 @@ func _build() -> void:
 	_street_furniture()
 	_lamps()
 	_ground_details()
+	RiversideInteriors.add_to(d)
 	_cars_and_spawn()
 
 

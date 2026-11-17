@@ -19,8 +19,11 @@ image is its window light at night and is replaced separately. Cars and people f
 | `cars/sedan` | `custom/graphics/cars/sedan.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, top-down, nose right, centred, transparent background. |
 | `cars/sedan_b` | `custom/graphics/cars/sedan_b.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, second paint scheme; same contract. |
 | `cars/wheel` | `custom/graphics/cars/wheel.png` | 48x20 | sprite (image, scaled to its display size) | 14x6 | Front tyre (whitewall) from above, rolling direction left-right; drawn under the body on both sides and turned with the steering (car bodies leave the front tyres out). |
+| `characters/bartender` | `custom/graphics/characters/bartender.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Augie the bartender: white sleeves, black vest, bow tie; frames like the player's. |
 | `characters/gangster` | `custom/graphics/characters/gangster.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred. |
 | `characters/gangster_armed` | `custom/graphics/characters/gangster_armed.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | The player with the pistol drawn: same frames, right arm reaching forward (the pistol is drawn separately). |
+| `characters/patron_man` | `custom/graphics/characters/patron_man.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A man in evening clothes (club guest, late passer-by). |
+| `characters/patron_woman` | `custom/graphics/characters/patron_woman.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A woman in an evening dress with a bob. |
 | `characters/police` | `custom/graphics/characters/police.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Police officer: 5 frames like the player's, facing right, centred. |
 | `city/alley` | `custom/graphics/city/alley.png` | 256x256 | tile (seamless in both directions) | 160 px per repeat | Brick alley paving. |
 | `city/asphalt` | `custom/graphics/city/asphalt.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Wet street asphalt. |
@@ -61,6 +64,15 @@ image is its window light at night and is replaced separately. Cars and people f
 | `fx/spark` | `custom/graphics/fx/spark.png` | 32x32 | light (additive night light; transparent where dark) | 12x12 | Spark where a bullet strikes. |
 | `fx/steam` | `custom/graphics/fx/steam.png` | 64x64 | sprite (image, scaled to its display size) | 48x48 | Steam / smoke puff. |
 | `fx/tracer` | `custom/graphics/fx/tracer.png` | 64x8 | light (additive night light; transparent where dark) | 48x5 | Bullet streak; the bullet is at the right end. |
+| `interiors/back_bar` | `custom/graphics/interiors/back_bar.png` | 420x42 | sprite (image, scaled to its display size) | 180x18 | Shelves of bottles behind the bar. |
+| `interiors/bandstand` | `custom/graphics/interiors/bandstand.png` | 128x240 | sprite (image, scaled to its display size) | 60x112 | Bandstand along a wall (right edge), curved front to the left. |
+| `interiors/bar_counter` | `custom/graphics/interiors/bar_counter.png` | 420x56 | sprite (image, scaled to its display size) | 180x24 | The Copper Owl's bar; customers along the bottom edge. |
+| `interiors/door` | `custom/graphics/interiors/door.png` | 64x12 | sprite (image, scaled to its display size) | 28x5 | Door leaf from above; hinge at the left end (stretched to the doorway). |
+| `interiors/floor_parquet` | `custom/graphics/interiors/floor_parquet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Oak parquet (the Copper Owl). |
+| `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
+| `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
+| `interiors/stool` | `custom/graphics/interiors/stool.png` | 36x36 | sprite (image, scaled to its display size) | 14x14 | Bar stool. |
+| `interiors/table_club` | `custom/graphics/interiors/table_club.png` | 128x128 | sprite (image, scaled to its display size) | 56x56 | Round club table with lamp and three chairs, centred. |
 | `props/awning_green` | `custom/graphics/props/awning_green.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
 | `props/awning_red` | `custom/graphics/props/awning_red.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
 | `props/barrel` | `custom/graphics/props/barrel.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | Barrel. |

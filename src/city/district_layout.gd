@@ -42,6 +42,8 @@ var decals: Array = []
 var steam_vents: Array = []
 ## Warm light from shop windows on the pavement: {pos, size: Vector2, rot}
 var spill: Array = []
+## Rooms you can walk into (InteriorPlan), each inside one building.
+var interiors: Array = []
 ## Parked cars: {type: "sedan" | "coupe", paint: int, pos, rot}
 var cars: Array = []
 ## The beat cop's round (he walks between these points and pauses at each).
@@ -59,6 +61,29 @@ func is_in_building(p: Vector2, margin: float = 0.0) -> bool:
 		if (b.rect as Rect2).grow(margin).has_point(p):
 			return true
 	return false
+
+
+## The room built into building i, or null (the building is solid).
+func interior_of(building_index: int) -> InteriorPlan:
+	for plan in interiors:
+		if (plan as InteriorPlan).building == building_index:
+			return plan
+	return null
+
+
+## The room at p, or null.
+func interior_at(p: Vector2) -> InteriorPlan:
+	for plan in interiors:
+		if (plan as InteriorPlan).contains(p):
+			return plan
+	return null
+
+
+func building_named(building_name: String) -> int:
+	for i in buildings.size():
+		if buildings[i].name == building_name:
+			return i
+	return -1
 
 
 func is_in_water(p: Vector2, margin: float = 0.0) -> bool:

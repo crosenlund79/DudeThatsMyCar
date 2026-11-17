@@ -19,6 +19,7 @@ var resolver: AssetResolver
 var settings: AudioSettings
 var layout: DistrictLayout
 var city: City
+var interiors: Interiors
 var cars: Array[Car] = []
 var walker: Walker
 var player: PlayerController
@@ -46,6 +47,9 @@ func _ready() -> void:
 	city.name = "City"
 	add_child(city)
 	city.build(layout, resolver)
+	interiors = Interiors.new()
+	add_child(interiors)
+	interiors.build(layout, city, resolver)
 	_park_cars()
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
@@ -62,6 +66,8 @@ func _ready() -> void:
 	player.command_source = command_source
 	add_child(player)
 	player.setup(walker, cars, city)
+	for v in interiors.views:
+		v.visitors = [walker]
 	bullets = BulletWorld.new()
 	bullets.name = "Bullets"
 	add_child(bullets)
@@ -83,6 +89,7 @@ func _ready() -> void:
 	hud = Hud.new()
 	add_child(hud)
 	hud.setup(resolver, layout.name)
+	player.interaction = _interact
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
 	player.notice.connect(hud.show_notice)
@@ -91,7 +98,7 @@ func _ready() -> void:
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, walker, camera, player, vehicle_audio, bullets, gunfire, officer] + cars:
+	for node in [city, interiors, walker, camera, player, vehicle_audio, bullets, gunfire, officer] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -128,6 +135,27 @@ func _on_exited_car(c: Car) -> void:
 	vehicle_audio.attach(null)
 
 
+## The interaction spot the player stands at (inside a room, on foot), or {}.
+func _spot() -> Dictionary:
+	if not player.on_foot() or interiors.current == null:
+		return {}
+	return interiors.current.spot_at(walker.global_position)
+
+
+## E on foot at a spot: talk to whoever is there. Returns true when used.
+func _interact(_at: Vector2) -> bool:
+	var spot := _spot()
+	if spot.is_empty():
+		return false
+	var plan := interiors.current
+	var view := interiors.view_of(plan.id)
+	var who := plan.person(spot.id)
+	if not who.is_empty():
+		view.face(spot.id, walker.global_position)
+		hud.show_notice("%s: \"Evening. What'll it be?\"" % who.name)
+	return true
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(CityInput.MENU):
 		paused = not paused
@@ -146,14 +174,19 @@ func _process(delta: float) -> void:
 func _update_view(delta: float) -> void:
 	camera.update_camera(delta)
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
+	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
 	var prompt := ""
 	if player.on_foot():
+		var spot := _spot()
 		var c := player.enterable_car()
-		if c != null:
+		if not spot.is_empty():
+			prompt = "E   %s" % spot.prompt
+		elif c != null:
 			prompt = "E   Get in the %s" % c.vehicle.params.display_name
 	elif player.car.speed() < 30.0:
 		prompt = "E   Get out"
 	var focus := player.body().global_position
-	hud.refresh(delta, layout.place_name(focus), prompt, player.car, get_viewport().get_mouse_position(),
+	var place := interiors.current.name if interiors.current != null else layout.place_name(focus)
+	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)
 	hud.show_gun(walker.gun if player.on_foot() else null)

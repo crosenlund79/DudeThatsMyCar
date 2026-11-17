@@ -34,6 +34,9 @@ var car: Car = null
 ## Supplies the command each tick: func(controller) -> PlayerCommand.
 ## Default: the real keyboard and mouse.
 var command_source: Callable
+## E on foot is offered here first (talk to someone, use the bed):
+## func(position) -> bool, true when it did something. Otherwise E gets into a car.
+var interaction: Callable
 ## True while the car brakes to a stop because the player asked to get out.
 var leaving := false
 var last_command := PlayerCommand.new()
@@ -69,6 +72,8 @@ func _walk(cmd: PlayerCommand) -> void:
 	walker.move = cmd.move
 	walker.aim_point = cmd.aim
 	if cmd.interact:
+		if interaction.is_valid() and interaction.call(walker.global_position):
+			return
 		var c := enterable_car()
 		if c != null:
 			enter(c)

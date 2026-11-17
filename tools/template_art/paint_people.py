@@ -23,6 +23,15 @@ GANGSTER = {"coat": COAT, "coat_light": COAT_LIGHT, "trouser": TROUSER, "hat": "
             "stripes": True, "front": "tie"}
 POLICE = {"coat": "#36508c", "coat_light": "#4d69ad", "trouser": "#24304f", "hat": "cap", "hat_color": "#2a3a66",
           "stripes": False, "front": "buttons"}
+# M003: the people of the Riverside Ward. Optional keys: "arm" (sleeves, default the coat),
+# "hat": "fedora" | "cap" | "hair" (bare head) | "bob" (bobbed hair) | "flatcap" | "cloche",
+# "front": "tie" | "buttons" | "bowtie" | "pearls" | "apron" | "plain".
+BARTENDER = {"coat": "#24211f", "coat_light": "#3a3633", "arm": "#e8e3d6", "trouser": "#1c1c1f", "hat": "hair",
+             "hat_color": "#24170f", "stripes": False, "front": "bowtie"}
+PATRON_MAN = {"coat": "#1b1b20", "coat_light": "#34343c", "trouser": "#16161a", "hat": "hair", "hat_color": "#6a4c32",
+              "stripes": False, "front": "bowtie"}
+PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
+                "hat_color": "#1d1410", "stripes": False, "front": "pearls"}
 
 
 def frame(step, look=GANGSTER, armed=False):
@@ -47,13 +56,13 @@ def frame(step, look=GANGSTER, armed=False):
     if armed:
         arms = arms[:1]
     for ax, ay, side in arms:
-        paint_shape(img, SP(ellipse_pts((cx + ax) / 2 + 1, ay, 6.5, 3.8, rot=math.atan2(0, ax - cx))), COAT, int(ay * 7),
+        paint_shape(img, SP(ellipse_pts((cx + ax) / 2 + 1, ay, 6.5, 3.8, rot=math.atan2(0, ax - cx))), look.get("arm", COAT), int(ay * 7),
                     outline=OUT, ow=1.1, wob=0.2, tex=0.18, light=(0, -1, 0.4))
         paint_shape(img, SP(ellipse_pts(ax + 6, ay + side * 0.5, 2.6, 2.4)), SKIN, int(ay * 7 + 3), outline=OUT, ow=0.9,
                     wob=0.1, tex=0.1)
     if armed:
         # right arm straight out towards the aim, hand ready for the pistol
-        paint_shape(img, SP(ellipse_pts(cx + 8.5, cy + 9.5, 9.0, 3.6, rot=math.atan2(-6, 14))), COAT, 77,
+        paint_shape(img, SP(ellipse_pts(cx + 8.5, cy + 9.5, 9.0, 3.6, rot=math.atan2(-6, 14))), look.get("arm", COAT), 77,
                     outline=OUT, ow=1.1, wob=0.2, tex=0.18, light=(0, -1, 0.4))
         paint_shape(img, SP(ellipse_pts(cx + 18, cy + 4.5, 2.7, 2.5)), SKIN, 78, outline=OUT, ow=0.9, wob=0.1, tex=0.1)
     # torso: overcoat with pinstripes, collar, white shirt V and red tie at the front
@@ -86,7 +95,24 @@ def _head_and_front(img, cx, cy, look):
                  cy - 9 + math.sin(-math.pi / 2 + k * math.pi / 5) * (3.2 if k % 2 == 0 else 1.4)) for k in range(10)]
         paint_shape(img, SP(star), "#f0cc66", 85, outline=OUT, ow=0.6, wob=0.02)
         return _hat(img, cx, cy, look)
+    front = look["front"]
+    if front == "pearls":
+        for k in range(7):
+            a = -0.9 + k * 0.3
+            paint_shape(img, SP(ellipse_pts(cx + 3 + math.cos(a) * 6, cy + math.sin(a) * 6, 0.9, 0.9)), "#f4efe2", 90 + k,
+                        outline=None, wob=0.02)
+        return _hat(img, cx, cy, look)
+    if front == "apron":
+        paint_shape(img, SP(ellipse_pts(cx + 3.5, cy, 6.5, 12.5)), "#e9e4d6", 91, outline=OUT, ow=0.8, wob=0.2, tex=0.1)
+        line(img, [(S(cx - 2), S(cy - 12)), (S(cx - 2), S(cy + 12))], "#d8d2c2", 1.0 * SS, 200)
+        return _hat(img, cx, cy, look)
+    if front == "plain":
+        return _hat(img, cx, cy, look)
     paint_shape(img, SP([(cx + 5, cy - 5), (cx + 10, cy), (cx + 5, cy + 5), (cx + 7.5, cy)]), "#ece6d8", 5, outline=None, wob=0.1)
+    if front == "bowtie":
+        paint_shape(img, SP([(cx + 7.5, cy), (cx + 9.2, cy - 2.6), (cx + 9.2, cy + 2.6)]), "#111111", 6, outline=None, wob=0.02)
+        paint_shape(img, SP([(cx + 7.5, cy), (cx + 5.8, cy - 2.6), (cx + 5.8, cy + 2.6)]), "#111111", 6, outline=None, wob=0.02)
+        return _hat(img, cx, cy, look)
     paint_shape(img, SP([(cx + 6.5, cy - 1.4), (cx + 9.6, cy), (cx + 6.5, cy + 1.4)]), "#8f1e1e", 6, outline=None, wob=0.05)
     return _hat(img, cx, cy, look)
 
@@ -104,6 +130,20 @@ def _hat(img, cx, cy, look):
                     light=(0.4, -1, 0.6))
         paint_shape(img, SP(ellipse_pts(cx + 6.5, cy, 1.6, 2.0)), "#e2c068", 84, outline=OUT, ow=0.6, wob=0.05)
         soft_blob(img, S(cx + 1.5), S(cy - 2.5), S(2.2), S(1.4), "#ffffff", 40, 0.8 * SS)
+        return finish(img, F, F)
+    if look["hat"] in ("hair", "bob"):
+        hair = look["hat_color"]
+        bob = look["hat"] == "bob"
+        # bare head: the face towards the front, hair combed back (or a glossy bob)
+        paint_shape(img, SP(ellipse_pts(cx + 1.5, cy, 7.4, 7.0)), SKIN, 7, outline=OUT, ow=1.0, wob=0.15, tex=0.1,
+                    light=(0.5, -1, 0.4))
+        paint_shape(img, SP(ellipse_pts(cx + 8.4, cy, 1.8, 1.5)), SKIN, 71, outline=OUT, ow=0.7, wob=0.05, tex=0.1)
+        hx, rx, ry = (cx - 0.5, 7.6, 8.4) if bob else (cx - 1.4, 6.6, 6.4)
+        paint_shape(img, SP(ellipse_pts(hx, cy, rx, ry)), hair, 72, outline=OUT, ow=1.1, wob=0.2, tex=0.15, strokes_n=8,
+                    stroke_cols=[shade(hair, 1.4), shade(hair, 0.8)], light=(0.4, -1, 0.6))
+        if not bob:
+            line(img, [(S(cx - 6), S(cy - 2)), (S(cx + 4), S(cy - 2.4))], shade(hair, 1.6), 0.9 * SS, 200)
+        soft_blob(img, S(cx), S(cy - 3), S(2.6), S(1.4), "#ffffff", 50, 0.7 * SS)
         return finish(img, F, F)
     # head: fedora with a dark band and a pinched crown; the nose just visible at the front
     paint_shape(img, SP(ellipse_pts(cx + 9.5, cy, 2.0, 1.7)), SKIN, 7, outline=OUT, ow=0.8, wob=0.1, tex=0.1)
@@ -131,4 +171,7 @@ ASSETS = {
     "characters/gangster": sheet,
     "characters/gangster_armed": lambda: sheet(GANGSTER, True),
     "characters/police": lambda: sheet(POLICE),
+    "characters/bartender": lambda: sheet(BARTENDER),
+    "characters/patron_man": lambda: sheet(PATRON_MAN),
+    "characters/patron_woman": lambda: sheet(PATRON_WOMAN),
 }

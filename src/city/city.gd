@@ -33,6 +33,8 @@ var _reflections: Array = []
 var _ground: Node2D
 var _props: Node2D
 var _lights: Node2D
+## Layout index of each entry in `buildings` (they are built lowest first).
+var _building_order: Array[int] = []
 
 
 func build(p_layout: DistrictLayout, p_resolver: AssetResolver) -> void:
@@ -40,6 +42,8 @@ func build(p_layout: DistrictLayout, p_resolver: AssetResolver) -> void:
 	resolver = p_resolver
 	for child in get_children():
 		child.free()
+	buildings.clear()
+	_building_order.clear()
 	_ground = _child("Ground")
 	_props = _child("Props")
 	_lights = _child("Lights")
@@ -281,12 +285,13 @@ func _build_buildings() -> void:
 	for i in order:
 		var b: Dictionary = layout.buildings[i]
 		var r: Rect2 = b.rect
-		var shape := CollisionShape2D.new()
-		var box := RectangleShape2D.new()
-		box.size = r.size
-		shape.shape = box
-		shape.position = r.get_center()
-		solids.add_child(shape)
+		if layout.interior_of(i) == null:  # rooms you can enter get their walls from Interiors
+			var shape := CollisionShape2D.new()
+			var box := RectangleShape2D.new()
+			box.size = r.size
+			shape.shape = box
+			shape.position = r.get_center()
+			solids.add_child(shape)
 		var view := BuildingView.new()
 		view.name = "Building%d" % i
 		view.setup(r, b.storeys, _faces(i), tex("roofs/" + b.roof), tex("roofs/parapet") if not b.opts.get("bare", false) else null,
@@ -296,6 +301,7 @@ func _build_buildings() -> void:
 		view.roof_tint = Color(shade, shade * (0.97 + 0.03 * float(i % 3)), shade * (0.95 + 0.05 * float(i % 2)))
 		holder.add_child(view)
 		buildings.append(view)
+		_building_order.append(i)
 
 
 ## Wall styles: the street front uses the building's facade, the alley side
@@ -359,6 +365,11 @@ static func _prop_lift(kind: String) -> float:
 		"roof/chimney": return 14.0
 		"roof/laundry": return 8.0
 	return 3.0
+
+
+## Position in `buildings` of the view for layout building i.
+func building_index(layout_index: int) -> int:
+	return _building_order.find(layout_index)
 
 
 # ------------------------------------------------------------------ street furniture

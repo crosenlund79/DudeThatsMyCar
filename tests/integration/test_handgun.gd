@@ -65,9 +65,9 @@ func test_in_the_open_a_bullet_runs_out_of_range() -> void:
 
 func test_a_gun_pressed_to_a_wall_fires_into_the_wall() -> void:
 	watch_signals(_bullets())
-	walker().place(Vector2(2300, OWL_FRONT + Walker.RADIUS + 1.0), -PI / 2)  # back against nothing, nose to the club
+	walker().place(Vector2(2210, OWL_FRONT + Walker.RADIUS + 1.0), -PI / 2)  # nose to the club wall, beside its door
 	await wait_physics_frames(1)
-	await click(Vector2(2300, OWL_FRONT - 100.0))
+	await click(Vector2(2210, OWL_FRONT - 100.0))
 	await wait_physics_frames(15)
 	assert_signal_emitted(_bullets(), "impact")
 	var hit: Vector2 = _last_impact()[0]

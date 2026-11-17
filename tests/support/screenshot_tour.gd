@@ -103,6 +103,20 @@ func _run(shots: Array) -> void:
 				await _frames(2)
 				cmd = PlayerCommand.make(Vector2(0, 0))
 				await _frames(60)
+			"club":
+				# M003: walk in under the Copper Owl's canopy; the roof opens up
+				_teleport_walker(Vector2(2291, 480), -PI / 2)
+				cmd = PlayerCommand.make(Vector2(0, -1), false, false, Vector2(2291, 300))
+				await _frames(50)
+				cmd = PlayerCommand.make(Vector2(-0.4, -1).normalized(), false, false, Vector2(2240, 202))
+				await _frames(45)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2240, 202))
+				await _frames(30)
+				await _shot("club")
+			"club_door":
+				_teleport_walker(Vector2(2291, 455), -PI / 2)
+				await _frames(40)
+				await _shot("club_door")
 			"garage":
 				_teleport_walker(Vector2(1180, 1395), -PI / 2)
 				await _frames(40)
