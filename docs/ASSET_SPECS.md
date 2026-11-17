@@ -16,6 +16,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | --- | --- | --- | --- | --- | --- |
 | `cars/coupe` | `custom/graphics/cars/coupe.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Roadster, top-down, nose right, centred, transparent background. |
 | `cars/coupe_b` | `custom/graphics/cars/coupe_b.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Roadster, second paint scheme; same contract. |
+| `cars/police` | `custom/graphics/cars/police.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Police squad car (sedan body): black, POLICE across the roof, siren, spotlight. |
 | `cars/sedan` | `custom/graphics/cars/sedan.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, top-down, nose right, centred, transparent background. |
 | `cars/sedan_b` | `custom/graphics/cars/sedan_b.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, second paint scheme; same contract. |
 | `cars/wheel` | `custom/graphics/cars/wheel.png` | 48x20 | sprite (image, scaled to its display size) | 14x6 | Front tyre (whitewall) from above, rolling direction left-right; drawn under the body on both sides and turned with the steering (car bodies leave the front tyres out). |
@@ -26,9 +27,11 @@ image is its window light at night and is replaced separately. Cars and people f
 | `characters/gangster` | `custom/graphics/characters/gangster.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred. |
 | `characters/gangster_armed` | `custom/graphics/characters/gangster_armed.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | The player with the pistol drawn: same frames, right arm reaching forward (the pistol is drawn separately). |
 | `characters/grocer` | `custom/graphics/characters/grocer.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Mr. Novak the grocer: apron and flat cap. |
+| `characters/lady` | `custom/graphics/characters/lady.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A woman in a coat and cloche hat (passer-by). |
 | `characters/patron_man` | `custom/graphics/characters/patron_man.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A man in evening clothes (club guest, late passer-by). |
 | `characters/patron_woman` | `custom/graphics/characters/patron_woman.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A woman in an evening dress with a bob. |
 | `characters/police` | `custom/graphics/characters/police.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Police officer: 5 frames like the player's, facing right, centred. |
+| `characters/worker` | `custom/graphics/characters/worker.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A working man in a flat cap (passer-by). |
 | `city/alley` | `custom/graphics/city/alley.png` | 256x256 | tile (seamless in both directions) | 160 px per repeat | Brick alley paving. |
 | `city/asphalt` | `custom/graphics/city/asphalt.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Wet street asphalt. |
 | `city/cobbles` | `custom/graphics/city/cobbles.png` | 256x256 | tile (seamless in both directions) | 112 px per repeat | Granite setts (streetcar tracks). |

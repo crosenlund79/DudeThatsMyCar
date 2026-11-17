@@ -10,6 +10,9 @@ var cmd := PlayerCommand.new()
 var _e_pending := false
 var _fire_pending := false
 var _choice_pending := 0
+## Street life (passers-by, traffic) is cleared for tests about other things;
+## a test script about the streets sets this to false.
+var quiet_streets := true
 
 
 func _source(_c: PlayerController) -> PlayerCommand:
@@ -36,6 +39,8 @@ func before_each() -> void:
 	main.command_source = _source
 	main.save_path = ""  # never touch the player's real save
 	add_child_autofree(main)
+	if quiet_streets:
+		main.street.clear()
 	await wait_physics_frames(2)
 
 

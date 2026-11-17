@@ -63,7 +63,7 @@ func test_parked_cars_stand_on_open_ground_and_apart() -> void:
 		var t := Transform2D(c.rot, c.pos)
 		for corner in [Vector2(40, 18), Vector2(40, -18), Vector2(-40, 18), Vector2(-40, -18)]:
 			assert_true(d.is_open_ground(t * corner), "car at %s fits on open ground" % c.pos)
-	assert_eq(types.keys().size(), 2, "both period cars are parked somewhere")
+	assert_true(types.has("sedan") and types.has("coupe"), "both period cars are parked somewhere")
 	for i in d.cars.size():
 		for j in range(i + 1, d.cars.size()):
 			assert_gt((d.cars[i].pos as Vector2).distance_to(d.cars[j].pos), 60.0)

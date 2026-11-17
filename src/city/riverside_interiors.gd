@@ -12,7 +12,7 @@ static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(hardware_store(d))
 	d.interiors.append(flat(d))
 	# the barber's pole beside Sal's door
-	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 447), "rot": 0.0, "height": 0.0, "radius": 4.0})
+	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 444), "rot": 0.0, "height": 0.0, "radius": 4.0})
 
 
 ## The Copper Owl supper club: the bar along the back wall with Augie behind

@@ -186,7 +186,29 @@ def wheel(seed=9):
     return finish(grain(img, 2, seed), W, H)
 
 
+def police_car(seed=7):
+    """The Chicago squad car: a black sedan with POLICE on the roof, a siren and a spotlight."""
+    img = sedan("#16181c", roof="#1c1f24", seed=seed)
+    big = img.resize((CW * SS, CH * SS), Image.LANCZOS)
+    # white band and lettering across the roof (reads from above)
+    paint_shape(big, SP(rrect_pts(60, 26, 99, 54, 3)), "#e8e4d8", seed + 1, outline=OUT, ow=1.0, wob=0.15, tex=0.1)
+    layer = new(CW, CH)
+    text(layer, (79.5, 40), "POLICE", 7.2, "#16181c", font="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+    big.alpha_composite(layer.rotate(0))
+    # siren on the left front fender, spotlight on the windscreen pillar
+    paint_shape(big, SP(ellipse_pts(150, 13, 4.5, 4.5)), "#c9ccce", seed + 2, outline=OUT, ow=0.9, wob=0.05, light=(0.4, -1, 0.5))
+    paint_shape(big, SP(ellipse_pts(151, 13, 2.6, 2.6)), "#c02a22", seed + 3, outline=None, wob=0.05)
+    paint_shape(big, SP(ellipse_pts(106, 22, 3.4, 2.6)), "#d6d9db", seed + 4, outline=OUT, ow=0.8, wob=0.05, light=(1, -1, 0.5))
+    # a gold star on each front door
+    for y in (17, 63):
+        star = [(80 + math.cos(-math.pi / 2 + k * math.pi / 5) * (2.6 if k % 2 == 0 else 1.1),
+                 y + math.sin(-math.pi / 2 + k * math.pi / 5) * (2.6 if k % 2 == 0 else 1.1)) for k in range(10)]
+        paint_shape(big, SP(star), "#e2c068", seed + y, outline=None, wob=0.02)
+    return finish(big, CW, CH)
+
+
 ASSETS = {
+    "cars/police": lambda: police_car(7),
     "cars/wheel": lambda: wheel(9),
     "cars/sedan": lambda: sedan("#1d2b25", seed=1),
     "cars/sedan_b": lambda: sedan("#4a1b1e", roof="#2a1213", seed=2),

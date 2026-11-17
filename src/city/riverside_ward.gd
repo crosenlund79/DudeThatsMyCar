@@ -53,6 +53,7 @@ func _build() -> void:
 	_ground_details()
 	RiversideInteriors.add_to(d)
 	_cars_and_spawn()
+	_street_life()
 
 
 # ------------------------------------------------------------------ streets
@@ -412,7 +413,7 @@ func _lamps() -> void:
 			d.lamps.append(Vector2(FAR_BANK_X + 20, yf))
 		yf += 300.0
 	# Dim lamps over back doors in the alleys.
-	for p in [Vector2(450, 108), Vector2(1100, 162), Vector2(2120, 108), Vector2(2800, 162),
+	for p in [Vector2(450, 108), Vector2(1100, 162), Vector2(1880, 1092), Vector2(2120, 108), Vector2(2800, 162),
 			Vector2(500, 1038), Vector2(1150, 1092), Vector2(2200, 1038), Vector2(2900, 1092)]:
 		d.alley_lamps.append(p)
 
@@ -441,6 +442,45 @@ func _ground_details() -> void:
 		d.decals.append({"kind": "decals/oil", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": rnd.randf_range(0.8, 1.2)})
 
 
+## A few people walk the sidewalks of Marlowe Avenue and down Kessler Street
+## (clear of lamp posts, hydrants and the newsstand); three cars go round the
+## blocks on the right-hand lanes, clear of the cars parked at the curbs.
+func _street_life() -> void:
+	d.walk_routes = [
+		PackedVector2Array([Vector2(1870, 460), Vector2(3150, 460)]),  # Marlowe, north side: the club, your flat
+		PackedVector2Array([Vector2(1800, 740), Vector2(3150, 740)]),  # Marlowe, south side: the grocery, the hotel
+		PackedVector2Array([Vector2(160, 460), Vector2(1500, 460)]),  # Marlowe, north side: Sal's
+		PackedVector2Array([Vector2(160, 740), Vector2(1540, 740), Vector2(1540, 1390)]),  # past Lindqvist's, down Kessler
+	]
+	d.walkers = [
+		{"look": "characters/patron_man", "route": 0, "at": 0.25},
+		{"look": "characters/patron_woman", "route": 0, "at": 0.7},
+		{"look": "characters/worker", "route": 1, "at": 0.3},
+		{"look": "characters/lady", "route": 1, "at": 0.85},
+		{"look": "characters/worker", "route": 2, "at": 0.55},
+		{"look": "characters/lady", "route": 3, "at": 0.4},
+	]
+	var lane := 28.0  # from the middle of a side street; 45 on the avenue (clear of the tracks)
+	var e := MARLOWE + 45.0
+	var w := MARLOWE - 45.0
+	d.drive_loops = [
+		# round the hotel block, right turns: east on Marlowe, south on Wharf, west on Pruitt, north on Kessler
+		PackedVector2Array([Vector2(KESSLER + lane, e), Vector2(WHARF - lane, e), Vector2(WHARF - lane, PRUITT - lane), Vector2(KESSLER + lane, PRUITT - lane)]),
+		# the other way round it, left turns
+		PackedVector2Array([Vector2(WHARF + lane, w), Vector2(KESSLER - lane, w), Vector2(KESSLER - lane, PRUITT + lane), Vector2(WHARF + lane, PRUITT + lane)]),
+		# round the garage block: east on Marlowe, south on Kessler, west on Pruitt, north on Dorsey
+		PackedVector2Array([Vector2(DORSEY + lane, e), Vector2(KESSLER - lane, e), Vector2(KESSLER - lane, PRUITT - lane), Vector2(DORSEY + lane, PRUITT - lane)]),
+	]
+	d.traffic = [
+		{"type": "sedan", "paint": 0, "loop": 0, "segment": 0, "at": 0.15},
+		{"type": "coupe", "paint": 1, "loop": 1, "segment": 0, "at": 0.55},
+		{"type": "sedan", "paint": 1, "loop": 2, "segment": 2, "at": 0.4},
+	]
+	for x in [DORSEY, KESSLER, WHARF]:
+		for s in [[MARLOWE, AVENUE_HALF], [PRUITT, STREET_HALF], [CALLOWAY, STREET_HALF]]:
+			d.junctions.append(Rect2(x - STREET_HALF, s[0] - s[1], STREET_HALF * 2.0, s[1] * 2.0))
+
+
 func _cars_and_spawn() -> void:
 	d.cars = [
 		{"type": "coupe", "paint": 0, "pos": Vector2(2425, 694), "rot": 0.0},    # outside Hotel Marlowe
@@ -449,8 +489,9 @@ func _cars_and_spawn() -> void:
 		{"type": "coupe", "paint": 1, "pos": Vector2(960, 1190), "rot": PI / 2},  # Doyle's forecourt
 		{"type": "sedan", "paint": 0, "pos": Vector2(1040, 1250), "rot": -PI / 2},
 		{"type": "sedan", "paint": 1, "pos": Vector2(3845, 150), "rot": PI / 2},  # warehouse apron
-		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1435), "rot": PI},     # Pruitt Street
+		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1432), "rot": PI},     # Pruitt Street
 		{"type": "sedan", "paint": 1, "pos": Vector2(2585, 506), "rot": PI},     # M003: outside your flat
+		{"type": "police", "paint": 0, "pos": Vector2(1835, 1065), "rot": PI},  # M003: the squad car, in the alley behind Novak's
 	]
 	# The beat cop walks a short round on the north side of Marlowe Avenue by
 	# the Kessler Street corner, past the newsstand and his call box.

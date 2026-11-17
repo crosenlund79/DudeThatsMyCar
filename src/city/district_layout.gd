@@ -44,6 +44,15 @@ var steam_vents: Array = []
 var spill: Array = []
 ## Rooms you can walk into (InteriorPlan), each inside one building.
 var interiors: Array = []
+## Street life (M003): sidewalk routes people stroll up and down
+## (PackedVector2Array each), who walks them ({look, route, at: share along}),
+## closed loops of right-hand lane points cars drive round, the cars on them
+## ({type, paint, loop, segment, at}) and the street crossings (Rect2).
+var walk_routes: Array = []
+var walkers: Array = []
+var drive_loops: Array = []
+var traffic: Array = []
+var junctions: Array = []
 ## Parked cars: {type: "sedan" | "coupe", paint: int, pos, rot}
 var cars: Array = []
 ## The beat cop's round (he walks between these points and pauses at each).

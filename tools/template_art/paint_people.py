@@ -36,6 +36,10 @@ CLERK = {"coat": "#8a7a5a", "coat_light": "#9c8c6c", "trouser": "#3a3a3e", "hat"
          "stripes": False, "front": "tie"}
 DEALER = {"coat": "#2e3a2e", "coat_light": "#3e4c3e", "trouser": "#1f2420", "hat": "fedora", "hat_color": "#2a2a26",
           "stripes": True, "front": "tie"}
+WORKER = {"coat": "#5a4a3a", "coat_light": "#6e5c48", "trouser": "#33302c", "hat": "flatcap", "hat_color": "#4a4640",
+          "stripes": False, "front": "plain"}
+LADY = {"coat": "#4a5a6a", "coat_light": "#5e7082", "trouser": "#b89070", "hat": "cloche", "hat_color": "#7a2a3a",
+        "stripes": False, "front": "plain"}
 PATRON_MAN = {"coat": "#1b1b20", "coat_light": "#34343c", "trouser": "#16161a", "hat": "hair", "hat_color": "#6a4c32",
               "stripes": False, "front": "bowtie"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
@@ -139,6 +143,16 @@ def _hat(img, cx, cy, look):
         paint_shape(img, SP(ellipse_pts(cx + 6.5, cy, 1.6, 2.0)), "#e2c068", 84, outline=OUT, ow=0.6, wob=0.05)
         soft_blob(img, S(cx + 1.5), S(cy - 2.5), S(2.2), S(1.4), "#ffffff", 40, 0.8 * SS)
         return finish(img, F, F)
+    if look["hat"] == "cloche":
+        # a close-fitting bell hat with a ribbon, the face just showing at the front
+        paint_shape(img, SP(ellipse_pts(cx + 8.6, cy, 2.2, 2.6)), SKIN, 7, outline=OUT, ow=0.8, wob=0.1, tex=0.1)
+        paint_shape(img, SP(ellipse_pts(cx, cy, 8.8, 8.6)), shade(HAT, 0.85), 88, outline=OUT, ow=1.3, wob=0.2, tex=0.2,
+                    light=(0.4, -1, 0.5))
+        paint_shape(img, SP(ellipse_pts(cx - 0.5, cy, 6.6, 6.4)), HAT, 89, outline=OUT, ow=1.0, wob=0.2, tex=0.2,
+                    light=(0.4, -1, 0.6))
+        line(img, [(S(cx + 2), S(cy - 5.6)), (S(cx + 4), S(cy - 2))], "#e8d8b0", 1.2 * SS, 230)
+        soft_blob(img, S(cx + 1), S(cy - 3), S(2.4), S(1.4), "#ffffff", 40, 0.8 * SS)
+        return finish(img, F, F)
     if look["hat"] == "flatcap":
         # a cloth flat cap: round crown, short brim at the front
         paint_shape(img, SP(ellipse_pts(cx + 9.5, cy, 2.0, 1.7)), SKIN, 7, outline=OUT, ow=0.8, wob=0.1, tex=0.1)
@@ -191,6 +205,8 @@ ASSETS = {
     "characters/bartender": lambda: sheet(BARTENDER),
     "characters/patron_man": lambda: sheet(PATRON_MAN),
     "characters/barber": lambda: sheet(BARBER),
+    "characters/worker": lambda: sheet(WORKER),
+    "characters/lady": lambda: sheet(LADY),
     "characters/grocer": lambda: sheet(GROCER),
     "characters/clerk": lambda: sheet(CLERK),
     "characters/dealer": lambda: sheet(DEALER),

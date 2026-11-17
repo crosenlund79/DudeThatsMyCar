@@ -8,6 +8,7 @@ const CAR_SCENE := preload("res://src/driving/car.tscn")
 const VEHICLES := {
 	"sedan": preload("res://src/driving/vehicles/sedan.tres"),
 	"coupe": preload("res://src/driving/vehicles/coupe.tres"),
+	"police": preload("res://src/driving/vehicles/police.tres"),
 }
 
 ## Optional command source for tests: func(controller) -> PlayerCommand.
@@ -32,6 +33,7 @@ var bullets: BulletWorld
 var gunfire: GunfireView
 var navigator: CityNavigator
 var officer: PoliceOfficer
+var street: StreetLife
 @export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
 ## The player's handgun.
 @export var gun_rules: GunRules = preload("res://src/weapons/default_pistol.tres")
@@ -114,6 +116,11 @@ func _ready() -> void:
 	add_child(officer)
 	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body)
 	player.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void: officer.hear_gunshot(muzzle, gun_rules.noise_radius))
+	street = StreetLife.new()
+	add_child(street)
+	street.setup(layout, resolver, clock, CAR_SCENE, VEHICLES, cars, [walker, officer.body] as Array[Walker])
+	street.view = camera.view_rect()
+	player.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void: street.hear_gunshot(muzzle))
 	vehicle_audio = VehicleAudio.new()
 	add_child(vehicle_audio)
 	vehicle_audio.setup(resolver)
@@ -132,7 +139,7 @@ func _ready() -> void:
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, interiors, walker, camera, player, vehicle_audio, bullets, gunfire, officer] + cars:
+	for node in [city, interiors, walker, camera, player, vehicle_audio, bullets, gunfire, officer, street] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -277,6 +284,7 @@ func sleep() -> void:
 		cars[i].place(Transform2D(spec.rot, spec.pos))
 		cars[i].driven = false
 	officer.reset()
+	street.reset()
 	if walker.gun != null:
 		walker.gun.holster()
 	walker.place(layout.spawn, layout.spawn_facing)
@@ -344,6 +352,7 @@ func _update_view(delta: float) -> void:
 	camera.update_camera(delta)
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
+	street.view = camera.view_rect()
 	var prompt := ""
 	if player.on_foot():
 		var spot := _spot()

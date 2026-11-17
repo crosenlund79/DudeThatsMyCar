@@ -152,6 +152,15 @@ func _run(shots: Array) -> void:
 				main.sleep()
 				await _frames(80)
 				await _shot("wake")
+			"traffic":
+				# M003: Marlowe Avenue with the evening's cars and passers-by
+				_teleport_walker(Vector2(2250, 600), 0.0)
+				await _frames(150)
+				await _shot("traffic")
+			"squad_car":
+				_teleport_walker(Vector2(1900, 1065), PI)
+				await _frames(40)
+				await _shot("squad_car")
 			"club_door":
 				_teleport_walker(Vector2(2291, 455), -PI / 2)
 				await _frames(40)
