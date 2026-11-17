@@ -2,7 +2,7 @@
 
 A top-down, hand-painted gangster sandbox set in Prohibition-era Chicago, built in Godot 4.7 (GL Compatibility). It grew out of a copy of the HyperCars racing game, whose driving physics it keeps; everything racing-specific has been retired. Design: `docs/chicago_1932_game_design_document.md`. Decisions and the current objective: `docs/PROJECT_BRIEF.md`.
 
-You play a nighttime henchman: the whole game takes place at night. **Milestone 003 (A Night's Work):** the Riverside Ward is a small working criminal neighbourhood. You wake in your flat at 7:30 pm, buy bootleg rye from Sal the barber, sell it at the Copper Owl for more, lean on the bartender and the grocer for protection money, buy .45 rounds from Eddie in the back of the hardware store, and get home to bed before dawn. Walk into the shops (their roofs open up), talk to the people, watch the clock; a few cars and passers-by are out late, a squad car waits in an alley, and the beat cop still comes running when you shoot. The cars now drive like heavy 1930s road cars, and you can see their front wheels steer. A guide to the district: `docs/RIVERSIDE_WARD.md`.
+You play a nighttime henchman: the whole game takes place at night. **Milestone 003 (A Night's Work):** the Riverside Ward is a small working criminal neighbourhood. You wake in your flat at 7:30 pm, buy bootleg rye from Sal the barber, sell it at the Copper Owl for more, lean on the bartender and the grocer for protection money, buy .45 rounds from Eddie in the back of the hardware store, and get home to bed before dawn. Walk into the shops (their roofs open up), talk to the people, watch the clock; a few cars and passers-by are out late, a squad car waits in an alley, and the beat cop still comes running when you shoot. The cars now drive like heavy 1930s road cars, and you can see their front wheels steer. **Milestone 004 (Street Smarts):** the cars show at a glance which way they face, a painted badge floats over the door of every place you can walk into (brighter as you come near, the flat in its own house-shaped badge), E goes in and out by any door, and a small map in the bottom-left corner shows the streets round you, those places and the beat cop. A guide to the district: `docs/RIVERSIDE_WARD.md`.
 
 ## Run it
 
@@ -19,13 +19,15 @@ You wake in your flat next door to the Copper Owl on Marlowe Avenue; your sedan 
 | W A S D | walk | W | accelerate |
 | Mouse | aim | S | brake, then reverse |
 | Left click | shoot (the first click draws the gun) | A / D | steer |
-| E | talk / go to bed / get into the nearest parked car | Space | handbrake |
+| E | talk / go to bed / go in or out by a door / get into the nearest parked car | Space | handbrake |
 | 1 – 4 | answer when you talk to someone (or click) | E | get out (the car stops first) |
 | E or Esc | walk away from a conversation | | |
 
 F1 shows the controls card, Esc pauses (Q quits while paused). Arrow keys mirror WASD.
 
 ### A night's work
+
+Look for the badges over the doors (a cocktail glass, a barber's pole, an apple, a hammer, and the house-shaped badge of your flat) and on the minimap in the bottom-left corner; places off the map wait at its rim in their direction. At a door, E takes you in (or you just walk in).
 
 1. Out of your door, turn west along Marlowe Avenue (on foot or in the sedan) to **Sal's Barber Shop** (red awning, barber's pole). Talk to Sal: he keeps rye in his cupboard ($1.50 a bottle, six a night, six is all you can carry).
 2. Take it to **the Copper Owl** (the canopy next door to your flat) and sell it to **Augie** behind the bar ($3 a bottle). You can also ask for his "insurance" — once a night; lean on him and he pays more but pays less for your rye that night.
@@ -62,7 +64,7 @@ GUT 9.7.1 is vendored in `addons/gut/`. More in `tests/README.md`; the manual ch
 | `src/interiors/` | rooms you can walk into: plans, the cut-away view, walls |
 | `src/economy/`, `src/night/` | money, deals and conversations, the save file; the night clock |
 | `src/street/` | passers-by and traffic |
-| `src/camera/`, `src/ui/`, `src/presentation/` | camera, HUD (dialogue, clock, money), lights, wheels and sound of the car |
+| `src/camera/`, `src/ui/`, `src/presentation/` | camera, HUD (dialogue, clock, money, minimap), place markers, lights, wheels and sound of the car |
 | `src/assets/` | the override resolver and the asset catalogue |
 | `src/main/` | the composition root (run scene) |
 | `docs/` | brief, rules, design document, asset list, district guide; `docs/archive/hypercars/` keeps the racing game's documents |

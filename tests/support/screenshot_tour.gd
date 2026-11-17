@@ -8,7 +8,9 @@ extends SceneTree
 ## story (the M002 sequence: shots, the officer, the getaway, the alley, lost
 ## him), steer (M003: the roadster's front wheels at full lock, standing and turning),
 ## club / club_door / barber / grocery / eddie (M003 interiors and talk),
-## home (where the night begins), wake (the next evening fading in).
+## home (where the night begins), wake (the next evening fading in),
+## cars (M004: the cars in six headings, lights off), grocery_door,
+## grocery_marker (at Novak's door), drive_markers (markers from the car).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -196,6 +198,27 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(1900, 520), PI / 2)
 				await _frames(40)
 				await _shot("grocery_door")
+			"grocery_marker":
+				# M004: at Novak's door: its marker pulses, E enters
+				var gp: InteriorPlan = main.interiors.view_of("grocery").plan
+				_teleport_walker(gp.outside_door(0, 16.0), PI / 2)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, gp.door_centre(0))
+				await _frames(40)
+				await _shot("grocery_marker")
+			"drive_markers":
+				# M004: driving west down Marlowe Avenue: Sal's and Lindqvist's markers come up
+				var dc: Car = main.cars[1]
+				dc.place(Transform2D(PI, Vector2(1700, 555)))
+				main.walker.place(dc.global_position + Vector2(0, -34), 0.0)
+				await _frames(2)
+				main.player.enter(dc)
+				cmd = PlayerCommand.make(Vector2(0.0, -1.0))
+				await _frames(150)
+				await _shot("drive_markers")
+				cmd = PlayerCommand.make(Vector2(0, 0), true)
+				await _frames(2)
+				cmd = PlayerCommand.make(Vector2(0, 0))
+				await _frames(90)
 			"club_door":
 				_teleport_walker(Vector2(2291, 455), -PI / 2)
 				await _frames(40)
