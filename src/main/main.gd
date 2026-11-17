@@ -23,6 +23,7 @@ var settings: AudioSettings
 var layout: DistrictLayout
 var city: City
 var interiors: Interiors
+var markers: PlaceMarkers
 var cars: Array[Car] = []
 var walker: Walker
 var player: PlayerController
@@ -77,6 +78,9 @@ func _ready() -> void:
 	interiors = Interiors.new()
 	add_child(interiors)
 	interiors.build(layout, city, resolver)
+	markers = PlaceMarkers.new()
+	add_child(markers)
+	markers.setup(layout, resolver)
 	_park_cars()
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
@@ -380,6 +384,12 @@ func _update_view(delta: float) -> void:
 	elif player.car.speed() < 30.0:
 		prompt = "E   Get out"
 	var focus := player.body().global_position
+	var door := interiors.door_at(walker.global_position) if player.on_foot() else {}
+	var in_room: InteriorPlan = null
+	if player.on_foot() and interiors.current != null and interiors.current.contains(walker.global_position):
+		in_room = interiors.current
+	markers.update_markers(delta, camera.eye(), camera.eye_height(), focus, in_room,
+		door.plan if not door.is_empty() and door.outside else null)
 	var place := interiors.current.name if interiors.current != null else layout.place_name(focus)
 	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)

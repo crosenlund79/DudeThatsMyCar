@@ -504,6 +504,93 @@ def badge(symbol, color):
     return finish(img, w, h)
 
 
+# ---------------------------------------------------------------- place markers (M004)
+
+MARK_ENAMEL = "#5a1e1a"      # businesses: oxblood enamel, copper rim, cream picture
+MARK_HOME = "#1f4a4a"        # your flat: teal enamel in a house-shaped badge
+MARK_CREAM = "#f1e4c6"
+MARK_COPPER = "#d8a060"
+
+
+def _pictogram(img, kind, cx, cy, col=MARK_CREAM):
+    """A simple cream pictogram centred on (cx, cy) (template px of a 64 px badge)."""
+    if kind == "bar":  # cocktail glass with an olive
+        paint_shape(img, SP([(cx - 9, cy - 8), (cx + 9, cy - 8), (cx, cy + 2)]), col, 3, outline=None, wob=0.05)
+        line(img, [(S(cx), S(cy + 1)), (S(cx), S(cy + 8))], col, 2.2 * SS, 255)
+        line(img, [(S(cx - 5), S(cy + 9)), (S(cx + 5), S(cy + 9))], col, 2.2 * SS, 255)
+        paint_shape(img, SP(ellipse_pts(cx + 3, cy - 5, 2.2, 2.2)), "#7a9a3a", 4, outline=None, wob=0.02)
+        line(img, [(S(cx + 3), S(cy - 5)), (S(cx + 8), S(cy - 12))], col, 1.2 * SS, 255)
+    elif kind == "barber":  # the striped pole with its caps
+        paint_shape(img, SP(rrect_pts(cx - 4.5, cy - 9, cx + 4.5, cy + 9, 2)), col, 5, outline=None, wob=0.03)
+        for k in range(4):
+            y = cy - 8 + k * 5
+            paint_shape(img, SP([(cx - 4.5, y + 2), (cx + 4.5, y - 1.5), (cx + 4.5, y + 1), (cx - 4.5, y + 4.5)]),
+                        "#b8322a" if k % 2 == 0 else "#2a4a9a", 6 + k, outline=None, wob=0.02)
+        for y in (cy - 11, cy + 11):
+            paint_shape(img, SP(rrect_pts(cx - 6, y - 2, cx + 6, y + 2, 1.5)), MARK_COPPER, 9, outline=None, wob=0.02)
+    elif kind == "grocery":  # an apple with a leaf
+        paint_shape(img, SP(ellipse_pts(cx, cy + 2, 9, 8.5)), col, 11, outline=None, wob=0.15)
+        soft_blob(img, S(cx - 3.5), S(cy - 0.5), S(1.8), S(1.4), "#ffffff", 150, 0.5 * SS)
+        line(img, [(S(cx), S(cy - 5)), (S(cx + 1.5), S(cy - 11))], col, 1.8 * SS, 255)
+        paint_shape(img, SP(ellipse_pts(cx + 5, cy - 9, 4, 2, rot=-0.5)), "#8ab04a", 13, outline=None, wob=0.05)
+    elif kind == "hardware":  # a claw hammer
+        line(img, [(S(cx - 7), S(cy + 10)), (S(cx + 4), S(cy - 5))], col, 3.2 * SS, 255)
+        paint_shape(img, SP([(cx - 2, cy - 11), (cx + 9, cy - 3), (cx + 6, cy + 1), (cx - 5, cy - 7)]), col, 14, outline=None, wob=0.05)
+        line(img, [(S(cx - 5), S(cy - 7)), (S(cx - 9), S(cy - 4))], col, 2.2 * SS, 255)
+    elif kind == "home":  # a bed under a crescent moon: where the henchman sleeps by day
+        paint_shape(img, SP(rrect_pts(cx - 10, cy + 1, cx + 10, cy + 7, 1.5)), col, 15, outline=None, wob=0.05)
+        paint_shape(img, SP(rrect_pts(cx - 10, cy - 4, cx - 7, cy + 10, 1)), col, 16, outline=None, wob=0.03)
+        paint_shape(img, SP(ellipse_pts(cx - 3, cy - 1, 3.4, 2.4)), col, 17, outline=None, wob=0.05)
+        moon = ellipse_pts(cx + 6, cy - 9, 4.5, 4.5)
+        paint_shape(img, SP(moon), "#f4d88a", 18, outline=None, wob=0.02)
+        paint_shape(img, SP(ellipse_pts(cx + 8, cy - 10.5, 3.8, 3.8)), MARK_HOME, 19, outline=None, wob=0.02)
+
+
+def place_marker(kind):
+    """A floating enamel badge marking a place you can walk into (64 x 80, the pin's point at the bottom middle).
+    Businesses: a round oxblood badge with a copper rim; your flat: a teal house-shaped badge."""
+    w, h = 64, 80
+    img = new(w, h)
+    soft_blob(img, S(33), S(35), S(24), S(24), "#000000", 90, 4 * SS)
+    if kind == "home":
+        outer = [(32, 4), (60, 28), (56, 30), (56, 58), (38, 58), (32, 74), (26, 58), (8, 58), (8, 30), (4, 28)]
+        inner = [(32, 9.5), (52, 27), (51, 28.5), (51, 53), (13, 53), (13, 28.5), (12, 27)]
+        paint_shape(img, SP(outer), MARK_COPPER, 1, outline=OUT, ow=1.8, wob=0.2, tex=0.12, light=(0.3, -1, 0.5))
+        paint_shape(img, SP(inner), MARK_HOME, 2, outline=None, wob=0.15, tex=0.15, light=(0.3, -1, 0.4))
+        _pictogram(img, "home", 32, 38)
+    else:
+        pin = ellipse_pts(32, 30, 26, 26)
+        tail = [(22, 50), (32, 76), (42, 50)]
+        paint_shape(img, SP(tail), MARK_COPPER, 3, outline=OUT, ow=1.6, wob=0.1, light=(0.3, -1, 0.5))
+        paint_shape(img, SP(pin), MARK_COPPER, 1, outline=OUT, ow=1.8, wob=0.2, tex=0.12, light=(0.3, -1, 0.5))
+        paint_shape(img, SP(ellipse_pts(32, 30, 21, 21)), MARK_ENAMEL, 2, outline=None, wob=0.15, tex=0.18,
+                    light=(0.3, -1, 0.4), inner_shadow=0.3)
+        _pictogram(img, kind, 32, 30)
+    soft_blob(img, S(24), S(18), S(7), S(4), "#ffffff", 50, 1.5 * SS)
+    return finish(img, w, h)
+
+
+def player_arrow():
+    """The minimap's 'you are here': a cream arrowhead with a dark edge, pointing right."""
+    w = h = 32
+    img = new(w, h)
+    soft_blob(img, S(16), S(17), S(11), S(9), "#000000", 110, 2 * SS)
+    paint_shape(img, SP([(29, 16), (5, 4), (11, 16), (5, 28)]), "#fff4d6", 1, outline=(20, 14, 10), ow=2.0, wob=0.05,
+                light=(0.3, -1, 0.4))
+    return finish(img, w, h)
+
+
+def police_mark():
+    """Police presence on the minimap: a small blue enamel disc with a gold star."""
+    w = h = 32
+    img = new(w, h)
+    paint_shape(img, SP(ellipse_pts(16, 16, 13, 13)), "#2a3a6a", 1, outline=(14, 16, 26), ow=1.6, wob=0.1, light=(0.3, -1, 0.5))
+    star = [(16 + math.cos(-math.pi / 2 + k * math.pi / 5) * (8.5 if k % 2 == 0 else 3.6),
+             16 + math.sin(-math.pi / 2 + k * math.pi / 5) * (8.5 if k % 2 == 0 else 3.6)) for k in range(10)]
+    paint_shape(img, SP(star), "#f0cc66", 2, outline=None, wob=0.02)
+    return finish(img, w, h)
+
+
 def call_box():
     """A police call box on its post (Chicago 'Police Telegraph'), seen from above."""
     w = h = 40
@@ -687,6 +774,13 @@ ASSETS = {
     "signs/hotel": hotel_sign,
     "signs/garage": lambda: painted_roof_sign("garage", "DOYLE'S GARAGE", 20, 256, 64),
     "signs/barber": lambda: painted_roof_sign("barber", "SAL'S BARBER SHOP", 17, 256, 64),
+    "ui/marker_bar": lambda: place_marker("bar"),
+    "ui/marker_barber": lambda: place_marker("barber"),
+    "ui/marker_grocery": lambda: place_marker("grocery"),
+    "ui/marker_hardware": lambda: place_marker("hardware"),
+    "ui/marker_home": lambda: place_marker("home"),
+    "ui/map_player": player_arrow,
+    "ui/map_police": police_mark,
     "signs/grocery": lambda: painted_roof_sign("grocery", "NOVAK'S GROCERY", 18, 256, 64),
     "signs/hardware": lambda: painted_roof_sign("hardware", "LINDQVIST HARDWARE", 16, 256, 64),
     "props/barber_pole": barber_pole,

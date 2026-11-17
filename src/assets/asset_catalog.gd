@@ -173,6 +173,13 @@ const SPECS := {
 	# Interface.
 	"ui/alert": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(30, 30), "notes": "Over the officer: he has seen you."},
 	"ui/search": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(30, 30), "notes": "Over the officer: he is looking for you."},
+	"ui/marker_bar": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "Place marker (world and minimap): the Copper Owl. Badge on top, the pin's point at the bottom middle."},
+	"ui/marker_barber": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "Place marker: Sal's Barber Shop."},
+	"ui/marker_grocery": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "Place marker: Novak's Grocery."},
+	"ui/marker_hardware": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "Place marker: Lindqvist Hardware."},
+	"ui/marker_home": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "Place marker: your flat (house-shaped, unlike the businesses)."},
+	"ui/map_player": {"kind": "sprite", "template_size": Vector2i(32, 32), "display_size": Vector2(14, 14), "notes": "Minimap: you, an arrowhead pointing right (screen px)."},
+	"ui/map_police": {"kind": "sprite", "template_size": Vector2i(32, 32), "display_size": Vector2(12, 12), "notes": "Minimap: the beat cop (screen px)."},
 	"ui/crosshair": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(30, 30), "notes": "Mouse aim reticle (screen px)."},
 	"ui/panel": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(96, 96), "notes": "Nine-patch panel, 24 px margins."},
 }

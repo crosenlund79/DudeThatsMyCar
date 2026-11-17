@@ -142,6 +142,13 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/hotel_lit` | `custom/graphics/signs/hotel_lit.png` | 256x64 | light (additive night light; transparent where dark) | 150x38 | Hotel Marlowe bulbs. |
 | `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |
 | `ui/crosshair` | `custom/graphics/ui/crosshair.png` | 64x64 | sprite (image, scaled to its display size) | 30x30 | Mouse aim reticle (screen px). |
+| `ui/map_player` | `custom/graphics/ui/map_player.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Minimap: you, an arrowhead pointing right (screen px). |
+| `ui/map_police` | `custom/graphics/ui/map_police.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Minimap: the beat cop (screen px). |
+| `ui/marker_bar` | `custom/graphics/ui/marker_bar.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker (world and minimap): the Copper Owl. Badge on top, the pin's point at the bottom middle. |
+| `ui/marker_barber` | `custom/graphics/ui/marker_barber.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Sal's Barber Shop. |
+| `ui/marker_grocery` | `custom/graphics/ui/marker_grocery.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Novak's Grocery. |
+| `ui/marker_hardware` | `custom/graphics/ui/marker_hardware.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Lindqvist Hardware. |
+| `ui/marker_home` | `custom/graphics/ui/marker_home.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: your flat (house-shaped, unlike the businesses). |
 | `ui/panel` | `custom/graphics/ui/panel.png` | 96x96 | sprite (image, scaled to its display size) | 96x96 | Nine-patch panel, 24 px margins. |
 | `ui/search` | `custom/graphics/ui/search.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he is looking for you. |
 | `weapons/pistol` | `custom/graphics/weapons/pistol.png` | 48x20 | sprite (image, scaled to its display size) | 15x6 | .45 automatic from above, muzzle to the right; the left end sits in the hand. |

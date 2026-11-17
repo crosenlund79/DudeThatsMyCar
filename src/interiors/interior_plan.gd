@@ -18,6 +18,10 @@ var building := -1
 var building_rect := Rect2()
 ## The walkable room, walls included (inside building_rect).
 var room := Rect2()
+## Its marker over the main door and on the minimap ("ui/marker_bar", ...;
+## "" = unmarked), and whether it is the player's home (drawn differently).
+var marker := ""
+var is_home := false
 ## Floor tile (logical image name) and the colour of the closed rest of the house.
 var floor := "interiors/floor_parquet"
 ## Doors in the room's outer walls: {side: Vector2 (outward: UP, DOWN, LEFT,

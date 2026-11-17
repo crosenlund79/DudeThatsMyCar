@@ -20,6 +20,7 @@ static func add_to(d: DistrictLayout) -> void:
 ## the alley where tonight's delivery stands.
 static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 	var p := InteriorPlan.new("copper_owl", "The Copper Owl")
+	p.marker = "ui/marker_bar"
 	p.building = d.building_named("The Copper Owl")
 	p.building_rect = d.buildings[p.building].rect  # x 2151..2431, y 168..439
 	p.room = p.building_rect
@@ -65,6 +66,7 @@ static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 ## bootleg rye the Copper Owl runs short of.
 static func barber_shop(d: DistrictLayout) -> InteriorPlan:
 	var p := InteriorPlan.new("barber_shop", "Sal's Barber Shop")
+	p.marker = "ui/marker_barber"
 	p.building = d.building_named("Sal's Barber Shop")
 	p.building_rect = d.buildings[p.building].rect  # x 905..1125, y 168..439
 	p.room = Rect2(905, 279, 220, 160)  # the shop at the front; the back rooms stay shut
@@ -96,6 +98,7 @@ static func barber_shop(d: DistrictLayout) -> InteriorPlan:
 ## Mr. Novak pays for protection; push him too hard and he runs for the copper.
 static func grocery(d: DistrictLayout) -> InteriorPlan:
 	var p := InteriorPlan.new("grocery", "Novak's Grocery")
+	p.marker = "ui/marker_grocery"
 	p.building = d.building_named("Novak's Grocery")
 	p.building_rect = d.buildings[p.building].rect  # x 1781..2001, y 761..1032
 	p.room = Rect2(1781, 761, 220, 165)
@@ -127,6 +130,7 @@ static func grocery(d: DistrictLayout) -> InteriorPlan:
 ## crate of pistols and .45 rounds.
 static func hardware_store(d: DistrictLayout) -> InteriorPlan:
 	var p := InteriorPlan.new("hardware", "Lindqvist Hardware")
+	p.marker = "ui/marker_hardware"
 	p.building = d.building_named("Lindqvist Hardware")
 	p.building_rect = d.buildings[p.building].rect  # x 927..1157, y 761..1032
 	p.room = Rect2(927, 761, 230, 250)
@@ -164,6 +168,8 @@ static func hardware_store(d: DistrictLayout) -> InteriorPlan:
 ## stove, a wardrobe and a radio. Every night starts here, and here you sleep.
 static func flat(d: DistrictLayout) -> InteriorPlan:
 	var p := InteriorPlan.new("home", "Your Flat")
+	p.marker = "ui/marker_home"
+	p.is_home = true
 	p.building = d.building_named("Marlowe Flats")
 	p.building_rect = d.buildings[p.building].rect  # x 2455..2655, y 168..439
 	p.room = Rect2(2455, 299, 170, 140)
