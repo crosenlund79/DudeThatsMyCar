@@ -20,6 +20,11 @@ var yaw_rate := 0.0
 var steer_level := 0.0
 ## How hard the engine pulls (0 idle .. 1 full); follows W / reverse.
 var drive_level := 0.0
+## How hard the brakes bite (0 .. 1); builds at brake_rise_time.
+var brake_level := 0.0
+## Sideways sliding speed the tyres have not caught (px/s): 0 in clean
+## driving, large in a handbrake slide or after a knock (tyre squeal).
+var slip := 0.0
 
 
 func _init(p_params: DrivingParams = null) -> void:
@@ -79,6 +84,42 @@ func _turn_wheel(delta: float, command: float) -> void:
 		steer_level = move_toward(steer_level, target, delta / time)
 
 
+## Yaw rate (rad/s) of a road car (wheelbase > 0) rolling at fwd_speed with
+## the wheel at `level`: it follows the circle of its front wheels, widened
+## where the tyres run out of cornering grip; the handbrake lets the tail come
+## round (handbrake_turn_scale times the grip limit).
+func road_yaw(fwd_speed: float, level: float, handbrake := false) -> float:
+	var curvature := tan(deg_to_rad(params.max_wheel_angle) * clampf(level, -1.0, 1.0)) / params.wheelbase
+	var v2 := fwd_speed * fwd_speed
+	if params.cornering_grip > 0.0 and v2 > 1.0:
+		var limit := params.cornering_grip / v2
+		if handbrake:
+			limit *= params.handbrake_turn_scale
+		curvature = clampf(curvature, -limit, limit)
+	return fwd_speed * curvature
+
+
+## Tightest turning circle of a road car (centre of the car, px).
+func min_circle() -> float:
+	var r := params.wheelbase / tan(deg_to_rad(params.max_wheel_angle))
+	return sqrt(r * r + params.rear_axle * params.rear_axle)
+
+
+## Front wheel angle (radians, + = right) for drawing the wheels.
+func wheel_angle() -> float:
+	return deg_to_rad(params.max_wheel_angle) * steer_level
+
+
+## Brakes bite over brake_rise_time and let go at once.
+func _press_brakes(delta: float, pressed: bool) -> void:
+	if not pressed:
+		brake_level = 0.0
+	elif params.brake_rise_time <= 0.0:
+		brake_level = 1.0
+	else:
+		brake_level = minf(brake_level + delta / params.brake_rise_time, 1.0)
+
+
 ## Engine pull builds and fades at the rates in DrivingParams.
 func _pull_engine(delta: float, pulling: bool) -> void:
 	var time := params.throttle_rise_time if pulling else params.throttle_fall_time
@@ -94,9 +135,13 @@ func _pull_engine(delta: float, pulling: bool) -> void:
 ## backwards. brake (S): brake, then reverse once stopped. handbrake (Space).
 func update(delta: float, steer: float, throttle: bool, brake: bool, handbrake := false) -> void:
 	_turn_wheel(delta, steer)
-	var turn := steer_level * deg_to_rad(params.turn_rate_degrees) * steer_factor(forward_speed())
-	if handbrake:
-		turn *= params.handbrake_turn_scale
+	var turn := 0.0
+	if params.wheelbase > 0.0:
+		turn = road_yaw(forward_speed(), steer_level, handbrake)
+	else:
+		turn = steer_level * deg_to_rad(params.turn_rate_degrees) * steer_factor(forward_speed())
+		if handbrake:
+			turn *= params.handbrake_turn_scale
 	heading = wrapf(heading + turn * delta, -PI, PI)
 	_apply_yaw(delta)
 
@@ -106,31 +151,38 @@ func update(delta: float, steer: float, throttle: bool, brake: bool, handbrake :
 	var side := velocity.dot(side_dir)
 	# the engine pulls when W drives forward or S reverses from a standstill
 	_pull_engine(delta, not handbrake and throttle != brake and (throttle or fwd <= STOP_SPEED))
+	_press_brakes(delta, (brake and (throttle or fwd > STOP_SPEED)) or (throttle and fwd < -STOP_SPEED))
+	var braking := params.brake_deceleration * brake_level
 
 	if handbrake:
 		fwd = move_toward(fwd, 0.0, params.handbrake_deceleration * delta)
 	elif throttle and not brake:
 		if fwd < -STOP_SPEED:
-			fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
+			fwd = move_toward(fwd, 0.0, braking * delta)
 		elif fwd < params.max_speed:
 			fwd = minf(fwd + pull_at(fwd, params.acceleration, params.max_speed) * drive_level * delta, params.max_speed)
 		else:
 			fwd = move_toward(fwd, params.max_speed, params.coast_deceleration * delta)
 	elif brake and not throttle:
 		if fwd > STOP_SPEED:
-			fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
+			fwd = move_toward(fwd, 0.0, braking * delta)
 		elif fwd > -params.reverse_max_speed:
 			fwd = maxf(fwd - pull_at(fwd, params.reverse_acceleration, params.reverse_max_speed) * drive_level * delta,
 				-params.reverse_max_speed)
 		else:
 			fwd = move_toward(fwd, -params.reverse_max_speed, params.coast_deceleration * delta)
 	elif brake and throttle:
-		fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
+		fwd = move_toward(fwd, 0.0, braking * delta)
 	else:
 		fwd = move_toward(fwd, 0.0, params.coast_deceleration * delta)
 
-	var grip := params.grip * (params.handbrake_grip_scale if handbrake else 1.0)
-	side *= exp(-grip * delta)
+	var grip_scale := params.handbrake_grip_scale if handbrake else 1.0
+	# a road car turns round its rear axle, so its centre swings out a little
+	var pivot := -turn * params.rear_axle if params.wheelbase > 0.0 else 0.0
+	side = pivot + (side - pivot) * exp(-params.grip * grip_scale * delta)
+	if params.tyre_grip > 0.0:
+		side = move_toward(side, pivot, params.tyre_grip * grip_scale * delta)
+	slip = side - pivot
 	velocity = fwd_dir * fwd + side_dir * side
 
 
@@ -157,8 +209,9 @@ func integrate(delta: float) -> void:
 ## the car). Returns the share of the along-wall speed kept (for the rest of
 ## this tick's motion). With wall_friction the loss grows with how hard the car
 ## hits: a shallow scrape keeps most of its speed and turns the nose along the
-## wall (wall_align), a head-on hit stops it and bounces it back a little.
-func apply_wall_collision(normal: Vector2) -> float:
+## wall (wall_align, at most wall_align_rate per second of contact), a
+## head-on hit stops it and bounces it back a little.
+func apply_wall_collision(normal: Vector2, delta := 1.0 / 60.0) -> float:
 	var into := velocity.dot(normal)
 	if into >= 0.0:
 		return 1.0
@@ -175,7 +228,10 @@ func apply_wall_collision(normal: Vector2) -> float:
 			var along_dir := tangent.normalized()
 			if forward().dot(along_dir) < 0.0:
 				along_dir = -along_dir  # reversing along the wall: the tail leads
-			heading = wrapf(heading + angle_difference(heading, along_dir.angle()) * params.wall_align * glance, -PI, PI)
+			var turn := angle_difference(heading, along_dir.angle()) * params.wall_align * glance
+			if params.wall_align_rate > 0.0:
+				turn = clampf(turn, -params.wall_align_rate * delta, params.wall_align_rate * delta)
+			heading = wrapf(heading + turn, -PI, PI)
 	return keep
 
 

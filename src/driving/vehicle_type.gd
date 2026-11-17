@@ -14,5 +14,10 @@ extends Resource
 ## Lamps in car space (px, nose +X, y down): headlights and tail lights.
 @export var headlights := PackedVector2Array([Vector2(34, -9), Vector2(34, 9)])
 @export var taillights := PackedVector2Array([Vector2(-32, -12), Vector2(-32, 12)])
+## Front wheels (drawn separately, they turn with the steering): axle
+## position along the car and each wheel's distance from the centre line
+## (display px, car centre, nose +X).
+@export var front_axle_x := 22.0
+@export var wheel_half_track := 17.0
 ## Engine sound character (pitch multiplier on the shared engine sound).
 @export var engine_pitch := 1.0

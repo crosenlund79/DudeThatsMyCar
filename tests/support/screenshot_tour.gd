@@ -5,7 +5,8 @@ extends SceneTree
 ## Shots: street (the starting view), walk (on foot by the roadster), drive
 ## (driving down Marlowe Avenue), garage, river, alley, wide, shoot (firing at
 ## the Copper Owl, captured on the muzzle flash), beat / pursuit (the officer),
-## story (the M002 sequence: shots, the officer, the getaway, the alley, lost him).
+## story (the M002 sequence: shots, the officer, the getaway, the alley, lost
+## him), steer (M003: the roadster's front wheels at full lock, standing and turning).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -82,6 +83,26 @@ func _run(shots: Array) -> void:
 				await _frames(2)
 				cmd = PlayerCommand.make(Vector2(0, 0))
 				await _frames(90)
+			"steer":
+				# M003: in the roadster at the curb, wheel turned to full lock (front tyres turn)
+				var c: Car = main.cars[0]
+				main.walker.place(c.global_position + Vector2(0, -34), 0.0)
+				await _frames(2)
+				main.player.enter(c)
+				cmd = PlayerCommand.make(Vector2(-1.0, 0.0))
+				await _frames(40)
+				await _shot("steer")
+				cmd = PlayerCommand.make(Vector2(-1.0, -1.0))
+				await _frames(50)
+				cmd = PlayerCommand.make(Vector2(-1.0, -0.0))
+				await _frames(4)
+				await _shot("steer_turning")
+				cmd = PlayerCommand.make(Vector2(0, 1))
+				await _frames(60)
+				cmd = PlayerCommand.make(Vector2(0, 0), true)
+				await _frames(2)
+				cmd = PlayerCommand.make(Vector2(0, 0))
+				await _frames(60)
 			"garage":
 				_teleport_walker(Vector2(1180, 1395), -PI / 2)
 				await _frames(40)

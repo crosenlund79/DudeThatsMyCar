@@ -57,10 +57,9 @@ def sheen(img, pts, alpha=60, blur=2.0):
 def sedan(body="#1d2b25", roof=None, seed=1):
     roof = roof or shade(body, 1.18)
     img = new(CW, CH)
-    # tyres peeking from under the fenders
-    for x0 in (26, 124):
-        tyre_top(img, x0, 3.5, x0 + 24, 11, seed)
-        tyre_top(img, x0, 69, x0 + 24, 76.5, seed + 1)
+    # rear tyres peeking from under the fenders (the front ones are cars/wheel, turned by the steering)
+    tyre_top(img, 26, 3.5, 50, 11, seed)
+    tyre_top(img, 26, 69, 50, 76.5, seed + 1)
     # running boards
     for y0, y1 in ((10, 17), (63, 70)):
         paint_shape(img, SP(rrect_pts(52, y0, 120, y1, 2)), "#1b1b1c", seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.3)
@@ -118,9 +117,8 @@ def sedan(body="#1d2b25", roof=None, seed=1):
 
 def coupe(body="#e3d4ac", fend="#6a1d22", seat="#7b2420", seed=5):
     img = new(CW, CH)
-    for x0 in (22, 128):
-        tyre_top(img, x0, 3.5, x0 + 24, 11, seed)
-        tyre_top(img, x0, 69, x0 + 24, 76.5, seed + 1)
+    tyre_top(img, 22, 3.5, 46, 11, seed)
+    tyre_top(img, 22, 69, 46, 76.5, seed + 1)
     for y0, y1 in ((10.5, 17), (63, 69.5)):
         paint_shape(img, SP(rrect_pts(48, y0, 120, y1, 2)), fend, seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.25)
     # boat-tail body: long hood, short cockpit, tapering tail
@@ -174,7 +172,22 @@ def coupe(body="#e3d4ac", fend="#6a1d22", seat="#7b2420", seed=5):
     return finish(grain(img, 3, seed), CW, CH)
 
 
+def wheel(seed=9):
+    """Front tyre seen from above: whitewall sidewalls along both long edges, dark tread between."""
+    W, H = 48, 20
+    img = new(W, H)
+    paint_shape(img, SP(rrect_pts(2, 2, 46, 18, 6)), "#e4dccb", seed, outline=OUT, ow=1.4, wob=0.15, tex=0.15,
+                light=(0, -1, 0.3))
+    paint_shape(img, SP(rrect_pts(4, 6, 44, 14, 3.5)), TYRE, seed + 1, outline=None, wob=0.1, tex=0.3)
+    d = ImageDraw.Draw(img)
+    for x in range(8, 42, 4):
+        d.line([(S(x), S(6.8)), (S(x + 1.5), S(13.2))], fill=rgba("#323232"), width=SS)
+    sheen(img, [(8, 3.5), (40, 3.5), (40, 5), (8, 5)], 70, 0.8)
+    return finish(grain(img, 2, seed), W, H)
+
+
 ASSETS = {
+    "cars/wheel": lambda: wheel(9),
     "cars/sedan": lambda: sedan("#1d2b25", seed=1),
     "cars/sedan_b": lambda: sedan("#4a1b1e", roof="#2a1213", seed=2),
     "cars/coupe": lambda: coupe("#e3d4ac", "#6a1d22", "#7b2420", seed=5),

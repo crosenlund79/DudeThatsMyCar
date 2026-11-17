@@ -26,6 +26,8 @@ const SPECS := {
 		"notes": "Roadster, top-down, nose right, centred, transparent background."},
 	"cars/coupe_b": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
 		"notes": "Roadster, second paint scheme; same contract."},
+	"cars/wheel": {"kind": "sprite", "template_size": Vector2i(48, 20), "display_size": Vector2(14, 6),
+		"notes": "Front tyre (whitewall) from above, rolling direction left-right; drawn under the body on both sides and turned with the steering (car bodies leave the front tyres out)."},
 	"characters/gangster": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred."},
 	"characters/gangster_armed": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),

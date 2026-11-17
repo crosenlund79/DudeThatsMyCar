@@ -77,6 +77,34 @@ extends Resource
 @export var wall_glance_angle := 45.0
 @export_group("")
 
+@export_group("Road car (M003)")
+## Steering like a real road car instead of a turn rate: the front wheels turn
+## (up to max_wheel_angle) and the car follows the circle they describe
+## (radius wheelbase / tan(angle)), so it turns in proportion to how fast it
+## rolls, pivots round its rear axle and never spins on the spot. Above the
+## speed where the tyres run out of cornering_grip the circle widens (the nose
+## pushes on, it does not slide round). 0 = the turn-rate steering above.
+## Distance between the axles (px).
+@export var wheelbase := 0.0
+## Distance from the car's centre back to the rear axle (px): the car turns
+## round that point.
+@export var rear_axle := 0.0
+## Front wheel angle at full lock (degrees).
+@export var max_wheel_angle := 32.0
+## Most sideways acceleration the tyres give when cornering (px/s^2); beyond
+## it the car runs wide. 0 = no limit.
+@export var cornering_grip := 0.0
+## Sideways speed the tyres can scrub per second (px/s^2) on top of `grip`;
+## while it is higher than the cornering grip the car does not slide in normal
+## driving (the handbrake scales it down). 0 = only `grip`.
+@export var tyre_grip := 0.0
+## Seconds for the brakes to bite fully (0 = instantly).
+@export var brake_rise_time := 0.0
+## Most the nose is turned along a wall per second on a glancing hit (rad/s);
+## 0 = all at once (M002).
+@export var wall_align_rate := 0.0
+@export_group("")
+
 ## Contact yaw (HyperCars): a car struck behind its centre turns more than one
 ## struck at the nose; capped and quickly damped. contact_yaw_factor = 0 = off.
 @export var contact_yaw_factor := 0.9

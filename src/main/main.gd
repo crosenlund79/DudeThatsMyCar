@@ -100,6 +100,7 @@ func _ready() -> void:
 
 func _park_cars() -> void:
 	var glow := resolver.get_texture("fx/glow")
+	var wheel := resolver.get_texture(CarWheels.LOGICAL)
 	for spec in layout.cars:
 		var vehicle: VehicleType = VEHICLES[spec.type]
 		var c: Car = CAR_SCENE.instantiate()
@@ -111,6 +112,7 @@ func _park_cars() -> void:
 		c.setup(vehicle, resolver.get_texture(paint), paint)
 		var lights := VehicleLights.new()
 		lights.setup(c, glow)
+		CarWheels.new().setup(c, wheel)
 		cars.append(c)
 
 

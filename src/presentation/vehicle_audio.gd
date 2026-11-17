@@ -90,7 +90,7 @@ func _process(delta: float) -> void:
 	load_layer.pitch_scale = maxf(0.05, _pitch)
 	engine.volume_db = lerpf(engine.volume_db, t.base_db, 1.0 - exp(-delta / params.volume_smoothing))
 	load_layer.volume_db = lerpf(load_layer.volume_db, t.load_db, 1.0 - exp(-delta / params.volume_smoothing))
-	var slip := absf(car.model.lateral_speed())
+	var slip := absf(car.model.slip)
 	var sliding := slip > SQUEAL_SLIP or (car.handbrake and speed > 60.0)
 	if sliding and not squeal.playing:
 		squeal.play()

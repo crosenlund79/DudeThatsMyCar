@@ -1,8 +1,8 @@
 extends GutTest
 ## The two period cars: both load, look different, handle slightly
-## differently, and stay close to the approved HyperCars handling.
-
-const BASELINE := {"max_speed": 420.0, "acceleration": 260.0, "brake_deceleration": 520.0, "turn_rate_degrees": 210.0, "grip": 4.5}
+## differently, and (M003) drive like heavy 1930s road cars rather than the
+## HyperCars racers they came from: lower top speeds, gentler pedals, road-car
+## steering with a believable turning circle.
 
 var sedan: VehicleType
 var coupe: VehicleType
@@ -28,14 +28,21 @@ func test_handling_differs_slightly() -> void:
 	assert_gt(coupe.params.max_speed, sedan.params.max_speed, "the roadster is quicker")
 	assert_gt(coupe.params.acceleration, sedan.params.acceleration)
 	assert_lt(coupe.params.grip, sedan.params.grip, "and slides more")
-	assert_gt(coupe.params.turn_rate_degrees, sedan.params.turn_rate_degrees)
+	assert_lt(CarModel.new(coupe.params).min_circle(), CarModel.new(sedan.params).min_circle(), "and turns tighter")
+	assert_gt(coupe.params.cornering_grip, sedan.params.cornering_grip)
 
 
-func test_both_stay_close_to_the_hypercars_baseline() -> void:
+func test_both_are_city_cars_not_racers() -> void:
 	for v in [sedan, coupe]:
-		for key in BASELINE:
-			var value: float = v.params.get(key)
-			assert_almost_eq(value / BASELINE[key], 1.0, 0.15, "%s %s stays within 15 %% of HyperCars" % [v.id, key])
+		var p: DrivingParams = v.params
+		assert_gt(p.wheelbase, 0.0, "%s steers like a road car" % v.id)
+		assert_between(p.max_speed, 280.0, 400.0, "%s: a city top speed (about 45-60 mph)" % v.id)
+		assert_lt(p.acceleration, 220.0, "%s gathers speed like a heavy car" % v.id)
+		assert_lt(p.brake_deceleration, 400.0, "%s has drum brakes, not racing brakes" % v.id)
+		assert_lt(p.coast_deceleration, 100.0, "%s rolls on when you lift off" % v.id)
+		var circle := CarModel.new(p).min_circle()
+		assert_between(circle, 60.0, 95.0, "%s turns on a road car's circle (about 4-6.5 m)" % v.id)
+		assert_gt(p.tyre_grip, p.cornering_grip, "%s does not slide in ordinary cornering" % v.id)
 
 
 func test_city_driving_additions_are_sane() -> void:
@@ -43,5 +50,5 @@ func test_city_driving_additions_are_sane() -> void:
 		var p: DrivingParams = v.params
 		assert_lt(p.reverse_max_speed, p.max_speed * 0.5, "reverse is slow")
 		assert_gt(p.brake_deceleration, p.coast_deceleration, "braking beats coasting")
-		assert_gt(p.full_steer_speed, 0.0, "no turning on the spot")
+		assert_eq(CarModel.new(p).road_yaw(0.0, 1.0), 0.0, "no turning on the spot")
 		assert_lt(p.handbrake_grip_scale, 1.0, "the handbrake lets the tail slide")

@@ -37,7 +37,7 @@ func test_car_stops_at_wall_and_bounces_back() -> void:
 
 
 func test_glancing_hit_keeps_moving_along_wall() -> void:
-	_car.place(Transform2D(0.0, Vector2(250, 0)))
+	_car.place(Transform2D(Vector2(200, 300).angle(), Vector2(250, 0)))
 	_car.model.velocity = Vector2(200, 300)
 	_car.throttle = false
 	await wait_physics_frames(10)

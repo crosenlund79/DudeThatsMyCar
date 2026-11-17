@@ -2,7 +2,10 @@ extends GutTest
 ## M002 driving: weight (the engine builds up, pull fades towards top speed),
 ## a steering wheel that turns in rather than snapping, a fixed tightest
 ## turning circle for low-speed precision, steadier steering at speed, and
-## wall contact that lets shallow hits scrape along. Braking stays instant.
+## wall contact that lets shallow hits scrape along. M003: the brakes bite
+## over a fraction of a second and the nose turns along a wall gradually; the
+## two cars steer like road cars (test_road_steering.gd), so the turn-rate
+## steering of M002 is checked here on copies with wheelbase 0.
 ## With the default (M001) settings the model behaves exactly as before.
 
 const DT := 1.0 / 60.0
@@ -23,6 +26,13 @@ func _time_to(p: DrivingParams, speed: float) -> float:
 		m.update(DT, 0.0, true, false)
 		t += DT
 	return t
+
+
+## The same car with M002's turn-rate steering.
+func _turn_rate(p: DrivingParams) -> DrivingParams:
+	var old := p.duplicate() as DrivingParams
+	old.wheelbase = 0.0
+	return old
 
 
 func _m001(p: DrivingParams) -> DrivingParams:
@@ -75,11 +85,17 @@ func test_pull_fades_towards_top_speed_but_top_speed_is_reached() -> void:
 	assert_lt(_time_to(sedan, sedan.max_speed * 0.99), 12.0)
 
 
-func test_braking_is_still_instant() -> void:
+func test_the_brakes_bite_quickly_but_not_in_one_jolt() -> void:
 	var m := CarModel.new(sedan)
 	m.velocity = Vector2(300, 0)
 	m.update(DT, 0.0, false, true)
-	assert_almost_eq(m.forward_speed(), 300.0 - sedan.brake_deceleration * DT, 0.001)
+	assert_lt(300.0 - m.forward_speed(), sedan.brake_deceleration * DT * 0.2, "a gentle first touch")
+	for i in int(sedan.brake_rise_time / DT) + 1:
+		m.update(DT, 0.0, false, true)
+	var v := m.forward_speed()
+	m.update(DT, 0.0, false, true)
+	assert_almost_eq(v - m.forward_speed(), sedan.brake_deceleration * DT, 0.001, "full braking after the rise time")
+	assert_lt(sedan.brake_rise_time, 0.3, "still a quick pedal")
 
 
 func test_steering_builds_up_and_settles() -> void:
@@ -106,7 +122,7 @@ func test_counter_steering_swings_across_quickly() -> void:
 
 
 func test_at_a_crawl_the_car_follows_its_tightest_circle() -> void:
-	for p in [sedan, roadster]:
+	for p in [_turn_rate(sedan), _turn_rate(roadster)]:
 		var m := CarModel.new(p)
 		for v in [30.0, 60.0, 120.0]:
 			var yaw := deg_to_rad(p.turn_rate_degrees) * m.steer_factor(v)
@@ -115,13 +131,13 @@ func test_at_a_crawl_the_car_follows_its_tightest_circle() -> void:
 
 
 func test_reversing_follows_the_same_circle_the_other_way() -> void:
-	var m := CarModel.new(sedan)
+	var m := CarModel.new(_turn_rate(sedan))
 	assert_almost_eq(m.steer_factor(-60.0), -m.steer_factor(60.0), 0.0001)
 	assert_eq(m.steer_factor(0.0), 0.0, "no turning on the spot")
 
 
 func test_a_real_low_speed_turn_traces_a_tight_circle() -> void:
-	var m := CarModel.new(sedan)
+	var m := CarModel.new(_turn_rate(sedan))
 	m.velocity = Vector2(60, 0)
 	m.steer_level = 1.0
 	var start := m.position
@@ -135,7 +151,7 @@ func test_a_real_low_speed_turn_traces_a_tight_circle() -> void:
 
 
 func test_steering_is_steadier_at_speed() -> void:
-	var m := CarModel.new(sedan)
+	var m := CarModel.new(_turn_rate(sedan))
 	assert_almost_eq(m.steer_factor(sedan.max_speed), sedan.high_speed_turn_scale, 0.0001)
 	assert_gt(m.steer_factor(sedan.max_speed * 0.6), m.steer_factor(sedan.max_speed))
 
@@ -152,11 +168,11 @@ func test_a_shallow_wall_hit_keeps_its_speed_and_turns_along_the_wall() -> void:
 	var along := wall.orthogonal()
 	if along.x < 0.0:
 		along = -along  # the way the car was going
+	var turned := deg_to_rad(15.0) - absf(angle_difference(m.heading, along.angle()))
+	assert_gt(turned, 0.0, "the nose swings towards the wall's line")
+	assert_almost_eq(turned, sedan.wall_align_rate * DT, 0.0001, "but only a little per tick of contact, no snap")
 	var glance := 1.0 - 15.0 / sedan.wall_glance_angle
-	var expected := deg_to_rad(15.0) * (1.0 - sedan.wall_align * glance)
-	assert_almost_eq(absf(angle_difference(m.heading, along.angle())), expected, 0.01,
-		"the nose swings part of the way towards the wall's line")
-	assert_lt(expected, deg_to_rad(11.0))
+	assert_lt(turned, deg_to_rad(15.0) * sedan.wall_align * glance, "rate-limited")
 
 
 func test_a_head_on_hit_stops_the_car_and_bounces_it_back() -> void:
