@@ -96,10 +96,11 @@ func _physics_process(_delta: float) -> void:
 			motion = collision.get_remainder().slide(normal)
 		else:
 			var impact := -model.velocity.dot(normal)
-			model.apply_wall_collision(normal)
+			var keep := model.apply_wall_collision(normal)
 			if impact > 0.0:
 				wall_hit.emit(normal, impact)
-			motion = collision.get_remainder().slide(normal) * model.params.wall_tangent_retention
+			global_rotation = model.heading
+			motion = collision.get_remainder().slide(normal) * keep
 		if motion.length_squared() < 0.0001:
 			break
 	model.position = global_position

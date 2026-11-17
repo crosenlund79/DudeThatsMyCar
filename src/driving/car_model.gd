@@ -15,6 +15,11 @@ var heading := 0.0
 var velocity := Vector2.ZERO
 ## Extra rotation (rad/s) from being struck by another car; fades quickly.
 var yaw_rate := 0.0
+## Where the steering wheel is (-1 full left .. +1 full right); follows the
+## driver's command at the rates in DrivingParams.
+var steer_level := 0.0
+## How hard the engine pulls (0 idle .. 1 full); follows W / reverse.
+var drive_level := 0.0
 
 
 func _init(p_params: DrivingParams = null) -> void:
@@ -33,21 +38,63 @@ func lateral_speed() -> float:
 	return velocity.dot(forward().orthogonal())
 
 
-## Share of full steering available at a forward speed: none at rest, full
-## from full_steer_speed; negative while rolling backwards (the car turns the
-## other way, as a real car reversing does).
+## Share of the full turn rate available at a forward speed: none at rest;
+## at low speed the car follows its tightest circle (min_turn_radius) or, in
+## the M001 setting, fades in linearly to full_steer_speed; a little less at
+## top speed; negative while rolling backwards (the car turns the other way,
+## as a real car reversing does).
 func steer_factor(fwd_speed: float) -> float:
+	var a := absf(fwd_speed)
 	var f := 1.0
-	if params.full_steer_speed > 0.0:
-		f = clampf(absf(fwd_speed) / params.full_steer_speed, 0.0, 1.0)
+	var full := 0.0  # speed from which the full turn rate is available
+	if params.min_turn_radius > 0.0:
+		full = params.min_turn_radius * deg_to_rad(params.turn_rate_degrees)
+	elif params.full_steer_speed > 0.0:
+		full = params.full_steer_speed
+	if full > 0.0:
+		f = clampf(a / full, 0.0, 1.0)
+	if params.high_speed_turn_scale < 1.0 and params.max_speed > full:
+		var r := clampf((a - full) / (params.max_speed - full), 0.0, 1.0)
+		f *= lerpf(1.0, params.high_speed_turn_scale, r * r)
 	return -f if fwd_speed < -STOP_SPEED else f
+
+
+## Pull at a forward speed with the engine at full: fades towards top speed.
+func pull_at(fwd_speed: float, base: float, top: float) -> float:
+	if params.accel_falloff <= 0.0 or top <= 0.0:
+		return base
+	var r := clampf(absf(fwd_speed) / top, 0.0, 1.0)
+	return base * (1.0 - params.accel_falloff * r * r)
+
+
+## Moves the wheel towards the driver's command: turning in takes
+## steer_rise_time, straightening (or swinging across) steer_return_time.
+func _turn_wheel(delta: float, command: float) -> void:
+	var target := clampf(command, -1.0, 1.0)
+	var returning := absf(target) < absf(steer_level) or (steer_level != 0.0 and signf(target) != signf(steer_level))
+	var time := params.steer_return_time if returning else params.steer_rise_time
+	if time <= 0.0:
+		steer_level = target
+	else:
+		steer_level = move_toward(steer_level, target, delta / time)
+
+
+## Engine pull builds and fades at the rates in DrivingParams.
+func _pull_engine(delta: float, pulling: bool) -> void:
+	var time := params.throttle_rise_time if pulling else params.throttle_fall_time
+	var target := 1.0 if pulling else 0.0
+	if time <= 0.0:
+		drive_level = target
+	else:
+		drive_level = move_toward(drive_level, target, delta / time)
 
 
 ## Advances velocity and heading by delta for one driver command.
 ## steer: -1 left .. +1 right. throttle (W): accelerate, or brake while rolling
 ## backwards. brake (S): brake, then reverse once stopped. handbrake (Space).
 func update(delta: float, steer: float, throttle: bool, brake: bool, handbrake := false) -> void:
-	var turn := clampf(steer, -1.0, 1.0) * deg_to_rad(params.turn_rate_degrees) * steer_factor(forward_speed())
+	_turn_wheel(delta, steer)
+	var turn := steer_level * deg_to_rad(params.turn_rate_degrees) * steer_factor(forward_speed())
 	if handbrake:
 		turn *= params.handbrake_turn_scale
 	heading = wrapf(heading + turn * delta, -PI, PI)
@@ -57,6 +104,8 @@ func update(delta: float, steer: float, throttle: bool, brake: bool, handbrake :
 	var side_dir := fwd_dir.orthogonal()
 	var fwd := velocity.dot(fwd_dir)
 	var side := velocity.dot(side_dir)
+	# the engine pulls when W drives forward or S reverses from a standstill
+	_pull_engine(delta, not handbrake and throttle != brake and (throttle or fwd <= STOP_SPEED))
 
 	if handbrake:
 		fwd = move_toward(fwd, 0.0, params.handbrake_deceleration * delta)
@@ -64,14 +113,15 @@ func update(delta: float, steer: float, throttle: bool, brake: bool, handbrake :
 		if fwd < -STOP_SPEED:
 			fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
 		elif fwd < params.max_speed:
-			fwd = minf(fwd + params.acceleration * delta, params.max_speed)
+			fwd = minf(fwd + pull_at(fwd, params.acceleration, params.max_speed) * drive_level * delta, params.max_speed)
 		else:
 			fwd = move_toward(fwd, params.max_speed, params.coast_deceleration * delta)
 	elif brake and not throttle:
 		if fwd > STOP_SPEED:
 			fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
 		elif fwd > -params.reverse_max_speed:
-			fwd = maxf(fwd - params.reverse_acceleration * delta, -params.reverse_max_speed)
+			fwd = maxf(fwd - pull_at(fwd, params.reverse_acceleration, params.reverse_max_speed) * drive_level * delta,
+				-params.reverse_max_speed)
 		else:
 			fwd = move_toward(fwd, -params.reverse_max_speed, params.coast_deceleration * delta)
 	elif brake and throttle:
@@ -103,13 +153,30 @@ func integrate(delta: float) -> void:
 	position += velocity * delta
 
 
-## Collision response against a wall with outward normal (pointing towards the car).
-func apply_wall_collision(normal: Vector2) -> void:
+## Collision response against a wall with outward normal (pointing towards
+## the car). Returns the share of the along-wall speed kept (for the rest of
+## this tick's motion). With wall_friction the loss grows with how hard the car
+## hits: a shallow scrape keeps most of its speed and turns the nose along the
+## wall (wall_align), a head-on hit stops it and bounces it back a little.
+func apply_wall_collision(normal: Vector2) -> float:
 	var into := velocity.dot(normal)
 	if into >= 0.0:
-		return
+		return 1.0
 	var tangent := velocity - normal * into
-	velocity = tangent * params.wall_tangent_retention - normal * into * params.wall_restitution
+	var keep := params.wall_tangent_retention
+	if params.wall_friction >= 0.0:
+		var along := tangent.length()
+		keep = clampf(1.0 - params.wall_friction * -into / maxf(along, 0.001), 0.0, 1.0)
+	velocity = tangent * keep - normal * into * params.wall_restitution
+	if params.wall_align > 0.0 and tangent.length() > 1.0:
+		var angle := atan2(-into, tangent.length())  # 0 = sliding along the wall
+		var glance := 1.0 - clampf(angle / deg_to_rad(params.wall_glance_angle), 0.0, 1.0)
+		if glance > 0.0:
+			var along_dir := tangent.normalized()
+			if forward().dot(along_dir) < 0.0:
+				along_dir = -along_dir  # reversing along the wall: the tail leads
+			heading = wrapf(heading + angle_difference(heading, along_dir.angle()) * params.wall_align * glance, -PI, PI)
+	return keep
 
 
 ## Equal-mass contact between two cars. normal points from b towards a.

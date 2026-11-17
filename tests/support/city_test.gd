@@ -95,3 +95,36 @@ func park(c: Car, at: Vector2, rot: float) -> void:
 	c.place(Transform2D(rot, at))
 	c.model.position = at
 	await wait_physics_frames(2)
+
+
+## Drives `c` (the player must be in it) through waypoints using only the
+## normal W / A / S / D command, like a careful driver: steer towards the
+## next point, keep to `cruise`, slow down for sharp turns. Returns the
+## number of ticks used (max_ticks when it never got there).
+func drive_route(c: Car, points: Array, cruise: float, max_ticks: int = 900) -> int:
+	var i := 0
+	for t in max_ticks:
+		var target: Vector2 = points[i]
+		if c.global_position.distance_to(target) < 40.0:
+			i += 1
+			if i >= points.size():
+				cmd = PlayerCommand.new()
+				return t
+			target = points[i]
+		var diff := angle_difference(c.model.heading, (target - c.global_position).angle())
+		var steer := 0.0
+		if diff > 0.05:
+			steer = 1.0
+		elif diff < -0.05:
+			steer = -1.0
+		var speed := c.model.forward_speed()
+		var want := cruise if absf(diff) < 0.45 else cruise * 0.5
+		var pedal := 0.0
+		if speed < want:
+			pedal = -1.0
+		elif speed > want + 50.0:
+			pedal = 1.0
+		cmd = PlayerCommand.make(Vector2(steer, pedal))
+		await wait_physics_frames(1)
+	cmd = PlayerCommand.new()
+	return max_ticks

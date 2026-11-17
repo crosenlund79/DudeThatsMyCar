@@ -43,6 +43,40 @@ extends Resource
 ## Car-to-car contact: fraction of the closing speed bounced apart (0..1). Equal masses.
 @export_range(0.0, 1.0) var car_restitution: float = 0.4
 
+@export_group("Weight and response (M002)")
+## Every value here defaults to the M001 behaviour (instant, constant); the
+## vehicle files opt in, so the HyperCars core stays as it was underneath.
+## Seconds for the engine to build from idle to full pull when W (or reverse)
+## is held; it fades at engine_fall_time when released. 0 = instant.
+@export var throttle_rise_time := 0.0
+@export var throttle_fall_time := 0.0
+## Acceleration fades towards top speed: at top speed it is
+## (1 - accel_falloff) of full. 0 = the same pull at every speed.
+@export_range(0.0, 0.95) var accel_falloff := 0.0
+## Seconds to turn the wheel from straight to full lock, and to let it come
+## back to straight (also used when swinging from one lock to the other).
+## 0 = the wheel snaps (M001).
+@export var steer_rise_time := 0.0
+@export var steer_return_time := 0.0
+## Low-speed precision: the tightest circle the car can turn (centre to
+## centre, px). Below the speed where the full turn rate is reached the car
+## follows this circle, so the same steering always gives the same path when
+## parking or nosing into an alley. 0 = M001 (turning fades linearly up to
+## full_steer_speed).
+@export var min_turn_radius := 0.0
+## Share of the turn rate left at top speed (steadier at speed). 1 = M001.
+@export_range(0.2, 1.0) var high_speed_turn_scale := 1.0
+## Walls: speed along the wall lost per unit of speed into it (friction), so
+## a shallow scrape keeps most of its momentum and a head-on hit stops the
+## car. Negative = M001 (a fixed share, wall_tangent_retention, every hit).
+@export var wall_friction := -1.0
+## A shallow hit turns the nose along the wall (0 = never, 1 = fully).
+@export_range(0.0, 1.0) var wall_align := 0.0
+## Hits shallower than this angle (degrees between travel and wall) count as
+## glancing; steeper ones are head-on and get no turn.
+@export var wall_glance_angle := 45.0
+@export_group("")
+
 ## Contact yaw (HyperCars): a car struck behind its centre turns more than one
 ## struck at the nose; capped and quickly damped. contact_yaw_factor = 0 = off.
 @export var contact_yaw_factor := 0.9

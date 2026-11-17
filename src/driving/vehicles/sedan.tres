@@ -18,6 +18,16 @@ grip = 4.9
 handbrake_deceleration = 320.0
 handbrake_grip_scale = 0.32
 handbrake_turn_scale = 1.3
+throttle_rise_time = 0.55
+throttle_fall_time = 0.25
+accel_falloff = 0.55
+steer_rise_time = 0.3
+steer_return_time = 0.16
+min_turn_radius = 68.0
+high_speed_turn_scale = 0.62
+wall_friction = 0.55
+wall_align = 0.6
+wall_glance_angle = 45.0
 car_half_length = 38.0
 
 [resource]
