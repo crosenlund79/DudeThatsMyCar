@@ -43,13 +43,15 @@ func _teleport_walker(p: Vector2, facing: float) -> void:
 
 func _run(shots: Array) -> void:
 	await _frames(20)
+	if main.hud.help_panel.visible:
+		main.hud.toggle_help()  # the controls card would cover the view
 	for s in shots:
 		match s:
 			"street":
 				await _frames(30)
 				await _shot("street")
 			"walk":
-				cmd = PlayerCommand.make(Vector2(0.5, -0.2).normalized(), false, false, Vector2(2425, 694))
+				cmd = PlayerCommand.make(Vector2(0.45, 1.0).normalized(), false, false, Vector2(2425, 694))
 				await _frames(30)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2425, 694))
 				await _frames(10)
@@ -60,13 +62,17 @@ func _run(shots: Array) -> void:
 					main.walker.place(c.global_position + Vector2(0, -34), 0.0)
 					await _frames(2)
 					main.player.enter(c)
-				# pull out and head west down Marlowe Avenue
-				cmd = PlayerCommand.make(Vector2(-0.5, -1.0))
-				await _frames(40)
+				# pull out of the parking space and cruise east down Marlowe Avenue
+				cmd = PlayerCommand.make(Vector2(-0.45, -1.0))
+				await _frames(26)
+				cmd = PlayerCommand.make(Vector2(0.3, -1.0))
+				await _frames(18)
 				cmd = PlayerCommand.make(Vector2(0.0, -1.0))
-				await _frames(80)
+				await _frames(40)
 				await _shot("drive")
 				cmd = PlayerCommand.make(Vector2(0, 0), true)
+				await _frames(2)
+				cmd = PlayerCommand.make(Vector2(0, 0))
 				await _frames(90)
 			"garage":
 				_teleport_walker(Vector2(1180, 1395), -PI / 2)

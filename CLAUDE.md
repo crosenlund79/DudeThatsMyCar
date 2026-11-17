@@ -1,6 +1,6 @@
 # Claude Code — Godot Project Instructions
 
-This repository may be the reusable starter pack, **not a game**. Read the linked rules before planning or editing. A suggestion, roadmap entry, or assistant-generated plan is never authorization.
+This repository is the game *Chicago, 1932* (working title; repository `DudeThatsMyCar`), converted from a copy of HyperCars. Never modify the original HyperCars repository from here. Read the linked rules before planning or editing. A suggestion, roadmap entry, or assistant-generated plan is never authorization.
 
 @docs/GODOT_CLAUDE_GUIDELINES.md
 @docs/PROJECT_BRIEF.md

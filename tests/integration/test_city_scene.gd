@@ -76,3 +76,15 @@ func test_pause_stops_the_world_and_resumes() -> void:
 	assert_false(get_tree().paused)
 	await wait_physics_frames(10)
 	assert_gt(walker().global_position.x, at.x)
+
+
+func test_the_gangster_faces_the_mouse_while_walking_elsewhere() -> void:
+	var w := walker()
+	var aim := w.global_position + Vector2(0, -200)  # up the screen
+	for i in 20:
+		cmd = PlayerCommand.make(Vector2.RIGHT, false, false, aim)
+		await wait_physics_frames(1)
+	cmd = PlayerCommand.new()
+	assert_gt(w.velocity.x, 50.0, "walking right")
+	assert_almost_eq(w.sprite.rotation, (aim - w.global_position).angle(), 0.15, "while facing the aim point")
+	assert_true(main.hud.crosshair.visible, "the reticle shows on foot")

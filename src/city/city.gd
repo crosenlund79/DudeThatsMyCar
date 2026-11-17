@@ -8,7 +8,7 @@ extends Node2D
 ## the street is drawn in perspective.
 
 ## Ground is cut into squares this size: a canvas item takes at most ~15 lights.
-const CHUNK := 384.0
+const CHUNK := 256.0
 const LAMP_HEIGHT := 72.0
 const LAMP_RADIUS := 215.0
 const LAMP_COLOR := Color(1.0, 0.79, 0.5)
@@ -88,7 +88,7 @@ func _build_ground() -> void:
 	for l in layout.lots:
 		_fill_rect(l.rect, "city/sidewalk" if l.kind == "concrete" else "city/lot", Layers.Z_GROUND + 4)
 	for w in layout.water:
-		_fill_rect(w, "city/water", Layers.Z_GROUND + 5)
+		_fill_rect(w, "city/water", Layers.Z_GROUND + 5, Color.WHITE, Layers.LIGHT_STREET | Layers.LIGHT_ROOF)
 	for b in layout.blocks:
 		var r2: Rect2 = b
 		if layout.water.any(func(w: Rect2) -> bool: return w.intersects(r2.grow(1))):
@@ -171,7 +171,8 @@ static func rect_points(r: Rect2) -> PackedVector2Array:
 	return PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
 
 
-func _ground_poly(points: PackedVector2Array, texture: Texture2D, uv_scale: Vector2, z: int, tint: Color = Color.WHITE) -> void:
+func _ground_poly(points: PackedVector2Array, texture: Texture2D, uv_scale: Vector2, z: int, tint: Color = Color.WHITE,
+		mask: int = Layers.LIGHT_STREET) -> void:
 	var p := Polygon2D.new()
 	p.color = tint
 	p.polygon = points
@@ -182,7 +183,7 @@ func _ground_poly(points: PackedVector2Array, texture: Texture2D, uv_scale: Vect
 		uvs.append(v * uv_scale)
 	p.uv = uvs
 	p.z_index = z
-	p.light_mask = Layers.LIGHT_STREET
+	p.light_mask = mask
 	_ground.add_child(p)
 
 
@@ -198,13 +199,13 @@ func _cells(area: Rect2) -> Array[Rect2]:
 	return out
 
 
-func _fill_rect(r: Rect2, logical: String, z: int, tint: Color = Color.WHITE) -> void:
+func _fill_rect(r: Rect2, logical: String, z: int, tint: Color = Color.WHITE, mask: int = Layers.LIGHT_STREET) -> void:
 	var t := tex(logical)
 	var uv_scale := AssetCatalog.uv_per_world_pixel(t, AssetCatalog.SPECS[logical].tile_world_size)
 	for cell in _cells(r):
 		var part := r.intersection(cell)
 		if part.has_area():
-			_ground_poly(rect_points(part), t, uv_scale, z, tint)
+			_ground_poly(rect_points(part), t, uv_scale, z, tint, mask)
 
 
 func _fill_poly(poly: PackedVector2Array, logical: String, z: int) -> void:
@@ -290,6 +291,7 @@ func _build_buildings() -> void:
 		view.name = "Building%d" % i
 		view.setup(r, b.storeys, _faces(i), tex("roofs/" + b.roof), tex("roofs/parapet") if not b.opts.get("bare", false) else null,
 			_roof_items(b))
+		view.fire_escape_tex = tex("props/fire_escape")
 		var shade := 0.9 + 0.2 * float((i * 53) % 11) / 10.0
 		view.roof_tint = Color(shade, shade * (0.97 + 0.03 * float(i % 3)), shade * (0.95 + 0.05 * float(i % 2)))
 		holder.add_child(view)
@@ -319,7 +321,12 @@ func _faces(index: int) -> Array:
 			elif _building_near(probe + n * 30.0, index, 12.0):
 				style = "party"
 		var lit_name := "facades/%s_lit" % style
-		out.append({"a": a, "b": e, "n": n, "tex": tex("facades/" + style),
+		var escapes := []
+		var length := a.distance_to(e)
+		if b.storeys >= 2 and length >= 120.0 and (style == "rear" or (style == "brick_red" and b.storeys >= 3 and index % 2 == 0)):
+			for k in clampi(int(length / 230.0), 1, 3):
+				escapes.append((k + 0.5) / clampi(int(length / 230.0), 1, 3))
+		out.append({"a": a, "b": e, "n": n, "tex": tex("facades/" + style), "escapes": escapes,
 			"lit": tex(lit_name) if AssetCatalog.SPECS.has(lit_name) else null,
 			"u0": float((index * 37 + i * 11) % 16) / 16.0})
 	return out

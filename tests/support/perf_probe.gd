@@ -14,13 +14,22 @@ func _measure(label: String) -> void:
 		await process_frame
 	var t0 := Time.get_ticks_usec()
 	var frames := 0
-	var cpu := 0.0
 	while Time.get_ticks_usec() - t0 < 2500000:
 		await process_frame
 		frames += 1
 	print("%-28s fps %.1f  process %.1f ms" % [label, frames / 2.5, Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0])
 func _run() -> void:
-	await _measure("baseline")
+	await _measure("on foot")
+	var c: Car = main.cars[0]
+	main.walker.place(c.global_position + Vector2(0, -36), 0.0)
+	await process_frame
+	main.player.enter(c)
+	cmd = PlayerCommand.make(Vector2(-0.12, -1))
+	await _measure("driving")
+	cmd = PlayerCommand.make(Vector2.ZERO, true)
+	await process_frame
+	cmd = PlayerCommand.new()
+	await _measure("baseline (after the drive)")
 	for l in main.city.lamp_lights: l.enabled = false
 	await _measure("no lamp lights")
 	for l in main.city.lamp_lights: l.enabled = true

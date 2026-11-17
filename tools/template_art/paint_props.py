@@ -259,10 +259,17 @@ def puddle(seed=1):
     ImageDraw.Draw(mask).polygon(SP(pts), fill=255)
     mask = mask.filter(ImageFilter.GaussianBlur(3 * SS))
     n = tnoise(img.size[0], img.size[1], 4, seed, octaves=3)
-    col = ramp(n, ["#55657a", "#6c7d92", "#8494a8"])
+    col = ramp(n, ["#141a22", "#1b2430", "#25303f"])
     a = np.asarray(col).copy()
-    a[..., 3] = (np.asarray(mask, dtype=np.float32) * 0.62).astype(np.uint8)
-    img = Image.fromarray(a, "RGBA")
+    m = np.asarray(mask, dtype=np.float32) / 255.0
+    # a thin light rim where the water meets the street, and a soft sky sheen
+    rim = np.clip(m * (1.0 - m) * 4.0, 0, 1)
+    a[..., :3] = np.clip(a[..., :3] + (rim[..., None] * np.array([70, 80, 95])), 0, 255)
+    yy, xx = np.mgrid[0:a.shape[0], 0:a.shape[1]].astype(np.float32)
+    sheen = np.clip(1.0 - np.hypot((xx - a.shape[1] * 0.42) / (a.shape[1] * 0.3), (yy - a.shape[0] * 0.4) / (a.shape[0] * 0.25)), 0, 1)
+    a[..., :3] = np.clip(a[..., :3] + sheen[..., None] * np.array([28, 34, 44]), 0, 255)
+    a[..., 3] = (m * 0.82 * 255).astype(np.uint8)
+    img = Image.fromarray(a.astype(np.uint8), "RGBA")
     return finish(img, w, h)
 
 
@@ -374,6 +381,29 @@ def laundry():
             x += wdt + rnd.uniform(3, 8)
     for x in (6, 122):
         paint_shape(img, SP(ellipse_pts(x, 30, 2.5, 16)), "#3e3a36", x, outline=OUT, ow=0.8, wob=0.1)
+    return finish(img, w, h)
+
+
+def fire_escape():
+    """An iron fire-escape landing seen from above; the wall is along the top edge."""
+    w, h = 128, 40
+    img = new(w, h)
+    soft_blob(img, S(66), S(26), S(60), S(14), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 2, 124, 34, 2)), "#1b1c1f", 1, outline=OUT, ow=1.4, wob=0.2, tex=0.2)
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    for x in range(8, 122, 5):
+        d.line([(S(x), S(5)), (S(x), S(31))], fill=rgba("#3e4046", 230), width=SS)
+    d.line([(S(6), S(18)), (S(122), S(18))], fill=rgba("#3e4046", 230), width=SS)
+    img.alpha_composite(layer)
+    # railing round the open sides, the stair hatch and a drop ladder
+    line(img, [(S(4), S(3)), (S(4), S(34)), (S(124), S(34)), (S(124), S(3))], "#56595f", 2.2 * SS, 255, blur=0.2)
+    for x in range(4, 126, 12):
+        paint_shape(img, SP(ellipse_pts(x, 34, 1.6, 1.6)), "#6a6d73", x, outline=None, wob=0.05)
+    paint_shape(img, SP(rrect_pts(84, 8, 116, 28, 1)), "#0b0b0d", 2, outline=OUT, ow=1, wob=0.1)
+    for k in range(6):
+        y = 9 + k * 3.4
+        line(img, [(S(86), S(y)), (S(114), S(y))], "#4a4c52", 1.2 * SS, 255, blur=0.1)
     return finish(img, w, h)
 
 
@@ -511,6 +541,7 @@ ASSETS = {
     "props/awning_red": lambda: awning("#9e2b25", "#e9dcc0", 1),
     "props/awning_green": lambda: awning("#2f5a3e", "#e4dcc4", 2),
     "props/marquee": marquee,
+    "props/fire_escape": fire_escape,
     "decals/manhole": manhole,
     "decals/drain": drain,
     "decals/puddle": puddle,

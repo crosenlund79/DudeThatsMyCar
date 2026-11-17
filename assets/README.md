@@ -1,6 +1,6 @@
 # Replaceable graphics and audio — runtime override contract
 
-**Approved behavior: Option B.** Users must be able to replace Claude-created graphics/audio by dropping files into one documented folder, **including next to an exported Windows/Linux game, without rebuilding**. The game must keep working when an override is absent or invalid. This document defines the contract; the starter pack does not include a speculative Godot loader.
+**Approved behavior: Option B.** Users must be able to replace Claude-created graphics/audio by dropping files into one documented folder, **including next to an exported Windows/Linux game, without rebuilding**. The game must keep working when an override is absent or invalid. This document defines the contract; `src/assets/asset_resolver.gd` implements it and `src/assets/asset_catalog.gd` lists every replaceable asset (generated list with sizes: `docs/ASSET_SPECS.md`).
 
 ## One override layout
 

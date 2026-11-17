@@ -185,9 +185,9 @@ def tile_lot(seed=5):
 def tile_water(seed=6):
     w = h = 256
     n = tnoise(w * SS, h * SS, 2, seed, octaves=5)
-    img = ramp(n, ["#121a22", "#17222c", "#1d2a35", "#152029"])
-    strokes(img, 320, ["#2a3a48", "#0d141a", "#26384a", "#1f2f3c"], 34, 3, seed + 1, angle=0.0, alpha=(25, 70))
-    strokes(img, 80, ["#3d5468", "#40566a"], 18, 1.5, seed + 2, angle=0.0, alpha=(30, 80))
+    img = ramp(n, ["#1c2a36", "#22333f", "#2a3d4b", "#203039"])
+    strokes(img, 360, ["#36506a", "#121c24", "#30485e", "#29404f"], 34, 3, seed + 1, angle=0.0, alpha=(30, 80))
+    strokes(img, 140, ["#5d7a94", "#6a86a0", "#88a2b8"], 16, 1.4, seed + 2, angle=0.0, alpha=(40, 110))
     return finish(grain(img, 4, seed), w, h)
 
 

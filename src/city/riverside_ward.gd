@@ -2,7 +2,7 @@ class_name RiversideWard
 extends RefCounted
 ## The first neighbourhood: a few blocks of a fictional Near North Side,
 ## Chicago, 1932, laid out by hand. North is up (-y), one world px is about
-## 6 cm. Chicago-style grid: long blocks with an alley down the middle and
+## 7 cm. Chicago-style grid: long blocks with an alley down the middle and
 ## narrow gangways between houses. The district is closed by things you can
 ## see: the railroad embankment (north), the river with its raised bascule
 ## bridge (east) and street-closed barricades (west, south). The city
@@ -192,8 +192,6 @@ func _outer_rows() -> void:
 	_row(1781, -431, EMBANKMENT_Y, [
 		[340, 4, "brick_brown", "tar", {"depth": 330}], [280, 3, "brick_red", "tar", {"depth": 330}], [26],
 		[420, 5, "warehouse", "gravel"], [322, 3, "greystone", "tar", {"depth": 330}]])
-	for blk in [[-169.0, 135.0, 439.0], [761.0, 1065.0, 1369.0]]:
-		pass
 	# West of Dorsey Street: unbroken frontages (the barricades close the streets at x -800).
 	_row(-1700, -431, EMBANKMENT_Y, [[500, 4, "warehouse", "tin"], [520, 3, "brick_red", "tar"], [549, 4, "brick_brown", "gravel"]])
 	_row(-1700, -169, 135, [[560, 3, "brick_red", "tar"], [480, 4, "greystone", "gravel"], [529, 3, "brick_brown", "tar"]])
@@ -445,6 +443,7 @@ func _cars_and_spawn() -> void:
 		{"type": "sedan", "paint": 1, "pos": Vector2(3845, 150), "rot": PI / 2},  # warehouse apron
 		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1435), "rot": PI},     # Pruitt Street
 	]
-	# On the sidewalk outside Hotel Marlowe, across the avenue from the Copper Owl.
-	d.spawn = Vector2(2335, 738)
-	d.spawn_facing = -PI * 0.42
+	# At the streetcar stop in the middle of Marlowe Avenue, between the Copper
+	# Owl and Hotel Marlowe, a few steps from the roadster.
+	d.spawn = Vector2(2350, 600)
+	d.spawn_facing = PI * 0.3

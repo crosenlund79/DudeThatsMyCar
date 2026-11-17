@@ -92,6 +92,7 @@ const SPECS := {
 	"props/newsstand": {"kind": "sprite", "template_size": Vector2i(96, 64), "display_size": Vector2(46, 30), "notes": "Newsstand."},
 	"props/awning_red": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
 	"props/awning_green": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
+	"props/fire_escape": {"kind": "sprite", "template_size": Vector2i(128, 40), "display_size": Vector2(64, 20), "notes": "Iron fire-escape landing; wall side at the top."},
 	"props/marquee": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Copper Owl canopy; wall side at the top."},
 	"props/marquee_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Canopy bulbs and lettering."},
 	"decals/manhole": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(24, 24), "notes": "Manhole cover."},

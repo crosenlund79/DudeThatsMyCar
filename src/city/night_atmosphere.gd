@@ -1,7 +1,7 @@
 class_name NightAtmosphere
 extends Node2D
 ## The night: a cool tint over everything that is not a light, steam rising
-## from manholes, smoke from a few chimneys, slow mist drifting through the
+## from manholes, smoke from a few chimneys, a faint haze drifting through the
 ## lamplight and a soft vignette. Presentation only.
 
 const NIGHT_TINT := Color(0.27, 0.3, 0.45)
@@ -41,14 +41,15 @@ func setup(p_city: City) -> void:
 				add_child(e)
 				_smoke.append({"node": e, "pos": item.pos, "height": city.layout.building_height(b) + 22.0})
 				count += 1
+	var haze_tex := city.tex("fx/glow")
 	for k in MIST_PATCHES:
 		var m := Sprite2D.new()
-		m.texture = steam_tex
+		m.texture = haze_tex
 		m.z_index = Layers.Z_MIST
 		m.z_as_relative = false
-		m.light_mask = Layers.LIGHT_STREET
-		m.scale = Vector2(7.0, 4.5) * (0.8 + 0.1 * k)
-		m.modulate = Color(0.8, 0.84, 0.9, 0.09)
+		m.light_mask = 0  # not lit per lamp: a big soft sprite costs too much fill on slow graphics
+		m.scale = Vector2(7.0, 4.2) * (0.85 + 0.12 * k)
+		m.modulate = Color(0.62, 0.68, 0.8, 0.16)
 		add_child(m)
 		_mist.append(m)
 		_mist_offsets.append(Vector2(fmod(k * 523.0, 1600.0) - 800.0, fmod(k * 311.0, 900.0) - 450.0))
@@ -107,11 +108,11 @@ func _steam(pos: Vector2, texture: Texture2D) -> CPUParticles2D:
 	p.initial_velocity_max = 22.0
 	p.angular_velocity_min = -12.0
 	p.angular_velocity_max = 12.0
-	p.scale_amount_min = 0.4
-	p.scale_amount_max = 0.7
+	p.scale_amount_min = 0.3
+	p.scale_amount_max = 0.55
 	p.scale_amount_curve = _growth()
 	p.color = Color(0.86, 0.89, 0.94)
-	p.color_ramp = _ramp(0.1)
+	p.color_ramp = _ramp(0.075)
 	return p
 
 

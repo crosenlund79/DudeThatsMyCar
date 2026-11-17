@@ -41,6 +41,7 @@ func test_landmarks_are_there() -> void:
 func test_the_player_starts_on_open_ground_in_the_district() -> void:
 	assert_true(d.is_open_ground(d.spawn, 12.0))
 	assert_eq(d.place_name(d.spawn), "Marlowe Avenue")
+	assert_false(d.is_in_building(d.spawn, 30.0), "out in the open, not against a wall")
 
 
 func test_the_starting_car_is_a_few_steps_away() -> void:

@@ -19,6 +19,7 @@ var height := 0.0
 var faces: Array = []
 var roof_tex: Texture2D
 var parapet_tex: Texture2D
+var fire_escape_tex: Texture2D
 ## {tex, lit, pos, size, rot, lift}
 var roof_items: Array = []
 ## Slight per-building colour of the roofing.
@@ -117,7 +118,30 @@ func _walls(ci: CanvasItem, light: bool) -> void:
 			ci.draw_polygon(pts, cols, uvs, tex)
 
 
+## Iron fire-escape landings on the walls, one per upper storey: from above
+## they stack outwards in perspective. Drawn before the roof, which may hide
+## the part right under its edge.
+func _draw_fire_escapes(ci: CanvasItem) -> void:
+	if fire_escape_tex == null:
+		return
+	var size := AssetCatalog.display_size("props/fire_escape")
+	for f in faces:
+		if f.escapes.is_empty():
+			continue
+		var n: Vector2 = f.n
+		var rot := (-n).angle() + PI / 2
+		for t in f.escapes:
+			var base: Vector2 = (f.a as Vector2).lerp(f.b, t) + n * size.y * 0.5
+			for k in range(1, storeys):
+				var h := k * DistrictLayout.STOREY + 2.0
+				var s := Perspective.scale_at(h, eye_height)
+				ci.draw_set_transform(project(base, h), rot, Vector2(s, s))
+				ci.draw_texture_rect(fire_escape_tex, Rect2(-size * 0.5, size), false)
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
 func _draw_roof(ci: CanvasItem) -> void:
+	_draw_fire_escapes(ci)
 	var c := _corners()
 	var top := PackedVector2Array()
 	var uvs := PackedVector2Array()

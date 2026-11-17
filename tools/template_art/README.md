@@ -1,0 +1,9 @@
+# Template art generator
+
+Paints every `template_` image in `assets/graphics/` (Python 3 with Pillow and numpy; deterministic, so a re-run reproduces the files byte for byte):
+
+```bash
+python3 tools/template_art/make_all.py assets/graphics
+```
+
+Optional: a second argument writes 2x2 tiled previews (to check seams) to a folder; a third limits the run to logical names starting with a prefix (for example `facades`). Files: `paintkit.py` (painting helpers), `paint_ground.py` (ground, roof tiles, strips), `paint_buildings.py` (facades and window light), `paint_props.py` (street and rooftop furniture, signs, effects, UI), `paint_vehicles.py` (the two cars), `paint_people.py` (the gangster). The game never runs these scripts; `tools/.gdignore` keeps Godot from importing them. Your own art goes in `custom/` instead (see `docs/ASSET_SPECS.md`).
