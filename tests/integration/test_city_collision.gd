@@ -7,7 +7,7 @@ extends "res://tests/support/city_test.gd"
 
 func test_a_car_cannot_drive_through_a_building() -> void:
 	var c := roadster()
-	await park(c, Vector2(2600, 600), -PI / 2)  # heading north at the Copper Owl's row
+	await park(c, Vector2(2720, 600), -PI / 2)  # heading north at the row east of the Copper Owl
 	await seat_in(c)
 	watch_signals(c)
 	await hold(Vector2(0, -1), 180)
@@ -16,7 +16,7 @@ func test_a_car_cannot_drive_through_a_building() -> void:
 
 
 func test_a_person_cannot_walk_into_a_building() -> void:
-	walker().place(Vector2(2600, 470), -PI / 2)
+	walker().place(Vector2(2720, 470), -PI / 2)
 	await hold(Vector2(0, -1), 120)
 	assert_gte(walker().global_position.y, 439.0 + Walker.RADIUS - 1.0)
 

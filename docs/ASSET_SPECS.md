@@ -73,11 +73,13 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/bar_counter` | `custom/graphics/interiors/bar_counter.png` | 420x56 | sprite (image, scaled to its display size) | 180x24 | The Copper Owl's bar; customers along the bottom edge. |
 | `interiors/barber_chair` | `custom/graphics/interiors/barber_chair.png` | 72x56 | sprite (image, scaled to its display size) | 32x25 | Barber chair, the sitter facing right. |
 | `interiors/barber_counter` | `custom/graphics/interiors/barber_counter.png` | 336x44 | sprite (image, scaled to its display size) | 150x20 | Mirror and marble counter with tonics. |
+| `interiors/bed` | `custom/graphics/interiors/bed.png` | 76x136 | sprite (image, scaled to its display size) | 34x62 | Iron bed, headboard at the top. |
 | `interiors/bench` | `custom/graphics/interiors/bench.png` | 160x40 | sprite (image, scaled to its display size) | 70x18 | Waiting bench with a newspaper. |
 | `interiors/cabinet` | `custom/graphics/interiors/cabinet.png` | 64x52 | sprite (image, scaled to its display size) | 30x24 | Tall cupboard (Sal keeps the rye in it). |
 | `interiors/card_table` | `custom/graphics/interiors/card_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Back-room card table with two chairs, centred. |
 | `interiors/coat_rack` | `custom/graphics/interiors/coat_rack.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Coat stand with two coats. |
 | `interiors/door` | `custom/graphics/interiors/door.png` | 64x12 | sprite (image, scaled to its display size) | 28x5 | Door leaf from above; hinge at the left end (stretched to the doorway). |
+| `interiors/flat_table` | `custom/graphics/interiors/flat_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Kitchen table with two chairs, centred. |
 | `interiors/floor_boards` | `custom/graphics/interiors/floor_boards.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Worn pine floorboards (shops, the flat). |
 | `interiors/floor_parquet` | `custom/graphics/interiors/floor_parquet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Oak parquet (the Copper Owl). |
 | `interiors/floor_tile` | `custom/graphics/interiors/floor_tile.png` | 128x128 | tile (seamless in both directions) | 64 px per repeat | Black-and-cream checkerboard tile (the barbershop). |
@@ -85,11 +87,14 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
 | `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
 | `interiors/produce` | `custom/graphics/interiors/produce.png` | 132x56 | sprite (image, scaled to its display size) | 60x25 | Three crates of apples, potatoes and cabbages. |
+| `interiors/radio` | `custom/graphics/interiors/radio.png` | 44x34 | sprite (image, scaled to its display size) | 18x14 | Cathedral radio, grille towards the bottom. |
+| `interiors/rug` | `custom/graphics/interiors/rug.png` | 160x100 | sprite (image, scaled to its display size) | 72x45 | Oval rag rug (flat on the floor). |
 | `interiors/sacks` | `custom/graphics/interiors/sacks.png` | 64x64 | sprite (image, scaled to its display size) | 28x28 | Flour and sugar sacks. |
 | `interiors/shelf_grocery` | `custom/graphics/interiors/shelf_grocery.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of tins and boxes. |
 | `interiors/shelf_hardware` | `custom/graphics/interiors/shelf_hardware.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of paint, rope, nails and tools. |
 | `interiors/shop_counter` | `custom/graphics/interiors/shop_counter.png` | 220x56 | sprite (image, scaled to its display size) | 96x24 | Shop counter with cash register and scale; the shopkeeper's side at the top. |
 | `interiors/stool` | `custom/graphics/interiors/stool.png` | 36x36 | sprite (image, scaled to its display size) | 14x14 | Bar stool. |
+| `interiors/stove` | `custom/graphics/interiors/stove.png` | 60x56 | sprite (image, scaled to its display size) | 26x24 | Small kitchen range with a kettle. |
 | `interiors/table_club` | `custom/graphics/interiors/table_club.png` | 128x128 | sprite (image, scaled to its display size) | 56x56 | Round club table with lamp and three chairs, centred. |
 | `props/awning_green` | `custom/graphics/props/awning_green.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
 | `props/awning_red` | `custom/graphics/props/awning_red.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |

@@ -32,6 +32,7 @@ func _alert_from(spot: Vector2) -> void:
 
 
 func test_he_is_on_his_beat_and_in_view_at_the_start() -> void:
+	await at_the_streetcar_stop()
 	var beat: PackedVector2Array = main.layout.police_beat
 	assert_eq(cop().brain.state, OfficerBrain.State.PATROL)
 	assert_true(main.camera.view_rect().has_point(cop_pos()), "you can see him from the streetcar stop")

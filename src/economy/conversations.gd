@@ -6,9 +6,11 @@ extends RefCounted
 ## and an empty page ends the conversation. The money side lives in Rackets;
 ## effects ask the game for anything outside it ({"police": true}: someone
 ## runs for the copper once you have gone, {"rounds": n}: rounds for the gun).
-## `context` describes the moment: {"gun_drawn": bool, "spare": int rounds carried}.
+## `context` describes the moment: {"gun_drawn": bool, "spare": int rounds
+## carried, "time": "4:10 AM", "late": bool (time to go home)}.
 
-const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie"}
+const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
+	"bed": "Home"}
 
 var rackets: Rackets
 
@@ -45,6 +47,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _lindqvist(step, context)
 		"eddie":
 			return _eddie(step, context)
+		"bed":
+			return _bed(step, context)
 	return {}
 
 
@@ -210,4 +214,20 @@ func _eddie(step: String, context: Dictionary) -> Dictionary:
 			return _page("eddie", "%d rounds of .45, still in the paper. %s. Don't say where you got 'em." % [k, price], [], {"rounds": k})
 		"heavy":
 			return _page("eddie", "A Thompson costs more than you make in a year, kid. Come back when you're somebody.")
+	return {}
+
+
+# ------------------------------------------------------------------ your own bed
+
+func _bed(step: String, context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			var line := "The sky's going grey over the El. Time to turn in." if context.get("late", false) \
+				else "Only %s. The night's still young out there." % context.get("time", "")
+			return _page("bed", line, [
+				{"id": "sleep", "text": "Sleep through the day."},
+				{"id": "bye", "text": "Not yet."},
+			])
+		"sleep":
+			return _page("bed", "You hang up your hat, pull the blind and sleep like the dead.", [], {"sleep": true})
 	return {}

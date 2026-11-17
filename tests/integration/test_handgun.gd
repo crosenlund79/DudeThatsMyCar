@@ -7,6 +7,11 @@ extends "res://tests/support/city_test.gd"
 const OWL_FRONT := 439.0  # the Copper Owl's front wall (y)
 
 
+func before_each() -> void:
+	await super.before_each()
+	await at_the_streetcar_stop()
+
+
 func _bullets() -> BulletWorld:
 	return main.bullets
 

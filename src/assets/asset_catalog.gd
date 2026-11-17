@@ -151,6 +151,11 @@ const SPECS := {
 	"interiors/sacks": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(28, 28), "notes": "Flour and sugar sacks."},
 	"interiors/card_table": {"kind": "sprite", "template_size": Vector2i(112, 112), "display_size": Vector2(50, 50), "notes": "Back-room card table with two chairs, centred."},
 	"interiors/gun_crate": {"kind": "sprite", "template_size": Vector2i(112, 56), "display_size": Vector2(50, 25), "notes": "Open crate of wrapped pistols and boxes of rounds."},
+	"interiors/bed": {"kind": "sprite", "template_size": Vector2i(76, 136), "display_size": Vector2(34, 62), "notes": "Iron bed, headboard at the top."},
+	"interiors/rug": {"kind": "sprite", "template_size": Vector2i(160, 100), "display_size": Vector2(72, 45), "notes": "Oval rag rug (flat on the floor)."},
+	"interiors/flat_table": {"kind": "sprite", "template_size": Vector2i(112, 112), "display_size": Vector2(50, 50), "notes": "Kitchen table with two chairs, centred."},
+	"interiors/stove": {"kind": "sprite", "template_size": Vector2i(60, 56), "display_size": Vector2(26, 24), "notes": "Small kitchen range with a kettle."},
+	"interiors/radio": {"kind": "sprite", "template_size": Vector2i(44, 34), "display_size": Vector2(18, 14), "notes": "Cathedral radio, grille towards the bottom."},
 	# Effects (lights and particles).
 	"fx/steam": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(48, 48), "notes": "Steam / smoke puff."},
 	"fx/muzzle_flash": {"kind": "light", "template_size": Vector2i(64, 40), "display_size": Vector2(34, 21), "notes": "Muzzle flash; the muzzle is at the left edge, middle."},

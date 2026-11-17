@@ -6,7 +6,9 @@ extends SceneTree
 ## (driving down Marlowe Avenue), garage, river, alley, wide, shoot (firing at
 ## the Copper Owl, captured on the muzzle flash), beat / pursuit (the officer),
 ## story (the M002 sequence: shots, the officer, the getaway, the alley, lost
-## him), steer (M003: the roadster's front wheels at full lock, standing and turning).
+## him), steer (M003: the roadster's front wheels at full lock, standing and turning),
+## club / club_door / barber / grocery / eddie (M003 interiors and talk),
+## home (where the night begins), wake (the next evening fading in).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -140,6 +142,16 @@ func _run(shots: Array) -> void:
 				await _frames(10)
 				await _shot("eddie")
 				main.end_talk()
+			"home":
+				# M003: where every night begins
+				_teleport_walker(main.layout.spawn, PI * 0.5)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, main.layout.spawn + Vector2(0, 60))
+				await _frames(40)
+				await _shot("home")
+			"wake":
+				main.sleep()
+				await _frames(80)
+				await _shot("wake")
 			"club_door":
 				_teleport_walker(Vector2(2291, 455), -PI / 2)
 				await _frames(40)

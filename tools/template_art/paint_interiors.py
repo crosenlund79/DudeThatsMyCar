@@ -522,7 +522,99 @@ def gun_crate(seed=95):
     return finish(grain(img, 3, seed), w, h)
 
 
+# ------------------------------------------------------------------ the henchman's flat
+
+def bed(seed=101):
+    """An iron bedstead from above, headboard at the top: rumpled grey blanket, a flat pillow."""
+    w, h = 76, 136
+    img = new(w, h)
+    soft_blob(img, S(39), S(70), S(34), S(64), "#000000", 80, 4 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, 72, 132, 3)), "#2a2a2e", seed, outline=OUT, ow=1.4, wob=0.1, light=(0.3, -1, 0.4))
+    paint_shape(img, SP(rrect_pts(8, 10, 68, 128, 4)), "#e2dccb", seed + 1, outline=None, wob=0.2, tex=0.15)
+    paint_shape(img, SP(rrect_pts(14, 14, 62, 36, 8)), "#efe9da", seed + 2, outline=OUT, ow=1.0, wob=0.3, tex=0.1,
+                light=(0.3, -1, 0.5))
+    blanket = [(8, 48), (40, 44), (68, 50), (68, 128), (8, 128)]
+    paint_shape(img, SP(blanket), "#5a5f68", seed + 3, outline=OUT, ow=1.2, wob=0.6, tex=0.3, strokes_n=14,
+                stroke_cols=["#6a707a", "#474b52"], light=(0.3, -1, 0.4))
+    line(img, [(S(10), S(52)), (S(66), S(54))], "#7a2a26", 2.0 * SS, 220)
+    for k in range(3):
+        line(img, [(S(18 + k * 14), S(70)), (S(24 + k * 13), S(118))], "#41454c", 1.2 * SS, 160)
+    for x in (6, 70):  # iron posts
+        for y in (6, 130):
+            paint_shape(img, SP(ellipse_pts(x, y, 3, 3)), "#c9b06a", seed + x + y, outline=OUT, ow=0.6, wob=0.02)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def rug(seed=103):
+    """A worn oval rag rug (lies flat under everything)."""
+    w, h = 160, 100
+    img = new(w, h)
+    rnd = random.Random(seed)
+    for k, c in enumerate(["#6a3a2a", "#8a6a3a", "#4a5a6a", "#7a2a2a", "#9a8a5a", "#5a4a3a"]):
+        f = 1.0 - k * 0.15
+        paint_shape(img, SP(ellipse_pts(80, 50, 76 * f, 46 * f)), c, seed + k, outline=None if k else OUT, ow=1.0,
+                    wob=0.4, tex=0.35, strokes_n=8, stroke_cols=[shade(c, 1.2), shade(c, 0.8)])
+    return finish(grain(img, 5, seed), w, h)
+
+
+def flat_table(seed=105):
+    """A small kitchen table with an oilcloth, two chairs, a bottle, a glass and the Tribune."""
+    w = h = 112
+    img = new(w, h)
+    cx = cy = 56
+    soft_blob(img, S(cx + 3), S(cy + 4), S(36), S(34), "#000000", 70, 5 * SS)
+    for k, a in enumerate((math.pi * 0.5, math.pi * 1.5)):
+        chair(img, cx + math.cos(a) * 36, cy + math.sin(a) * 36, a, seed + k * 3)
+    paint_shape(img, SP(rrect_pts(28, 32, 84, 80, 3)), "#a8b8a0", seed + 10, outline=OUT, ow=1.4, wob=0.2, tex=0.15,
+                light=(0.3, -1, 0.35))
+    d = ImageDraw.Draw(img)
+    for x in range(32, 84, 8):  # gingham
+        d.line([(S(x), S(33)), (S(x), S(79))], fill=rgba("#c94a3a", 70), width=2 * SS)
+    for y in range(36, 80, 8):
+        d.line([(S(29), S(y)), (S(83), S(y))], fill=rgba("#c94a3a", 70), width=2 * SS)
+    paint_shape(img, SP(rrect_pts(36, 44, 60, 62, 1)), "#e6e0cf", seed + 11, outline=OUT, ow=0.7, wob=0.1)
+    for k in range(4):
+        line(img, [(S(39), S(48 + k * 3.5)), (S(57), S(48 + k * 3.5))], "#55524c", 0.8 * SS, 160)
+    paint_shape(img, SP(ellipse_pts(70, 46, 4.6, 4.6)), "#6a4a1a", seed + 12, outline=OUT, ow=0.6, wob=0.05)
+    paint_shape(img, SP(ellipse_pts(70, 46, 1.8, 1.8)), "#d8c08a", seed + 13, outline=None, wob=0.02)
+    paint_shape(img, SP(ellipse_pts(72, 66, 3.2, 3.2)), "#b9cfd6", seed + 14, outline=OUT, ow=0.6, wob=0.05)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def stove(seed=107):
+    """A small black kitchen range from above with a kettle (wall side at the top)."""
+    w, h = 60, 56
+    img = new(w, h)
+    soft_blob(img, S(31), S(30), S(26), S(24), "#000000", 80, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, 56, 52, 3)), "#25252a", seed, outline=OUT, ow=1.4, wob=0.1, tex=0.15, light=(0.3, -1, 0.5))
+    for x, y in ((18, 20), (42, 20), (18, 40), (42, 40)):
+        layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        ImageDraw.Draw(layer).ellipse([S(x - 8), S(y - 8), S(x + 8), S(y + 8)], outline=rgba("#4a4a50"), width=2 * SS)
+        img.alpha_composite(layer)
+    paint_shape(img, SP(ellipse_pts(42, 20, 7.5, 7.5)), "#b9bcbf", seed + 1, outline=OUT, ow=0.8, wob=0.05, light=(0.4, -1, 0.6))
+    line(img, [(S(36), S(14)), (S(48), S(26))], "#2a2a2e", 1.4 * SS, 220)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def radio(seed=109):
+    """A cathedral radio from above: walnut case, fabric grille towards the room (bottom), two knobs."""
+    w, h = 44, 34
+    img = new(w, h)
+    soft_blob(img, S(23), S(18), S(19), S(14), "#000000", 70, 2 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, 40, 30, 8)), "#6a3a1e", seed, outline=OUT, ow=1.2, wob=0.1, tex=0.2,
+                strokes_n=6, stroke_cols=["#7e4a2a", "#5a2e16"], light=(0.3, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(12, 18, 32, 28, 3)), "#c9b48a", seed + 1, outline=None, wob=0.05, tex=0.3)
+    for x in (16, 28):
+        paint_shape(img, SP(ellipse_pts(x, 11, 2.2, 2.2)), "#d8c08a", seed + x, outline=OUT, ow=0.5, wob=0.02)
+    return finish(img, w, h)
+
+
 ASSETS = {
+    "interiors/bed": bed,
+    "interiors/rug": rug,
+    "interiors/flat_table": flat_table,
+    "interiors/stove": stove,
+    "interiors/radio": radio,
     "interiors/floor_boards": floor_boards,
     "interiors/shop_counter": shop_counter,
     "interiors/shelf_grocery": shelf_grocery,

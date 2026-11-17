@@ -1,5 +1,6 @@
 extends "res://tests/support/city_test.gd"
-## The game starts in the Riverside Ward at night, on foot, by a parked car;
+## The game starts in the Riverside Ward at night, on foot, at home (M003)
+## next door to the Copper Owl;
 ## the district is built from its layout (buildings solid, lamps lit, cars
 ## parked) and draws raised things in perspective round the camera.
 
@@ -9,10 +10,12 @@ func test_the_project_launches_into_the_city() -> void:
 	assert_eq(ProjectSettings.get_setting("application/config/name"), "Chicago, 1932")
 
 
-func test_starts_on_foot_on_marlowe_avenue_at_night() -> void:
+func test_starts_on_foot_at_home_off_marlowe_avenue_at_night() -> void:
 	assert_true(player().on_foot())
 	assert_true(walker().global_position.distance_to(main.layout.spawn) < 4.0)
-	assert_eq(main.layout.place_name(walker().global_position), "Marlowe Avenue")
+	assert_eq(main.interiors.current.id, "home", "in his flat")
+	var door: Vector2 = main.interiors.current.outside_door(0)
+	assert_eq(main.layout.place_name(door), "Marlowe Avenue", "the door opens onto Marlowe Avenue")
 	var tint: CanvasModulate = main.city.atmosphere.tint
 	assert_lt(tint.color.get_luminance(), 0.45, "night")
 	assert_true(main.camera.is_current())
@@ -54,6 +57,7 @@ func test_far_buildings_are_not_drawn() -> void:
 
 
 func test_a_prompt_offers_the_nearby_car() -> void:
+	await at_the_streetcar_stop()
 	var c := roadster()
 	await walk_to(c.global_position + Vector2(0, 40), 3.0)
 	assert_eq(player().enterable_car(), c)

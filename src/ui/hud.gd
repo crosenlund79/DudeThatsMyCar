@@ -21,6 +21,13 @@ const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE 
 var resolver: AssetResolver
 var place_label: Label
 var purse_label: Label
+var clock_panel: PanelContainer
+var clock_label: Label
+var home_label: Label
+## Black screen with the night's title, fading out as you wake.
+var wake_screen: ColorRect
+var wake_label: Label
+var _wake_left := 0.0
 var dialogue_panel: PanelContainer
 var speaker_label: Label
 var line_label: Label
@@ -59,6 +66,25 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	purse_label = _label("", 16, DIM)
 	box.add_child(purse_label)
 	_build_dialogue()
+	clock_panel = _panel(Vector2.ZERO)
+	var cb := VBoxContainer.new()
+	cb.add_theme_constant_override("separation", -2)
+	clock_panel.add_child(cb)
+	clock_label = _label("", 19, CREAM)
+	clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	home_label = _label("GET HOME TO BED", 14, Color("ffb070"))
+	home_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	home_label.visible = false
+	cb.add_child(clock_label)
+	cb.add_child(home_label)
+	wake_screen = ColorRect.new()
+	wake_screen.color = Color(0.02, 0.02, 0.04)
+	wake_screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wake_screen.visible = false
+	add_child(wake_screen)
+	wake_label = _label("", 30, CREAM)
+	wake_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wake_screen.add_child(wake_label)
 	prompt = _panel(Vector2.ZERO)
 	prompt_label = _label("", 19, CREAM)
 	prompt.add_child(prompt_label)
@@ -145,6 +171,24 @@ func _place_dialogue() -> void:
 	dialogue_panel.position = Vector2((screen.x - dialogue_panel.size.x) * 0.5, screen.y - dialogue_panel.size.y - 24)
 
 
+## The clock at the top of the screen: "NIGHT 2   ·   11:40 PM", and a
+## reminder to go home once it is late.
+func set_clock(night: int, time_text: String, late: bool) -> void:
+	clock_label.text = "NIGHT %d   \u00b7   %s" % [night, time_text]
+	home_label.visible = late
+	var screen := get_viewport().get_visible_rect().size
+	clock_panel.reset_size()
+	clock_panel.position = Vector2((screen.x - clock_panel.size.x) * 0.5, 12)
+
+
+## Wakes up to a new night: a moment of black with its title, then the city.
+func wake_up(night: int, time_text: String) -> void:
+	wake_label.text = "NIGHT %d\n%s\n\nThe street lamps are coming on." % [night, time_text]
+	_wake_left = 3.0
+	wake_screen.visible = true
+	wake_screen.modulate.a = 1.0
+
+
 ## Money and bottles under the place name.
 func set_purse(cents: int, bottles: int) -> void:
 	var b := "no bottles" if bottles == 0 else ("1 bottle of rye" if bottles == 1 else "%d bottles of rye" % bottles)
@@ -218,7 +262,7 @@ func set_police_status(state: int) -> void:
 	police_panel.visible = police_label.visible
 	var screen := get_viewport().get_visible_rect().size
 	police_panel.reset_size()
-	police_panel.position = Vector2((screen.x - police_panel.size.x) * 0.5, 16)
+	police_panel.position = Vector2((screen.x - police_panel.size.x) * 0.5, 84)
 
 
 func set_paused(on: bool) -> void:
@@ -254,7 +298,14 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 	help_panel.position = Vector2(screen.x - help_panel.size.x - 18, 16)
 	pause_panel.reset_size()
 	pause_panel.position = (screen - pause_panel.size) * 0.5
-	crosshair.visible = show_crosshair and not dialogue_panel.visible
+	if _wake_left > 0.0:
+		_wake_left -= delta
+		wake_screen.size = screen
+		wake_label.size = Vector2(screen.x, 200)
+		wake_label.position = Vector2(0, screen.y * 0.5 - 100)
+		wake_screen.modulate.a = clampf(_wake_left / 1.5, 0.0, 1.0)
+		wake_screen.visible = _wake_left > 0.0
+	crosshair.visible = show_crosshair and not dialogue_panel.visible and not wake_screen.visible
 	if dialogue_panel.visible:
 		_place_dialogue()
 	crosshair.position = mouse - crosshair.size * 0.5

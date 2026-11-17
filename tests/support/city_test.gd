@@ -43,6 +43,18 @@ func after_each() -> void:
 	get_tree().paused = false
 
 
+## The streetcar stop in the middle of Marlowe Avenue, between the Copper Owl
+## and Hotel Marlowe, a few steps from the roadster (where M001 / M002 began).
+const STREETCAR_STOP := Vector2(2350, 600)
+
+
+## Steps out of the flat to the streetcar stop (most street tests start there).
+func at_the_streetcar_stop() -> void:
+	walker().place(STREETCAR_STOP, PI * 0.3)
+	main.camera.snap_to(walker())
+	await wait_physics_frames(3)
+
+
 func player() -> PlayerController:
 	return main.player
 
@@ -58,11 +70,11 @@ func car_of_type(id: String) -> Car:
 	return null
 
 
-## The roadster parked by the hotel, next to the start.
+## The roadster parked by the hotel, next to the streetcar stop.
 func roadster() -> Car:
 	var best: Car = null
 	for c in main.cars:
-		if c.vehicle.id == "coupe" and (best == null or c.global_position.distance_to(main.layout.spawn) < best.global_position.distance_to(main.layout.spawn)):
+		if c.vehicle.id == "coupe" and (best == null or c.global_position.distance_to(STREETCAR_STOP) < best.global_position.distance_to(STREETCAR_STOP)):
 			best = c
 	return best
 

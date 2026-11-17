@@ -5,6 +5,7 @@ extends "res://tests/support/city_test.gd"
 
 
 func test_walk_to_the_roadster_and_get_in() -> void:
+	await at_the_streetcar_stop()
 	var c := roadster()
 	await walk_to(c.global_position + Vector2(0, 40), 3.0)
 	await press_e()

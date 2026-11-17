@@ -38,16 +38,19 @@ func test_landmarks_are_there() -> void:
 	assert_true(d.props.any(func(p: Dictionary) -> bool: return p.kind == "props/marquee"), "the canopy over the sidewalk")
 
 
-func test_the_player_starts_on_open_ground_in_the_district() -> void:
-	assert_true(d.is_open_ground(d.spawn, 12.0))
-	assert_eq(d.place_name(d.spawn), "Marlowe Avenue")
-	assert_false(d.is_in_building(d.spawn, 30.0), "out in the open, not against a wall")
+func test_the_player_starts_at_home_with_the_street_outside() -> void:
+	var home := d.interior_at(d.spawn)
+	assert_not_null(home, "the night starts indoors")
+	assert_eq(home.id, "home")
+	assert_true(home.contains(d.spawn, -Walker.RADIUS - InteriorPlan.WALL), "clear of the walls")
+	assert_eq(d.place_name(home.outside_door(0)), "Marlowe Avenue")
 
 
-func test_the_starting_car_is_a_few_steps_away() -> void:
+func test_a_car_waits_a_few_steps_from_the_front_door() -> void:
+	var door := d.interior_at(d.spawn).outside_door(0)
 	var nearest := INF
 	for c in d.cars:
-		nearest = minf(nearest, (c.pos as Vector2).distance_to(d.spawn))
+		nearest = minf(nearest, (c.pos as Vector2).distance_to(door))
 	assert_lt(nearest, 160.0, "walk over to a car")
 	assert_gt(nearest, 60.0, "but not standing on it")
 

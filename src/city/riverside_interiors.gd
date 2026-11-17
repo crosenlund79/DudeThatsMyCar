@@ -10,6 +10,7 @@ static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(barber_shop(d))
 	d.interiors.append(grocery(d))
 	d.interiors.append(hardware_store(d))
+	d.interiors.append(flat(d))
 	# the barber's pole beside Sal's door
 	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 447), "rot": 0.0, "height": 0.0, "radius": 4.0})
 
@@ -154,5 +155,32 @@ static func hardware_store(d: DistrictLayout) -> InteriorPlan:
 	p.spots = [
 		{"id": "lindqvist", "pos": Vector2(1030, 834), "radius": 28.0, "prompt": "Talk to Mr. Lindqvist"},
 		{"id": "eddie", "pos": Vector2(1032, 952), "radius": 30.0, "prompt": "Talk to Eddie"},
+	]
+	return p
+
+
+## Your flat: one room on the ground floor of the Marlowe Flats, next door to
+## the Copper Owl. An iron bed, a rag rug, a table with yesterday's Tribune, a
+## stove, a wardrobe and a radio. Every night starts here, and here you sleep.
+static func flat(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("home", "Your Flat")
+	p.building = d.building_named("Marlowe Flats")
+	p.building_rect = d.buildings[p.building].rect  # x 2455..2655, y 168..439
+	p.room = Rect2(2455, 299, 170, 140)
+	p.floor = "interiors/floor_boards"
+	p.doors = [{"side": Vector2.DOWN, "at": 2478.0, "width": 28.0}]
+	p.furniture = [
+		{"kind": "interiors/rug", "pos": Vector2(2545, 384), "z": -1},
+		{"kind": "interiors/bed", "pos": Vector2(2486, 340), "box": Vector2(32, 60)},
+		{"kind": "interiors/radio", "pos": Vector2(2520, 316), "box": Vector2(16, 12)},
+		{"kind": "interiors/cabinet", "pos": Vector2(2565, 320), "box": Vector2(30, 24)},
+		{"kind": "interiors/flat_table", "pos": Vector2(2590, 362), "radius": 15.0},
+		{"kind": "interiors/stove", "pos": Vector2(2603, 416), "box": Vector2(24, 22)},
+	]
+	p.lamps = [
+		{"pos": Vector2(2540, 362), "color": Color(1.0, 0.84, 0.58), "energy": 0.85, "radius": 140.0},
+	]
+	p.spots = [
+		{"id": "bed", "pos": Vector2(2516, 352), "radius": 28.0, "prompt": "Go to bed"},
 	]
 	return p

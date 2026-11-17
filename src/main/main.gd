@@ -37,6 +37,11 @@ var officer: PoliceOfficer
 @export var gun_rules: GunRules = preload("res://src/weapons/default_pistol.tres")
 ## Prices and nightly limits of the bootleg trade and the protection racket.
 @export var economy_rules: EconomyRules = preload("res://src/economy/default_economy.tres")
+## The hours of the night (start, time to go home, dawn) and how fast it runs.
+@export var night_rules: NightRules = preload("res://src/night/default_night.tres")
+var clock: NightClock
+## Reminders given tonight: 0 none, 1 "get home", 2 "dawn".
+var _warned := 0
 var paused := false
 var rackets: Rackets
 var talk: Conversations
@@ -59,6 +64,7 @@ func _ready() -> void:
 	settings.apply()
 	resolver = AssetResolver.new(override_root)
 	rackets = Rackets.new(economy_rules)
+	clock = NightClock.new(night_rules)
 	talk = Conversations.new(rackets)
 	_load_game()
 	layout = RiversideWard.create()
@@ -74,6 +80,8 @@ func _ready() -> void:
 	add_child(walker)
 	walker.place(layout.spawn, layout.spawn_facing)
 	_load_gun()
+	interiors.update_player(walker.global_position)
+	interiors.snap()
 	walker.aim_point = layout.spawn + Vector2.from_angle(layout.spawn_facing) * 60.0
 	camera = CityCamera.new()
 	camera.name = "Camera"
@@ -168,24 +176,26 @@ func _spot() -> Dictionary:
 	return interiors.current.spot_at(walker.global_position)
 
 
-## E on foot at a spot: talk to whoever is there. Returns true when used.
+## E on foot at a spot: talk to whoever is there (or go to bed). Returns true when used.
 func _interact(_at: Vector2) -> bool:
 	var spot := _spot()
 	if spot.is_empty():
 		return false
-	if not interiors.current.person(spot.id).is_empty():
+	if spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
 	return true
 
 
 func start_talk(who: String) -> void:
 	talking = who
-	interiors.view_of(interiors.current.id).face(who, walker.global_position)
+	if interiors.current != null:
+		interiors.view_of(interiors.current.id).face(who, walker.global_position)
 	_show(talk.open(who, _talk_context()))
 
 
 func _talk_context() -> Dictionary:
-	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0}
+	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0,
+		"time": clock.text(), "late": clock.is_late()}
 
 
 func _show(page: Dictionary) -> void:
@@ -212,6 +222,9 @@ func _answer(i: int) -> void:
 	if talking == "" or i < 0 or i >= (_page.options as Array).size():
 		return
 	var next := talk.choose(talking, _page.options[i].id, _talk_context())
+	if next.get("effects", {}).get("sleep", false):
+		sleep()
+		return
 	_apply(next.get("effects", {}))
 	hud.set_purse(rackets.money, rackets.bottles)
 	save_game()
@@ -250,6 +263,43 @@ func end_talk() -> void:
 		v.face_home()
 
 
+## Sleeps through the day: the next evening begins at home with everything
+## you carry (money, bottles, rounds); the streets, the cars and the copper
+## are back as they are at the start of every night, and tonight's deals reset.
+func sleep() -> void:
+	end_talk()
+	rackets.end_night()
+	clock.reset()
+	_warned = 0
+	_report_from = null
+	for i in cars.size():
+		var spec: Dictionary = layout.cars[i]
+		cars[i].place(Transform2D(spec.rot, spec.pos))
+		cars[i].driven = false
+	officer.reset()
+	if walker.gun != null:
+		walker.gun.holster()
+	walker.place(layout.spawn, layout.spawn_facing)
+	interiors.update_player(walker.global_position)
+	interiors.snap()
+	camera.snap_to(walker)
+	hud.set_purse(rackets.money, rackets.bottles)
+	hud.wake_up(rackets.night, clock.text())
+	save_game()
+
+
+func _update_clock(delta: float) -> void:
+	if not paused:
+		clock.advance(delta)
+	if clock.is_dawn() and _warned < 2:
+		_warned = 2
+		hud.show_notice("Dawn's breaking. Get home to bed before the city wakes up.")
+	elif clock.is_late() and _warned < 1:
+		_warned = 1
+		hud.show_notice("It's getting late. Time to head home to bed.")
+	hud.set_clock(rackets.night, clock.text(), clock.is_late())
+
+
 func save_game() -> void:
 	var data := {"rackets": rackets.to_dict()}
 	if walker != null and walker.gun != null:
@@ -285,6 +335,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	_update_clock(delta)
 	_update_view(delta)
 	_update_report(delta)
 

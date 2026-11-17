@@ -75,6 +75,21 @@ func setup(resolver: AssetResolver, p_rules: PoliceRules, beat: PackedVector2Arr
 	_last_pos = body.global_position
 
 
+## Back on his beat at the start of a night: patrolling, nothing on his mind.
+func reset() -> void:
+	brain = OfficerBrain.new(rules, brain.beat)
+	body.place(brain.beat[0] if not brain.beat.is_empty() else body.global_position, PI * 0.5)
+	body.model.walk_speed = rules.patrol_speed
+	_route = PackedVector2Array()
+	_route_goal = Vector2.INF
+	_stuck = 0.0
+	_sidestep = 0.0
+	_last_pos = body.global_position
+	_set_icon("")
+	_last_state = brain.state
+	state_changed.emit(brain.state)
+
+
 ## The player fired at `at`; the shot carries `loudness` px.
 func hear_gunshot(at: Vector2, loudness: float) -> bool:
 	return brain.hear_gunshot(body.global_position, at, loudness)

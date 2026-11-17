@@ -168,7 +168,7 @@ func _central_rows() -> void:
 	_row(1781, 439, 168, [
 		[200, 3, "brick_brown", "tar"], [170, 2, "brick_brown", "gravel", {"awning": "red"}],
 		[280, 3, "club", "tar", {"name": "The Copper Owl", "marquee": true}], [24],
-		[200, 3, "greystone", "tar"], [514, 4, "brick_red", "tar"]])
+		[200, 3, "greystone", "tar", {"name": "Marlowe Flats"}], [514, 4, "brick_red", "tar"]])
 	# Facing Marlowe Avenue from the south: Hotel Marlowe.
 	_row(131, 761, 1032, [
 		[300, 4, "brick_red", "tar"], [210, 2, "brick_brown", "gravel", {"awning": "red"}], [26],
@@ -450,11 +450,12 @@ func _cars_and_spawn() -> void:
 		{"type": "sedan", "paint": 0, "pos": Vector2(1040, 1250), "rot": -PI / 2},
 		{"type": "sedan", "paint": 1, "pos": Vector2(3845, 150), "rot": PI / 2},  # warehouse apron
 		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1435), "rot": PI},     # Pruitt Street
+		{"type": "sedan", "paint": 1, "pos": Vector2(2585, 506), "rot": PI},     # M003: outside your flat
 	]
 	# The beat cop walks a short round on the north side of Marlowe Avenue by
 	# the Kessler Street corner, past the newsstand and his call box.
 	d.police_beat = PackedVector2Array([Vector2(1872, 457), Vector2(1995, 457)])
-	# At the streetcar stop in the middle of Marlowe Avenue, between the Copper
-	# Owl and Hotel Marlowe, a few steps from the roadster.
-	d.spawn = Vector2(2350, 600)
-	d.spawn_facing = PI * 0.3
+	# M003: every night begins at home, in the ground-floor flat next door to
+	# the Copper Owl, by the bed (see RiversideInteriors.flat).
+	d.spawn = Vector2(2522, 384)
+	d.spawn_facing = PI * 0.5
