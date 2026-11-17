@@ -176,11 +176,19 @@ func _on_exited_car(c: Car) -> void:
 	vehicle_audio.attach(null)
 
 
-## The interaction spot the player stands at (inside a room, on foot), or {}.
+## The interaction spot the player stands at (on foot): someone to talk to or
+## the bed inside a room, else a door to go in or out by; {} when none.
 func _spot() -> Dictionary:
-	if not player.on_foot() or interiors.current == null:
+	if not player.on_foot():
 		return {}
-	return interiors.current.spot_at(walker.global_position)
+	if interiors.current != null:
+		var s := interiors.current.spot_at(walker.global_position)
+		if not s.is_empty():
+			return s
+	var door := interiors.door_at(walker.global_position)
+	if not door.is_empty():
+		door["id"] = "door"
+	return door
 
 
 ## E on foot at a spot: talk to whoever is there (or go to bed). Returns true when used.
@@ -188,7 +196,9 @@ func _interact(_at: Vector2) -> bool:
 	var spot := _spot()
 	if spot.is_empty():
 		return false
-	if spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
+	if spot.id == "door":
+		interiors.step_through(walker, spot)
+	elif spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
 	return true
 

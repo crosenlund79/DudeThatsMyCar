@@ -132,7 +132,7 @@ static func hardware_store(d: DistrictLayout) -> InteriorPlan:
 	p.room = Rect2(927, 761, 230, 250)
 	p.floor = "interiors/floor_boards"
 	p.doors = [{"side": Vector2.UP, "at": 975.0, "width": 28.0}]
-	p.partitions = [{"a": Vector2(927, 900), "b": Vector2(1157, 900), "door_at": 1095.0, "door_width": 26.0}]
+	p.partitions = [{"a": Vector2(927, 900), "b": Vector2(1157, 900), "door_at": 1095.0, "door_width": 30.0}]
 	p.furniture = [
 		{"kind": "interiors/shelf_hardware", "pos": Vector2(945, 838), "rot": -PI / 2, "box": Vector2(118, 16)},
 		{"kind": "interiors/shelf_hardware", "pos": Vector2(1139, 828), "rot": PI / 2, "box": Vector2(118, 16)},

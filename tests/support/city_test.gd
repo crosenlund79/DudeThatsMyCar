@@ -192,6 +192,72 @@ func talk_to(plan_id: String, person_id: String) -> void:
 	await press_e()
 
 
+## A walking path inside a room from `from` to within reach of `to`, round
+## the furniture (a breadth-first search on a 6 px grid, like a person
+## looking where to step). Empty when there is no way.
+func path_in_room(plan: InteriorPlan, from: Vector2, to: Vector2, reach: float = 20.0) -> Array:
+	var step := 6.0
+	var r := Walker.RADIUS + 1.0
+	var walls := plan.wall_boxes()
+	var free := func(q: Vector2) -> bool:
+		if not plan.room.has_point(q):
+			return false
+		for b in walls:
+			if b.grow(r).has_point(q):
+				return false
+		for f in plan.furniture:
+			if f.has("radius") and q.distance_to(f.pos) < float(f.radius) + r:
+				return false
+			if f.has("box"):
+				var local: Vector2 = (q - (f.pos as Vector2)).rotated(-float(f.get("rot", 0.0)))
+				if Rect2(-(f.box as Vector2) * 0.5, f.box).grow(r).has_point(local):
+					return false
+		return true
+	var start := Vector2i(roundi(from.x / step), roundi(from.y / step))
+	var parent := {start: start}
+	var queue := [start]
+	var goal := Vector2i(-99999, -99999)
+	while not queue.is_empty():
+		var c: Vector2i = queue.pop_front()
+		if (Vector2(c) * step).distance_to(to) <= reach:
+			goal = c
+			break
+		for n in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]:
+			var nc: Vector2i = c + n
+			if not parent.has(nc) and free.call(Vector2(nc) * step):
+				parent[nc] = c
+				queue.append(nc)
+	if goal.x == -99999:
+		return []
+	var cells := [goal]
+	while cells[0] != start:
+		cells.push_front(parent[cells[0]])
+	var out := []
+	for i in range(0, cells.size(), 3):  # every third cell is plenty for walk_to
+		out.append(Vector2(cells[i]) * step)
+	out.append(Vector2(goal) * step)
+	return out
+
+
+## Walks from the street in through door `door` of a room to the spot `spot_id`
+## with the normal WASD movement (no teleporting inside). Returns true when
+## the walker got there.
+func walk_in_to(plan: InteriorPlan, spot_id: String, door: int = 0) -> bool:
+	var spot := {}
+	for s in plan.spots:
+		if s.id == spot_id:
+			spot = s
+	walker().place(plan.outside_door(door, 40.0), (-(plan.doors[door].side as Vector2)).angle())
+	main.camera.snap_to(walker())
+	await wait_physics_frames(2)
+	await walk_to(plan.outside_door(door, 14.0), 4.0, 240)
+	await walk_to(plan.inside_door(door, 14.0), 4.0, 240)
+	for p in path_in_room(plan, walker().global_position, spot.pos, float(spot.radius) - 10.0):
+		await walk_to(p, 4.0, 120)
+	await wait_physics_frames(3)
+	return walker().global_position.distance_to(spot.pos) <= float(spot.radius)
+
+
 ## One left click with the mouse over `aim` (the aim stays there afterwards).
 func click(aim: Vector2, move: Vector2 = Vector2.ZERO) -> void:
 	cmd = PlayerCommand.make(move, false, false, aim)

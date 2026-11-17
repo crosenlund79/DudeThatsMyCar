@@ -16,7 +16,7 @@ const COPPER := Color("d8a060")
 const DIM := Color("f1e4c6", 0.65)
 ## px per second -> miles per hour (one world px is about 7.5 cm of street).
 const MPH_PER_PX := 0.168
-const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   talk / get in a car\n1 - 4   answer\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nF1   this card      Esc   pause"
+const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   talk / go in, out / get in a car\n1 - 4   answer\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nF1   this card      Esc   pause"
 
 var resolver: AssetResolver
 var place_label: Label

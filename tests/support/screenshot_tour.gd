@@ -192,6 +192,10 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(2520, 1430), PI / 2)
 				await _frames(40)
 				await _shot("cars")
+			"grocery_door":
+				_teleport_walker(Vector2(1900, 520), PI / 2)
+				await _frames(40)
+				await _shot("grocery_door")
 			"club_door":
 				_teleport_walker(Vector2(2291, 455), -PI / 2)
 				await _frames(40)

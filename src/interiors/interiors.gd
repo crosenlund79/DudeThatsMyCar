@@ -36,20 +36,26 @@ func build(p_layout: DistrictLayout, city: City, resolver: AssetResolver) -> voi
 				shape.shape = circle
 				shape.position = f.pos
 				solids.add_child(shape)
-		# warm light on the pavement at every door you can walk through
+		var host: BuildingView = city.buildings[city.building_index(p.building)]
+		# warm light on the pavement at every door you can walk through, and
+		# the open door drawn in the wall so the entrance shows on the facade
 		for i in p.doors.size():
+			var side: Vector2 = p.doors[i].side
 			var pool := Sprite2D.new()
 			pool.texture = resolver.get_texture("fx/glow")
 			pool.material = DrawLayer.glow_material()
-			pool.scale = AssetCatalog.scale_for(pool.texture, Vector2(p.doors[i].width * 2.2, 44))
-			pool.rotation = (p.doors[i].side as Vector2).orthogonal().angle()
-			pool.position = p.outside_door(i, 12.0)
-			pool.modulate = Color(1.0, 0.72, 0.42, 0.42)
+			pool.scale = AssetCatalog.scale_for(pool.texture, Vector2(p.doors[i].width * 3.0, 64))
+			pool.rotation = side.orthogonal().angle()
+			pool.position = p.outside_door(i, 16.0)
+			pool.modulate = Color(1.0, 0.72, 0.42, 0.6)
 			pool.z_index = Layers.Z_LIGHT_POOL
 			add_child(pool)
+			var centre := p.door_centre(i) + side * InteriorPlan.WALL * 0.5
+			var along := side.orthogonal() * float(p.doors[i].width) * 0.5
+			host.add_doorway(centre - along, centre + along, side)
 		var view := InteriorView.new()
 		add_child(view)
-		view.setup(p, city.buildings[city.building_index(p.building)], resolver)
+		view.setup(p, host, resolver)
 		views.append(view)
 
 
@@ -73,6 +79,31 @@ func plan_at(p: Vector2) -> InteriorPlan:
 			if p.distance_to(ip.door_centre(i)) <= InteriorPlan.WALL + 10.0:
 				return ip
 	return null
+
+
+## The door within reach of p: {plan, index, outside (true: you are in the
+## street), prompt}, or {} when none. Inside, only the doors of your room.
+func door_at(p: Vector2, reach: float = 24.0) -> Dictionary:
+	for plan in layout.interiors:
+		var ip: InteriorPlan = plan
+		for i in ip.doors.size():
+			if p.distance_to(ip.outside_door(i, 10.0)) <= reach and not ip.contains(p):
+				return {"plan": ip, "index": i, "outside": true, "prompt": "Enter %s" % ip.name}
+			if ip == current and p.distance_to(ip.inside_door(i, 10.0)) <= reach:
+				return {"plan": ip, "index": i, "outside": false, "prompt": "Go out"}
+	return {}
+
+
+## Steps through a door (E at the door): just inside, or just outside.
+func step_through(walker: Walker, door: Dictionary) -> void:
+	var plan: InteriorPlan = door.plan
+	var side: Vector2 = plan.doors[door.index].side
+	if door.outside:
+		walker.place(plan.inside_door(door.index, 16.0), (-side).angle())
+	else:
+		walker.place(plan.outside_door(door.index, 18.0), side.angle())
+	walker.aim_point = walker.global_position + Vector2.from_angle(walker.model.facing) * 60.0
+	update_player(walker.global_position)
 
 
 func view_of(id: String) -> InteriorView:

@@ -22,11 +22,16 @@ var parapet_tex: Texture2D
 var fire_escape_tex: Texture2D
 ## {tex, lit, pos, size, rot, lift}
 var roof_items: Array = []
+## Doors you can walk through (M004), drawn as lit openings in the wall:
+## {a, b (ends on the wall line), n (the wall's outward normal)}.
+var doorways: Array = []
+const DOOR_HEIGHT := 31.0
 ## Slight per-building colour of the roofing.
 var roof_tint := Color.WHITE
 var eye := Vector2.ZERO
 var eye_height := 1500.0
 var _layers: Array[DrawLayer] = []
+var _wall_light: DrawLayer
 
 
 func setup(p_rect: Rect2, p_storeys: int, p_faces: Array, p_roof: Texture2D, p_parapet: Texture2D, items: Array) -> void:
@@ -41,7 +46,8 @@ func setup(p_rect: Rect2, p_storeys: int, p_faces: Array, p_roof: Texture2D, p_p
 		or roof_items.any(func(i: Dictionary) -> bool: return i.lit != null)
 	_layers.append(DrawLayer.new(_draw_walls, Layers.Z_WALL))
 	if has_lit:
-		_layers.append(DrawLayer.new(_draw_wall_light, Layers.Z_WALL_GLOW, true))
+		_wall_light = DrawLayer.new(_draw_wall_light, Layers.Z_WALL_GLOW, true)
+		_layers.append(_wall_light)
 	var roof := DrawLayer.new(_draw_roof, Layers.Z_ROOF + storeys, false, Layers.LIGHT_ROOF)
 	roof.self_modulate = Color(0.95, 0.95, 1.0)
 	_layers.append(roof)
@@ -49,6 +55,15 @@ func setup(p_rect: Rect2, p_storeys: int, p_faces: Array, p_roof: Texture2D, p_p
 		_layers.append(DrawLayer.new(_draw_roof_light, Layers.Z_ROOF + storeys, true))
 	for l in _layers:
 		add_child(l)
+
+
+## An open door at ground level between a and b in the wall facing n.
+func add_doorway(a: Vector2, b: Vector2, n: Vector2) -> void:
+	doorways.append({"a": a, "b": b, "n": n})
+	if _wall_light == null:
+		_wall_light = DrawLayer.new(_draw_wall_light, Layers.Z_WALL_GLOW, true)
+		_layers.append(_wall_light)
+		add_child(_wall_light)
 
 
 ## Footprint grown by how far the roof can lean out (for culling).
@@ -116,6 +131,26 @@ func _walls(ci: CanvasItem, light: bool) -> void:
 				var b1 := tone * lerpf(0.62, 1.0, minf(1.0, h1 / (st * 1.5)))
 				cols = PackedColorArray([Color(b0, b0, b0), Color(b0, b0, b0), Color(b1, b1, b1), Color(b1, b1, b1)])
 			ci.draw_polygon(pts, cols, uvs, tex)
+		for d in doorways:
+			if d.n == f.n:
+				_doorway(ci, d, light)
+
+
+## An open door in the ground storey: dark in the wall pass, a warm glow from
+## inside in the light pass, so the real entrance shows on the facade.
+func _doorway(ci: CanvasItem, d: Dictionary, light: bool) -> void:
+	var a: Vector2 = d.a
+	var b: Vector2 = d.b
+	var pts := PackedVector2Array([project(a, 0.0), project(b, 0.0), project(b, DOOR_HEIGHT), project(a, DOOR_HEIGHT)])
+	if light:
+		var warm := Color(1.0, 0.72, 0.4, 0.75)
+		var dim := Color(1.0, 0.6, 0.3, 0.25)
+		ci.draw_polygon(pts, PackedColorArray([warm, warm, dim, dim]))
+		return
+	var frame := PackedVector2Array([project(a - (b - a).normalized() * 3.0, 0.0), project(b + (b - a).normalized() * 3.0, 0.0),
+		project(b + (b - a).normalized() * 3.0, DOOR_HEIGHT + 3.0), project(a - (b - a).normalized() * 3.0, DOOR_HEIGHT + 3.0)])
+	ci.draw_polygon(frame, PackedColorArray([Color(0.3, 0.2, 0.13)]))
+	ci.draw_polygon(pts, PackedColorArray([Color(0.16, 0.1, 0.06)]))
 
 
 ## Iron fire-escape landings on the walls, one per upper storey: from above
