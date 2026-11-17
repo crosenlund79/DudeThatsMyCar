@@ -6,6 +6,7 @@ var main: Node2D
 var cmd := PlayerCommand.new()
 func _initialize() -> void:
 	main = load("res://src/main/main.tscn").instantiate()
+	main.save_path = ""
 	main.command_source = func(_c): return cmd
 	root.add_child(main)
 	_run.call_deferred()
@@ -19,7 +20,11 @@ func _measure(label: String) -> void:
 		frames += 1
 	print("%-28s fps %.1f  process %.1f ms" % [label, frames / 2.5, Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0])
 func _run() -> void:
-	await _measure("on foot")
+	await _measure("at home (start)")
+	main.walker.place(Vector2(2280, 330), 0.0)
+	await _measure("inside the Copper Owl")
+	main.walker.place(Vector2(2350, 600), 0.0)
+	await _measure("on foot, Marlowe Ave traffic")
 	var c: Car = main.cars[0]
 	main.walker.place(c.global_position + Vector2(0, -36), 0.0)
 	await process_frame

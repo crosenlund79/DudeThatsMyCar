@@ -111,6 +111,8 @@ func _process(delta: float) -> void:
 
 func _apply() -> void:
 	visible = alpha > 0.0
+	for w in people.values():
+		(w as Walker).active = visible  # nobody to see them move while you are outside
 	modulate = Color(1, 1, 1, alpha)
 	if host != null:
 		host.modulate = Color(1, 1, 1, 1.0 - alpha)

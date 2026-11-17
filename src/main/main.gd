@@ -337,9 +337,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().paused = paused
 		hud.set_paused(paused)
 	elif event.is_action_pressed(CityInput.QUIT) and paused:
+		save_game()
 		get_tree().quit()
 	elif event.is_action_pressed(CityInput.HELP):
 		hud.toggle_help()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		save_game()
 
 
 func _process(delta: float) -> void:

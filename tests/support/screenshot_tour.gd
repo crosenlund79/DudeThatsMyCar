@@ -2,7 +2,7 @@ extends SceneTree
 ## Renders the neighbourhood and saves screenshots (needs a display, e.g.
 ## xvfb-run; not part of the automated tests):
 ##   godot --path . -s tests/support/screenshot_tour.gd -- <output dir> [shot names...]
-## Shots: street (the starting view), walk (on foot by the roadster), drive
+## Shots: street (the M001 starting view at the streetcar stop), walk (on foot by the roadster), drive
 ## (driving down Marlowe Avenue), garage, river, alley, wide, shoot (firing at
 ## the Copper Owl, captured on the muzzle flash), beat / pursuit (the officer),
 ## story (the M002 sequence: shots, the officer, the getaway, the alley, lost
@@ -60,9 +60,12 @@ func _run(shots: Array) -> void:
 	for s in shots:
 		match s:
 			"street":
+				# the M001 / M002 starting view at the streetcar stop (since M003 the night begins at home: see "home")
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
 				await _frames(30)
 				await _shot("street")
 			"walk":
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
 				cmd = PlayerCommand.make(Vector2(0.45, 1.0).normalized(), false, false, Vector2(2425, 694))
 				await _frames(30)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2425, 694))
@@ -125,6 +128,18 @@ func _run(shots: Array) -> void:
 				await _frames(20)
 				await _shot("barber")
 				main.end_talk()
+			"augie":
+				_teleport_walker(Vector2(2240, 256), -PI / 2)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2240, 202))
+				await _frames(40)
+				main.rackets.bottles = 6
+				main.hud.set_purse(main.rackets.money, main.rackets.bottles)
+				main.start_talk("augie")
+				await _frames(10)
+				await _shot("augie")
+				main.end_talk()
+				main.rackets.bottles = 0
+				main.hud.set_purse(main.rackets.money, main.rackets.bottles)
 			"grocery":
 				_teleport_walker(Vector2(1921, 838), 0.0)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(1976, 838))
@@ -150,7 +165,7 @@ func _run(shots: Array) -> void:
 				await _shot("home")
 			"wake":
 				main.sleep()
-				await _frames(80)
+				await _frames(135)
 				await _shot("wake")
 			"traffic":
 				# M003: Marlowe Avenue with the evening's cars and passers-by

@@ -38,6 +38,8 @@ func test_keyboard_and_mouse_bindings() -> void:
 	var mouse := InputMap.action_get_events(CityInput.FIRE).filter(func(e: InputEvent) -> bool:
 		return e is InputEventMouseButton and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT)
 	assert_eq(mouse.size(), 1, "left mouse button is reserved for shooting")
+	for i in 4:
+		assert_has(_keys(CityInput.CHOICES[i]), KEY_1 + i, "M003: number keys answer when talking")
 
 
 func test_d_walks_right() -> void:
