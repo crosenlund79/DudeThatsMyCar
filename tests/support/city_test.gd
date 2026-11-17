@@ -6,8 +6,9 @@ const MAIN := preload("res://src/main/main.tscn")
 
 var main: Node2D
 var cmd := PlayerCommand.new()
-## One E press waiting to be read by the controller (delivered exactly once).
+## One E press / one click waiting to be read by the controller (each delivered exactly once).
 var _e_pending := false
+var _fire_pending := false
 
 
 func _source(_c: PlayerController) -> PlayerCommand:
@@ -15,12 +16,17 @@ func _source(_c: PlayerController) -> PlayerCommand:
 	if _e_pending:
 		out.interact = true
 		_e_pending = false
+	if _fire_pending:
+		out.fire_pressed = true
+		out.fire = true
+		_fire_pending = false
 	return out
 
 
 func before_each() -> void:
 	cmd = PlayerCommand.new()
 	_e_pending = false
+	_fire_pending = false
 	main = MAIN.instantiate()
 	main.command_source = _source
 	add_child_autofree(main)
@@ -128,3 +134,19 @@ func drive_route(c: Car, points: Array, cruise: float, max_ticks: int = 900) -> 
 		await wait_physics_frames(1)
 	cmd = PlayerCommand.new()
 	return max_ticks
+
+
+## One left click with the mouse over `aim` (the aim stays there afterwards).
+func click(aim: Vector2, move: Vector2 = Vector2.ZERO) -> void:
+	cmd = PlayerCommand.make(move, false, false, aim)
+	_fire_pending = true
+	for i in 10:
+		await wait_physics_frames(1)
+		if not _fire_pending:
+			break
+
+
+## Keeps the mouse over `aim` (and walks `move`) for n ticks.
+func aim_for(aim: Vector2, ticks: int, move: Vector2 = Vector2.ZERO) -> void:
+	cmd = PlayerCommand.make(move, false, false, aim)
+	await wait_physics_frames(ticks)

@@ -28,6 +28,12 @@ const SPECS := {
 		"notes": "Roadster, second paint scheme; same contract."},
 	"characters/gangster": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred."},
+	"characters/gangster_armed": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "The player with the pistol drawn: same frames, right arm reaching forward (the pistol is drawn separately)."},
+	"characters/police": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "Police officer: 5 frames like the player's, facing right, centred."},
+	"weapons/pistol": {"kind": "sprite", "template_size": Vector2i(48, 20), "display_size": Vector2(15, 6),
+		"notes": ".45 automatic from above, muzzle to the right; the left end sits in the hand."},
 	# Ground.
 	"city/asphalt": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Wet street asphalt."},
 	"city/sidewalk": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 192.0, "notes": "Concrete sidewalk slabs."},
@@ -93,6 +99,7 @@ const SPECS := {
 	"props/awning_red": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
 	"props/awning_green": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
 	"props/fire_escape": {"kind": "sprite", "template_size": Vector2i(128, 40), "display_size": Vector2(64, 20), "notes": "Iron fire-escape landing; wall side at the top."},
+	"props/call_box": {"kind": "sprite", "template_size": Vector2i(40, 40), "display_size": Vector2(18, 18), "notes": "Police call box on its post."},
 	"props/marquee": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Copper Owl canopy; wall side at the top."},
 	"props/marquee_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Canopy bulbs and lettering."},
 	"decals/manhole": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(24, 24), "notes": "Manhole cover."},
@@ -102,9 +109,15 @@ const SPECS := {
 	"decals/oil": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(52, 52), "notes": "Oil stain."},
 	# Effects (lights and particles).
 	"fx/steam": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(48, 48), "notes": "Steam / smoke puff."},
+	"fx/muzzle_flash": {"kind": "light", "template_size": Vector2i(64, 40), "display_size": Vector2(34, 21), "notes": "Muzzle flash; the muzzle is at the left edge, middle."},
+	"fx/tracer": {"kind": "light", "template_size": Vector2i(64, 8), "display_size": Vector2(48, 5), "notes": "Bullet streak; the bullet is at the right end."},
+	"fx/impact_dust": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(22, 22), "notes": "Brick dust where a bullet strikes a wall."},
+	"fx/spark": {"kind": "light", "template_size": Vector2i(32, 32), "display_size": Vector2(12, 12), "notes": "Spark where a bullet strikes."},
 	"fx/glow": {"kind": "light", "template_size": Vector2i(128, 128), "display_size": Vector2(128, 128), "notes": "Round warm glow (lamp halos, light spill)."},
 	"fx/reflection": {"kind": "light", "template_size": Vector2i(64, 192), "display_size": Vector2(22, 70), "notes": "Light reflected on wet ground; the light is at the top."},
 	# Interface.
+	"ui/alert": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(22, 22), "notes": "Over the officer: he has seen you."},
+	"ui/search": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(22, 22), "notes": "Over the officer: he is looking for you."},
 	"ui/crosshair": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(30, 30), "notes": "Mouse aim reticle (screen px)."},
 	"ui/panel": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(96, 96), "notes": "Nine-patch panel, 24 px margins."},
 }
@@ -115,6 +128,10 @@ const AUDIO := {
 	"vehicles/engine_load": {"loop": true, "bus": "Engine", "notes": "Engine load layer, louder while accelerating."},
 	"vehicles/tire_squeal": {"loop": true, "bus": "Effects", "notes": "Tyre squeal while sliding."},
 	"vehicles/impact_car": {"loop": false, "bus": "Effects", "notes": "Car hits car, under 1 s."},
+	"weapons/pistol_shot": {"loop": false, "bus": "Effects", "notes": "A .45 shot in a brick street, about 1 s with its echo."},
+	"weapons/pistol_reload": {"loop": false, "bus": "Effects", "notes": "Magazine out and in, slide racked."},
+	"weapons/bullet_impact": {"loop": false, "bus": "Effects", "notes": "A bullet striking brick."},
+	"police/whistle": {"loop": false, "bus": "Effects", "notes": "The officer's whistle when he spots you."},
 	"vehicles/impact_wall": {"loop": false, "bus": "Effects", "notes": "Car hits a wall or kerb object, under 1 s."},
 }
 

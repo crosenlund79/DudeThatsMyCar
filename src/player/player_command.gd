@@ -10,15 +10,18 @@ var aim := Vector2.ZERO
 var interact := false
 ## Space held (driving).
 var handbrake := false
-## Left mouse button held: reserved for shooting (no effect yet).
+## Left mouse button held, and clicked this tick (one shot per click).
 var fire := false
+var fire_pressed := false
 
 
 static func make(p_move: Vector2 = Vector2.ZERO, p_interact: bool = false, p_handbrake: bool = false,
-		p_aim: Vector2 = Vector2.ZERO) -> PlayerCommand:
+		p_aim: Vector2 = Vector2.ZERO, p_fire_pressed: bool = false) -> PlayerCommand:
 	var c := PlayerCommand.new()
 	c.move = p_move
 	c.interact = p_interact
 	c.handbrake = p_handbrake
 	c.aim = p_aim
+	c.fire_pressed = p_fire_pressed
+	c.fire = p_fire_pressed
 	return c

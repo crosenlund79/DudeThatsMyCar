@@ -11,6 +11,11 @@ signal entered_car(car: Car)
 signal exited_car(car: Car)
 ## A short message for the player ("No room to get out here.").
 signal notice(text: String)
+## The player fired (muzzle position, direction). Anyone who cares about
+## gunfire (the presentation, the police) listens to this.
+signal fired(muzzle: Vector2, direction: Vector2)
+## Other gun moments for sound and HUD: "drawn", "reload", "reloaded", "holstered".
+signal gun_event(event: String, at: Vector2)
 
 ## How close (px from the car's body) the player must be to get in.
 const ENTER_RANGE := 26.0
@@ -22,6 +27,8 @@ const EXIT_SPEED := 40.0
 var walker: Walker
 var cars: Array[Car] = []
 var city: City
+## Where the player's bullets fly (set by the game; null: the gun cannot fire).
+var bullets: BulletWorld
 ## Car being driven (null on foot).
 var car: Car = null
 ## Supplies the command each tick: func(controller) -> PlayerCommand.
@@ -65,6 +72,27 @@ func _walk(cmd: PlayerCommand) -> void:
 		var c := enterable_car()
 		if c != null:
 			enter(c)
+			return
+	if walker.gun == null:
+		return
+	if cmd.fire_pressed:
+		walker.gun.trigger()
+	for e in walker.gun.step(Car.FIXED_STEP):
+		if e == "fired":
+			_shoot(cmd.aim)
+		else:
+			gun_event.emit(e, walker.global_position)
+
+
+## Fires towards the aim point (straight ahead when the aim is on top of the gangster).
+func _shoot(aim: Vector2) -> void:
+	var muzzle := walker.muzzle_position()
+	var dir := aim - muzzle
+	if aim.distance_to(walker.global_position) < walker.gun.rules.muzzle_offset.length() + 4.0 or dir.length() < 1.0:
+		dir = Vector2.from_angle(walker.model.facing)
+	if bullets != null:
+		bullets.fire(walker.global_position, muzzle, dir, walker.gun.rules, [walker.get_rid()])
+	fired.emit(muzzle, dir.normalized())
 
 
 func _drive(cmd: PlayerCommand) -> void:
@@ -111,6 +139,8 @@ func enter(c: Car) -> void:
 	leaving = false
 	c.driven = true
 	c.clear_command()
+	if walker.gun != null:
+		walker.gun.holster()
 	walker.active = false
 	walker.visible = false
 	walker.velocity = Vector2.ZERO
@@ -151,8 +181,8 @@ func spot_clear(p: Vector2, from_car: Car) -> bool:
 	circle.radius = Walker.RADIUS + 1.0
 	q.shape = circle
 	q.transform = Transform2D(0.0, p)
-	q.collision_mask = Layers.WORLD | Layers.CARS
-	q.exclude = [from_car.get_rid()]
+	q.collision_mask = Layers.WORLD | Layers.CARS | Layers.PEOPLE
+	q.exclude = [from_car.get_rid(), walker.get_rid()]
 	if not space.intersect_shape(q, 1).is_empty():
 		return false
 	var ray := PhysicsRayQueryParameters2D.create(from_car.global_position, p, Layers.WORLD)

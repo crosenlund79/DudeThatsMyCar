@@ -1,7 +1,7 @@
 class_name CityInput
 extends RefCounted
 ## Keyboard and mouse controls. On foot: WASD walk, the mouse aims, the left
-## button is reserved for shooting, E interacts / gets into a car. Driving:
+## button shoots, E interacts / gets into a car. Driving:
 ## W accelerate, S brake / reverse, A / D steer, Space handbrake, E get out.
 ## Arrow keys mirror WASD. Esc pauses, F1 shows the controls.
 ## Actions are created here unless the project already defines them.
@@ -48,4 +48,5 @@ static func read(aim: Vector2) -> PlayerCommand:
 	c.interact = Input.is_action_just_pressed(INTERACT)
 	c.handbrake = Input.is_action_pressed(HANDBRAKE)
 	c.fire = Input.is_action_pressed(FIRE)
+	c.fire_pressed = Input.is_action_just_pressed(FIRE)
 	return c

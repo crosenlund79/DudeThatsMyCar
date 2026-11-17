@@ -407,6 +407,114 @@ def fire_escape():
     return finish(img, w, h)
 
 
+def pistol():
+    """A .45 automatic seen from above, muzzle to the right; the grip end (left) sits in the hand."""
+    w, h = 48, 20
+    img = new(w, h)
+    soft_blob(img, S(26), S(12), S(20), S(5), "#000000", 70, 1.5 * SS)
+    paint_shape(img, SP(rrect_pts(6, 6, 44, 13, 1.5)), "#3a3f47", 1, outline=OUT, ow=1.1, wob=0.1, tex=0.15,
+                light=(0, -1, 0.7))
+    line(img, [(S(10), S(7.5)), (S(42), S(7.5))], "#8d96a3", 1.0 * SS, 230, blur=0.15)  # light on the slide
+    for x in range(10, 20, 2):
+        line(img, [(S(x), S(6.5)), (S(x), S(12.5))], "#23272c", 0.7 * SS, 220, blur=0.05)  # slide serrations
+    paint_shape(img, SP(rrect_pts(2, 7, 9, 12, 1)), "#5a3a24", 2, outline=OUT, ow=0.9, wob=0.1, tex=0.2)  # grip / hammer end
+    paint_shape(img, SP(ellipse_pts(44.5, 9.5, 1.2, 1.4)), "#0b0b0d", 3, outline=None, wob=0.02)  # muzzle
+    return finish(img, w, h)
+
+
+def muzzle_flash():
+    """Additive flash: a hot core at the left (the muzzle) and a forward cone of fire."""
+    w, h = 64, 40
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    u = xx / w
+    v = (yy - h / 2) / (h / 2)
+    cone = np.clip(1.0 - np.abs(v) / (0.15 + 0.9 * u), 0, 1) * np.clip(1.0 - u, 0, 1) ** 0.8
+    core = np.clip(1.0 - np.hypot((xx - 6) / 10.0, (yy - h / 2) / 9.0), 0, 1) ** 1.5
+    star = np.zeros_like(cone)
+    for ang in (-0.9, -0.45, 0.45, 0.9):
+        dx, dy = math.cos(ang), math.sin(ang)
+        dist = np.abs((xx - 6) * dy - (yy - h / 2) * dx)
+        along = (xx - 6) * dx + (yy - h / 2) * dy
+        star += np.clip(1.0 - dist / 1.6, 0, 1) * np.clip(1.0 - along / 22.0, 0, 1) * (along > 0)
+    a = np.clip(cone * 0.9 + core + star * 0.6, 0, 1)
+    out = np.zeros((h, w, 4), dtype=np.uint8)
+    out[..., 0] = 255
+    out[..., 1] = np.clip(170 + 85 * core, 0, 255).astype(np.uint8)
+    out[..., 2] = np.clip(70 + 150 * core, 0, 255).astype(np.uint8)
+    out[..., 3] = (a * 255).astype(np.uint8)
+    return Image.fromarray(out, "RGBA")
+
+
+def tracer():
+    """A bullet's streak (additive): bright head at the right, fading tail."""
+    w, h = 64, 8
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    along = (xx / w) ** 1.8
+    across = np.clip(1.0 - np.abs(yy - (h - 1) / 2) / (h / 2), 0, 1) ** 1.5
+    a = along * across
+    out = np.zeros((h, w, 4), dtype=np.uint8)
+    out[..., 0] = 255
+    out[..., 1] = 226
+    out[..., 2] = 160
+    out[..., 3] = (np.clip(a, 0, 1) * 255).astype(np.uint8)
+    return Image.fromarray(out, "RGBA")
+
+
+def impact_dust():
+    """Brick dust and grit knocked off a wall (normal-blended sprite)."""
+    w = h = 48
+    img = new(w, h)
+    rnd = random.Random(11)
+    for k in range(6):
+        soft_blob(img, S(24 + rnd.uniform(-7, 7)), S(24 + rnd.uniform(-7, 7)), S(rnd.uniform(5, 10)), S(rnd.uniform(4, 8)),
+                  rnd.choice(["#b98a6a", "#a07560", "#c7a58a"]), rnd.randint(110, 170), 2.5 * SS)
+    for k in range(14):
+        x, y = 24 + rnd.uniform(-16, 16), 24 + rnd.uniform(-16, 16)
+        paint_shape(img, SP(ellipse_pts(x, y, rnd.uniform(0.8, 1.8), rnd.uniform(0.6, 1.4))), rnd.choice(["#5a3528", "#7a4a36"]),
+                    k + 5, outline=None, wob=0.1)
+    return finish(img, w, h)
+
+
+def spark():
+    """A small spark star (additive): bullets striking metal or stone."""
+    w = h = 32
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    dx, dy = xx - 15.5, yy - 15.5
+    r = np.hypot(dx, dy)
+    a = np.clip(1.0 - r / 5.0, 0, 1) ** 1.2
+    for ang in np.linspace(0, math.pi, 4, endpoint=False):
+        dist = np.abs(dx * math.sin(ang) - dy * math.cos(ang))
+        a += np.clip(1.0 - dist / 1.1, 0, 1) * np.clip(1.0 - r / 15.0, 0, 1)
+    out = np.zeros((h, w, 4), dtype=np.uint8)
+    out[..., 0] = 255
+    out[..., 1] = 230
+    out[..., 2] = 150
+    out[..., 3] = (np.clip(a, 0, 1) * 255).astype(np.uint8)
+    return Image.fromarray(out, "RGBA")
+
+
+def badge(symbol, color):
+    """A small painted badge floating over a character: '!' noticed, '?' searching."""
+    w = h = 48
+    img = new(w, h)
+    soft_blob(img, S(25), S(27), S(15), S(15), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(ellipse_pts(24, 24, 15, 15)), color, 1, outline=OUT, ow=1.8, wob=0.4, tex=0.12, light=(0.3, -1, 0.5))
+    paint_shape(img, SP(ellipse_pts(24, 24, 11.5, 11.5)), shade(color, 1.18), 2, outline=None, wob=0.3, tex=0.1)
+    text(img, (24, 25.5), symbol, 21, "#2a1610", font=DECO)
+    return finish(img, w, h)
+
+
+def call_box():
+    """A police call box on its post (Chicago 'Police Telegraph'), seen from above."""
+    w = h = 40
+    img = new(w, h)
+    soft_blob(img, S(22), S(23), S(13), S(12), "#000000", 100, 2 * SS)
+    paint_shape(img, SP(rrect_pts(9, 9, 31, 31, 3)), "#2d3d5c", 1, outline=OUT, ow=1.4, wob=0.25, tex=0.2, light=(0.4, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(13, 13, 27, 27, 2)), "#22304a", 2, outline=OUT, ow=1.0, wob=0.2, tex=0.2)
+    paint_shape(img, SP(ellipse_pts(20, 20, 3.4, 3.4)), "#d9b45a", 3, outline=OUT, ow=0.8, wob=0.05, light=(0.4, -1, 0.6))
+    return finish(img, w, h)
+
+
 # ---------------------------------------------------------------- roof signs
 
 def copper_owl_sign():
@@ -542,6 +650,14 @@ ASSETS = {
     "props/awning_green": lambda: awning("#2f5a3e", "#e4dcc4", 2),
     "props/marquee": marquee,
     "props/fire_escape": fire_escape,
+    "props/call_box": call_box,
+    "weapons/pistol": pistol,
+    "fx/muzzle_flash": muzzle_flash,
+    "fx/tracer": tracer,
+    "fx/impact_dust": impact_dust,
+    "fx/spark": spark,
+    "ui/alert": lambda: badge("!", "#e8a23c"),
+    "ui/search": lambda: badge("?", "#c9b98a"),
     "decals/manhole": manhole,
     "decals/drain": drain,
     "decals/puddle": puddle,

@@ -11,7 +11,7 @@ const COPPER := Color("d8a060")
 const DIM := Color("f1e4c6", 0.65)
 ## px per second -> miles per hour (one world px is about 7.5 cm of street).
 const MPH_PER_PX := 0.168
-const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nE   get in a car\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nF1   this card      Esc   pause"
+const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   get in a car\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nF1   this card      Esc   pause"
 
 var resolver: AssetResolver
 var place_label: Label
@@ -20,6 +20,8 @@ var prompt: PanelContainer
 var prompt_label: Label
 var car_panel: PanelContainer
 var car_label: Label
+var gun_panel: PanelContainer
+var gun_label: Label
 var notice_label: Label
 var help_panel: PanelContainer
 var pause_panel: PanelContainer
@@ -50,6 +52,10 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	car_label = _label("", 18, CREAM)
 	car_panel.add_child(car_label)
 	car_panel.visible = false
+	gun_panel = _panel(Vector2.ZERO)
+	gun_label = _label("", 18, CREAM)
+	gun_panel.add_child(gun_label)
+	gun_panel.visible = false
 	notice_label = _label("", 20, Color("ffd9a0"))
 	notice_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	notice_label.add_theme_constant_override("outline_size", 6)
@@ -105,6 +111,20 @@ func show_notice(text: String) -> void:
 func toggle_help() -> void:
 	help_panel.visible = not help_panel.visible
 	_help_left = -1.0
+
+
+## The handgun readout (bottom right, while it is drawn): rounds left, or reloading.
+func show_gun(gun: Gun) -> void:
+	gun_panel.visible = gun != null and gun.is_drawn()
+	if not gun_panel.visible:
+		return
+	if gun.is_reloading():
+		gun_label.text = "%s   reloading..." % gun.rules.display_name
+	else:
+		gun_label.text = "%s   %d / %d" % [gun.rules.display_name, gun.ammo, gun.rules.magazine]
+	var screen := get_viewport().get_visible_rect().size
+	gun_panel.reset_size()
+	gun_panel.position = Vector2(screen.x - gun_panel.size.x - 18, screen.y - gun_panel.size.y - 18)
 
 
 func set_paused(on: bool) -> void:

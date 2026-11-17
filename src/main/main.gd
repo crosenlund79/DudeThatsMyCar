@@ -25,6 +25,10 @@ var player: PlayerController
 var camera: CityCamera
 var hud: Hud
 var vehicle_audio: VehicleAudio
+var bullets: BulletWorld
+var gunfire: GunfireView
+## The player's handgun.
+@export var gun_rules: GunRules = preload("res://src/weapons/default_pistol.tres")
 var paused := false
 
 
@@ -40,7 +44,7 @@ func _ready() -> void:
 	add_child(city)
 	city.build(layout, resolver)
 	_park_cars()
-	walker = Walker.create(resolver)
+	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
 	walker.place(layout.spawn, layout.spawn_facing)
 	walker.aim_point = layout.spawn + Vector2.from_angle(layout.spawn_facing) * 60.0
@@ -55,6 +59,16 @@ func _ready() -> void:
 	player.command_source = command_source
 	add_child(player)
 	player.setup(walker, cars, city)
+	bullets = BulletWorld.new()
+	bullets.name = "Bullets"
+	add_child(bullets)
+	player.bullets = bullets
+	gunfire = GunfireView.new()
+	add_child(gunfire)
+	gunfire.setup(resolver, bullets)
+	player.fired.connect(gunfire.on_fired)
+	player.gun_event.connect(gunfire.on_gun_event)
+	bullets.impact.connect(gunfire.on_impact)
 	vehicle_audio = VehicleAudio.new()
 	add_child(vehicle_audio)
 	vehicle_audio.setup(resolver)
@@ -67,7 +81,7 @@ func _ready() -> void:
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, walker, camera, player, vehicle_audio] + cars:
+	for node in [city, walker, camera, player, vehicle_audio, bullets, gunfire] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -130,3 +144,4 @@ func _update_view(delta: float) -> void:
 	var focus := player.body().global_position
 	hud.refresh(delta, layout.place_name(focus), prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)
+	hud.show_gun(walker.gun if player.on_foot() else null)

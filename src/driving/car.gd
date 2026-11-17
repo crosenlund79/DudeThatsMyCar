@@ -67,6 +67,12 @@ func clear_command() -> void:
 	handbrake = false
 
 
+## A bullet struck the car: a tiny nudge (the sparks and sound are presentation).
+func hit_by_bullet(_at: Vector2, direction: Vector2) -> void:
+	if model != null:
+		model.velocity += direction.normalized() * 4.0
+
+
 func speed() -> float:
 	return model.velocity.length() if model != null else 0.0
 
