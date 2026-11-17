@@ -9,10 +9,14 @@ var cmd := PlayerCommand.new()
 ## One E press / one click waiting to be read by the controller (each delivered exactly once).
 var _e_pending := false
 var _fire_pending := false
+var _choice_pending := 0
 
 
 func _source(_c: PlayerController) -> PlayerCommand:
 	var out := PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim)
+	if _choice_pending > 0:
+		out.choice = _choice_pending
+		_choice_pending = 0
 	if _e_pending:
 		out.interact = true
 		_e_pending = false
@@ -27,8 +31,10 @@ func before_each() -> void:
 	cmd = PlayerCommand.new()
 	_e_pending = false
 	_fire_pending = false
+	_choice_pending = 0
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.save_path = ""  # never touch the player's real save
 	add_child_autofree(main)
 	await wait_physics_frames(2)
 
@@ -134,6 +140,39 @@ func drive_route(c: Car, points: Array, cruise: float, max_ticks: int = 900) -> 
 		await wait_physics_frames(1)
 	cmd = PlayerCommand.new()
 	return max_ticks
+
+
+## Presses answer key n (1-4) once while talking.
+func answer(n: int) -> void:
+	cmd = PlayerCommand.new()
+	_choice_pending = n
+	for i in 10:
+		await wait_physics_frames(1)
+		if _choice_pending == 0:
+			break
+	await wait_physics_frames(1)
+
+
+## Answers with the option whose id is `id` on the page on screen (fails the test if absent).
+func answer_with(id: String) -> void:
+	var opts: Array = main._page.get("options", [])
+	for i in opts.size():
+		if opts[i].id == id:
+			await answer(i + 1)
+			return
+	fail_test("no answer '%s' on the page (%s)" % [id, opts.map(func(o: Dictionary) -> String: return o.id)])
+
+
+## Walks up to a person's talk spot inside a room and presses E.
+func talk_to(plan_id: String, person_id: String) -> void:
+	var plan: InteriorPlan = main.interiors.view_of(plan_id).plan
+	var spot := {}
+	for s in plan.spots:
+		if s.id == person_id:
+			spot = s
+	walker().place(spot.pos, 0.0)
+	await wait_physics_frames(3)
+	await press_e()
 
 
 ## One left click with the mouse over `aim` (the aim stays there afterwards).

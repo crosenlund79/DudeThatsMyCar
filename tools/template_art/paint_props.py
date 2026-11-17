@@ -548,6 +548,20 @@ def hotel_sign():
     return {"signs/hotel": finish(img, w, h), "signs/hotel_lit": finish(glow_from(lit, 5 * SS, 0.9), w, h)}
 
 
+def barber_pole():
+    """A barber's pole on its wall bracket, seen from above: the striped glass cylinder's cap."""
+    w = h = 32
+    img = new(w, h)
+    soft_blob(img, S(17), S(17), S(11), S(11), "#000000", 80, 2 * SS)
+    paint_shape(img, SP(ellipse_pts(16, 16, 10, 10)), "#e8e2d4", 1, outline=OUT, ow=1.2, wob=0.1, light=(0.4, -1, 0.5))
+    for k in range(3):
+        a0 = k * 2 * math.pi / 3
+        pts = [(16, 16)] + [(16 + math.cos(a0 + t) * 9, 16 + math.sin(a0 + t) * 9) for t in np.linspace(0, 0.9, 6)]
+        paint_shape(img, SP(pts), "#b22a24" if k != 1 else "#2a4a9a", 2 + k, outline=None, wob=0.05)
+    paint_shape(img, SP(ellipse_pts(16, 16, 4, 4)), "#d6d9db", 6, outline=OUT, ow=0.8, wob=0.05, light=(0.4, -1, 0.6))
+    return finish(img, w, h)
+
+
 def painted_roof_sign(name, words, size, w, h, col="#e8e0c8"):
     img = new(w, h)
     layer = new(w, h)
@@ -672,6 +686,8 @@ ASSETS = {
     "signs/copper_owl": copper_owl_sign,
     "signs/hotel": hotel_sign,
     "signs/garage": lambda: painted_roof_sign("garage", "DOYLE'S GARAGE", 20, 256, 64),
+    "signs/barber": lambda: painted_roof_sign("barber", "SAL'S BARBER SHOP", 17, 256, 64),
+    "props/barber_pole": barber_pole,
     "signs/cold_storage": lambda: painted_roof_sign("cold_storage", "LAKESHORE COLD STORAGE", 17, 384, 64),
     "fx/steam": steam,
     "fx/glow": glow,

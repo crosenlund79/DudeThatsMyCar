@@ -28,6 +28,8 @@ POLICE = {"coat": "#36508c", "coat_light": "#4d69ad", "trouser": "#24304f", "hat
 # "front": "tie" | "buttons" | "bowtie" | "pearls" | "apron" | "plain".
 BARTENDER = {"coat": "#24211f", "coat_light": "#3a3633", "arm": "#e8e3d6", "trouser": "#1c1c1f", "hat": "hair",
              "hat_color": "#24170f", "stripes": False, "front": "bowtie"}
+BARBER = {"coat": "#e9e5da", "coat_light": "#f7f4ec", "trouser": "#2c2a2a", "hat": "hair", "hat_color": "#8a8580",
+          "stripes": False, "front": "plain"}
 PATRON_MAN = {"coat": "#1b1b20", "coat_light": "#34343c", "trouser": "#16161a", "hat": "hair", "hat_color": "#6a4c32",
               "stripes": False, "front": "bowtie"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
@@ -173,5 +175,6 @@ ASSETS = {
     "characters/police": lambda: sheet(POLICE),
     "characters/bartender": lambda: sheet(BARTENDER),
     "characters/patron_man": lambda: sheet(PATRON_MAN),
+    "characters/barber": lambda: sheet(BARBER),
     "characters/patron_woman": lambda: sheet(PATRON_WOMAN),
 }

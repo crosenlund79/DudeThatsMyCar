@@ -19,6 +19,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `cars/sedan` | `custom/graphics/cars/sedan.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, top-down, nose right, centred, transparent background. |
 | `cars/sedan_b` | `custom/graphics/cars/sedan_b.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, second paint scheme; same contract. |
 | `cars/wheel` | `custom/graphics/cars/wheel.png` | 48x20 | sprite (image, scaled to its display size) | 14x6 | Front tyre (whitewall) from above, rolling direction left-right; drawn under the body on both sides and turned with the steering (car bodies leave the front tyres out). |
+| `characters/barber` | `custom/graphics/characters/barber.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Sal the barber in his white coat. |
 | `characters/bartender` | `custom/graphics/characters/bartender.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Augie the bartender: white sleeves, black vest, bow tie; frames like the player's. |
 | `characters/gangster` | `custom/graphics/characters/gangster.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred. |
 | `characters/gangster_armed` | `custom/graphics/characters/gangster_armed.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | The player with the pistol drawn: same frames, right arm reaching forward (the pistol is drawn separately). |
@@ -67,14 +68,21 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/back_bar` | `custom/graphics/interiors/back_bar.png` | 420x42 | sprite (image, scaled to its display size) | 180x18 | Shelves of bottles behind the bar. |
 | `interiors/bandstand` | `custom/graphics/interiors/bandstand.png` | 128x240 | sprite (image, scaled to its display size) | 60x112 | Bandstand along a wall (right edge), curved front to the left. |
 | `interiors/bar_counter` | `custom/graphics/interiors/bar_counter.png` | 420x56 | sprite (image, scaled to its display size) | 180x24 | The Copper Owl's bar; customers along the bottom edge. |
+| `interiors/barber_chair` | `custom/graphics/interiors/barber_chair.png` | 72x56 | sprite (image, scaled to its display size) | 32x25 | Barber chair, the sitter facing right. |
+| `interiors/barber_counter` | `custom/graphics/interiors/barber_counter.png` | 336x44 | sprite (image, scaled to its display size) | 150x20 | Mirror and marble counter with tonics. |
+| `interiors/bench` | `custom/graphics/interiors/bench.png` | 160x40 | sprite (image, scaled to its display size) | 70x18 | Waiting bench with a newspaper. |
+| `interiors/cabinet` | `custom/graphics/interiors/cabinet.png` | 64x52 | sprite (image, scaled to its display size) | 30x24 | Tall cupboard (Sal keeps the rye in it). |
+| `interiors/coat_rack` | `custom/graphics/interiors/coat_rack.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Coat stand with two coats. |
 | `interiors/door` | `custom/graphics/interiors/door.png` | 64x12 | sprite (image, scaled to its display size) | 28x5 | Door leaf from above; hinge at the left end (stretched to the doorway). |
 | `interiors/floor_parquet` | `custom/graphics/interiors/floor_parquet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Oak parquet (the Copper Owl). |
+| `interiors/floor_tile` | `custom/graphics/interiors/floor_tile.png` | 128x128 | tile (seamless in both directions) | 64 px per repeat | Black-and-cream checkerboard tile (the barbershop). |
 | `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
 | `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
 | `interiors/stool` | `custom/graphics/interiors/stool.png` | 36x36 | sprite (image, scaled to its display size) | 14x14 | Bar stool. |
 | `interiors/table_club` | `custom/graphics/interiors/table_club.png` | 128x128 | sprite (image, scaled to its display size) | 56x56 | Round club table with lamp and three chairs, centred. |
 | `props/awning_green` | `custom/graphics/props/awning_green.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
 | `props/awning_red` | `custom/graphics/props/awning_red.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
+| `props/barber_pole` | `custom/graphics/props/barber_pole.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Barber's pole beside the shop door. |
 | `props/barrel` | `custom/graphics/props/barrel.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | Barrel. |
 | `props/barricade` | `custom/graphics/props/barricade.png` | 192x64 | sprite (image, scaled to its display size) | 96x32 | Street-closed sawhorse. |
 | `props/call_box` | `custom/graphics/props/call_box.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Police call box on its post. |
@@ -104,6 +112,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `roofs/steel` | `custom/graphics/roofs/steel.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Riveted steel deck (raised bridge). |
 | `roofs/tar` | `custom/graphics/roofs/tar.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Tar-paper flat roof. |
 | `roofs/tin` | `custom/graphics/roofs/tin.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Corrugated sheet roof. |
+| `signs/barber` | `custom/graphics/signs/barber.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
 | `signs/cold_storage` | `custom/graphics/signs/cold_storage.png` | 384x64 | sprite (image, scaled to its display size) | 220x37 | Painted roof lettering, transparent. |
 | `signs/copper_owl` | `custom/graphics/signs/copper_owl.png` | 256x128 | sprite (image, scaled to its display size) | 150x75 | Copper Owl rooftop sign. |
 | `signs/copper_owl_lit` | `custom/graphics/signs/copper_owl_lit.png` | 256x128 | light (additive night light; transparent where dark) | 150x75 | Copper Owl neon. |

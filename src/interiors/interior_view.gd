@@ -191,9 +191,20 @@ func _floor(t: Texture2D) -> void:
 		x += chunk
 
 
-## The closed rest of the house: dark, like the inside of a wall.
+## The closed rest of the house keeps its roof (drawn flat; you stand right
+## under it), with a dark edge where the cut runs.
 func _draw_base(ci: CanvasItem) -> void:
-	ci.draw_rect(plan.building_rect, CUT_COLOR)
+	var r := plan.building_rect
+	if host == null or host.roof_tex == null:
+		ci.draw_rect(r, CUT_COLOR)
+		return
+	var pts := City.rect_points(r)
+	var uvs := PackedVector2Array()
+	for p in pts:
+		uvs.append(p / 256.0)
+	var tint := host.roof_tint * Color(0.62, 0.62, 0.7)
+	ci.draw_polygon(pts, PackedColorArray([tint]), uvs, host.roof_tex)
+	ci.draw_rect(r.grow(-2.0), CUT_COLOR, false, 4.0)
 
 
 ## A soft shadow along the foot of every wall, so the walls read as standing up.

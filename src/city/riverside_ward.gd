@@ -163,7 +163,8 @@ func _central_rows() -> void:
 	# Facing Marlowe Avenue from the north: shops, the Copper Owl.
 	_row(131, 439, 168, [
 		[260, 3, "brick_brown", "tar", {"awning": "red"}], [190, 2, "brick_brown", "gravel", {"awning": "green"}], [24],
-		[300, 4, "brick_red", "tar"], [220, 2, "brick_brown", "tar", {"awning": "red"}], [394, 3, "greystone", "gravel"]])
+		[300, 4, "brick_red", "tar"], [220, 2, "brick_brown", "tar", {"awning": "red", "name": "Sal's Barber Shop"}],
+		[394, 3, "greystone", "gravel"]])
 	_row(1781, 439, 168, [
 		[200, 3, "brick_brown", "tar"], [170, 2, "brick_brown", "gravel", {"awning": "red"}],
 		[280, 3, "club", "tar", {"name": "The Copper Owl", "marquee": true}], [24],
@@ -312,6 +313,7 @@ func _street_furniture() -> void:
 	_sign("The Copper Owl", "signs/copper_owl", 26.0, 44.0)
 	_sign("Hotel Marlowe", "signs/hotel", 22.0, 30.0)
 	_sign("Doyle's Garage", "signs/garage", 0.0, 60.0)
+	_sign("Sal's Barber Shop", "signs/barber", 0.0, 34.0)
 	_sign("Lakeshore Cold Storage", "signs/cold_storage", 0.0, 120.0)
 	# Awnings and the club canopy hang over the sidewalk.
 	for b in d.buildings:

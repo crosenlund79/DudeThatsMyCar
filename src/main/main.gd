@@ -14,6 +14,8 @@ const VEHICLES := {
 var command_source: Callable
 ## Override folder for replaceable art (tests); "" = the normal custom/ folder.
 var override_root := ""
+## Where progress is saved ("" = never; tests and screenshots).
+var save_path := SaveGame.DEFAULT_PATH
 
 var resolver: AssetResolver
 var settings: AudioSettings
@@ -33,7 +35,14 @@ var officer: PoliceOfficer
 @export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
 ## The player's handgun.
 @export var gun_rules: GunRules = preload("res://src/weapons/default_pistol.tres")
+## Prices and nightly limits of the bootleg trade and the protection racket.
+@export var economy_rules: EconomyRules = preload("res://src/economy/default_economy.tres")
 var paused := false
+var rackets: Rackets
+var talk: Conversations
+## Who the player is talking to ("" = nobody) and the page on screen.
+var talking := ""
+var _page := {}
 
 
 func _ready() -> void:
@@ -42,6 +51,9 @@ func _ready() -> void:
 	settings.load_settings()
 	settings.apply()
 	resolver = AssetResolver.new(override_root)
+	rackets = Rackets.new(economy_rules)
+	talk = Conversations.new(rackets)
+	_load_game()
 	layout = RiversideWard.create()
 	city = City.new()
 	city.name = "City"
@@ -90,6 +102,9 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(resolver, layout.name)
 	player.interaction = _interact
+	player.conversation = _converse
+	hud.dialogue_choice.connect(_answer)
+	hud.set_purse(rackets.money, rackets.bottles)
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
 	player.notice.connect(hud.show_notice)
@@ -147,17 +162,78 @@ func _interact(_at: Vector2) -> bool:
 	var spot := _spot()
 	if spot.is_empty():
 		return false
-	var plan := interiors.current
-	var view := interiors.view_of(plan.id)
-	var who := plan.person(spot.id)
-	if not who.is_empty():
-		view.face(spot.id, walker.global_position)
-		hud.show_notice("%s: \"Evening. What'll it be?\"" % who.name)
+	if not interiors.current.person(spot.id).is_empty():
+		start_talk(spot.id)
 	return true
 
 
+func start_talk(who: String) -> void:
+	talking = who
+	interiors.view_of(interiors.current.id).face(who, walker.global_position)
+	_show(talk.open(who, _talk_context()))
+
+
+func _talk_context() -> Dictionary:
+	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn()}
+
+
+func _show(page: Dictionary) -> void:
+	if page.is_empty():
+		end_talk()
+		return
+	_page = page
+	hud.show_dialogue(page)
+
+
+## While talking, the player's keys answer (1-4) or walk away (E).
+func _converse(cmd: PlayerCommand) -> bool:
+	if talking == "":
+		return false
+	if cmd.choice > 0:
+		_answer(cmd.choice - 1)
+	elif cmd.interact:
+		end_talk()
+	return true
+
+
+## Picks answer i (0-based) on the page on screen.
+func _answer(i: int) -> void:
+	if talking == "" or i < 0 or i >= (_page.options as Array).size():
+		return
+	var next := talk.choose(talking, _page.options[i].id, _talk_context())
+	_apply(next.get("effects", {}))
+	hud.set_purse(rackets.money, rackets.bottles)
+	save_game()
+	_show(next)
+
+
+## Effects of a conversation outside the money (police, rounds).
+func _apply(_effects: Dictionary) -> void:
+	pass
+
+
+func end_talk() -> void:
+	talking = ""
+	_page = {}
+	hud.hide_dialogue()
+	for v in interiors.views:
+		v.face_home()
+
+
+func save_game() -> void:
+	SaveGame.write(save_path, {"rackets": rackets.to_dict()})
+
+
+func _load_game() -> void:
+	var data := SaveGame.read(save_path)
+	if data.has("rackets"):
+		rackets.from_dict(data.rackets)
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(CityInput.MENU):
+	if event.is_action_pressed(CityInput.MENU) and talking != "":
+		end_talk()
+	elif event.is_action_pressed(CityInput.MENU):
 		paused = not paused
 		get_tree().paused = paused
 		hud.set_paused(paused)

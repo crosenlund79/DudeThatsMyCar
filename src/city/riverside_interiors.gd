@@ -7,6 +7,9 @@ extends RefCounted
 
 static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(copper_owl(d))
+	d.interiors.append(barber_shop(d))
+	# the barber's pole beside Sal's door
+	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 447), "rot": 0.0, "height": 0.0, "radius": 4.0})
 
 
 ## The Copper Owl supper club: the bar along the back wall with Augie behind
@@ -50,5 +53,36 @@ static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 	]
 	p.spots = [
 		{"id": "augie", "pos": Vector2(2240, 252), "radius": 34.0, "prompt": "Talk to Augie"},
+	]
+	return p
+
+
+## Sal's Barber Shop, a block west of the club on Marlowe Avenue: two chairs
+## before the mirror, a waiting bench, and the cupboard where Sal keeps the
+## bootleg rye the Copper Owl runs short of.
+static func barber_shop(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("barber_shop", "Sal's Barber Shop")
+	p.building = d.building_named("Sal's Barber Shop")
+	p.building_rect = d.buildings[p.building].rect  # x 905..1125, y 168..439
+	p.room = Rect2(905, 279, 220, 160)  # the shop at the front; the back rooms stay shut
+	p.floor = "interiors/floor_tile"
+	p.doors = [{"side": Vector2.DOWN, "at": 1080.0, "width": 28.0}]
+	p.furniture = [
+		{"kind": "interiors/barber_counter", "pos": Vector2(990, 297), "box": Vector2(150, 16)},
+		{"kind": "interiors/barber_chair", "pos": Vector2(955, 330), "rot": -PI / 2, "radius": 11.0},
+		{"kind": "interiors/barber_chair", "pos": Vector2(1025, 330), "rot": -PI / 2, "radius": 11.0},
+		{"kind": "interiors/bench", "pos": Vector2(923, 385), "rot": -PI / 2, "box": Vector2(70, 14)},
+		{"kind": "interiors/cabinet", "pos": Vector2(1098, 301), "box": Vector2(30, 24)},
+		{"kind": "interiors/coat_rack", "pos": Vector2(1105, 380), "radius": 6.0},
+	]
+	p.lamps = [
+		{"pos": Vector2(990, 325), "color": Color(1.0, 0.84, 0.62), "energy": 0.95, "radius": 150.0},
+		{"pos": Vector2(1060, 400), "color": Color(1.0, 0.8, 0.58), "energy": 0.8, "radius": 110.0},
+	]
+	p.people = [
+		{"id": "sal", "name": "Sal", "look": "characters/barber", "pos": Vector2(990, 334), "facing": PI / 2},
+	]
+	p.spots = [
+		{"id": "sal", "pos": Vector2(990, 366), "radius": 32.0, "prompt": "Talk to Sal"},
 	]
 	return p

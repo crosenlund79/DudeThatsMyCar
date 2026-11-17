@@ -239,7 +239,117 @@ def door(seed=55):
     return finish(img, w, h)
 
 
+# ------------------------------------------------------------------ Sal's Barber Shop
+
+def floor_tile(seed=61):
+    """Small black-and-cream checkerboard tile, the barbershop classic (seamless)."""
+    w = h = 128
+    img = new(w, h)
+    d = ImageDraw.Draw(img)
+    rnd = random.Random(seed)
+    cell = 16
+    for y in range(0, h, cell):
+        for x in range(0, w, cell):
+            dark = ((x + y) // cell) % 2 == 0
+            col = rnd.choice(["#3a3632", "#403b36"]) if dark else rnd.choice(["#b9af9b", "#b3a994", "#bdb4a1"])
+            d.rectangle([S(x), S(y), S(x + cell) - 1, S(y + cell) - 1], fill=rgba(col))
+            d.rectangle([S(x), S(y), S(x + cell) - 1, S(y + cell) - 1], outline=rgba("#1c1a18", 120), width=1)
+    n = tnoise(w * SS, h * SS, 3, seed + 1, octaves=3)
+    img = modulate(img, n, 0.2)
+    # a little wear and a wet-mop sheen
+    sheen = tnoise(w * SS, h * SS, 2, seed + 4, octaves=2)
+    a = np.asarray(img, dtype=np.float32).copy()
+    s2 = np.clip((sheen - 0.55) * 2.5, 0, 1)
+    a[..., :3] += s2[..., None] * 12
+    img = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
+    return finish(grain(img, 4, seed), w, h)
+
+
+def barber_chair(seed=63):
+    """A barber chair from above, the sitter facing right: leather seat, chrome arms, headrest at the left, footrest at the right."""
+    w, h = 72, 56
+    img = new(w, h)
+    soft_blob(img, S(37), S(30), S(30), S(22), "#000000", 80, 3 * SS)
+    paint_shape(img, SP(rrect_pts(52, 18, 68, 38, 3)), "#b9bcbf", seed, outline=OUT, ow=1.0, wob=0.1, light=(0.4, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(14, 10, 56, 46, 8)), "#c9ccce", seed + 1, outline=OUT, ow=1.4, wob=0.15, light=(0.4, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(18, 15, 52, 41, 7)), "#7a2a22", seed + 2, outline=OUT, ow=1.0, wob=0.2, tex=0.25,
+                light=(0.4, -1, 0.5), inner_shadow=0.3)
+    paint_shape(img, SP(rrect_pts(4, 20, 16, 36, 4)), "#7a2a22", seed + 3, outline=OUT, ow=1.0, wob=0.1, tex=0.2)
+    line(img, [(S(22), S(28)), (S(48), S(28))], "#5a1c16", 1.0 * SS, 180)
+    soft_blob(img, S(30), S(20), S(9), S(3), "#ffffff", 60, 1 * SS)
+    return finish(img, w, h)
+
+
+def barber_counter(seed=65):
+    """The mirror wall above a marble counter with tonics, combs and a jar of blue Barbicide (wall side top)."""
+    w, h = 336, 44
+    img = new(w, h)
+    soft_blob(img, S(w / 2), S(26), S(w / 2 - 6), S(14), "#000000", 70, 3 * SS)
+    paint_shape(img, SP(rrect_pts(2, 2, w - 2, 12, 2)), "#9fb3bd", seed, outline=OUT, ow=1.2, wob=0.1, tex=0.1, light=(0, 1, 0.4))
+    soft_blob(img, S(w * 0.3), S(6), S(40), S(2), "#ffffff", 90, 1 * SS)
+    paint_shape(img, SP(rrect_pts(4, 11, w - 4, 38, 3)), "#e2ddd2", seed + 1, outline=OUT, ow=1.4, wob=0.2, tex=0.15,
+                strokes_n=16, stroke_cols=["#cfc8ba", "#f0ece2"], light=(0, -1, 0.3))
+    rnd = random.Random(seed)
+    for x in range(20, w - 20, 22):
+        kind = rnd.random()
+        if kind < 0.45:
+            c = rnd.choice(["#7a9a4a", "#b5651d", "#c9b26a", "#6a3a7a"])
+            paint_shape(img, SP(ellipse_pts(x, 22, 3.6, 3.6)), c, x, outline=OUT, ow=0.7, wob=0.05)
+            soft_blob(img, S(x - 1), S(21), S(1.2), S(1.2), "#ffffff", 140, 0.4 * SS)
+        elif kind < 0.65:
+            line(img, [(S(x - 6), S(28)), (S(x + 6), S(26))], "#2a2a2a", 1.6 * SS, 230)
+        elif kind < 0.8:
+            paint_shape(img, SP(rrect_pts(x - 5, 18, x + 5, 30, 2)), "#4a8ab0", x, outline=OUT, ow=0.8, wob=0.05, tex=0.05)
+        else:
+            paint_shape(img, SP(ellipse_pts(x, 24, 5, 3)), "#f4f0e6", x, outline=OUT, ow=0.6, wob=0.1)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def bench(seed=67):
+    """A slatted waiting bench from above, wall side at the top, with a folded newspaper."""
+    w, h = 160, 40
+    img = new(w, h)
+    soft_blob(img, S(w / 2), S(22), S(w / 2 - 6), S(14), "#000000", 70, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, w - 4, 34, 3)), "#5a3a22", seed, outline=OUT, ow=1.4, wob=0.2, tex=0.2, light=(0, -1, 0.3))
+    for y in (11, 18, 25):
+        line(img, [(S(8), S(y)), (S(w - 8), S(y))], "#3a2414", 1.0 * SS, 200)
+    paint_shape(img, SP(rrect_pts(100, 12, 126, 30, 1)), "#e6e0cf", seed + 1, outline=OUT, ow=0.7, wob=0.1, tex=0.05)
+    for k in range(4):
+        line(img, [(S(103), S(16 + k * 3.5)), (S(123), S(16 + k * 3.5))], "#55524c", 0.8 * SS, 160)
+    return finish(img, w, h)
+
+
+def cabinet(seed=69):
+    """A tall cupboard seen from above (wall side at the top): dark wood top, a fold of cloth."""
+    w, h = 64, 52
+    img = new(w, h)
+    soft_blob(img, S(33), S(28), S(28), S(22), "#000000", 80, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, 60, 46, 2)), "#4a2e1c", seed, outline=OUT, ow=1.4, wob=0.15, tex=0.25,
+                strokes_n=10, stroke_cols=["#5a3a24", "#3a2214"], light=(0.3, -1, 0.4))
+    line(img, [(S(8), S(10)), (S(56), S(10))], "#6a4630", 1.2 * SS, 200)
+    paint_shape(img, SP([(12, 20), (40, 18), (44, 34), (14, 36)]), "#d8d0b8", seed + 1, outline=OUT, ow=0.6, wob=0.3, tex=0.1)
+    return finish(img, w, h)
+
+
+def coat_rack(seed=71):
+    w = h = 40
+    img = new(w, h)
+    soft_blob(img, S(21), S(21), S(14), S(14), "#000000", 70, 2 * SS)
+    for k, c in enumerate(("#3a3a40", "#5a4a32")):
+        a = k * 2.4
+        paint_shape(img, SP(ellipse_pts(20 + math.cos(a) * 7, 20 + math.sin(a) * 7, 8, 6, rot=a)), c, seed + k, outline=OUT,
+                    ow=1.0, wob=0.2, tex=0.2, light=(0.3, -1, 0.4))
+    paint_shape(img, SP(ellipse_pts(20, 20, 4, 4)), "#4a2e1c", seed + 5, outline=OUT, ow=0.8, wob=0.05)
+    return finish(img, w, h)
+
+
 ASSETS = {
+    "interiors/floor_tile": floor_tile,
+    "interiors/barber_chair": barber_chair,
+    "interiors/barber_counter": barber_counter,
+    "interiors/bench": bench,
+    "interiors/cabinet": cabinet,
+    "interiors/coat_rack": coat_rack,
     "interiors/floor_parquet": floor_parquet,
     "interiors/bar_counter": bar_counter,
     "interiors/back_bar": back_bar,

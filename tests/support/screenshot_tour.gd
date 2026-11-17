@@ -21,6 +21,7 @@ func _initialize() -> void:
 		out_dir = args[0]
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	main = load("res://src/main/main.tscn").instantiate()
+	main.save_path = ""
 	main.command_source = func(_c: PlayerController) -> PlayerCommand:
 		var out := PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim, _click)
 		_click = false
@@ -113,6 +114,15 @@ func _run(shots: Array) -> void:
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2240, 202))
 				await _frames(30)
 				await _shot("club")
+			"barber":
+				# M003: Sal's Barber Shop, talking to Sal
+				_teleport_walker(Vector2(990, 368), -PI / 2)
+				await _frames(40)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(990, 334))
+				main.start_talk("sal")
+				await _frames(20)
+				await _shot("barber")
+				main.end_talk()
 			"club_door":
 				_teleport_walker(Vector2(2291, 455), -PI / 2)
 				await _frames(40)

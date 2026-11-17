@@ -37,6 +37,9 @@ var command_source: Callable
 ## E on foot is offered here first (talk to someone, use the bed):
 ## func(position) -> bool, true when it did something. Otherwise E gets into a car.
 var interaction: Callable
+## While the player talks to someone this takes his command instead of
+## walking and shooting: func(command) -> bool, true while talking.
+var conversation: Callable
 ## True while the car brakes to a stop because the player asked to get out.
 var leaving := false
 var last_command := PlayerCommand.new()
@@ -62,6 +65,9 @@ func body() -> Node2D:
 func _physics_process(_delta: float) -> void:
 	var cmd: PlayerCommand = command_source.call(self)
 	last_command = cmd
+	if car == null and conversation.is_valid() and conversation.call(cmd):
+		walker.move = Vector2.ZERO
+		return
 	if car == null:
 		_walk(cmd)
 	else:

@@ -4,6 +4,11 @@ extends CanvasLayer
 ## are (top left), what E does here (bottom centre), the car and its speed
 ## while driving (bottom right), a short notice when something cannot be
 ## done, the controls card (F1), the aim reticle on foot and the pause menu.
+## M003: what you carry (money, bottles) under the place name, and the
+## dialogue panel when you talk to someone (answers 1-4, E to walk away).
+
+## The player clicked answer i (0-based) in the dialogue panel.
+signal dialogue_choice(index: int)
 
 const FONT_PATH := "res://assets/fonts/Fredoka.ttf"
 const CREAM := Color("f1e4c6")
@@ -11,10 +16,15 @@ const COPPER := Color("d8a060")
 const DIM := Color("f1e4c6", 0.65)
 ## px per second -> miles per hour (one world px is about 7.5 cm of street).
 const MPH_PER_PX := 0.168
-const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   get in a car\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nF1   this card      Esc   pause"
+const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   talk / get in a car\n1 - 4   answer\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nF1   this card      Esc   pause"
 
 var resolver: AssetResolver
 var place_label: Label
+var purse_label: Label
+var dialogue_panel: PanelContainer
+var speaker_label: Label
+var line_label: Label
+var option_labels: Array[Label] = []
 var district_label: Label
 var prompt: PanelContainer
 var prompt_label: Label
@@ -46,6 +56,9 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	place_label = _label("", 21, CREAM)
 	box.add_child(district_label)
 	box.add_child(place_label)
+	purse_label = _label("", 16, DIM)
+	box.add_child(purse_label)
+	_build_dialogue()
 	prompt = _panel(Vector2.ZERO)
 	prompt_label = _label("", 19, CREAM)
 	prompt.add_child(prompt_label)
@@ -83,6 +96,59 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	crosshair.size = AssetCatalog.display_size("ui/crosshair")
 	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(crosshair)
+
+
+func _build_dialogue() -> void:
+	dialogue_panel = _panel(Vector2.ZERO)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	dialogue_panel.add_child(v)
+	speaker_label = _label("", 17, COPPER)
+	line_label = _label("", 20, CREAM)
+	line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	line_label.custom_minimum_size = Vector2(640, 0)
+	v.add_child(speaker_label)
+	v.add_child(line_label)
+	for i in 4:
+		var o := _label("", 18, CREAM)
+		o.mouse_filter = Control.MOUSE_FILTER_STOP
+		o.gui_input.connect(func(e: InputEvent) -> void:
+			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+				dialogue_choice.emit(i))
+		v.add_child(o)
+		option_labels.append(o)
+	dialogue_panel.visible = false
+
+
+## Shows a conversation page ({speaker, text, options: [{id, text}]}).
+func show_dialogue(page: Dictionary) -> void:
+	speaker_label.text = String(page.speaker).to_upper()
+	line_label.text = "\u201c%s\u201d" % page.text
+	var options: Array = page.options
+	for i in option_labels.size():
+		var o := option_labels[i]
+		o.visible = i < options.size()
+		if o.visible:
+			o.text = "%d   %s" % [i + 1, options[i].text]
+			o.add_theme_color_override("font_color", DIM if options[i].id == "bye" else CREAM)
+	dialogue_panel.visible = true
+	_place_dialogue()
+
+
+func hide_dialogue() -> void:
+	dialogue_panel.visible = false
+
+
+func _place_dialogue() -> void:
+	var screen := get_viewport().get_visible_rect().size
+	dialogue_panel.reset_size()
+	dialogue_panel.position = Vector2((screen.x - dialogue_panel.size.x) * 0.5, screen.y - dialogue_panel.size.y - 24)
+
+
+## Money and bottles under the place name.
+func set_purse(cents: int, bottles: int) -> void:
+	var b := "no bottles" if bottles == 0 else ("1 bottle of rye" if bottles == 1 else "%d bottles of rye" % bottles)
+	purse_label.text = "%s   \u00b7   %s" % [Rackets.dollars(cents), b]
 
 
 func _label(text: String, size: int, color: Color) -> Label:
@@ -161,7 +227,7 @@ func set_paused(on: bool) -> void:
 func refresh(delta: float, place: String, prompt_text: String, driving: Car, mouse: Vector2, show_crosshair: bool) -> void:
 	var screen := get_viewport().get_visible_rect().size
 	place_label.text = place if place != "" else " "
-	prompt.visible = prompt_text != ""
+	prompt.visible = prompt_text != "" and not dialogue_panel.visible
 	prompt_label.text = prompt_text
 	prompt.reset_size()
 	prompt.position = Vector2((screen.x - prompt.size.x) * 0.5, screen.y - prompt.size.y - 26)
@@ -186,5 +252,7 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 	help_panel.position = Vector2(screen.x - help_panel.size.x - 18, 16)
 	pause_panel.reset_size()
 	pause_panel.position = (screen - pause_panel.size) * 0.5
-	crosshair.visible = show_crosshair
+	crosshair.visible = show_crosshair and not dialogue_panel.visible
+	if dialogue_panel.visible:
+		_place_dialogue()
 	crosshair.position = mouse - crosshair.size * 0.5

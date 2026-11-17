@@ -40,6 +40,8 @@ const SPECS := {
 		"notes": "A man in evening clothes (club guest, late passer-by)."},
 	"characters/patron_woman": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "A woman in an evening dress with a bob."},
+	"characters/barber": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "Sal the barber in his white coat."},
 	"weapons/pistol": {"kind": "sprite", "template_size": Vector2i(48, 20), "display_size": Vector2(15, 6),
 		"notes": ".45 automatic from above, muzzle to the right; the left end sits in the hand."},
 	# Ground.
@@ -89,6 +91,7 @@ const SPECS := {
 	"signs/copper_owl_lit": {"kind": "light", "template_size": Vector2i(256, 128), "display_size": Vector2(150, 75), "notes": "Copper Owl neon."},
 	"signs/hotel": {"kind": "sprite", "template_size": Vector2i(256, 64), "display_size": Vector2(150, 38), "notes": "Hotel Marlowe rooftop letters."},
 	"signs/hotel_lit": {"kind": "light", "template_size": Vector2i(256, 64), "display_size": Vector2(150, 38), "notes": "Hotel Marlowe bulbs."},
+	"signs/barber": {"kind": "sprite", "template_size": Vector2i(256, 64), "display_size": Vector2(130, 33), "notes": "Painted roof lettering, transparent."},
 	"signs/garage": {"kind": "sprite", "template_size": Vector2i(256, 64), "display_size": Vector2(150, 38), "notes": "Painted roof lettering, transparent."},
 	"signs/cold_storage": {"kind": "sprite", "template_size": Vector2i(384, 64), "display_size": Vector2(220, 37), "notes": "Painted roof lettering, transparent."},
 	# Street furniture.
@@ -107,6 +110,7 @@ const SPECS := {
 	"props/awning_red": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
 	"props/awning_green": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
 	"props/fire_escape": {"kind": "sprite", "template_size": Vector2i(128, 40), "display_size": Vector2(64, 20), "notes": "Iron fire-escape landing; wall side at the top."},
+	"props/barber_pole": {"kind": "sprite", "template_size": Vector2i(32, 32), "display_size": Vector2(14, 14), "notes": "Barber's pole beside the shop door."},
 	"props/call_box": {"kind": "sprite", "template_size": Vector2i(40, 40), "display_size": Vector2(18, 18), "notes": "Police call box on its post."},
 	"props/marquee": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Copper Owl canopy; wall side at the top."},
 	"props/marquee_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Canopy bulbs and lettering."},
@@ -125,6 +129,12 @@ const SPECS := {
 	"interiors/bandstand": {"kind": "sprite", "template_size": Vector2i(128, 240), "display_size": Vector2(60, 112), "notes": "Bandstand along a wall (right edge), curved front to the left."},
 	"interiors/palm": {"kind": "sprite", "template_size": Vector2i(72, 72), "display_size": Vector2(28, 28), "notes": "Potted palm."},
 	"interiors/door": {"kind": "sprite", "template_size": Vector2i(64, 12), "display_size": Vector2(28, 5), "notes": "Door leaf from above; hinge at the left end (stretched to the doorway)."},
+	"interiors/floor_tile": {"kind": "tile", "template_size": Vector2i(128, 128), "tile_world_size": 64.0, "notes": "Black-and-cream checkerboard tile (the barbershop)."},
+	"interiors/barber_chair": {"kind": "sprite", "template_size": Vector2i(72, 56), "display_size": Vector2(32, 25), "notes": "Barber chair, the sitter facing right."},
+	"interiors/barber_counter": {"kind": "sprite", "template_size": Vector2i(336, 44), "display_size": Vector2(150, 20), "notes": "Mirror and marble counter with tonics."},
+	"interiors/bench": {"kind": "sprite", "template_size": Vector2i(160, 40), "display_size": Vector2(70, 18), "notes": "Waiting bench with a newspaper."},
+	"interiors/cabinet": {"kind": "sprite", "template_size": Vector2i(64, 52), "display_size": Vector2(30, 24), "notes": "Tall cupboard (Sal keeps the rye in it)."},
+	"interiors/coat_rack": {"kind": "sprite", "template_size": Vector2i(40, 40), "display_size": Vector2(18, 18), "notes": "Coat stand with two coats."},
 	# Effects (lights and particles).
 	"fx/steam": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(48, 48), "notes": "Steam / smoke puff."},
 	"fx/muzzle_flash": {"kind": "light", "template_size": Vector2i(64, 40), "display_size": Vector2(34, 21), "notes": "Muzzle flash; the muzzle is at the left edge, middle."},

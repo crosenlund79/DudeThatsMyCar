@@ -13,6 +13,8 @@ var handbrake := false
 ## Left mouse button held, and clicked this tick (one shot per click).
 var fire := false
 var fire_pressed := false
+## Answer key pressed this tick (1-4; 0 = none), while talking to someone.
+var choice := 0
 
 
 static func make(p_move: Vector2 = Vector2.ZERO, p_interact: bool = false, p_handbrake: bool = false,
