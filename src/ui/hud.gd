@@ -195,6 +195,8 @@ func show_gun(gun: Gun) -> void:
 		gun_label.text = "%s   reloading..." % gun.rules.display_name
 	else:
 		gun_label.text = "%s   %d / %d" % [gun.rules.display_name, gun.ammo, gun.rules.magazine]
+		if gun.spare >= 0:
+			gun_label.text += "   +%d" % gun.spare if gun.spare > 0 else "   no spare rounds"
 	var screen := get_viewport().get_visible_rect().size
 	gun_panel.reset_size()
 	gun_panel.position = Vector2(screen.x - gun_panel.size.x - 18, screen.y - gun_panel.size.y - 18)

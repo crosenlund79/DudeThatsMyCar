@@ -123,6 +123,23 @@ func _run(shots: Array) -> void:
 				await _frames(20)
 				await _shot("barber")
 				main.end_talk()
+			"grocery":
+				_teleport_walker(Vector2(1921, 838), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(1976, 838))
+				await _frames(40)
+				main.start_talk("novak")
+				main._answer(0)
+				await _frames(10)
+				await _shot("grocery")
+				main.end_talk()
+			"eddie":
+				_teleport_walker(Vector2(1032, 952), PI)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(982, 955))
+				await _frames(40)
+				main.start_talk("eddie")
+				await _frames(10)
+				await _shot("eddie")
+				main.end_talk()
 			"club_door":
 				_teleport_walker(Vector2(2291, 455), -PI / 2)
 				await _frames(40)

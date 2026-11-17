@@ -96,3 +96,54 @@ func test_holster_puts_it_away_at_once() -> void:
 	g.holster()
 	assert_false(g.is_drawn())
 	assert_eq(_shots(_run(g, 1.0)), 0, "the pending click is dropped")
+
+
+## Fires one round per trigger pull until n rounds are out (draws first).
+func _empty_magazine(g: Gun) -> void:
+	for i in 30:
+		if g.ammo == 0 or g.is_reloading():
+			break
+		g.trigger()
+		_run(g, rules.fire_interval + DT)
+
+
+func test_reloads_come_out_of_the_spare_rounds() -> void:
+	var g := Gun.new(rules)
+	assert_eq(g.spare, rules.spare_rounds, "M003: the pistol starts with a couple of spare magazines")
+	_empty_magazine(g)
+	_run(g, rules.reload_time + DT)
+	assert_eq(g.ammo, rules.magazine)
+	assert_eq(g.spare, rules.spare_rounds - rules.magazine)
+
+
+func test_out_of_rounds_it_only_clicks() -> void:
+	var g := Gun.new(rules)
+	g.spare = 3
+	_empty_magazine(g)
+	_run(g, rules.reload_time + DT)
+	assert_eq(g.ammo, 3, "a short reload with what was left")
+	assert_eq(g.spare, 0)
+	_empty_magazine(g)
+	_run(g, rules.reload_time + DT)
+	assert_true(g.is_dry())
+	assert_false(g.is_reloading(), "nothing to reload with")
+	g.trigger()
+	var events := _run(g, 0.2)
+	assert_true(events.has("empty"), "click")
+	assert_eq(_shots(events), 0)
+	g.add_spare(14)
+	assert_true(g.is_reloading(), "new rounds go straight in")
+	_run(g, rules.reload_time + DT)
+	assert_eq(g.ammo, rules.magazine)
+	assert_eq(g.spare, 14 - rules.magazine)
+
+
+func test_unlimited_spare_rounds_as_in_m002() -> void:
+	var r := rules.duplicate() as GunRules
+	r.spare_rounds = -1
+	var g := Gun.new(r)
+	for k in 3:
+		_empty_magazine(g)
+		_run(g, r.reload_time + DT)
+	assert_eq(g.ammo, r.magazine)
+	assert_eq(g.spare, -1)

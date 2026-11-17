@@ -92,3 +92,44 @@ func test_sal_wants_cash() -> void:
 func test_walking_away_ends_it() -> void:
 	assert_true(talk.choose("augie", "bye").is_empty())
 	assert_true(talk.choose("sal", "bye").is_empty())
+
+
+func test_novak_pays_once_and_runs_for_the_copper_if_pushed() -> void:
+	var hello := talk.open("novak")
+	_check_page(hello)
+	assert_eq(hello.speaker, "Mr. Novak")
+	assert_true(_ids(hello).has("protection"))
+	var page := talk.choose("novak", "protection")
+	assert_true(_ids(page).has("ask") and _ids(page).has("lean"))
+	page = talk.choose("novak", "lean", {"gun_drawn": true})
+	assert_eq(page.effects.get("paid"), r.rules.grocer_protection_leaned)
+	assert_true(page.effects.get("police", false), "he won't keep quiet about it")
+	assert_false(_ids(talk.open("novak")).has("protection"), "nothing more tonight")
+	assert_eq(talk.choose("novak", "ask").get("effects", {}).get("paid", 0), 0)
+
+
+func test_asking_novak_nicely_keeps_the_peace() -> void:
+	var page := talk.choose("novak", "ask")
+	assert_eq(page.effects.get("paid"), r.rules.grocer_protection)
+	assert_false(page.effects.get("police", false))
+
+
+func test_eddie_sells_rounds_not_a_catalogue() -> void:
+	var hello := talk.open("eddie", {"spare": 0})
+	_check_page(hello)
+	assert_eq(_ids(hello), ["ammo", "heavy", "bye"], "a box of rounds, nothing more")
+	var money := r.money
+	var page := talk.choose("eddie", "ammo", {"spare": 0})
+	assert_eq(page.effects.get("rounds"), r.rules.ammo_box)
+	assert_eq(r.money, money - r.rules.ammo_price)
+	page = talk.choose("eddie", "ammo", {"spare": r.rules.spare_limit})
+	assert_false(page.effects.has("rounds"), "no room for more")
+	r.money = 10
+	page = talk.choose("eddie", "ammo", {"spare": 0})
+	assert_string_contains(page.text, "Money first")
+	assert_false(page.effects.has("rounds"))
+
+
+func test_lindqvist_points_to_the_back() -> void:
+	_check_page(talk.open("lindqvist"))
+	assert_string_contains(talk.choose("lindqvist", "back").text, "Through the door")

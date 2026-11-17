@@ -5,10 +5,10 @@ extends RefCounted
 ##   {speaker, text, options: [{id, text}], effects: {}}
 ## and an empty page ends the conversation. The money side lives in Rackets;
 ## effects ask the game for anything outside it ({"police": true}: someone
-## calls the copper, {"rounds": n}: rounds for the gun).
+## runs for the copper once you have gone, {"rounds": n}: rounds for the gun).
 ## `context` describes the moment: {"gun_drawn": bool, "spare": int rounds carried}.
 
-const NAMES := {"augie": "Augie", "sal": "Sal"}
+const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie"}
 
 var rackets: Rackets
 
@@ -23,23 +23,28 @@ func speaker(who: String) -> String:
 
 ## The first page when you walk up to someone and press E.
 func open(who: String, context: Dictionary = {}) -> Dictionary:
-	match who:
-		"augie":
-			return _augie("hello", context)
-		"sal":
-			return _sal("hello", context)
-	return {}
+	return _say(who, "hello", context)
 
 
 ## The page after choosing an answer (an empty page: the talk is over).
 func choose(who: String, option: String, context: Dictionary = {}) -> Dictionary:
 	if option == "bye":
 		return {}
+	return _say(who, option, context)
+
+
+func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 	match who:
 		"augie":
-			return _augie(option, context)
+			return _augie(step, context)
 		"sal":
-			return _sal(option, context)
+			return _sal(step, context)
+		"novak":
+			return _novak(step, context)
+		"lindqvist":
+			return _lindqvist(step, context)
+		"eddie":
+			return _eddie(step, context)
 	return {}
 
 
@@ -126,4 +131,83 @@ func _sal(step: String, _context: Dictionary) -> Dictionary:
 			var cost := Rackets.dollars(k * r.rules.barber_price)
 			var tail := " That's the last of it tonight." if r.barber_stock() == 0 else ""
 			return _page("sal", "%d bottles of Canadian rye, wrapped in yesterday's Tribune. %s.%s" % [k, cost, tail], [], {"bought": k})
+	return {}
+
+
+# ------------------------------------------------------------------ Mr. Novak, the grocer
+
+func _novak(step: String, context: Dictionary) -> Dictionary:
+	var r := rackets
+	match step:
+		"hello":
+			if r.has_paid("grocery"):
+				var again := "You again? I paid! There is nothing left in the till, look for yourself." if r.paid.grocery == "asked" \
+					else "Please. I have nothing more. Please go."
+				return _page("novak", again, [{"id": "apples", "text": "Just an apple, Mr. Novak."}])
+			return _page("novak", "We're closing. Oh. It's you.", [
+				{"id": "protection", "text": "It's Friday somewhere, Mr. Novak. Protection."},
+				{"id": "apples", "text": "Just an apple."},
+			])
+		"protection":
+			if r.has_paid("grocery"):
+				return _page("novak", "I paid already tonight!")
+			return _page("novak", "Again? Business is terrible. Nobody has money, the Depression...", [
+				{"id": "ask", "text": "Everybody's got troubles. Pay up and you won't have mine."},
+				{"id": "lean", "text": "(Sweep a row of tins off the shelf.)" if not context.get("gun_drawn", false) else "(Show him the .45.)"},
+			])
+		"ask":
+			var got := r.collect("grocery", false)
+			if got == 0:
+				return _page("novak", "I paid already tonight!")
+			return _page("novak", "Here. %s. My wife will kill me. Same as always, yes? Same as always." % Rackets.dollars(got), [], {"paid": got})
+		"lean":
+			var got2 := r.collect("grocery", true)
+			if got2 == 0:
+				return _page("novak", "I paid already tonight!")
+			return _page("novak", "Take it! %s, everything, take it and go!\n(His eyes keep going to the door. He won't keep quiet about this.)" % Rackets.dollars(got2),
+				[], {"paid": got2, "police": true})
+		"apples":
+			return _page("novak", "Take one. Take one and go, please. On the house.")
+	return {}
+
+
+# ------------------------------------------------------------------ Mr. Lindqvist, hardware
+
+func _lindqvist(step: String, _context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			return _page("lindqvist", "Lindqvist Hardware. Nails, paint, rope. Something else, maybe?", [
+				{"id": "back", "text": "Is Eddie in the back?"},
+				{"id": "rope", "text": "Just looking at the rope."},
+			])
+		"back":
+			return _page("lindqvist", "Through the door. Knock first. And I didn't see you.")
+		"rope":
+			return _page("lindqvist", "Good rope. Holds anything. I don't ask what.")
+	return {}
+
+
+# ------------------------------------------------------------------ Eddie, the back-room dealer
+
+func _eddie(step: String, context: Dictionary) -> Dictionary:
+	var r := rackets
+	var spare: int = context.get("spare", 0)
+	var price := Rackets.dollars(r.rules.ammo_price)
+	match step:
+		"hello":
+			return _page("eddie", "Well, if it ain't the Copper Owl's errand boy. Pull up a chair. Don't touch the crate.", [
+				{"id": "ammo", "text": "A box of .45 rounds. (%s for %d)" % [price, r.rules.ammo_box]},
+				{"id": "heavy", "text": "Got anything heavier?"},
+			])
+		"ammo":
+			if spare < 0:
+				return _page("eddie", "You're carrying enough lead to sink a rowboat already.")
+			if r.money < r.rules.ammo_price:
+				return _page("eddie", "Money first, pal. This ain't the Salvation Army.")
+			var k := r.buy_ammo(spare)
+			if k == 0:
+				return _page("eddie", "You're carrying enough lead to sink a rowboat already.")
+			return _page("eddie", "%d rounds of .45, still in the paper. %s. Don't say where you got 'em." % [k, price], [], {"rounds": k})
+		"heavy":
+			return _page("eddie", "A Thompson costs more than you make in a year, kid. Come back when you're somebody.")
 	return {}

@@ -30,6 +30,12 @@ BARTENDER = {"coat": "#24211f", "coat_light": "#3a3633", "arm": "#e8e3d6", "trou
              "hat_color": "#24170f", "stripes": False, "front": "bowtie"}
 BARBER = {"coat": "#e9e5da", "coat_light": "#f7f4ec", "trouser": "#2c2a2a", "hat": "hair", "hat_color": "#8a8580",
           "stripes": False, "front": "plain"}
+GROCER = {"coat": "#6b5a44", "coat_light": "#80705a", "arm": "#d9d2c0", "trouser": "#3a3530", "hat": "flatcap",
+          "hat_color": "#5a5248", "stripes": False, "front": "apron"}
+CLERK = {"coat": "#8a7a5a", "coat_light": "#9c8c6c", "trouser": "#3a3a3e", "hat": "hair", "hat_color": "#d8c48a",
+         "stripes": False, "front": "tie"}
+DEALER = {"coat": "#2e3a2e", "coat_light": "#3e4c3e", "trouser": "#1f2420", "hat": "fedora", "hat_color": "#2a2a26",
+          "stripes": True, "front": "tie"}
 PATRON_MAN = {"coat": "#1b1b20", "coat_light": "#34343c", "trouser": "#16161a", "hat": "hair", "hat_color": "#6a4c32",
               "stripes": False, "front": "bowtie"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
@@ -133,6 +139,15 @@ def _hat(img, cx, cy, look):
         paint_shape(img, SP(ellipse_pts(cx + 6.5, cy, 1.6, 2.0)), "#e2c068", 84, outline=OUT, ow=0.6, wob=0.05)
         soft_blob(img, S(cx + 1.5), S(cy - 2.5), S(2.2), S(1.4), "#ffffff", 40, 0.8 * SS)
         return finish(img, F, F)
+    if look["hat"] == "flatcap":
+        # a cloth flat cap: round crown, short brim at the front
+        paint_shape(img, SP(ellipse_pts(cx + 9.5, cy, 2.0, 1.7)), SKIN, 7, outline=OUT, ow=0.8, wob=0.1, tex=0.1)
+        paint_shape(img, SP(ellipse_pts(cx + 5.5, cy, 4.5, 6.8)), shade(HAT, 0.8), 86, outline=OUT, ow=1.0, wob=0.15, tex=0.15)
+        paint_shape(img, SP(ellipse_pts(cx - 0.5, cy, 8.2, 8.0)), HAT, 87, outline=OUT, ow=1.3, wob=0.25, tex=0.3, strokes_n=10,
+                    stroke_cols=[shade(HAT, 1.2), shade(HAT, 0.85)], light=(0.4, -1, 0.5))
+        line(img, [(S(cx - 5), S(cy)), (S(cx + 3), S(cy))], shade(HAT, 0.7), 1.0 * SS, 200)
+        soft_blob(img, S(cx + 1), S(cy - 3), S(2.4), S(1.4), "#ffffff", 40, 0.8 * SS)
+        return finish(img, F, F)
     if look["hat"] in ("hair", "bob"):
         hair = look["hat_color"]
         bob = look["hat"] == "bob"
@@ -176,5 +191,8 @@ ASSETS = {
     "characters/bartender": lambda: sheet(BARTENDER),
     "characters/patron_man": lambda: sheet(PATRON_MAN),
     "characters/barber": lambda: sheet(BARBER),
+    "characters/grocer": lambda: sheet(GROCER),
+    "characters/clerk": lambda: sheet(CLERK),
+    "characters/dealer": lambda: sheet(DEALER),
     "characters/patron_woman": lambda: sheet(PATRON_WOMAN),
 }

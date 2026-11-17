@@ -21,8 +21,11 @@ image is its window light at night and is replaced separately. Cars and people f
 | `cars/wheel` | `custom/graphics/cars/wheel.png` | 48x20 | sprite (image, scaled to its display size) | 14x6 | Front tyre (whitewall) from above, rolling direction left-right; drawn under the body on both sides and turned with the steering (car bodies leave the front tyres out). |
 | `characters/barber` | `custom/graphics/characters/barber.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Sal the barber in his white coat. |
 | `characters/bartender` | `custom/graphics/characters/bartender.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Augie the bartender: white sleeves, black vest, bow tie; frames like the player's. |
+| `characters/clerk` | `custom/graphics/characters/clerk.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Lindqvist the hardware man in his dust coat. |
+| `characters/dealer` | `custom/graphics/characters/dealer.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Eddie, the back-room gun dealer: dark green suit and fedora. |
 | `characters/gangster` | `custom/graphics/characters/gangster.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred. |
 | `characters/gangster_armed` | `custom/graphics/characters/gangster_armed.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | The player with the pistol drawn: same frames, right arm reaching forward (the pistol is drawn separately). |
+| `characters/grocer` | `custom/graphics/characters/grocer.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Mr. Novak the grocer: apron and flat cap. |
 | `characters/patron_man` | `custom/graphics/characters/patron_man.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A man in evening clothes (club guest, late passer-by). |
 | `characters/patron_woman` | `custom/graphics/characters/patron_woman.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A woman in an evening dress with a bob. |
 | `characters/police` | `custom/graphics/characters/police.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Police officer: 5 frames like the player's, facing right, centred. |
@@ -72,12 +75,20 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/barber_counter` | `custom/graphics/interiors/barber_counter.png` | 336x44 | sprite (image, scaled to its display size) | 150x20 | Mirror and marble counter with tonics. |
 | `interiors/bench` | `custom/graphics/interiors/bench.png` | 160x40 | sprite (image, scaled to its display size) | 70x18 | Waiting bench with a newspaper. |
 | `interiors/cabinet` | `custom/graphics/interiors/cabinet.png` | 64x52 | sprite (image, scaled to its display size) | 30x24 | Tall cupboard (Sal keeps the rye in it). |
+| `interiors/card_table` | `custom/graphics/interiors/card_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Back-room card table with two chairs, centred. |
 | `interiors/coat_rack` | `custom/graphics/interiors/coat_rack.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Coat stand with two coats. |
 | `interiors/door` | `custom/graphics/interiors/door.png` | 64x12 | sprite (image, scaled to its display size) | 28x5 | Door leaf from above; hinge at the left end (stretched to the doorway). |
+| `interiors/floor_boards` | `custom/graphics/interiors/floor_boards.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Worn pine floorboards (shops, the flat). |
 | `interiors/floor_parquet` | `custom/graphics/interiors/floor_parquet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Oak parquet (the Copper Owl). |
 | `interiors/floor_tile` | `custom/graphics/interiors/floor_tile.png` | 128x128 | tile (seamless in both directions) | 64 px per repeat | Black-and-cream checkerboard tile (the barbershop). |
+| `interiors/gun_crate` | `custom/graphics/interiors/gun_crate.png` | 112x56 | sprite (image, scaled to its display size) | 50x25 | Open crate of wrapped pistols and boxes of rounds. |
 | `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
 | `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
+| `interiors/produce` | `custom/graphics/interiors/produce.png` | 132x56 | sprite (image, scaled to its display size) | 60x25 | Three crates of apples, potatoes and cabbages. |
+| `interiors/sacks` | `custom/graphics/interiors/sacks.png` | 64x64 | sprite (image, scaled to its display size) | 28x28 | Flour and sugar sacks. |
+| `interiors/shelf_grocery` | `custom/graphics/interiors/shelf_grocery.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of tins and boxes. |
+| `interiors/shelf_hardware` | `custom/graphics/interiors/shelf_hardware.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of paint, rope, nails and tools. |
+| `interiors/shop_counter` | `custom/graphics/interiors/shop_counter.png` | 220x56 | sprite (image, scaled to its display size) | 96x24 | Shop counter with cash register and scale; the shopkeeper's side at the top. |
 | `interiors/stool` | `custom/graphics/interiors/stool.png` | 36x36 | sprite (image, scaled to its display size) | 14x14 | Bar stool. |
 | `interiors/table_club` | `custom/graphics/interiors/table_club.png` | 128x128 | sprite (image, scaled to its display size) | 56x56 | Round club table with lamp and three chairs, centred. |
 | `props/awning_green` | `custom/graphics/props/awning_green.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
@@ -117,6 +128,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/copper_owl` | `custom/graphics/signs/copper_owl.png` | 256x128 | sprite (image, scaled to its display size) | 150x75 | Copper Owl rooftop sign. |
 | `signs/copper_owl_lit` | `custom/graphics/signs/copper_owl_lit.png` | 256x128 | light (additive night light; transparent where dark) | 150x75 | Copper Owl neon. |
 | `signs/garage` | `custom/graphics/signs/garage.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Painted roof lettering, transparent. |
+| `signs/grocery` | `custom/graphics/signs/grocery.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
+| `signs/hardware` | `custom/graphics/signs/hardware.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
 | `signs/hotel` | `custom/graphics/signs/hotel.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Hotel Marlowe rooftop letters. |
 | `signs/hotel_lit` | `custom/graphics/signs/hotel_lit.png` | 256x64 | light (additive night light; transparent where dark) | 150x38 | Hotel Marlowe bulbs. |
 | `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |

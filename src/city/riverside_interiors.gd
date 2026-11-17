@@ -8,6 +8,8 @@ extends RefCounted
 static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(copper_owl(d))
 	d.interiors.append(barber_shop(d))
+	d.interiors.append(grocery(d))
+	d.interiors.append(hardware_store(d))
 	# the barber's pole beside Sal's door
 	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 447), "rot": 0.0, "height": 0.0, "radius": 4.0})
 
@@ -84,5 +86,73 @@ static func barber_shop(d: DistrictLayout) -> InteriorPlan:
 	]
 	p.spots = [
 		{"id": "sal", "pos": Vector2(990, 366), "radius": 32.0, "prompt": "Talk to Sal"},
+	]
+	return p
+
+
+## Novak's Grocery on the corner of Kessler Street, across from the beat
+## cop's round: shelves of tins, crates of produce, the counter with the till.
+## Mr. Novak pays for protection; push him too hard and he runs for the copper.
+static func grocery(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("grocery", "Novak's Grocery")
+	p.building = d.building_named("Novak's Grocery")
+	p.building_rect = d.buildings[p.building].rect  # x 1781..2001, y 761..1032
+	p.room = Rect2(1781, 761, 220, 165)
+	p.floor = "interiors/floor_boards"
+	p.doors = [{"side": Vector2.UP, "at": 1828.0, "width": 28.0}]
+	p.furniture = [
+		{"kind": "interiors/shelf_grocery", "pos": Vector2(1799, 850), "rot": -PI / 2, "box": Vector2(118, 16)},
+		{"kind": "interiors/shelf_grocery", "pos": Vector2(1880, 908), "rot": PI, "box": Vector2(118, 16)},
+		{"kind": "interiors/shop_counter", "pos": Vector2(1950, 838), "rot": PI / 2, "box": Vector2(96, 20)},
+		{"kind": "interiors/produce", "pos": Vector2(1898, 785), "box": Vector2(60, 22)},
+		{"kind": "interiors/sacks", "pos": Vector2(1977, 900), "radius": 11.0},
+		{"kind": "props/barrel", "pos": Vector2(1872, 852), "radius": 9.0},
+	]
+	p.lamps = [
+		{"pos": Vector2(1880, 840), "color": Color(1.0, 0.82, 0.56), "energy": 0.95, "radius": 150.0},
+		{"pos": Vector2(1962, 830), "color": Color(1.0, 0.8, 0.55), "energy": 0.8, "radius": 110.0},
+	]
+	p.people = [
+		{"id": "novak", "name": "Mr. Novak", "look": "characters/grocer", "pos": Vector2(1976, 838), "facing": PI},
+	]
+	p.spots = [
+		{"id": "novak", "pos": Vector2(1921, 838), "radius": 30.0, "prompt": "Talk to Mr. Novak"},
+	]
+	return p
+
+
+## Lindqvist Hardware, Marlowe Avenue: nails, paint and rope at the front
+## counter, and through the door at the back, Eddie's card table and his
+## crate of pistols and .45 rounds.
+static func hardware_store(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("hardware", "Lindqvist Hardware")
+	p.building = d.building_named("Lindqvist Hardware")
+	p.building_rect = d.buildings[p.building].rect  # x 927..1157, y 761..1032
+	p.room = Rect2(927, 761, 230, 250)
+	p.floor = "interiors/floor_boards"
+	p.doors = [{"side": Vector2.UP, "at": 975.0, "width": 28.0}]
+	p.partitions = [{"a": Vector2(927, 900), "b": Vector2(1157, 900), "door_at": 1095.0, "door_width": 26.0}]
+	p.furniture = [
+		{"kind": "interiors/shelf_hardware", "pos": Vector2(945, 838), "rot": -PI / 2, "box": Vector2(118, 16)},
+		{"kind": "interiors/shelf_hardware", "pos": Vector2(1139, 828), "rot": PI / 2, "box": Vector2(118, 16)},
+		{"kind": "interiors/shop_counter", "pos": Vector2(1030, 862), "rot": PI, "box": Vector2(96, 20)},
+		{"kind": "props/barrel", "pos": Vector2(1004, 798), "radius": 9.0},
+		{"kind": "props/barrel", "pos": Vector2(1024, 788), "radius": 9.0},
+		# the back room
+		{"kind": "interiors/card_table", "pos": Vector2(1000, 955), "radius": 18.0},
+		{"kind": "interiors/gun_crate", "pos": Vector2(1100, 985), "box": Vector2(50, 22)},
+		{"kind": "props/crate", "pos": Vector2(1140, 930), "rot": 0.3, "box": Vector2(22, 22)},
+	]
+	p.lamps = [
+		{"pos": Vector2(1040, 830), "color": Color(1.0, 0.84, 0.6), "energy": 0.95, "radius": 150.0},
+		{"pos": Vector2(1005, 950), "color": Color(1.0, 0.68, 0.42), "energy": 0.95, "radius": 115.0},
+	]
+	p.people = [
+		{"id": "lindqvist", "name": "Mr. Lindqvist", "look": "characters/clerk", "pos": Vector2(1030, 885), "facing": -PI / 2},
+		{"id": "eddie", "name": "Eddie", "look": "characters/dealer", "pos": Vector2(982, 955), "facing": 0.0},
+	]
+	p.spots = [
+		{"id": "lindqvist", "pos": Vector2(1030, 834), "radius": 28.0, "prompt": "Talk to Mr. Lindqvist"},
+		{"id": "eddie", "pos": Vector2(1032, 952), "radius": 30.0, "prompt": "Talk to Eddie"},
 	]
 	return p

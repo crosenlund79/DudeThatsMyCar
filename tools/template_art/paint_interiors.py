@@ -343,7 +343,194 @@ def coat_rack(seed=71):
     return finish(img, w, h)
 
 
+# ------------------------------------------------------------------ Novak's Grocery, Lindqvist Hardware
+
+def floor_boards(seed=81):
+    """Worn pine floorboards running left-right, scuffed paths and knots (seamless)."""
+    w = h = 256
+    img = new(w, h, "#6a5034")
+    d = ImageDraw.Draw(img)
+    rnd = random.Random(seed)
+    board = 16
+    for y in range(0, h, board):
+        x = rnd.uniform(-120, 0)
+        while x < w:
+            L = rnd.uniform(70, 150)
+            c = rgba(rnd.choice(["#7a5c3a", "#6e5233", "#836240", "#735737"]))
+            for ox in (-w, 0, w):
+                d.rectangle([S(x + ox), S(y), S(x + L + ox) - 1, S(y + board) - 1], fill=c)
+                d.line([(S(x + ox), S(y)), (S(x + ox), S(y + board))], fill=rgba("#3a2a1a", 200), width=SS)
+            for g in range(3):
+                gy = y + rnd.uniform(3, board - 3)
+                d.line([(S(x + 2), S(gy)), (S(x + L - 2), S(gy + rnd.uniform(-1, 1)))], fill=shade(c, 0.85), width=1)
+            if rnd.random() < 0.25:
+                kx = x + rnd.uniform(10, L - 10)
+                d.ellipse([S(kx - 2.5), S(y + 5), S(kx + 2.5), S(y + 10)], fill=rgba("#4a321e"))
+            x += L
+        d.line([(0, S(y)), (S(w), S(y))], fill=rgba("#2e2014", 220), width=SS)
+    n = tnoise(w * SS, h * SS, 3, seed + 1, octaves=4)
+    img = modulate(img, n, 0.3)
+    return finish(grain(img, 5, seed), w, h)
+
+
+def shop_counter(seed=83):
+    """A shop counter from above (wall side, where the shopkeeper stands, at the top): worn wood, a brass
+    cash register at the left, a scale and a roll of brown paper at the right."""
+    w, h = 220, 56
+    img = new(w, h)
+    soft_blob(img, S(w / 2), S(h / 2 + 3), S(w / 2 - 6), S(h / 2 - 6), "#000000", 80, 4 * SS)
+    paint_shape(img, SP(rrect_pts(4, 6, w - 4, h - 6, 4)), "#7a5634", seed, outline=OUT, ow=1.6, wob=0.2, tex=0.25,
+                strokes_n=16, stroke_cols=["#8a6440", "#664628"], light=(0, -1, 0.3), inner_shadow=0.25)
+    paint_shape(img, SP(rrect_pts(14, 12, 54, 44, 4)), BRASS, seed + 1, outline=OUT, ow=1.2, wob=0.15, tex=0.15, light=(0.3, -1, 0.5))
+    for k in range(4):
+        for j in range(2):
+            paint_shape(img, SP(ellipse_pts(22 + k * 8, 30 + j * 7, 2.4, 2.4)), "#efe6cc", seed + 2 + k + j * 5, outline=OUT, ow=0.5, wob=0.02)
+    paint_shape(img, SP(rrect_pts(20, 14, 48, 22, 1)), "#2a2a2a", seed + 20, outline=None, wob=0.05)
+    paint_shape(img, SP(ellipse_pts(160, 28, 13, 13)), "#c9ccce", seed + 21, outline=OUT, ow=1.0, wob=0.1, light=(0.3, -1, 0.5))
+    paint_shape(img, SP(ellipse_pts(160, 28, 9, 9)), "#9a9ea2", seed + 22, outline=None, wob=0.1)
+    paint_shape(img, SP(rrect_pts(184, 12, 204, 44, 6)), "#b08a5a", seed + 23, outline=OUT, ow=1.0, wob=0.1, tex=0.2)
+    line(img, [(S(186), S(28)), (S(202), S(28))], "#8a6a40", 1.0 * SS, 200)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def _shelf(seed, items):
+    w, h = 260, 44
+    img = new(w, h)
+    soft_blob(img, S(w / 2), S(24), S(w / 2 - 4), S(16), "#000000", 70, 3 * SS)
+    paint_shape(img, SP(rrect_pts(2, 2, w - 2, 40, 2)), "#5a3e26", seed, outline=OUT, ow=1.4, wob=0.15, tex=0.2, light=(0, 1, 0.3))
+    rnd = random.Random(seed)
+    x = 10.0
+    while x < w - 12:
+        x = items(img, rnd, x)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def shelf_grocery(seed=85):
+    """Wall shelves of tins, jars and boxes seen from above (wall side at the top)."""
+    def items(img, rnd, x):
+        kind = rnd.random()
+        if kind < 0.5:  # a row of tins
+            c = rnd.choice(["#b03a2a", "#3a6a9a", "#d8b04a", "#4a7a3a", "#c9c4b8"])
+            for y in (13, 27):
+                paint_shape(img, SP(ellipse_pts(x + 4, y, 4.2, 4.2)), c, int(x * 3 + y), outline=OUT, ow=0.7, wob=0.05, light=(0.3, -1, 0.5))
+                paint_shape(img, SP(ellipse_pts(x + 4, y, 2.5, 2.5)), "#d6d9db", int(x * 3 + y + 1), outline=None, wob=0.02)
+            return x + 10
+        if kind < 0.8:  # a cardboard box
+            c = rnd.choice(["#c9a46a", "#d8c49a", "#b5895a", "#e0d6bc"])
+            bw = rnd.uniform(12, 20)
+            paint_shape(img, SP(rrect_pts(x, 8, x + bw, 34, 1)), c, int(x * 5), outline=OUT, ow=0.8, wob=0.1, tex=0.15)
+            line(img, [(S(x + 2), S(21)), (S(x + bw - 2), S(21))], "#8a6a40", 0.8 * SS, 160)
+            return x + bw + 3
+        c = rnd.choice(["#e8d8a8", "#c96a3a", "#8a3a5a"])  # jars
+        for y in (12, 26):
+            paint_shape(img, SP(ellipse_pts(x + 4, y, 3.6, 3.6)), "#b9cfd6", int(x * 7 + y), outline=OUT, ow=0.6, wob=0.05)
+            paint_shape(img, SP(ellipse_pts(x + 4, y, 2.4, 2.4)), c, int(x * 7 + y + 1), outline=None, wob=0.05)
+        return x + 9
+    return _shelf(seed, items)
+
+
+def shelf_hardware(seed=87):
+    """Wall shelves of paint tins, coils of rope, boxes of nails and tools (wall side at the top)."""
+    def items(img, rnd, x):
+        kind = rnd.random()
+        if kind < 0.35:
+            c = rnd.choice(["#b02a2a", "#2a5a9a", "#e8e0cf", "#3a6a3a"])
+            paint_shape(img, SP(ellipse_pts(x + 6, 20, 6, 6)), "#a9adb0", int(x * 3), outline=OUT, ow=0.8, wob=0.05, light=(0.3, -1, 0.5))
+            paint_shape(img, SP(ellipse_pts(x + 6, 20, 4, 4)), c, int(x * 3 + 1), outline=None, wob=0.05)
+            return x + 14
+        if kind < 0.55:
+            paint_shape(img, SP(ellipse_pts(x + 8, 20, 8, 8)), "#c9b07a", int(x * 5), outline=OUT, ow=0.8, wob=0.1, tex=0.3)
+            paint_shape(img, SP(ellipse_pts(x + 8, 20, 3.5, 3.5)), "#5a3e26", int(x * 5 + 1), outline=None, wob=0.05)
+            return x + 18
+        if kind < 0.8:
+            bw = rnd.uniform(10, 16)
+            paint_shape(img, SP(rrect_pts(x, 9, x + bw, 32, 1)), rnd.choice(["#c9a46a", "#a87a4a"]), int(x * 7), outline=OUT, ow=0.8, wob=0.1, tex=0.2)
+            return x + bw + 3
+        line(img, [(S(x), S(12)), (S(x + 14), S(30))], "#3a3a3e", 2.2 * SS, 240)  # a saw or a hammer
+        line(img, [(S(x + 10), S(10)), (S(x + 10), S(32))], "#7a5634", 2.0 * SS, 240)
+        return x + 18
+    return _shelf(seed, items)
+
+
+def produce(seed=89):
+    """Three crates of produce under the shop window: apples, potatoes, cabbages."""
+    w, h = 132, 56
+    img = new(w, h)
+    soft_blob(img, S(w / 2), S(30), S(w / 2 - 4), S(22), "#000000", 70, 3 * SS)
+    rnd = random.Random(seed)
+    for k, (fruit, r) in enumerate((("#b8322a", 4.0), ("#a8845a", 4.5), ("#7aa84a", 6.0))):
+        x0 = 4 + k * 42
+        paint_shape(img, SP(rrect_pts(x0, 6, x0 + 40, 50, 1.5)), "#8a6440", seed + k, outline=OUT, ow=1.2, wob=0.2, tex=0.25)
+        for j in range(14 if r < 5 else 7):
+            fx = rnd.uniform(x0 + 6, x0 + 34)
+            fy = rnd.uniform(11, 45)
+            paint_shape(img, SP(ellipse_pts(fx, fy, r, r * 0.92)), fruit, seed + k * 20 + j, outline=OUT, ow=0.6, wob=0.15,
+                        tex=0.2, light=(0.4, -1, 0.5))
+    return finish(grain(img, 3, seed), w, h)
+
+
+def sacks(seed=91):
+    """Flour and sugar sacks slumped together."""
+    w = h = 64
+    img = new(w, h)
+    soft_blob(img, S(33), S(34), S(24), S(22), "#000000", 70, 3 * SS)
+    for k, (x, y) in enumerate(((22, 26), (40, 30), (28, 42))):
+        paint_shape(img, SP(ellipse_pts(x, y, 13, 11, rot=k)), "#e2d8bc", seed + k, outline=OUT, ow=1.0, wob=0.4, tex=0.2,
+                    light=(0.4, -1, 0.5))
+        line(img, [(S(x - 6), S(y)), (S(x + 6), S(y))], "#8a3a2a", 1.0 * SS, 180)
+    return finish(img, w, h)
+
+
+def card_table(seed=93):
+    """The back-room table: green baize, a hand of cards, chips, an ashtray, a bottle; two chairs."""
+    w = h = 112
+    img = new(w, h)
+    cx = cy = 56
+    soft_blob(img, S(cx + 3), S(cy + 4), S(36), S(36), "#000000", 80, 5 * SS)
+    for k, a in enumerate((math.pi, 0.0)):
+        chair(img, cx + math.cos(a) * 38, cy + math.sin(a) * 38, a, seed + k * 3)
+    paint_shape(img, SP(ellipse_pts(cx, cy, 30, 30)), "#2f5a3a", seed + 10, outline=OUT, ow=1.6, wob=0.25, tex=0.25,
+                light=(0.3, -1, 0.35), inner_shadow=0.3)
+    rnd = random.Random(seed)
+    for k in range(5):
+        x = cx - 14 + k * 5 + rnd.uniform(-1, 1)
+        y = cy + 6 + rnd.uniform(-2, 2)
+        paint_shape(img, SP(rrect_pts(x, y, x + 6, y + 9, 0.8)), "#f2ecdc", seed + 20 + k, outline=OUT, ow=0.5, wob=0.05)
+    for k in range(6):
+        paint_shape(img, SP(ellipse_pts(cx + 12 + (k % 3) * 4, cy - 12 + (k // 3) * 4, 2.2, 2.2)),
+                    rnd.choice(["#b02a2a", "#e8e0cf", "#2a4a9a"]), seed + 30 + k, outline=OUT, ow=0.4, wob=0.02)
+    paint_shape(img, SP(ellipse_pts(cx - 14, cy - 12, 4, 4)), "#4a4a4e", seed + 40, outline=OUT, ow=0.6, wob=0.05)
+    paint_shape(img, SP(ellipse_pts(cx + 4, cy - 16, 3.6, 3.6)), "#6a4a1a", seed + 41, outline=OUT, ow=0.6, wob=0.05)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def gun_crate(seed=95):
+    """An open long crate packed in straw: wrapped pistols and boxes of .45 rounds."""
+    w, h = 112, 56
+    img = new(w, h)
+    soft_blob(img, S(w / 2), S(30), S(w / 2 - 4), S(22), "#000000", 80, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 6, w - 4, 50, 2)), "#7a5634", seed, outline=OUT, ow=1.4, wob=0.2, tex=0.25)
+    paint_shape(img, SP(rrect_pts(9, 11, w - 9, 45, 1)), "#c9b06a", seed + 1, outline=None, wob=0.3, tex=0.4, strokes_n=20,
+                stroke_cols=["#e0c880", "#a88a4a"])
+    for k in range(3):
+        x = 16 + k * 22
+        paint_shape(img, SP(rrect_pts(x, 15, x + 18, 41, 3)), "#3a3a3e", seed + 2 + k, outline=OUT, ow=0.8, wob=0.15,
+                    tex=0.2, light=(0.3, -1, 0.5))
+    for k in range(2):
+        paint_shape(img, SP(rrect_pts(84, 13 + k * 15, 102, 25 + k * 15, 1)), "#a8322a", seed + 9 + k, outline=OUT, ow=0.8, wob=0.05)
+        line(img, [(S(86), S(19 + k * 15)), (S(100), S(19 + k * 15))], "#e8e0cf", 0.8 * SS, 200)
+    return finish(grain(img, 3, seed), w, h)
+
+
 ASSETS = {
+    "interiors/floor_boards": floor_boards,
+    "interiors/shop_counter": shop_counter,
+    "interiors/shelf_grocery": shelf_grocery,
+    "interiors/shelf_hardware": shelf_hardware,
+    "interiors/produce": produce,
+    "interiors/sacks": sacks,
+    "interiors/card_table": card_table,
+    "interiors/gun_crate": gun_crate,
     "interiors/floor_tile": floor_tile,
     "interiors/barber_chair": barber_chair,
     "interiors/barber_counter": barber_counter,

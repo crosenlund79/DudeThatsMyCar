@@ -687,6 +687,8 @@ ASSETS = {
     "signs/hotel": hotel_sign,
     "signs/garage": lambda: painted_roof_sign("garage", "DOYLE'S GARAGE", 20, 256, 64),
     "signs/barber": lambda: painted_roof_sign("barber", "SAL'S BARBER SHOP", 17, 256, 64),
+    "signs/grocery": lambda: painted_roof_sign("grocery", "NOVAK'S GROCERY", 18, 256, 64),
+    "signs/hardware": lambda: painted_roof_sign("hardware", "LINDQVIST HARDWARE", 16, 256, 64),
     "props/barber_pole": barber_pole,
     "signs/cold_storage": lambda: painted_roof_sign("cold_storage", "LAKESHORE COLD STORAGE", 17, 384, 64),
     "fx/steam": steam,

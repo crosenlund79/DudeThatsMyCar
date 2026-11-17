@@ -172,9 +172,10 @@ func _central_rows() -> void:
 	# Facing Marlowe Avenue from the south: Hotel Marlowe.
 	_row(131, 761, 1032, [
 		[300, 4, "brick_red", "tar"], [210, 2, "brick_brown", "gravel", {"awning": "red"}], [26],
-		[260, 3, "greystone", "tar"], [230, 3, "brick_brown", "tar", {"awning": "green"}], [362, 3, "brick_red", "gravel"]])
+		[260, 3, "greystone", "tar"], [230, 3, "brick_brown", "tar", {"awning": "green", "name": "Lindqvist Hardware"}],
+		[362, 3, "brick_red", "gravel"]])
 	_row(1781, 761, 1032, [
-		[220, 3, "brick_brown", "tar", {"awning": "red"}], [24], [300, 3, "greystone", "gravel"],
+		[220, 3, "brick_brown", "tar", {"awning": "red", "name": "Novak's Grocery"}], [24], [300, 3, "greystone", "gravel"],
 		[320, 6, "greystone", "gravel", {"name": "Hotel Marlowe"}], [260, 3, "brick_brown", "tar", {"awning": "green"}],
 		[264, 2, "brick_red", "tar"]])
 	# Facing Pruitt Street: flats, Doyle's Garage and its forecourt.
@@ -314,6 +315,8 @@ func _street_furniture() -> void:
 	_sign("Hotel Marlowe", "signs/hotel", 22.0, 30.0)
 	_sign("Doyle's Garage", "signs/garage", 0.0, 60.0)
 	_sign("Sal's Barber Shop", "signs/barber", 0.0, 34.0)
+	_sign("Novak's Grocery", "signs/grocery", 0.0, 34.0)
+	_sign("Lindqvist Hardware", "signs/hardware", 0.0, 34.0)
 	_sign("Lakeshore Cold Storage", "signs/cold_storage", 0.0, 120.0)
 	# Awnings and the club canopy hang over the sidewalk.
 	for b in d.buildings:

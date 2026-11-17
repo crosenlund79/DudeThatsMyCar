@@ -43,6 +43,13 @@ var talk: Conversations
 ## Who the player is talking to ("" = nobody) and the page on screen.
 var talking := ""
 var _page := {}
+## A shopkeeper going for the police (see _update_report).
+const REPORT_DELAY := 6.0
+const REPORT_RADIUS := 900.0
+var _report_from: InteriorPlan = null
+var _report_left := 0.0
+var _report_who := ""
+var _saved := {}
 
 
 func _ready() -> void:
@@ -66,6 +73,7 @@ func _ready() -> void:
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
 	walker.place(layout.spawn, layout.spawn_facing)
+	_load_gun()
 	walker.aim_point = layout.spawn + Vector2.from_angle(layout.spawn_facing) * 60.0
 	camera = CityCamera.new()
 	camera.name = "Camera"
@@ -89,6 +97,9 @@ func _ready() -> void:
 	gunfire.setup(resolver, bullets)
 	player.fired.connect(gunfire.on_fired)
 	player.gun_event.connect(gunfire.on_gun_event)
+	player.gun_event.connect(func(e: String, _at: Vector2) -> void:
+		if e == "empty":
+			hud.show_notice("Click. Out of rounds. Eddie sells them, in the back of Lindqvist Hardware."))
 	bullets.impact.connect(gunfire.on_impact)
 	navigator = CityNavigator.new(layout, Walker.RADIUS + 3.0)
 	officer = PoliceOfficer.new()
@@ -174,7 +185,7 @@ func start_talk(who: String) -> void:
 
 
 func _talk_context() -> Dictionary:
-	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn()}
+	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0}
 
 
 func _show(page: Dictionary) -> void:
@@ -208,8 +219,27 @@ func _answer(i: int) -> void:
 
 
 ## Effects of a conversation outside the money (police, rounds).
-func _apply(_effects: Dictionary) -> void:
-	pass
+func _apply(effects: Dictionary) -> void:
+	if effects.has("rounds") and walker.gun != null:
+		walker.gun.add_spare(int(effects.rounds))
+	if effects.get("police", false) and interiors.current != null:
+		# the shopkeeper waits until you have gone, then runs out for the copper
+		_report_from = interiors.current
+		_report_who = talk.speaker(talking)
+		_report_left = REPORT_DELAY
+
+
+## Someone runs out of `_report_from` shouting for the police once the player
+## has left it (or after REPORT_DELAY seconds, whichever comes first).
+func _update_report(delta: float) -> void:
+	if _report_from == null:
+		return
+	_report_left -= delta
+	if interiors.current != _report_from or _report_left <= 0.0:
+		var door := _report_from.outside_door(0, 30.0)
+		_report_from = null
+		officer.hear_gunshot(door, REPORT_RADIUS)
+		hud.show_notice("%s runs into the street, shouting for the copper!" % _report_who)
 
 
 func end_talk() -> void:
@@ -221,13 +251,24 @@ func end_talk() -> void:
 
 
 func save_game() -> void:
-	SaveGame.write(save_path, {"rackets": rackets.to_dict()})
+	var data := {"rackets": rackets.to_dict()}
+	if walker != null and walker.gun != null:
+		data["gun"] = {"ammo": walker.gun.ammo, "spare": walker.gun.spare}
+	SaveGame.write(save_path, data)
 
 
 func _load_game() -> void:
-	var data := SaveGame.read(save_path)
-	if data.has("rackets"):
-		rackets.from_dict(data.rackets)
+	_saved = SaveGame.read(save_path)
+	if _saved.has("rackets"):
+		rackets.from_dict(_saved.rackets)
+
+
+## Puts the saved rounds back in the gun (after the player exists).
+func _load_gun() -> void:
+	if _saved.has("gun") and walker.gun != null:
+		walker.gun.ammo = clampi(int(_saved.gun.get("ammo", walker.gun.ammo)), 0, gun_rules.magazine)
+		if walker.gun.spare >= 0:
+			walker.gun.spare = maxi(0, int(_saved.gun.get("spare", walker.gun.spare)))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -245,6 +286,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	_update_view(delta)
+	_update_report(delta)
 
 
 func _update_view(delta: float) -> void:

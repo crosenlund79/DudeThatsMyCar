@@ -4,9 +4,11 @@ extends Resource
 ## The pistol is a .45 automatic: seven rounds, one shot per click.
 
 @export var display_name := ".45 automatic"
-## Rounds in a magazine; an empty gun reloads by itself (spare magazines are
-## not counted yet).
+## Rounds in a magazine; an empty gun reloads by itself from the spare rounds.
 @export var magazine := 7
+## Spare rounds carried at the start (-1 = never run out, as in M002). More
+## can be bought from Eddie in the back of the hardware store (M003).
+@export var spare_rounds := -1
 ## Seconds between shots; reloading time; drawing from under the coat.
 @export var fire_interval := 0.28
 @export var reload_time := 1.5
