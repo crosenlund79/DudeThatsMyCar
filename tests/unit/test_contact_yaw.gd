@@ -7,7 +7,7 @@ var _p: DrivingParams
 
 
 func before_each() -> void:
-	_p = (load("res://src/driving/default_driving_params.tres") as DrivingParams).duplicate()
+	_p = (load("res://src/driving/vehicles/sedan.tres") as VehicleType).params.duplicate()
 
 
 func _car() -> CarModel:
@@ -51,7 +51,7 @@ func test_the_knock_fades_and_never_becomes_a_spin() -> void:
 	var turned := 0.0
 	var h0 := m.heading
 	for i in 180:
-		m.update(1.0 / 60.0, 0.0, true)  # no counter-steering at all
+		m.update(1.0 / 60.0, 0.0, true, false)  # no counter-steering at all
 	turned = absf(angle_difference(h0, m.heading))
 	assert_lt(turned, deg_to_rad(30.0), "at most a recoverable twitch (%.1f deg)" % rad_to_deg(turned))
 	assert_gt(turned, deg_to_rad(10.0), "but noticeable")
@@ -63,11 +63,11 @@ func test_off_at_factor_zero_and_ordinary_driving_is_untouched() -> void:
 	var m := _car()
 	m.apply_contact_yaw(Vector2(-28, 18), Vector2(-150, 0))
 	assert_eq(m.yaw_rate, 0.0)
-	var a := CarModel.new(load("res://src/driving/default_driving_params.tres"))
+	var a := CarModel.new((load("res://src/driving/vehicles/sedan.tres") as VehicleType).params)
 	var b := CarModel.new(_p)
 	for i in 120:
-		a.update(1.0 / 60.0, 1.0 if i % 30 < 10 else 0.0, true)
-		b.update(1.0 / 60.0, 1.0 if i % 30 < 10 else 0.0, true)
+		a.update(1.0 / 60.0, 1.0 if i % 30 < 10 else 0.0, true, false)
+		b.update(1.0 / 60.0, 1.0 if i % 30 < 10 else 0.0, true, false)
 	assert_eq(a.heading, b.heading, "steering, throttle and grip are unchanged")
 	assert_eq(a.velocity, b.velocity)
 

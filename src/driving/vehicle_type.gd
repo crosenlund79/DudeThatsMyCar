@@ -1,0 +1,18 @@
+class_name VehicleType
+extends Resource
+## One kind of car: its handling, look and the size of its body. The look is a
+## replaceable image per paint scheme (logical names, see AssetCatalog).
+
+@export var id := "sedan"
+@export var params: DrivingParams
+## Paint schemes: logical image names, nose pointing right (+X).
+@export var paints: PackedStringArray = PackedStringArray(["cars/sedan"])
+## Body size on screen (world px, nose along +X); the image is scaled to it.
+@export var size := Vector2(80, 36)
+## Collision capsule (length, width), a little inside the painted body.
+@export var collision := Vector2(76, 30)
+## Lamps in car space (px, nose +X, y down): headlights and tail lights.
+@export var headlights := PackedVector2Array([Vector2(34, -9), Vector2(34, 9)])
+@export var taillights := PackedVector2Array([Vector2(-32, -12), Vector2(-32, 12)])
+## Engine sound character (pitch multiplier on the shared engine sound).
+@export var engine_pitch := 1.0

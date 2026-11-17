@@ -1,5 +1,5 @@
 extends GutTest
-## P2 Stage 1: engine sound model (presentation only). Pitch stays in a narrow,
+## Engine sound model (carried over from HyperCars; presentation only). Pitch stays in a narrow,
 ## deep range and flattens near top speed instead of droning at 2.6x; load
 ## and braking colour it; the load layer is silent when cruising.
 
@@ -11,7 +11,7 @@ func before_each() -> void:
 
 
 func _pitch(ratio: float, load := 0.0, brake := 0.0) -> float:
-	return RaceAudio.engine_targets(_p, ratio, load, brake, 0.0).pitch
+	return VehicleAudio.engine_targets(_p, ratio, load, brake, 0.0).pitch
 
 
 func test_pitch_range_is_deep_and_bounded() -> void:
@@ -19,7 +19,7 @@ func test_pitch_range_is_deep_and_bounded() -> void:
 	assert_almost_eq(_pitch(1.0), _p.pitch_top, 0.001)
 	assert_lt(_pitch(1.2, 1.0), 1.5, "never climbs towards the old 2.6x drone, even over top speed under load")
 	for t in [0.0, 1.3, 2.9, 7.7]:
-		var p: float = RaceAudio.engine_targets(_p, 1.0, 0.0, 0.0, t).pitch
+		var p: float = VehicleAudio.engine_targets(_p, 1.0, 0.0, 0.0, t).pitch
 		assert_almost_eq(p, _p.pitch_top, _p.pitch_top * _p.drift_amount + 0.0001, "cruise drift stays tiny")
 
 
@@ -35,8 +35,8 @@ func test_pitch_rises_with_speed_and_flattens_near_the_top() -> void:
 func test_load_and_braking_colour_the_pitch_and_layer() -> void:
 	assert_gt(_pitch(0.5, 1.0), _pitch(0.5), "working engine a little higher")
 	assert_lt(_pitch(0.5, 0.0, 1.0), _pitch(0.5), "dips when braking")
-	var cruise: Dictionary = RaceAudio.engine_targets(_p, 1.0, 0.0, 0.0, 0.0)
-	var working: Dictionary = RaceAudio.engine_targets(_p, 0.5, 1.0, 0.0, 0.0)
+	var cruise: Dictionary = VehicleAudio.engine_targets(_p, 1.0, 0.0, 0.0, 0.0)
+	var working: Dictionary = VehicleAudio.engine_targets(_p, 0.5, 1.0, 0.0, 0.0)
 	assert_almost_eq(working.load_db, _p.load_volume_db, 0.01)
 	assert_lt(cruise.load_db, -50.0, "load layer silent when cruising")
-	assert_gt(cruise.base_db, RaceAudio.engine_targets(_p, 0.0, 0.0, 0.0, 0.0).base_db, "foundation fuller at speed")
+	assert_gt(cruise.base_db, VehicleAudio.engine_targets(_p, 0.0, 0.0, 0.0, 0.0).base_db, "foundation fuller at speed")

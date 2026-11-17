@@ -1,9 +1,9 @@
 class_name DamageWorld
 extends RefCounted
-## M6: every car's condition during one race. Pure and deterministic (no scene,
-## no randomness): the race feeds it weapon destructions, barrier impacts and
-## car contacts in tick order, and it reports when a car reaches zero (DNF).
-## The same rules for every car; armour (a garage upgrade) scales damage down.
+## Every car's condition (retained from HyperCars, not yet wired into the
+## city). Pure and deterministic (no scene, no randomness): it is fed wall
+## impacts, car contacts and other damage in tick order and reports when a car
+## reaches zero (wrecked). The same rules for every car; armour scales damage down.
 
 var rules: DamageRules
 ## Per car: condition (0 .. rules.max_condition), armour damage reduction
@@ -14,7 +14,7 @@ var armour := PackedFloat32Array()
 var retired := PackedByteArray()
 var retired_age := PackedFloat32Array()
 var since_hit := PackedFloat32Array()
-## Total damage taken this race per car (statistics / tests).
+## Total damage taken per car (statistics / tests).
 var taken := PackedFloat32Array()
 var _pairs_this_tick := {}
 
@@ -26,7 +26,7 @@ func _init(p_rules: DamageRules, car_count: int) -> void:
 	reset()
 
 
-## New race: every car at full condition, no armour.
+## Every car at full condition, no armour.
 func reset() -> void:
 	condition.fill(rules.max_condition)
 	armour.fill(0.0)
@@ -41,7 +41,7 @@ func car_count() -> int:
 	return condition.size()
 
 
-## A car's condition and armour for this race (garage cars carry their damage).
+## Sets a car's condition and armour (for instance carried over from earlier).
 func set_start(id: int, start_condition: float, armour_reduction: float) -> void:
 	condition[id] = clampf(start_condition, 0.0, rules.max_condition)
 	armour[id] = clampf(armour_reduction, 0.0, 0.95)
@@ -73,10 +73,6 @@ func damage(id: int, amount: float) -> bool:
 		retired_age[id] = 0.0
 		return true
 	return false
-
-
-func weapon_hit(id: int, weapon: int) -> bool:
-	return damage(id, rules.weapon_damage(weapon))
 
 
 func wall_impact(id: int, speed: float) -> bool:

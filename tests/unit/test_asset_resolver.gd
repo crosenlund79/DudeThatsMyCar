@@ -2,6 +2,8 @@ extends GutTest
 ## AssetResolver contract (assets/README.md): override precedence, missing and invalid
 ## fallback, supported format, override-root selection, caching, catalogue coverage.
 
+const CAR := "cars/sedan"
+
 var _root: String
 
 
@@ -38,29 +40,29 @@ func _write_bytes(rel: String, bytes: PackedByteArray) -> void:
 
 
 func test_valid_png_override_takes_precedence() -> void:
-	_write_png("graphics/cars/car_player.png", Vector2i(256, 144))
-	var tex := AssetResolver.new(_root).get_texture(AssetCatalog.CAR_PLAYER)
+	_write_png("graphics/cars/sedan.png", Vector2i(256, 144))
+	var tex := AssetResolver.new(_root).get_texture(CAR)
 	assert_eq(tex.get_size(), Vector2(256, 144))
 
 
 func test_missing_override_uses_template() -> void:
-	var tex := AssetResolver.new(_root).get_texture(AssetCatalog.CAR_PLAYER)
+	var tex := AssetResolver.new(_root).get_texture(CAR)
 	assert_not_null(tex)
-	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_car_player.png")
+	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_sedan.png")
 
 
 func test_non_png_content_falls_back_with_warning() -> void:
-	_write_bytes("graphics/cars/car_player.png", "not an image".to_utf8_buffer())
-	var tex := AssetResolver.new(_root).get_texture(AssetCatalog.CAR_PLAYER)
-	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_car_player.png")
+	_write_bytes("graphics/cars/sedan.png", "not an image".to_utf8_buffer())
+	var tex := AssetResolver.new(_root).get_texture(CAR)
+	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_sedan.png")
 	assert_push_warning_count(1)
 
 
 func test_corrupt_png_falls_back_with_warning() -> void:
 	var bytes := PackedByteArray([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3, 4])
-	_write_bytes("graphics/cars/car_player.png", bytes)
-	var tex := AssetResolver.new(_root).get_texture(AssetCatalog.CAR_PLAYER)
-	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_car_player.png")
+	_write_bytes("graphics/cars/sedan.png", bytes)
+	var tex := AssetResolver.new(_root).get_texture(CAR)
+	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_sedan.png")
 	assert_push_warning_count(1)
 	# The engine's PNG decoder logs its own error for the corrupt buffer.
 	for e in get_errors():
@@ -68,16 +70,16 @@ func test_corrupt_png_falls_back_with_warning() -> void:
 
 
 func test_unsupported_extension_is_not_used() -> void:
-	_write_png("graphics/cars/car_player.jpg", Vector2i(8, 8))
-	var tex := AssetResolver.new(_root).get_texture(AssetCatalog.CAR_PLAYER)
-	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_car_player.png")
+	_write_png("graphics/cars/sedan.jpg", Vector2i(8, 8))
+	var tex := AssetResolver.new(_root).get_texture(CAR)
+	assert_eq(tex.resource_path, "res://assets/graphics/cars/template_sedan.png")
 
 
 func test_results_are_cached_for_the_session() -> void:
 	var r := AssetResolver.new(_root)
-	var first := r.get_texture(AssetCatalog.CAR_PLAYER)
-	_write_png("graphics/cars/car_player.png", Vector2i(16, 16))
-	assert_same(r.get_texture(AssetCatalog.CAR_PLAYER), first, "changes apply after restart only")
+	var first := r.get_texture(CAR)
+	_write_png("graphics/cars/sedan.png", Vector2i(16, 16))
+	assert_same(r.get_texture(CAR), first, "changes apply after restart only")
 
 
 func test_override_root_selection() -> void:
@@ -110,65 +112,75 @@ func test_every_catalogued_asset_has_a_template_of_declared_size() -> void:
 
 
 func test_override_of_any_resolution_scales_to_display_size() -> void:
-	var display: Vector2 = AssetCatalog.SPECS[AssetCatalog.CAR_PLAYER].display_size
-	_write_png("graphics/cars/car_player.png", Vector2i(512, 288))
-	var tex := AssetResolver.new(_root).get_texture(AssetCatalog.CAR_PLAYER)
+	var display: Vector2 = AssetCatalog.SPECS[CAR].display_size
+	_write_png("graphics/cars/sedan.png", Vector2i(512, 288))
+	var tex := AssetResolver.new(_root).get_texture(CAR)
 	assert_eq(Vector2(tex.get_size()) * AssetCatalog.scale_for(tex, display), display)
 
 
-# --- P2: car bodies, shared wheel and the flattened-car fallback ---
-
-func test_template_cars_use_wheel_free_bodies_with_wheels() -> void:
+func test_facade_override_of_any_resolution_is_used() -> void:
+	DirAccess.make_dir_recursive_absolute(_root.path_join("graphics/facades"))
+	_write_png("graphics/facades/brick_red.png", Vector2i(512, 384))
 	var r := AssetResolver.new(_root)
-	var look := CarArt.look(r, "cars/car_ai_3")
-	assert_true(look.wheels)
-	assert_eq(look.body_logical, "cars/body_ai_3")
-	assert_eq(look.body, r.get_texture("cars/body_ai_3"))
-	assert_eq(CarArt.icon(r, "cars/car_ai_3"), r.get_texture("cars/car_ai_3"), "icons show the complete car")
+	assert_true(r.has_override("facades/brick_red"))
+	assert_eq(r.get_texture("facades/brick_red").get_width(), 512, "the user's facade, at its own resolution")
+	assert_false(r.has_override("facades/brick_red_lit"), "its window light keeps the template")
+	assert_eq(r.get_texture("facades/brick_red_lit").get_width(), 256)
 
 
-func test_custom_flattened_car_is_drawn_alone_without_extra_wheels() -> void:
-	_write_png("graphics/cars/car_player.png", Vector2i(256, 144))
+func test_character_sheet_override_keeps_the_frame_size_on_screen() -> void:
+	DirAccess.make_dir_recursive_absolute(_root.path_join("graphics/characters"))
+	_write_png("graphics/characters/gangster.png", Vector2i(640, 128))
+	var tex := AssetResolver.new(_root).get_texture("characters/gangster")
+	var spec: Dictionary = AssetCatalog.SPECS["characters/gangster"]
+	var frame := Vector2(tex.get_size()) / Vector2(spec.frames, 1)
+	assert_eq(frame * AssetCatalog.scale_for(tex, spec.display_size * Vector2(spec.frames, 1)), spec.display_size)
+
+
+func _wav_bytes(samples: int) -> PackedByteArray:
+	var data := PackedByteArray()
+	data.resize(samples * 2)
+	for k in samples:
+		data.encode_s16(k * 2, int(sin(k * 0.05) * 8000.0))
+	var b := PackedByteArray()
+	b.append_array("RIFF".to_ascii_buffer())
+	var n := PackedByteArray()
+	n.resize(4)
+	n.encode_u32(0, 36 + data.size())
+	b.append_array(n)
+	b.append_array("WAVEfmt ".to_ascii_buffer())
+	var fmt := PackedByteArray()
+	fmt.resize(20)
+	fmt.encode_u32(0, 16)
+	fmt.encode_u16(4, 1)  # PCM
+	fmt.encode_u16(6, 1)  # mono
+	fmt.encode_u32(8, 22050)
+	fmt.encode_u32(12, 44100)
+	fmt.encode_u16(16, 2)
+	fmt.encode_u16(18, 16)
+	b.append_array(fmt)
+	b.append_array("data".to_ascii_buffer())
+	n.encode_u32(0, data.size())
+	b.append_array(n)
+	b.append_array(data)
+	return b
+
+
+func test_audio_override_takes_precedence_and_missing_falls_back() -> void:
 	var r := AssetResolver.new(_root)
-	assert_true(r.has_override("cars/car_player"))
-	var look := CarArt.look(r, "cars/car_player")
-	assert_false(look.wheels, "wheels are painted in: no duplicates")
-	assert_eq(look.body.get_width(), 256, "the user's image")
-	assert_eq(CarArt.icon(r, "cars/car_player").get_width(), 256)
+	assert_false(r.has_audio_override("vehicles/impact_car"))
+	var template := r.get_audio("vehicles/impact_car")
+	assert_not_null(template, "packaged template")
+	DirAccess.make_dir_recursive_absolute(_root.path_join("audio/vehicles"))
+	_write_bytes("audio/vehicles/impact_car.wav", _wav_bytes(4410))
+	var r2 := AssetResolver.new(_root)
+	assert_true(r2.has_audio_override("vehicles/impact_car"))
+	var stream := r2.get_audio("vehicles/impact_car")
+	assert_true(stream is AudioStreamWAV, "the user's WAV is loaded at runtime")
+	assert_almost_eq(stream.get_length(), 0.2, 0.01)
 
 
-func test_custom_body_gets_the_shared_wheels() -> void:
-	_write_png("graphics/cars/car_player.png", Vector2i(256, 144))
-	_write_png("graphics/cars/body_player.png", Vector2i(512, 288))
+func test_every_catalogued_sound_has_a_template() -> void:
 	var r := AssetResolver.new(_root)
-	var look := CarArt.look(r, "cars/car_player")
-	assert_true(look.wheels, "a body takes precedence over a flattened image")
-	assert_eq(look.body.get_width(), 512)
-	assert_eq(CarArt.icon(r, "cars/car_player").get_width(), 256, "icon: the complete flattened car")
-
-
-func test_custom_body_only_is_also_the_icon() -> void:
-	_write_png("graphics/cars/body_ai_1.png", Vector2i(128, 72))
-	var r := AssetResolver.new(_root)
-	assert_true(CarArt.look(r, "cars/car_ai_1").wheels)
-	assert_eq(CarArt.icon(r, "cars/car_ai_1"), r.get_texture("cars/body_ai_1"))
-
-
-func test_invalid_custom_body_falls_back_to_the_template_body() -> void:
-	var f := FileAccess.open(_root.path_join("graphics/cars/body_ai_2.png"), FileAccess.WRITE)
-	f.store_string("not a png")
-	f.close()
-	var r := AssetResolver.new(_root)
-	assert_false(r.has_override("cars/body_ai_2"))
-	var look := CarArt.look(r, "cars/car_ai_2")
-	assert_true(look.wheels)
-	assert_eq(look.body.get_width(), 128, "template body")
-
-
-func test_shared_wheel_override_is_used() -> void:
-	_write_png("graphics/cars/wheel.png", Vector2i(96, 56))
-	var r := AssetResolver.new(_root)
-	var wheel := r.get_texture(AssetCatalog.WHEEL)
-	assert_eq(wheel.get_width(), 96)
-	assert_eq(Vector2(wheel.get_size()) * AssetCatalog.scale_for(wheel, AssetCatalog.SPECS[AssetCatalog.WHEEL].display_size),
-		AssetCatalog.SPECS[AssetCatalog.WHEEL].display_size, "any resolution, same display size")
+	for logical in AssetCatalog.AUDIO:
+		assert_not_null(r.get_audio(logical, AssetCatalog.AUDIO[logical].loop), logical)

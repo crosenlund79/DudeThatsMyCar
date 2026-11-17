@@ -55,16 +55,3 @@ func test_apply_creates_buses_and_sets_volume_and_mute() -> void:
 	assert_almost_eq(AudioServer.get_bus_volume_db(fx), linear_to_db(0.5), 0.01)
 	assert_true(AudioServer.is_bus_mute(AudioServer.get_bus_index("Music")))
 	assert_eq(AudioServer.get_bus_send(fx), &"Master")
-
-
-func test_settings_panel_changes_and_saves() -> void:
-	var s := AudioSettings.new(_path)
-	var panel := SettingsPanel.new()
-	add_child_autofree(panel)
-	panel.setup(s)
-	panel.slider("Engine").value = 30
-	panel.mute_toggle("Effects").button_pressed = true
-	var t := AudioSettings.new(_path)
-	t.load_settings()
-	assert_almost_eq(t.volume["Engine"], 0.3, 0.0001)
-	assert_true(t.muted["Effects"])

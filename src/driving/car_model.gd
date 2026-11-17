@@ -1,13 +1,15 @@
 class_name CarModel
 extends RefCounted
-## Pure, deterministic top-down driving model (no scene dependencies).
-## Heading 0 points along +X. Steering rotates the car; velocity keeps its
-## momentum and is pulled towards the heading by grip, which produces sliding.
+## Pure, deterministic top-down driving model (no scene dependencies), carried
+## over from HyperCars. Heading 0 points along +X. Steering rotates the car;
+## velocity keeps its momentum and is pulled towards the heading by grip, which
+## produces sliding. City driving adds a brake / reverse pedal, a handbrake and
+## speed-dependent steering (see DrivingParams).
 
-enum ControlMode { FIRE_TO_ACCELERATE, FIRE_TO_BRAKE }
+## Below this forward speed (px/s) the car counts as stopped for gear changes.
+const STOP_SPEED := 1.0
 
 var params: DrivingParams
-var control_mode: ControlMode = ControlMode.FIRE_TO_ACCELERATE
 var position := Vector2.ZERO
 var heading := 0.0
 var velocity := Vector2.ZERO
@@ -15,9 +17,8 @@ var velocity := Vector2.ZERO
 var yaw_rate := 0.0
 
 
-func _init(p_params: DrivingParams = null, p_mode: ControlMode = ControlMode.FIRE_TO_ACCELERATE) -> void:
+func _init(p_params: DrivingParams = null) -> void:
 	params = p_params if p_params != null else DrivingParams.new()
-	control_mode = p_mode
 
 
 func forward() -> Vector2:
@@ -32,43 +33,69 @@ func lateral_speed() -> float:
 	return velocity.dot(forward().orthogonal())
 
 
-## True when the current input means "accelerate" in the active control mode.
-func is_accelerating(fire: bool) -> bool:
-	return fire if control_mode == ControlMode.FIRE_TO_ACCELERATE else not fire
-
-
-## Deceleration applied when not accelerating, per control mode.
-func braking_deceleration() -> float:
-	return params.release_deceleration if control_mode == ControlMode.FIRE_TO_ACCELERATE else params.brake_deceleration
-
-
-## Advances velocity and heading by delta. steer: -1 left, 0 none, +1 right.
-func update(delta: float, steer: float, fire: bool) -> void:
-	var steer_factor := 1.0
+## Share of full steering available at a forward speed: none at rest, full
+## from full_steer_speed; negative while rolling backwards (the car turns the
+## other way, as a real car reversing does).
+func steer_factor(fwd_speed: float) -> float:
+	var f := 1.0
 	if params.full_steer_speed > 0.0:
-		steer_factor = clampf(velocity.length() / params.full_steer_speed, 0.0, 1.0)
-	heading = wrapf(heading + clampf(steer, -1.0, 1.0) * deg_to_rad(params.turn_rate_degrees) * steer_factor * delta, -PI, PI)
-	if yaw_rate != 0.0:  # knocked by another car (see resolve_car_collision)
-		heading = wrapf(heading + yaw_rate * delta, -PI, PI)
-		yaw_rate *= exp(-params.contact_yaw_damping * delta)
-		if absf(yaw_rate) < 0.01:
-			yaw_rate = 0.0
+		f = clampf(absf(fwd_speed) / params.full_steer_speed, 0.0, 1.0)
+	return -f if fwd_speed < -STOP_SPEED else f
+
+
+## Advances velocity and heading by delta for one driver command.
+## steer: -1 left .. +1 right. throttle (W): accelerate, or brake while rolling
+## backwards. brake (S): brake, then reverse once stopped. handbrake (Space).
+func update(delta: float, steer: float, throttle: bool, brake: bool, handbrake := false) -> void:
+	var turn := clampf(steer, -1.0, 1.0) * deg_to_rad(params.turn_rate_degrees) * steer_factor(forward_speed())
+	if handbrake:
+		turn *= params.handbrake_turn_scale
+	heading = wrapf(heading + turn * delta, -PI, PI)
+	_apply_yaw(delta)
 
 	var fwd_dir := forward()
 	var side_dir := fwd_dir.orthogonal()
 	var fwd := velocity.dot(fwd_dir)
 	var side := velocity.dot(side_dir)
 
-	if is_accelerating(fire):
-		if fwd < params.max_speed:
+	if handbrake:
+		fwd = move_toward(fwd, 0.0, params.handbrake_deceleration * delta)
+	elif throttle and not brake:
+		if fwd < -STOP_SPEED:
+			fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
+		elif fwd < params.max_speed:
 			fwd = minf(fwd + params.acceleration * delta, params.max_speed)
 		else:
-			fwd = move_toward(fwd, params.max_speed, braking_deceleration() * delta)
+			fwd = move_toward(fwd, params.max_speed, params.coast_deceleration * delta)
+	elif brake and not throttle:
+		if fwd > STOP_SPEED:
+			fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
+		elif fwd > -params.reverse_max_speed:
+			fwd = maxf(fwd - params.reverse_acceleration * delta, -params.reverse_max_speed)
+		else:
+			fwd = move_toward(fwd, -params.reverse_max_speed, params.coast_deceleration * delta)
+	elif brake and throttle:
+		fwd = move_toward(fwd, 0.0, params.brake_deceleration * delta)
 	else:
-		fwd = move_toward(fwd, 0.0, braking_deceleration() * delta)
+		fwd = move_toward(fwd, 0.0, params.coast_deceleration * delta)
 
-	side *= exp(-params.grip * delta)
+	var grip := params.grip * (params.handbrake_grip_scale if handbrake else 1.0)
+	side *= exp(-grip * delta)
 	velocity = fwd_dir * fwd + side_dir * side
+
+
+## Nobody at the wheel (handbrake on, in gear): a shoved car scrubs to a stop.
+func update_parked(delta: float) -> void:
+	_apply_yaw(delta)
+	velocity = velocity.move_toward(Vector2.ZERO, params.parked_friction * delta)
+
+
+func _apply_yaw(delta: float) -> void:
+	if yaw_rate != 0.0:  # knocked by another car (see resolve_car_collision)
+		heading = wrapf(heading + yaw_rate * delta, -PI, PI)
+		yaw_rate *= exp(-params.contact_yaw_damping * delta)
+		if absf(yaw_rate) < 0.01:
+			yaw_rate = 0.0
 
 
 ## Moves position by velocity (used when no physics body integrates the motion).

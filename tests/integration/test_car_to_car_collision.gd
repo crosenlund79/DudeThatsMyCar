@@ -11,13 +11,14 @@ var _b: Car
 func _spawn(pos: Vector2, heading: float) -> Car:
 	var c: Car = CAR_SCENE.instantiate()
 	# Position before entering the tree so the physics server starts with it
-	# (as on the race grid); avoids a stale overlap at the origin.
+	# (as when the cars are parked); avoids a stale overlap at the origin.
 	c.position = pos
 	c.rotation = heading
 	add_child_autofree(c)
-	c.setup(DrivingParams.new(), CarModel.ControlMode.FIRE_TO_ACCELERATE, null)
+	c.setup(load("res://src/driving/vehicles/sedan.tres"), null)
 	c.place(Transform2D(heading, pos))
 	c.active = true
+	c.driven = true  # rolling freely (coasting), not parked
 	return c
 
 
@@ -32,7 +33,7 @@ func test_head_on_cars_bounce_apart_without_overlapping() -> void:
 	_a.model.velocity = Vector2(200, 0)
 	_b.model.velocity = Vector2(-200, 0)
 	await wait_physics_frames(40)
-	assert_lt(_a.global_position.x + 30.0, _b.global_position.x - 30.0 + 2.0, "bodies stay apart")
+	assert_lt(_a.global_position.x + 38.0, _b.global_position.x - 38.0 + 2.0, "bodies stay apart")
 	assert_lte(_a.model.velocity.x, 0.0, "A pushed back")
 	assert_gte(_b.model.velocity.x, 0.0, "B pushed back")
 	assert_true(get_signal_emit_count(_a, "car_hit") + get_signal_emit_count(_b, "car_hit") > 0)
@@ -40,7 +41,7 @@ func test_head_on_cars_bounce_apart_without_overlapping() -> void:
 
 func test_rear_end_contact_transfers_speed_to_car_ahead() -> void:
 	_b.queue_free()
-	_b = _spawn(Vector2(120, 0), 0.0)
+	_b = _spawn(Vector2(130, 0), 0.0)
 	await wait_physics_frames(2)
 	_a.model.velocity = Vector2(300, 0)
 	_b.model.velocity = Vector2(50, 0)
@@ -70,3 +71,15 @@ func test_separating_cars_are_not_changed() -> void:
 	CarModel.resolve_car_collision(a, b, Vector2.LEFT)
 	assert_eq(a.velocity, Vector2(-50, 0))
 	assert_eq(b.velocity, Vector2(50, 0))
+
+
+func test_driving_into_a_parked_car_shoves_it_a_little() -> void:
+	_b.queue_free()
+	_b = _spawn(Vector2(140, 0), 0.0)
+	_b.driven = false
+	await wait_physics_frames(2)
+	_a.model.velocity = Vector2(300, 0)
+	await wait_physics_frames(60)
+	assert_gt(_b.global_position.x, 140.5, "the parked car was pushed")
+	assert_lt(_b.global_position.x, 260.0, "but its handbrake stops it soon")
+	assert_eq(_b.model.velocity, Vector2.ZERO)

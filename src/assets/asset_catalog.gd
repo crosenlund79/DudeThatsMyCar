@@ -1,282 +1,126 @@
 class_name AssetCatalog
 extends RefCounted
-## Replacement contract for every graphic and sound used by the game.
-## Overrides may use any resolution but must keep the template's aspect ratio and
-## orientation; the game scales each texture to its display size in world pixels.
+## Replacement contract for every graphic and sound the game uses
+## (override rules: assets/README.md, generated list: docs/ASSET_SPECS.md).
+## Overrides may use any resolution but must keep the template's aspect ratio,
+## orientation and layout; the game scales each image to its size in the world.
+##
+## Kinds:
+##   sprite - one image, scaled to display_size (world px).
+##   sheet  - a horizontal strip of `frames` equal frames, each scaled to display_size.
+##   tile   - seamless in both directions; one repeat covers tile_world_size world px.
+##   strip  - seamless left-right, drawn along a line strip_width world px wide.
+##   facade - seamless left-right building wall: top half = one upper storey,
+##            bottom half = the ground storey; one repeat is 128 world px long.
+##   light  - additive light (night glow): transparent where there is no light.
 
-const CAR_PLAYER := "cars/car_player"
-## Second human player's car (two-player races).
-const CAR_PLAYER_2 := "cars/car_player_2"
-## Opponent cars: "cars/car_ai_1" .. "cars/car_ai_9" (see ai_car()).
-const AI_CAR_COUNT := 9
-const TARMAC := "track/tarmac"
-const GRASS := "track/grass"
-const WALL := "track/wall"
-const START_LINE := "track/start_line"
-const HUD_PANEL := "ui/hud_panel"
-const STAR_GOLD := "ui/star_gold"
-## Kill feed / rankings: a permanent elimination, and a collision kill.
-const TOMBSTONE := "ui/tombstone"
-const CRASH := "ui/crash"
-const STAR_SILVER := "ui/star_silver"
-const STAR_BRONZE := "ui/star_bronze"
-const BUTTON := "ui/button"
-const LOGO := "ui/logo"
-const TREE_ROUND := "scenery/tree_round"
-const TREE_BLOOM := "scenery/tree_bloom"
-const BUSH := "scenery/bush"
-const FLOWERS := "scenery/flowers"
-const ROCK := "scenery/rock"
-const TYRE_STACK := "scenery/tyre_stack"
-const FLAG := "scenery/flag"
-const GRANDSTAND := "scenery/grandstand"
-const ROAD_WEAR := "decals/road_wear"
-const GRID_BOX := "decals/grid_box"
-const TIRE_MARK := "decals/tire_mark"
-const SMOKE := "fx/smoke"
-const DUST := "fx/dust"
-const SPARK := "fx/spark"
-const CONFETTI := "fx/confetti"
-const MISSILE := "weapons/missile"
-const MINE := "weapons/mine"
-const BLAST := "fx/blast"
-const LAMP_POST := "scenery/lamp_post"
-const HOMING_MISSILE := "weapons/homing_missile"
-const SUPER_MISSILE := "weapons/super_missile"
-const GARAGE_BACKDROP := "ui/garage_backdrop"
-const ACHIEVEMENT_BADGE := "ui/achievement_badge"
-const ACHIEVEMENT_LOCKED := "ui/achievement_locked"
-## P2: one shared wheel image for every car, drawn four times per car.
-const WHEEL := "cars/wheel"
-## Championship rewards: the one junker every displaced rival drives.
-const CAR_JUNKER := "cars/car_junker"
+const FACADE_REPEAT := 128.0
 
-## display_size: world/screen pixels the texture is scaled to (sprites, strips).
-## tile_world_size: world pixels covered by one repeat of a seamless tile.
 const SPECS := {
-	CAR_PLAYER: {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Top-down, nose pointing right (+X), centred pivot, transparent background."},
-	CAR_PLAYER_2: {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Player 2 car (two-player races); same contract as the player car. Template is a blue recolour of it."},
-	"cars/car_ai_1": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 1; same contract as the player car."},
-	"cars/car_ai_2": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 2; same contract as the player car."},
-	"cars/car_ai_3": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 3; same contract as the player car."},
-	"cars/car_ai_4": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 4; same contract as the player car."},
-	"cars/car_ai_5": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 5; same contract as the player car."},
-	"cars/car_ai_6": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 6; same contract as the player car."},
-	"cars/car_ai_7": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 7; same contract as the player car."},
-	"cars/car_ai_8": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 8; same contract as the player car."},
-	"cars/car_ai_9": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Opponent car 9; same contract as the player car."},
-	"cars/body_player": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_player_2": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_1": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_2": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_3": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_4": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_5": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_6": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_7": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_8": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	"cars/body_ai_9": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free body (P2): same size, orientation and pivot as the car image, transparent where the wheels go; the game adds four shared wheels. Takes precedence over the flattened car image."},
-	CAR_JUNKER: {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Championship: the battered junker a rival drives after the player has won their car; same contract as the player car (complete car with wheels, used for icons)."},
-	"cars/body_junker": {"template_size": Vector2i(128, 72), "display_size": Vector2(64, 36),
-		"notes": "Wheel-free junker body (championship rewards); same contract as the other bodies. One image for every displaced rival (each gets a slight tint)."},
-	WHEEL: {"template_size": Vector2i(24, 14), "display_size": Vector2(12, 7),
-		"notes": "Shared wheel (P2), top-down, rolling direction along X (car nose right), centred pivot, transparent background. One image for all ten cars; four instances per car at the positions in src/presentation/default_wheel_layout.tres."},
-	TARMAC: {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Seamless repeating road surface, opaque."},
-	GRASS: {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Seamless repeating off-track ground, opaque."},
-	WALL: {"template_size": Vector2i(128, 32), "display_size": Vector2(80, 20),
-		"notes": "Barrier strip, seamless left-right, repeated along the track edge; transparent background."},
-	START_LINE: {"template_size": Vector2i(32, 128), "display_size": Vector2(24, 150),
-		"notes": "Start/finish strip, long axis across the road; stretched to road width."},
-	HUD_PANEL: {"template_size": Vector2i(96, 96), "patch_margin": 24,
-		"notes": "Nine-patch panel; 24 px corners are not stretched (scaled with the texture)."},
-	TOMBSTONE: {"template_size": Vector2i(48, 48), "display_size": Vector2(20, 20),
-		"notes": "Kill feed and rankings: a permanent elimination (DNF) caused by a driver; square, centred, transparent."},
-	CRASH: {"template_size": Vector2i(48, 48), "display_size": Vector2(20, 20),
-		"notes": "Kill feed: a car put out of the race by collisions (no weapon); square, centred, transparent."},
-	STAR_GOLD: {"template_size": Vector2i(48, 48), "display_size": Vector2(22, 22),
-		"notes": "1st place marker in the race history; square, centred, transparent background."},
-	STAR_SILVER: {"template_size": Vector2i(48, 48), "display_size": Vector2(22, 22),
-		"notes": "2nd place marker; same contract as the gold star."},
-	STAR_BRONZE: {"template_size": Vector2i(48, 48), "display_size": Vector2(22, 22),
-		"notes": "3rd place marker; same contract as the gold star."},
-	BUTTON: {"template_size": Vector2i(96, 48), "patch_margin": 16,
-		"notes": "Menu button nine-patch (16 px corners); hover/pressed/focus states are tints of it."},
-	LOGO: {"template_size": Vector2i(880, 240), "display_size": Vector2(660, 180),
-		"notes": "Title logo; transparent background, centred."},
-	TREE_ROUND: {"template_size": Vector2i(128, 128), "display_size": Vector2(128, 128),
-		"notes": "Top-down tree canopy, centred, transparent; sways gently."},
-	TREE_BLOOM: {"template_size": Vector2i(112, 112), "display_size": Vector2(112, 112),
-		"notes": "Top-down blossom tree, centred, transparent; sways gently."},
-	BUSH: {"template_size": Vector2i(72, 72), "display_size": Vector2(72, 72), "notes": "Top-down bush, centred, transparent."},
-	FLOWERS: {"template_size": Vector2i(64, 64), "display_size": Vector2(64, 64), "notes": "Flower patch, centred, transparent."},
-	ROCK: {"template_size": Vector2i(56, 56), "display_size": Vector2(56, 56), "notes": "Rock, centred, transparent."},
-	TYRE_STACK: {"template_size": Vector2i(56, 56), "display_size": Vector2(56, 56), "notes": "Tyre stack, centred, transparent."},
-	FLAG: {"template_size": Vector2i(96, 64), "display_size": Vector2(48, 64), "frames": 2,
-		"notes": "Marshal flag: horizontal strip of 2 frames (48x64 each), pole foot at bottom-left third."},
-	GRANDSTAND: {"template_size": Vector2i(192, 80), "display_size": Vector2(288, 120),
-		"notes": "Top-down grandstand; the crowd side (bottom edge) faces the track."},
-	ROAD_WEAR: {"template_size": Vector2i(160, 64), "display_size": Vector2(240, 96),
-		"notes": "Semi-transparent road wear decal, long axis along the driving direction."},
-	GRID_BOX: {"template_size": Vector2i(72, 48), "display_size": Vector2(72, 48),
-		"notes": "Painted grid-slot bracket; open side faces the driving direction (+X)."},
-	TIRE_MARK: {"template_size": Vector2i(32, 12), "display_size": Vector2(10, 26),
-		"notes": "Pair of rear-tyre marks along +X (stamped repeatedly while sliding); seamless left-right."},
-	SMOKE: {"template_size": Vector2i(32, 32), "display_size": Vector2(32, 32), "notes": "Tyre-smoke particle, soft, transparent."},
-	DUST: {"template_size": Vector2i(32, 32), "display_size": Vector2(32, 32), "notes": "Dust particle, soft, transparent."},
-	SPARK: {"template_size": Vector2i(24, 24), "display_size": Vector2(24, 24), "notes": "Impact spark particle."},
-	CONFETTI: {"template_size": Vector2i(12, 12), "display_size": Vector2(12, 12),
-		"notes": "White confetti piece; tinted at runtime, so keep it white/light."},
-	MISSILE: {"template_size": Vector2i(40, 16), "display_size": Vector2(30, 12),
-		"notes": "Missile, nose pointing right (+X), centred; also the HUD missile icon. Homing/super missiles are tinted."},
-	MINE: {"template_size": Vector2i(64, 32), "display_size": Vector2(26, 26), "frames": 2,
-		"notes": "Mine: horizontal strip of 2 frames (32x32 each: lamp off / lamp on), blinks while armed; also the HUD mine icon."},
-	BLAST: {"template_size": Vector2i(96, 96), "display_size": Vector2(110, 110),
-		"notes": "Explosion burst, centred, transparent; scaled up and faded out."},
-	HOMING_MISSILE: {"template_size": Vector2i(40, 16), "display_size": Vector2(30, 12),
-		"notes": "Homing missile, nose pointing right (+X), centred; also the HUD / garage icon."},
-	SUPER_MISSILE: {"template_size": Vector2i(40, 20), "display_size": Vector2(34, 17),
-		"notes": "Super missile (orbits its car), nose pointing right (+X), centred; also the HUD / garage icon."},
-	GARAGE_BACKDROP: {"template_size": Vector2i(640, 360), "display_size": Vector2(1280, 720),
-		"notes": "Garage screen background, full screen (16:9), opaque; the centre is covered by the weapon cards."},
-	ACHIEVEMENT_BADGE: {"template_size": Vector2i(64, 64), "display_size": Vector2(48, 48),
-		"notes": "Unlocked achievement medal (toast and list); square, centred, transparent."},
-	ACHIEVEMENT_LOCKED: {"template_size": Vector2i(64, 64), "display_size": Vector2(48, 48),
-		"notes": "Locked achievement medal; same contract as the unlocked one."},
-	"variant_2/track/grass": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Variant 2 ground; same contract as track/grass (seamless, opaque)."},
-	"variant_2/track/tarmac": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Variant 2 road surface; same contract as track/tarmac."},
-	"variant_2/track/wall": {"template_size": Vector2i(128, 32), "display_size": Vector2(80, 20),
-		"notes": "Variant 2 barrier strip; same contract as track/wall."},
-	"variant_2/scenery/prop_1": {"template_size": Vector2i(128, 128), "display_size": Vector2(128, 128),
-		"notes": "Variant 2 tall prop (sways), top-down, centred, transparent; any rotation."},
-	"variant_2/scenery/prop_2": {"template_size": Vector2i(72, 72), "display_size": Vector2(72, 72),
-		"notes": "Variant 2 medium prop, top-down, centred, transparent; any rotation."},
-	"variant_2/scenery/prop_3": {"template_size": Vector2i(56, 56), "display_size": Vector2(56, 56),
-		"notes": "Variant 2 small prop, top-down, centred, transparent; any rotation."},
-	"variant_3/track/grass": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Variant 3 ground; same contract as track/grass (seamless, opaque)."},
-	"variant_3/track/tarmac": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Variant 3 road surface; same contract as track/tarmac."},
-	"variant_3/track/wall": {"template_size": Vector2i(128, 32), "display_size": Vector2(80, 20),
-		"notes": "Variant 3 barrier strip; same contract as track/wall."},
-	"variant_3/scenery/prop_1": {"template_size": Vector2i(128, 128), "display_size": Vector2(128, 128),
-		"notes": "Variant 3 tall prop (sways), top-down, centred, transparent; any rotation."},
-	"variant_3/scenery/prop_2": {"template_size": Vector2i(72, 72), "display_size": Vector2(72, 72),
-		"notes": "Variant 3 medium prop, top-down, centred, transparent; any rotation."},
-	"variant_3/scenery/prop_3": {"template_size": Vector2i(56, 56), "display_size": Vector2(56, 56),
-		"notes": "Variant 3 small prop, top-down, centred, transparent; any rotation."},
-	"variant_4/track/grass": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "The Raceway ground: manicured striped grass; same contract as track/grass (seamless, opaque)."},
-	"variant_4/track/tarmac": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "The Raceway asphalt: clean dark grain; same contract as track/tarmac."},
-	"variant_4/track/wall": {"template_size": Vector2i(128, 32), "display_size": Vector2(80, 20),
-		"notes": "The Raceway barrier: red / white strip; same contract as track/wall."},
-	"variant_4/scenery/prop_1": {"template_size": Vector2i(128, 128), "display_size": Vector2(128, 128),
-		"notes": "The Raceway floodlight mast, top-down (lamp bank at the top), centred, transparent; any rotation."},
-	"variant_4/scenery/prop_2": {"template_size": Vector2i(160, 48), "display_size": Vector2(200, 60),
-		"notes": "The Raceway advertising board (original generic brand), text readable when the long edge faces the track; placed facing the road."},
-	"variant_4/scenery/prop_3": {"template_size": Vector2i(56, 56), "display_size": Vector2(56, 56),
-		"notes": "The Raceway marshal post, top-down, centred, transparent; any rotation."},
-	"variant_4/scenery/pit_building": {"template_size": Vector2i(384, 128), "display_size": Vector2(480, 160),
-		"notes": "The Raceway pit building beside the main straight; garage doors along the bottom edge face the track."},
-	"variant_4/decals/kerb": {"template_size": Vector2i(64, 16), "display_size": Vector2(64, 14),
-		"notes": "The Raceway kerb: red / white blocks along +X, seamless left-right; laid along the road edge on corners (visual only)."},
-	"variant_5/track/grass": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Tabletop Mayhem ground: wooden desk; same contract as track/grass (seamless, opaque)."},
-	"variant_5/track/tarmac": {"template_size": Vector2i(256, 256), "tile_world_size": 256.0,
-		"notes": "Tabletop Mayhem road: toy race-track plastic; same contract as track/tarmac."},
-	"variant_5/track/wall": {"template_size": Vector2i(128, 32), "display_size": Vector2(80, 20),
-		"notes": "Tabletop Mayhem barrier: wooden ruler strip; same contract as track/wall."},
-	"variant_5/scenery/prop_1": {"template_size": Vector2i(256, 256), "display_size": Vector2(220, 220),
-		"notes": "Tabletop Mayhem giant coffee mug, top-down, centred, transparent; any rotation."},
-	"variant_5/scenery/prop_2": {"template_size": Vector2i(128, 128), "display_size": Vector2(110, 110),
-		"notes": "Tabletop Mayhem giant die, top-down, centred, transparent; any rotation."},
-	"variant_5/scenery/prop_3": {"template_size": Vector2i(112, 112), "display_size": Vector2(96, 96),
-		"notes": "Tabletop Mayhem toy block, top-down, centred, transparent; any rotation."},
-	"variant_5/scenery/pencil": {"template_size": Vector2i(560, 88), "display_size": Vector2(560, 88),
-		"notes": "Tabletop Mayhem giant pencil, point to the left, centred, transparent; any rotation."},
-	"variant_5/scenery/card": {"template_size": Vector2i(220, 300), "display_size": Vector2(220, 300),
-		"notes": "Tabletop Mayhem giant playing card (original design), centred, transparent; any rotation."},
-	"variant_5/scenery/paperclip": {"template_size": Vector2i(280, 140), "display_size": Vector2(280, 140),
-		"notes": "Tabletop Mayhem giant paperclip, centred, transparent; any rotation."},
-	LAMP_POST: {"template_size": Vector2i(48, 48), "display_size": Vector2(56, 56),
-		"notes": "Lighting pilot: top-down lamp post, lamp head towards the top (-Y), rotated to face the track."},
+	# Vehicles and people (nose / face pointing right, +X, centred).
+	"cars/sedan": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
+		"notes": "Sedan, top-down, nose right, centred, transparent background."},
+	"cars/sedan_b": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
+		"notes": "Sedan, second paint scheme; same contract."},
+	"cars/coupe": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
+		"notes": "Roadster, top-down, nose right, centred, transparent background."},
+	"cars/coupe_b": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
+		"notes": "Roadster, second paint scheme; same contract."},
+	"characters/gangster": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred."},
+	# Ground.
+	"city/asphalt": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Wet street asphalt."},
+	"city/sidewalk": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 192.0, "notes": "Concrete sidewalk slabs."},
+	"city/alley": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 160.0, "notes": "Brick alley paving."},
+	"city/cobbles": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 112.0, "notes": "Granite setts (streetcar tracks)."},
+	"city/lot": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Yards and lots: cinders, dirt, weeds."},
+	"city/water": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 320.0, "notes": "River water."},
+	"city/curb": {"kind": "strip", "template_size": Vector2i(128, 24), "strip_width": 8.0, "notes": "Stone curb; sidewalk side at the top."},
+	"city/rails": {"kind": "strip", "template_size": Vector2i(128, 40), "strip_width": 22.0, "notes": "One streetcar track (two rails), transparent between."},
+	"city/quay": {"kind": "strip", "template_size": Vector2i(128, 32), "strip_width": 16.0, "notes": "Stone river edge with railing; water side at the bottom."},
+	"city/fence": {"kind": "strip", "template_size": Vector2i(128, 16), "strip_width": 8.0, "notes": "Wooden board fence."},
+	# Buildings.
+	"roofs/tar": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Tar-paper flat roof."},
+	"roofs/gravel": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Gravel flat roof."},
+	"roofs/tin": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Corrugated sheet roof."},
+	"roofs/ballast": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Railroad ballast with two tracks (runs left-right)."},
+	"roofs/steel": {"kind": "tile", "template_size": Vector2i(256, 256), "tile_world_size": 256.0, "notes": "Riveted steel deck (raised bridge)."},
+	"roofs/parapet": {"kind": "strip", "template_size": Vector2i(128, 32), "strip_width": 8.0, "notes": "Roof edge: stone coping (outside, top) and brick."},
+	"facades/brick_red": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Red-brick apartments."},
+	"facades/brick_red_lit": {"kind": "light", "template_size": Vector2i(256, 192), "notes": "Window light for brick_red."},
+	"facades/brick_brown": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Brown-brick shops (shopfronts below)."},
+	"facades/brick_brown_lit": {"kind": "light", "template_size": Vector2i(256, 192), "notes": "Window light for brick_brown."},
+	"facades/greystone": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Limestone greystone flats."},
+	"facades/greystone_lit": {"kind": "light", "template_size": Vector2i(256, 192), "notes": "Window light for greystone."},
+	"facades/warehouse": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Warehouse: steel windows, loading doors."},
+	"facades/warehouse_lit": {"kind": "light", "template_size": Vector2i(256, 192), "notes": "Window light for warehouse."},
+	"facades/club": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "The Copper Owl jazz club."},
+	"facades/club_lit": {"kind": "light", "template_size": Vector2i(256, 192), "notes": "Window and bulb light for club."},
+	"facades/garage": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Doyle's Garage: painted brick, garage doors."},
+	"facades/garage_lit": {"kind": "light", "template_size": Vector2i(256, 192), "notes": "Window light for garage."},
+	"facades/party": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Blank side wall between buildings."},
+	"facades/rear": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Alley side with fire escapes."},
+	"facades/rear_lit": {"kind": "light", "template_size": Vector2i(256, 192), "notes": "Window and bulb light for rear."},
+	"facades/steel": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Steel truss (the raised bascule bridge)."},
+	"facades/stone": {"kind": "facade", "template_size": Vector2i(256, 192), "notes": "Granite embankment wall."},
+	# Rooftop furniture (drawn at roof height).
+	"roof/chimney": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(27, 27), "notes": "Brick chimney stack."},
+	"roof/vent": {"kind": "sprite", "template_size": Vector2i(32, 32), "display_size": Vector2(17, 17), "notes": "Mushroom vent."},
+	"roof/skylight": {"kind": "sprite", "template_size": Vector2i(96, 64), "display_size": Vector2(54, 36), "notes": "Skylight."},
+	"roof/skylight_lit": {"kind": "light", "template_size": Vector2i(96, 64), "display_size": Vector2(54, 36), "notes": "Skylight light."},
+	"roof/stair_hut": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(50, 50), "notes": "Roof access stair hut, door on the right."},
+	"roof/water_tank": {"kind": "sprite", "template_size": Vector2i(112, 112), "display_size": Vector2(58, 58), "notes": "Wooden water tank."},
+	"roof/laundry": {"kind": "sprite", "template_size": Vector2i(128, 64), "display_size": Vector2(70, 35), "notes": "Washing lines."},
+	"signs/copper_owl": {"kind": "sprite", "template_size": Vector2i(256, 128), "display_size": Vector2(150, 75), "notes": "Copper Owl rooftop sign."},
+	"signs/copper_owl_lit": {"kind": "light", "template_size": Vector2i(256, 128), "display_size": Vector2(150, 75), "notes": "Copper Owl neon."},
+	"signs/hotel": {"kind": "sprite", "template_size": Vector2i(256, 64), "display_size": Vector2(150, 38), "notes": "Hotel Marlowe rooftop letters."},
+	"signs/hotel_lit": {"kind": "light", "template_size": Vector2i(256, 64), "display_size": Vector2(150, 38), "notes": "Hotel Marlowe bulbs."},
+	"signs/garage": {"kind": "sprite", "template_size": Vector2i(256, 64), "display_size": Vector2(150, 38), "notes": "Painted roof lettering, transparent."},
+	"signs/cold_storage": {"kind": "sprite", "template_size": Vector2i(384, 64), "display_size": Vector2(220, 37), "notes": "Painted roof lettering, transparent."},
+	# Street furniture.
+	"props/lamp_head": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(22, 22), "notes": "Street lamp lantern seen from above."},
+	"props/lamp_base": {"kind": "sprite", "template_size": Vector2i(32, 32), "display_size": Vector2(12, 12), "notes": "Street lamp base."},
+	"props/hydrant": {"kind": "sprite", "template_size": Vector2i(40, 40), "display_size": Vector2(15, 15), "notes": "Fire hydrant."},
+	"props/trash_can": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(18, 18), "notes": "Ash can."},
+	"props/crate": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(26, 26), "notes": "Wooden crate."},
+	"props/crates": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(44, 44), "notes": "Stack of crates."},
+	"props/barrel": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(20, 20), "notes": "Barrel."},
+	"props/barricade": {"kind": "sprite", "template_size": Vector2i(192, 64), "display_size": Vector2(96, 32), "notes": "Street-closed sawhorse."},
+	"props/lantern": {"kind": "sprite", "template_size": Vector2i(32, 32), "display_size": Vector2(12, 12), "notes": "Red warning lantern."},
+	"props/mailbox": {"kind": "sprite", "template_size": Vector2i(40, 40), "display_size": Vector2(16, 16), "notes": "Mailbox."},
+	"props/gas_pump": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(22, 22), "notes": "Gas pump."},
+	"props/newsstand": {"kind": "sprite", "template_size": Vector2i(96, 64), "display_size": Vector2(46, 30), "notes": "Newsstand."},
+	"props/awning_red": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
+	"props/awning_green": {"kind": "sprite", "template_size": Vector2i(160, 64), "display_size": Vector2(84, 34), "notes": "Shop awning; wall side at the top."},
+	"props/marquee": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Copper Owl canopy; wall side at the top."},
+	"props/marquee_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Canopy bulbs and lettering."},
+	"decals/manhole": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(24, 24), "notes": "Manhole cover."},
+	"decals/drain": {"kind": "sprite", "template_size": Vector2i(48, 24), "display_size": Vector2(24, 12), "notes": "Storm drain grate."},
+	"decals/puddle": {"kind": "sprite", "template_size": Vector2i(128, 80), "display_size": Vector2(96, 60), "notes": "Puddle (semi-transparent)."},
+	"decals/litter": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(18, 18), "notes": "Newspaper litter."},
+	"decals/oil": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(52, 52), "notes": "Oil stain."},
+	# Effects (lights and particles).
+	"fx/steam": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(48, 48), "notes": "Steam / smoke puff."},
+	"fx/glow": {"kind": "light", "template_size": Vector2i(128, 128), "display_size": Vector2(128, 128), "notes": "Round warm glow (lamp halos, light spill)."},
+	"fx/reflection": {"kind": "light", "template_size": Vector2i(64, 192), "display_size": Vector2(22, 70), "notes": "Light reflected on wet ground; the light is at the top."},
+	# Interface.
+	"ui/crosshair": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(30, 30), "notes": "Mouse aim reticle (screen px)."},
+	"ui/panel": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(96, 96), "notes": "Nine-patch panel, 24 px margins."},
 }
 
-## Replaceable audio: logical name -> spec. bus: Music / Engine / Effects.
+## Audio: OGG, WAV or MP3 overrides in custom/audio/<logical name>.<ext>.
 const AUDIO := {
-	"vehicles/engine_loop": {"loop": true, "bus": "Engine",
-		"notes": "Engine foundation: seamless deep loop (template ~41 Hz firing, body around 100-200 Hz), heard all the time; pitched about 0.78x (standstill) to 1.3x (top speed). WAV recommended for exact looping."},
-	"vehicles/engine_load": {"loop": true, "bus": "Engine",
-		"notes": "Engine load layer: seamless loop at the same pitch as the foundation (template: 2x firing order + soft intake roar, ~200-400 Hz), faded in while accelerating, silent when cruising. WAV recommended."},
-	"vehicles/tire_squeal": {"loop": true, "bus": "Effects", "notes": "Seamless tyre squeal loop; WAV recommended."},
-	"vehicles/impact_car": {"loop": false, "bus": "Effects", "notes": "Car-to-car bump, < 1 s."},
-	"vehicles/impact_wall": {"loop": false, "bus": "Effects", "notes": "Car hits barrier, < 1 s."},
-	"race/start_go": {"loop": false, "bus": "Effects", "notes": "Played when the race starts."},
-	"race/finish": {"loop": false, "bus": "Effects", "notes": "Finish jingle (player finishes / spectator winner)."},
-	"ui/ui_move": {"loop": false, "bus": "Effects", "notes": "Menu focus change."},
-	"ui/ui_select": {"loop": false, "bus": "Effects", "notes": "Menu confirm."},
-	"ui/ui_back": {"loop": false, "bus": "Effects", "notes": "Menu back."},
-	"ambience/ambience": {"loop": true, "bus": "Effects", "notes": "Trackside ambience loop (wind, birds), stereo."},
-	"music/music_menu": {"loop": true, "bus": "Music", "notes": "Menu music (title, GO RACING!, setup, garage, championship screens): the official HyperCars - Theme. OGG, WAV or MP3; played to its end and looped with a short crossfade."},
-	"music/music_race": {"loop": true, "bus": "Music", "notes": "Race music (every race, Knockout, Battle Royale, spectating): the official HyperCars - Racing Theme. OGG, WAV or MP3; played to its end and looped with a short crossfade."},
-	"weapons/missile_launch": {"loop": false, "bus": "Effects", "notes": "Missile fired."},
-	"weapons/explosion": {"loop": false, "bus": "Effects", "notes": "Missile/mine explosion and car destroyed."},
-	"weapons/mine_drop": {"loop": false, "bus": "Effects", "notes": "Mine dropped (clunk + arming beep)."},
-	"weapons/empty": {"loop": false, "bus": "Effects", "notes": "Fire pressed with no ammunition left."},
-	"ui/achievement": {"loop": false, "bus": "Effects", "notes": "Achievement unlocked jingle."},
-	"ui/shop_buy": {"loop": false, "bus": "Effects", "notes": "Garage: weapon bought (coins)."},
-	"ui/shop_sell": {"loop": false, "bus": "Effects", "notes": "Garage: weapon sold."},
-	"weapons/homing_launch": {"loop": false, "bus": "Effects", "notes": "Homing missile fired (launch + seeker chirp)."},
-	"weapons/super_launch": {"loop": false, "bus": "Effects", "notes": "Super missile fired (rising whirl)."},
+	"vehicles/engine_loop": {"loop": true, "bus": "Engine", "notes": "Engine foundation loop (pitch follows speed)."},
+	"vehicles/engine_load": {"loop": true, "bus": "Engine", "notes": "Engine load layer, louder while accelerating."},
+	"vehicles/tire_squeal": {"loop": true, "bus": "Effects", "notes": "Tyre squeal while sliding."},
+	"vehicles/impact_car": {"loop": false, "bus": "Effects", "notes": "Car hits car, under 1 s."},
+	"vehicles/impact_wall": {"loop": false, "bus": "Effects", "notes": "Car hits a wall or kerb object, under 1 s."},
 }
 
 
-## Track theme variants: the asset variant n uses for a shared logical name —
-## "variant_<n>/<logical>" when the catalogue defines it, otherwise the shared
-## asset. Variant 1 (the baseline) always uses the shared assets.
-static func themed(logical: String, variant: int) -> String:
-	if variant > 1:
-		var key := "variant_%d/%s" % [variant, logical]
-		if SPECS.has(key):
-			return key
-	return logical
-
-
-## Wheel-free body for a car image name ("cars/car_ai_3" -> "cars/body_ai_3").
-static func body_of(car_logical: String) -> String:
-	return car_logical.replace("cars/car_", "cars/body_")
-
-
-## Logical name of opponent car n (1-based), cycling if more cars than templates.
-static func ai_car(n: int) -> String:
-	return "cars/car_ai_%d" % ((n - 1) % AI_CAR_COUNT + 1)
+## Display size (world px) of a sprite, sheet frame or light.
+static func display_size(logical: String) -> Vector2:
+	return SPECS[logical].get("display_size", Vector2(SPECS[logical].template_size))
 
 
 ## Converts a world-space tile size to the UV scale for a texture of any resolution.
@@ -285,5 +129,5 @@ static func uv_per_world_pixel(texture: Texture2D, tile_world_size: float) -> Ve
 
 
 ## Scale that maps a texture of any resolution onto its display size.
-static func scale_for(texture: Texture2D, display_size: Vector2) -> Vector2:
-	return display_size / Vector2(texture.get_width(), texture.get_height())
+static func scale_for(texture: Texture2D, size: Vector2) -> Vector2:
+	return size / Vector2(texture.get_width(), texture.get_height())
