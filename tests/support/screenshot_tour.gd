@@ -129,6 +129,36 @@ func _run(shots: Array) -> void:
 				await _shot("shoot_close", false)
 				main.camera.foot_zoom = 1.2
 				await _frames(60)
+			"beat":
+				# the officer on his beat, seen from the corner of Kessler and Marlowe
+				_teleport_walker(Vector2(1990, 560), -PI / 2)
+				await _frames(150)
+				await _shot("beat")
+			"pursuit":
+				# shots by the newsstand: the officer whistles and comes running
+				_teleport_walker(Vector2(2330, 600), PI)
+				await _frames(10)
+				var near: Vector2 = main.officer.body.global_position
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, near + Vector2(80, -60))
+				_click = true
+				await _frames(30)
+				_click = true
+				await _frames(50)
+				# run for the roadster
+				var car: Car = main.cars[0]
+				for i in 120:
+					var to: Vector2 = car.global_position + Vector2(0, -36) - main.walker.global_position
+					if to.length() < 8.0:
+						break
+					cmd = PlayerCommand.make(to.normalized(), false, false, main.officer.body.global_position)
+					await physics_frame
+				await _shot("pursuit")
+				main.player.enter(car)
+				cmd = PlayerCommand.make(Vector2(-0.4, -1))
+				await _frames(30)
+				cmd = PlayerCommand.make(Vector2(0, -1))
+				await _frames(50)
+				await _shot("escape")
 			"wide":
 				_teleport_walker(Vector2(1650, 600), 0.0)
 				main.camera.foot_zoom = 0.45

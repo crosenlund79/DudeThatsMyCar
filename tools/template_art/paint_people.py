@@ -21,7 +21,7 @@ TROUSER = "#2b2d33"
 
 GANGSTER = {"coat": COAT, "coat_light": COAT_LIGHT, "trouser": TROUSER, "hat": "fedora", "hat_color": HAT,
             "stripes": True, "front": "tie"}
-POLICE = {"coat": "#26324d", "coat_light": "#36456a", "trouser": "#1c2336", "hat": "cap", "hat_color": "#1f2840",
+POLICE = {"coat": "#36508c", "coat_light": "#4d69ad", "trouser": "#24304f", "hat": "cap", "hat_color": "#2a3a66",
           "stripes": False, "front": "buttons"}
 
 
@@ -82,6 +82,9 @@ def _head_and_front(img, cx, cy, look):
             for by in (cy - 6, cy, cy + 6):
                 paint_shape(img, SP(ellipse_pts(bx, by, 1.1, 1.1)), "#d9b45a", int(bx * 9 + by), outline=None, wob=0.02)
         paint_shape(img, SP(rrect_pts(cx - 14, cy + 13, cx - 2, cy + 15.5, 1)), "#2a1a12", 79, outline=OUT, ow=0.8, wob=0.1)
+        star = [(cx + 2 + math.cos(-math.pi / 2 + k * math.pi / 5) * (3.2 if k % 2 == 0 else 1.4),
+                 cy - 9 + math.sin(-math.pi / 2 + k * math.pi / 5) * (3.2 if k % 2 == 0 else 1.4)) for k in range(10)]
+        paint_shape(img, SP(star), "#f0cc66", 85, outline=OUT, ow=0.6, wob=0.02)
         return _hat(img, cx, cy, look)
     paint_shape(img, SP([(cx + 5, cy - 5), (cx + 10, cy), (cx + 5, cy + 5), (cx + 7.5, cy)]), "#ece6d8", 5, outline=None, wob=0.1)
     paint_shape(img, SP([(cx + 6.5, cy - 1.4), (cx + 9.6, cy), (cx + 6.5, cy + 1.4)]), "#8f1e1e", 6, outline=None, wob=0.05)

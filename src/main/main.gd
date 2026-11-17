@@ -27,6 +27,9 @@ var hud: Hud
 var vehicle_audio: VehicleAudio
 var bullets: BulletWorld
 var gunfire: GunfireView
+var navigator: CityNavigator
+var officer: PoliceOfficer
+@export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
 ## The player's handgun.
 @export var gun_rules: GunRules = preload("res://src/weapons/default_pistol.tres")
 var paused := false
@@ -69,6 +72,11 @@ func _ready() -> void:
 	player.fired.connect(gunfire.on_fired)
 	player.gun_event.connect(gunfire.on_gun_event)
 	bullets.impact.connect(gunfire.on_impact)
+	navigator = CityNavigator.new(layout, Walker.RADIUS + 3.0)
+	officer = PoliceOfficer.new()
+	add_child(officer)
+	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body)
+	player.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void: officer.hear_gunshot(muzzle, gun_rules.noise_radius))
 	vehicle_audio = VehicleAudio.new()
 	add_child(vehicle_audio)
 	vehicle_audio.setup(resolver)
@@ -78,10 +86,12 @@ func _ready() -> void:
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
 	player.notice.connect(hud.show_notice)
+	officer.state_changed.connect(hud.set_police_status)
+	officer.gave_up.connect(func() -> void: hud.show_notice("You lost him."))
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, walker, camera, player, vehicle_audio, bullets, gunfire] + cars:
+	for node in [city, walker, camera, player, vehicle_audio, bullets, gunfire, officer] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN

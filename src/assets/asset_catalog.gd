@@ -116,8 +116,8 @@ const SPECS := {
 	"fx/glow": {"kind": "light", "template_size": Vector2i(128, 128), "display_size": Vector2(128, 128), "notes": "Round warm glow (lamp halos, light spill)."},
 	"fx/reflection": {"kind": "light", "template_size": Vector2i(64, 192), "display_size": Vector2(22, 70), "notes": "Light reflected on wet ground; the light is at the top."},
 	# Interface.
-	"ui/alert": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(22, 22), "notes": "Over the officer: he has seen you."},
-	"ui/search": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(22, 22), "notes": "Over the officer: he is looking for you."},
+	"ui/alert": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(30, 30), "notes": "Over the officer: he has seen you."},
+	"ui/search": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(30, 30), "notes": "Over the officer: he is looking for you."},
 	"ui/crosshair": {"kind": "sprite", "template_size": Vector2i(64, 64), "display_size": Vector2(30, 30), "notes": "Mouse aim reticle (screen px)."},
 	"ui/panel": {"kind": "sprite", "template_size": Vector2i(96, 96), "display_size": Vector2(96, 96), "notes": "Nine-patch panel, 24 px margins."},
 }

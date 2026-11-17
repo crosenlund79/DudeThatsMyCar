@@ -44,6 +44,8 @@ var steam_vents: Array = []
 var spill: Array = []
 ## Parked cars: {type: "sedan" | "coupe", paint: int, pos, rot}
 var cars: Array = []
+## The beat cop's round (he walks between these points and pauses at each).
+var police_beat := PackedVector2Array()
 var spawn := Vector2.ZERO
 var spawn_facing := 0.0
 

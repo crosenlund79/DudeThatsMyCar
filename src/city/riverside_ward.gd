@@ -164,7 +164,7 @@ func _central_rows() -> void:
 		[260, 3, "brick_brown", "tar", {"awning": "red"}], [190, 2, "brick_brown", "gravel", {"awning": "green"}], [24],
 		[300, 4, "brick_red", "tar"], [220, 2, "brick_brown", "tar", {"awning": "red"}], [394, 3, "greystone", "gravel"]])
 	_row(1781, 439, 168, [
-		[200, 3, "brick_brown", "tar", {"awning": "green"}], [170, 2, "brick_brown", "gravel", {"awning": "red"}],
+		[200, 3, "brick_brown", "tar"], [170, 2, "brick_brown", "gravel", {"awning": "red"}],
 		[280, 3, "club", "tar", {"name": "The Copper Owl", "marquee": true}], [24],
 		[200, 3, "greystone", "tar"], [514, 4, "brick_red", "tar"]])
 	# Facing Marlowe Avenue from the south: Hotel Marlowe.
@@ -349,6 +349,8 @@ func _street_furniture() -> void:
 		_prop("props/trash_can", p, 0.0, 8.0)
 	# Doyle's Garage forecourt: a pump.
 	_prop("props/gas_pump", Vector2(870, 1340), 0.0, 9.0)
+	# The police call box at the corner of the beat cop's round.
+	_prop("props/call_box", Vector2(1890, 479), 0.0, 8.0)
 	# Barricades with warning lanterns close the district's streets.
 	_barricade_line(Vector2(WEST_EDGE, CALLOWAY), Vector2.DOWN, 3)
 	_barricade_line(Vector2(WEST_EDGE, MARLOWE), Vector2.DOWN, 4)
@@ -443,6 +445,9 @@ func _cars_and_spawn() -> void:
 		{"type": "sedan", "paint": 1, "pos": Vector2(3845, 150), "rot": PI / 2},  # warehouse apron
 		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1435), "rot": PI},     # Pruitt Street
 	]
+	# The beat cop walks a short round on the north side of Marlowe Avenue by
+	# the Kessler Street corner, past the newsstand and his call box.
+	d.police_beat = PackedVector2Array([Vector2(1872, 457), Vector2(1995, 457)])
 	# At the streetcar stop in the middle of Marlowe Avenue, between the Copper
 	# Owl and Hotel Marlowe, a few steps from the roadster.
 	d.spawn = Vector2(2350, 600)

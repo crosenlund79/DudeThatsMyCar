@@ -97,10 +97,10 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/garage` | `custom/graphics/signs/garage.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Painted roof lettering, transparent. |
 | `signs/hotel` | `custom/graphics/signs/hotel.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Hotel Marlowe rooftop letters. |
 | `signs/hotel_lit` | `custom/graphics/signs/hotel_lit.png` | 256x64 | light (additive night light; transparent where dark) | 150x38 | Hotel Marlowe bulbs. |
-| `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 22x22 | Over the officer: he has seen you. |
+| `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |
 | `ui/crosshair` | `custom/graphics/ui/crosshair.png` | 64x64 | sprite (image, scaled to its display size) | 30x30 | Mouse aim reticle (screen px). |
 | `ui/panel` | `custom/graphics/ui/panel.png` | 96x96 | sprite (image, scaled to its display size) | 96x96 | Nine-patch panel, 24 px margins. |
-| `ui/search` | `custom/graphics/ui/search.png` | 48x48 | sprite (image, scaled to its display size) | 22x22 | Over the officer: he is looking for you. |
+| `ui/search` | `custom/graphics/ui/search.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he is looking for you. |
 | `weapons/pistol` | `custom/graphics/weapons/pistol.png` | 48x20 | sprite (image, scaled to its display size) | 15x6 | .45 automatic from above, muzzle to the right; the left end sits in the hand. |
 
 ## Audio (OGG, WAV or MP3)

@@ -22,6 +22,7 @@ var car_panel: PanelContainer
 var car_label: Label
 var gun_panel: PanelContainer
 var gun_label: Label
+var police_label: Label
 var notice_label: Label
 var help_panel: PanelContainer
 var pause_panel: PanelContainer
@@ -56,6 +57,12 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	gun_label = _label("", 18, CREAM)
 	gun_panel.add_child(gun_label)
 	gun_panel.visible = false
+	police_label = _label("", 22, Color("ff7a5c"))
+	police_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	police_label.add_theme_constant_override("outline_size", 7)
+	police_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	police_label.visible = false
+	add_child(police_label)
 	notice_label = _label("", 20, Color("ffd9a0"))
 	notice_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	notice_label.add_theme_constant_override("outline_size", 6)
@@ -125,6 +132,24 @@ func show_gun(gun: Gun) -> void:
 	var screen := get_viewport().get_visible_rect().size
 	gun_panel.reset_size()
 	gun_panel.position = Vector2(screen.x - gun_panel.size.x - 18, screen.y - gun_panel.size.y - 18)
+
+
+## The pursuit line at the top of the screen, from the officer's state.
+func set_police_status(state: int) -> void:
+	match state:
+		OfficerBrain.State.ALERTED, OfficerBrain.State.CHASE:
+			police_label.text = "A COPPER IS ON YOUR TAIL"
+			police_label.add_theme_color_override("font_color", Color("ff7a5c"))
+			police_label.visible = true
+		OfficerBrain.State.SEARCH:
+			police_label.text = "THE COPPER IS LOOKING FOR YOU"
+			police_label.add_theme_color_override("font_color", Color("ffcf7a"))
+			police_label.visible = true
+		_:
+			police_label.visible = false
+	var screen := get_viewport().get_visible_rect().size
+	police_label.reset_size()
+	police_label.position = Vector2((screen.x - police_label.size.x) * 0.5, 18)
 
 
 func set_paused(on: bool) -> void:
