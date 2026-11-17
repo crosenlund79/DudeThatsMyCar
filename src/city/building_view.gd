@@ -142,6 +142,8 @@ func _doorway(ci: CanvasItem, d: Dictionary, light: bool) -> void:
 	var a: Vector2 = d.a
 	var b: Vector2 = d.b
 	var pts := PackedVector2Array([project(a, 0.0), project(b, 0.0), project(b, DOOR_HEIGHT), project(a, DOOR_HEIGHT)])
+	if absf(_area(pts)) < 6.0:
+		return  # the wall is seen edge-on: nothing to show (and nothing to triangulate)
 	if light:
 		var warm := Color(1.0, 0.72, 0.4, 0.75)
 		var dim := Color(1.0, 0.6, 0.3, 0.25)
@@ -151,6 +153,13 @@ func _doorway(ci: CanvasItem, d: Dictionary, light: bool) -> void:
 		project(b + (b - a).normalized() * 3.0, DOOR_HEIGHT + 3.0), project(a - (b - a).normalized() * 3.0, DOOR_HEIGHT + 3.0)])
 	ci.draw_polygon(frame, PackedColorArray([Color(0.3, 0.2, 0.13)]))
 	ci.draw_polygon(pts, PackedColorArray([Color(0.16, 0.1, 0.06)]))
+
+
+static func _area(pts: PackedVector2Array) -> float:
+	var sum := 0.0
+	for i in pts.size():
+		sum += pts[i].cross(pts[(i + 1) % pts.size()])
+	return sum * 0.5
 
 
 ## Iron fire-escape landings on the walls, one per upper storey: from above
