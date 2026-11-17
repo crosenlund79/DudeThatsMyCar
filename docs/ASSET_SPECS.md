@@ -14,10 +14,10 @@ image is its window light at night and is replaced separately. Cars and people f
 
 | Logical name | Override path | Template px | Kind | In the world | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `cars/coupe` | `custom/graphics/cars/coupe.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Roadster, top-down, nose right, centred, transparent background. |
+| `cars/coupe` | `custom/graphics/cars/coupe.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Roadster, top-down, nose right, centred, transparent background; front tyres left out. Headlamps at (32, +-7.6), tail lamps at (-35.5, +-7.2) display px. |
 | `cars/coupe_b` | `custom/graphics/cars/coupe_b.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Roadster, second paint scheme; same contract. |
 | `cars/police` | `custom/graphics/cars/police.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Police squad car (sedan body): black, POLICE across the roof, siren, spotlight. |
-| `cars/sedan` | `custom/graphics/cars/sedan.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, top-down, nose right, centred, transparent background. |
+| `cars/sedan` | `custom/graphics/cars/sedan.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, top-down, nose right, centred, transparent background; front tyres left out (cars/wheel). Keep the nose recognisable: radiator, headlamps (31, +-7 display px from the centre) and windscreen at the right, red tail lamps (-34, +-11) at the left. |
 | `cars/sedan_b` | `custom/graphics/cars/sedan_b.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | Sedan, second paint scheme; same contract. |
 | `cars/wheel` | `custom/graphics/cars/wheel.png` | 48x20 | sprite (image, scaled to its display size) | 14x6 | Front tyre (whitewall) from above, rolling direction left-right; drawn under the body on both sides and turned with the steering (car bodies leave the front tyres out). |
 | `characters/barber` | `custom/graphics/characters/barber.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Sal the barber in his white coat. |

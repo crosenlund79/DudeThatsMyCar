@@ -54,64 +54,109 @@ def sheen(img, pts, alpha=60, blur=2.0):
     img.alpha_composite(layer.filter(ImageFilter.GaussianBlur(blur * SS)))
 
 
+def mirror(pts):
+    """The same outline on the other side of the car (y mirrored about the centre line)."""
+    return [(x, CH - y) for x, y in reversed(pts)]
+
+
+# Wing outlines for the top side of the car (template px); mirror() gives the other side.
+# Front wings are teardrops that sweep forward and in to a point beside the radiator,
+# rear wings are short and round: the nose reads narrow and pointed, the tail full.
+FRONT_WING = [(104, 17.5), (110, 11), (122, 6), (136, 3.6), (150, 5.2), (161, 9.5), (168, 15), (170.5, 20.5),
+              (166, 22), (156, 20.5), (140, 19), (122, 18.5)]
+REAR_WING = [(64, 17.5), (58, 10), (48, 5.2), (36, 3.6), (24, 5), (15, 9), (11, 14.5), (12, 19), (22, 19.5), (44, 19)]
+
+
+def wings(img, color, seed, front=FRONT_WING, rear=REAR_WING):
+    for k, pts in enumerate((front, mirror(front), rear, mirror(rear))):
+        paint_shape(img, SP(pts), color, seed + k, outline=OUT, ow=1.6, wob=0.25, tex=0.18, light=(0.3, -1, 0.5))
+    # a crease of light along each front wing
+    for pts in (front, mirror(front)):
+        xs = [x for x, _ in pts]
+        top = min(pts, key=lambda p: abs(p[0] - 140))
+        sheen(img, [(118, top[1] + 3), (158, top[1] + 4), (158, top[1] + 5.5), (118, top[1] + 4.5)], 45, 1.0)
+
+
+def radiator(img, seed, x0=160, half=10.5):
+    """A narrow V-fronted radiator shell with vertical slats and a mascot on the cap (points forward, +X)."""
+    shell = [(x0, 40 - half), (x0 + 6, 40 - half + 2.5), (x0 + 10.5, 40), (x0 + 6, 40 + half - 2.5), (x0, 40 + half)]
+    paint_shape(img, SP(shell), CHROME, seed, outline=OUT, ow=1.1, wob=0.08, light=(1, -1, 0.45))
+    d = ImageDraw.Draw(img)
+    for y in range(int(40 - half + 3), int(40 + half - 2), 2):
+        d.line([(S(x0 + 1.5), S(y)), (S(x0 + 5.5 - abs(y - 40) * 0.12), S(y))], fill=rgba("#3a3e40"), width=1)
+    # the mascot on the radiator cap: a bright chrome teardrop pointing ahead
+    paint_shape(img, SP([(x0 - 6, 37.8), (x0 + 1, 39), (x0 + 3.5, 40), (x0 + 1, 41), (x0 - 6, 42.2)]), "#eef0f1", seed + 1,
+                outline=OUT, ow=0.6, wob=0.02, light=(1, -1, 0.5))
+
+
+def front_bumper(img, seed, top=21.5, x=169.5):
+    """A chrome bumper bowed forward in the middle, narrower than the wings."""
+    pts = [(x - 1.5, top), (x + 2.6, 30), (x + 4.4, 40), (x + 2.6, 80 - 30), (x - 1.5, 80 - top),
+           (x - 4.2, 80 - top), (x - 0.6, 80 - 30), (x + 1.2, 40), (x - 0.6, 30), (x - 4.2, top)]
+    paint_shape(img, SP(pts), CHROME, seed, outline=OUT, ow=1.0, wob=0.05, light=(1, -1, 0.4))
+
+
+def windscreen(img, x0, x1, top, seed, split=True):
+    """A bright, slanted windscreen with a highlight: the brightest glass on the car, at the front of the cabin."""
+    pts = [(x0, top), (x1, top + 3.5), (x1, 80 - top - 3.5), (x0, 80 - top)]
+    paint_shape(img, SP(pts), "#6f97b2", seed, outline=OUT, ow=1.2, wob=0.1, tex=0.08, light=(1, -1, 0.6))
+    line(img, [(S(x0 + 2.5), S(top + 4)), (S(x1 - 1.5), S(top + 9))], "#e6f2fa", 1.3 * SS, 190, blur=0.4)
+    if split:
+        line(img, [(S(x0 + 0.5), S(40)), (S(x1 - 0.5), S(40))], CHROME_DARK, 1.0 * SS, 230)
+
+
 def sedan(body="#1d2b25", roof=None, seed=1):
     roof = roof or shade(body, 1.18)
     img = new(CW, CH)
-    # rear tyres peeking from under the fenders (the front ones are cars/wheel, turned by the steering)
+    # rear tyres peeking from under the wings (the front ones are cars/wheel, turned by the steering)
     tyre_top(img, 26, 3.5, 50, 11, seed)
     tyre_top(img, 26, 69, 50, 76.5, seed + 1)
     # running boards
-    for y0, y1 in ((10, 17), (63, 70)):
-        paint_shape(img, SP(rrect_pts(52, y0, 120, y1, 2)), "#1b1b1c", seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.3)
-        ImageDraw.Draw(img).line([(S(54), S((y0 + y1) / 2)), (S(118), S((y0 + y1) / 2))], fill=rgba("#55585a"), width=SS)
-    # body: trunk + cabin + hood in one organic outline
-    body_pts = [(14, 30), (18, 21), (30, 18), (52, 15.5), (104, 15.5), (112, 19.5), (162, 21), (170, 26),
-                (172, 40), (170, 54), (162, 59), (112, 60.5), (104, 64.5), (52, 64.5), (30, 62), (18, 59), (14, 50)]
-    paint_shape(img, SP(body_pts), body, seed + 3, outline=OUT, ow=1.8, wob=0.35, tex=0.12, strokes_n=14, stroke_cols=[shade(body, 1.08), shade(body, 0.94)],
-                light=(0.2, -1, 0.45), inner_shadow=0.35)
-    # fenders over the tyres
-    for side, cy in ((-1, 13.5), (1, 66.5)):
-        paint_shape(img, SP(fender(38, cy, 24, 9.5, 0.35, 0.65, side)), shade(body, 0.92), seed + 4 + cy, outline=OUT,
-                    ow=1.6, wob=0.3, tex=0.18, light=(0.3, -1, 0.5))
-        paint_shape(img, SP(fender(140, cy, 33, 10, 0.75, 0.35, side)), shade(body, 0.92), seed + 6 + cy, outline=OUT,
-                    ow=1.6, wob=0.3, tex=0.18, light=(0.3, -1, 0.5))
-    # hood: louvres and the centre hinge strip
-    d = ImageDraw.Draw(img)
-    for x in range(124, 152, 4):
-        for y0 in (25, 50):
-            line(img, [(S(x), S(y0)), (S(x + 2), S(y0 + 5))], "#0c100e", 1.4 * SS, 220, blur=0.2)
-    line(img, [(S(110), S(40)), (S(168), S(40))], CHROME, 1.4 * SS, 230, blur=0.2)
-    # cabin roof with windscreen and rear window
-    paint_shape(img, SP([(104, 22), (111, 26), (111, 54), (104, 58)]), "#2a3a48", seed + 8, outline=OUT, ow=1.2, wob=0.15, tex=0.1,
-                light=(0, -1, 0.6))
-    paint_shape(img, SP([(50, 24), (56, 21), (56, 59), (50, 56)]), "#2a3a48", seed + 9, outline=OUT, ow=1.0, wob=0.15, tex=0.1)
-    paint_shape(img, SP(rrect_pts(55, 19.5, 104, 60.5, 7)), roof, seed + 10, outline=OUT, ow=1.6, wob=0.25, tex=0.1,
+    for y0, y1 in ((11, 18), (62, 69)):
+        paint_shape(img, SP(rrect_pts(56, y0, 116, y1, 2)), "#1b1b1c", seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.3)
+        ImageDraw.Draw(img).line([(S(58), S((y0 + y1) / 2)), (S(114), S((y0 + y1) / 2))], fill=rgba("#55585a"), width=SS)
+    # body: a full, rounded trunk at the back, the cabin set back, a long hood narrowing to the radiator
+    body_pts = [(8, 34), (10, 25), (17, 19), (30, 16), (56, 15.5), (100, 16), (110, 18.5), (132, 22), (150, 26), (161, 29.5),
+                (161, 50.5), (150, 54), (132, 58), (110, 61.5), (100, 64), (56, 64.5), (30, 64), (17, 61), (10, 55), (8, 46)]
+    paint_shape(img, SP(body_pts), body, seed + 3, outline=OUT, ow=1.8, wob=0.35, tex=0.12, strokes_n=14,
+                stroke_cols=[shade(body, 1.08), shade(body, 0.94)], light=(0.2, -1, 0.45), inner_shadow=0.35)
+    wings(img, shade(body, 0.9), seed + 4)
+    # hood: louvres down both sides, the hinge strip along the middle
+    for x in range(118, 150, 4):
+        for y0 in (27, 48):
+            line(img, [(S(x), S(y0)), (S(x + 2), S(y0 + 4.5))], "#0c100e", 1.3 * SS, 220, blur=0.2)
+    line(img, [(S(110), S(40)), (S(158), S(40))], CHROME, 1.3 * SS, 230, blur=0.2)
+    radiator(img, seed + 5)
+    # the cabin: roof set back, a big bright windscreen at its front, a small rear window
+    paint_shape(img, SP([(46, 27), (53, 24), (53, 56), (46, 53)]), "#22303a", seed + 9, outline=OUT, ow=1.0, wob=0.15, tex=0.1)
+    paint_shape(img, SP(rrect_pts(52, 19, 100, 61, 7)), roof, seed + 10, outline=OUT, ow=1.6, wob=0.25, tex=0.1,
                 strokes_n=10, stroke_cols=[shade(roof, 1.06), shade(roof, 0.95)], light=(0.1, -1, 0.5), inner_shadow=0.25)
-    # side glass strips
+    windscreen(img, 99, 109, 20.5, seed + 8)
     for y0, y1 in ((16.5, 19.5), (60.5, 63.5)):
-        paint_shape(img, SP(rrect_pts(58, y0, 100, y1, 1)), "#2c3c4a", seed + 11, outline=None, wob=0.1, tex=0.1)
-    # trunk lid line, spare tyre and bumpers
-    line(img, [(S(34), S(22)), (S(34), S(58))], shade(body, 0.6), 1.2 * SS, 200)
-    paint_shape(img, SP(rrect_pts(4, 27, 15, 53, 4)), TYRE, seed + 12, outline=OUT, ow=1, wob=0.15, tex=0.2)
-    paint_shape(img, SP(rrect_pts(6.5, 33, 12.5, 47, 2)), CHROME, seed + 13, outline=None, wob=0.1, light=(0, -1, 0.4))
-    chrome_bar(img, 1.5, 15, 5, 65, seed + 14)
-    chrome_bar(img, 171, 13, 175, 67, seed + 15)
-    # grille shell + radiator cap, headlamps, horns
-    paint_shape(img, SP(rrect_pts(164, 31, 171, 49, 2.5)), CHROME, seed + 16, outline=OUT, ow=1, wob=0.1, light=(1, -1, 0.4))
-    for y in range(33, 48, 2):
-        d.line([(S(165.5), S(y)), (S(169.5), S(y))], fill=rgba("#3a3e40"), width=1)
-    lamp(img, 162, 20, 4.2, seed + 17)
-    lamp(img, 162, 60, 4.2, seed + 18)
-    # tail lamps
-    for y in (12, 68):
-        paint_shape(img, SP(ellipse_pts(19, y, 2.4, 2)), "#8a1a16", seed + 19, outline=OUT, ow=0.8, wob=0.1)
-    # door handles and the beltline chrome
-    for x in (66, 92):
-        d.line([(S(x), S(18)), (S(x + 3), S(18))], fill=rgba(CHROME), width=SS)
-        d.line([(S(x), S(62)), (S(x + 3), S(62))], fill=rgba(CHROME), width=SS)
+        paint_shape(img, SP(rrect_pts(56, y0, 98, y1, 1)), "#2c3c4a", seed + 11, outline=None, wob=0.1, tex=0.1)
+    # the back: trunk lid, the spare wheel under a painted cover, two dull bumperettes, red tail lamps
+    # (all the bright chrome is at the nose, so the front reads even with the lamps off)
+    line(img, [(S(30), S(23)), (S(30), S(57))], shade(body, 0.6), 1.2 * SS, 200)
+    paint_shape(img, SP(rrect_pts(2, 27, 12, 53, 4)), shade(body, 0.8), seed + 12, outline=OUT, ow=1.1, wob=0.15, tex=0.2,
+                light=(0.3, -1, 0.4))
+    line(img, [(S(7), S(29)), (S(7), S(51))], shade(body, 0.55), 1.0 * SS, 200)
+    for y0, y1 in ((15, 25), (55, 65)):
+        paint_shape(img, SP(rrect_pts(2.5, y0, 5.5, y1, 1.5)), CHROME_DARK, seed + 14 + y0, outline=OUT, ow=0.9, wob=0.05)
+    for y in (15, 65):
+        paint_shape(img, SP(ellipse_pts(13.5, y, 3.4, 3.0)), "#b3221c", seed + 19, outline=OUT, ow=0.8, wob=0.1)
+        soft_blob(img, S(13), S(y - 0.6), S(1.3), S(1.1), "#ffb0a0", 160, 0.4 * SS)
+    # the front: big headlamps between the wings and the radiator, a bowed bumper narrower than the wings
+    lamp(img, 157, 23.5, 4.8, seed + 17)
+    lamp(img, 157, 56.5, 4.8, seed + 18)
+    front_bumper(img, seed + 15)
+    # door handles and the belt-line chrome
+    d = ImageDraw.Draw(img)
+    for x in (64, 90):
+        d.line([(S(x), S(17.5)), (S(x + 3), S(17.5))], fill=rgba(CHROME), width=SS)
+        d.line([(S(x), S(62.5)), (S(x + 3), S(62.5))], fill=rgba(CHROME), width=SS)
     # highlights on hood and roof (wet paint)
-    sheen(img, [(114, 30), (160, 31), (160, 34), (114, 34)], 55, 1.6)
-    sheen(img, [(62, 26), (98, 26), (98, 31), (62, 31)], 50, 2.2)
+    sheen(img, [(114, 31), (152, 32), (152, 34.5), (114, 34)], 55, 1.6)
+    sheen(img, [(60, 26), (96, 26), (96, 31), (60, 31)], 50, 2.2)
     return finish(grain(img, 3, seed), CW, CH)
 
 
@@ -119,56 +164,53 @@ def coupe(body="#e3d4ac", fend="#6a1d22", seat="#7b2420", seed=5):
     img = new(CW, CH)
     tyre_top(img, 22, 3.5, 46, 11, seed)
     tyre_top(img, 22, 69, 46, 76.5, seed + 1)
-    for y0, y1 in ((10.5, 17), (63, 69.5)):
-        paint_shape(img, SP(rrect_pts(48, y0, 120, y1, 2)), fend, seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.25)
-    # boat-tail body: long hood, short cockpit, tapering tail
-    body_pts = [(4, 40), (8, 31), (18, 24), (40, 18), (60, 16), (100, 17), (112, 20.5), (162, 22), (169, 27),
-                (171, 40), (169, 53), (162, 58), (112, 59.5), (100, 63), (60, 64), (40, 62), (18, 56), (8, 49)]
-    paint_shape(img, SP(body_pts), body, seed + 3, outline=OUT, ow=1.8, wob=0.35, tex=0.1, strokes_n=14, stroke_cols=[shade(body, 1.06), shade(body, 0.95)],
-                light=(0.2, -1, 0.4), inner_shadow=0.3)
-    # tail centre strip
-    line(img, [(S(6), S(40)), (S(58), S(40))], CHROME, 1.4 * SS, 230, blur=0.2)
-    # cockpit: open, red leather bench, steering wheel, dash
-    paint_shape(img, SP(rrect_pts(58, 21, 94, 59, 8)), "#2a1a14", seed + 4, outline=OUT, ow=1.4, wob=0.2, tex=0.2)
-    paint_shape(img, SP(rrect_pts(60, 23, 76, 57, 6)), seat, seed + 5, outline=OUT, ow=1.0, wob=0.2, tex=0.25, light=(0, -1, 0.5))
+    for y0, y1 in ((11.5, 18), (62, 68.5)):
+        paint_shape(img, SP(rrect_pts(50, y0, 118, y1, 2)), fend, seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.25)
+    # long hood narrowing to the radiator, a short cockpit set back, a rounded boat-tail deck
+    body_pts = [(6, 36), (8, 29), (16, 23), (34, 18.5), (58, 16.5), (98, 17), (112, 20), (136, 23.5), (152, 27), (161, 30),
+                (161, 50), (152, 53), (136, 56.5), (112, 60), (98, 63), (58, 63.5), (34, 61.5), (16, 57), (8, 51), (6, 44)]
+    paint_shape(img, SP(body_pts), body, seed + 3, outline=OUT, ow=1.8, wob=0.35, tex=0.1, strokes_n=14,
+                stroke_cols=[shade(body, 1.06), shade(body, 0.95)], light=(0.2, -1, 0.4), inner_shadow=0.3)
+    front = [(100, 18.5), (108, 10.5), (122, 5.5), (140, 3.6), (154, 5.5), (164, 10), (171, 16.5), (172.5, 21.5),
+             (167, 23), (156, 21.5), (140, 20), (118, 19.5)]
+    rear = [(58, 17.5), (52, 10), (42, 5), (32, 3.6), (21, 5), (13, 9.5), (10, 15), (12, 19.5), (24, 20), (42, 19)]
+    wings(img, fend, seed + 9, front, rear)
+    # tail: the chrome strip down the deck, a fuel cap, round tail lamps
+    line(img, [(S(14), S(40)), (S(48), S(40))], shade(body, 0.6), 1.3 * SS, 220, blur=0.2)
+    paint_shape(img, SP(ellipse_pts(20, 40, 2.4, 2.4)), CHROME_DARK, seed + 30, outline=OUT, ow=0.6, wob=0.02)
+    for y in (24, 56):
+        paint_shape(img, SP(ellipse_pts(10, y, 3.0, 2.7)), "#b3221c", seed + 23, outline=OUT, ow=0.8, wob=0.1)
+        soft_blob(img, S(9.6), S(y - 0.5), S(1.1), S(0.9), "#ffb0a0", 160, 0.4 * SS)
+    # cockpit: open, red leather bench at the back of it, the steering wheel and dash at the front
+    paint_shape(img, SP(rrect_pts(56, 21, 94, 59, 8)), "#2a1a14", seed + 4, outline=OUT, ow=1.4, wob=0.2, tex=0.2)
+    paint_shape(img, SP(rrect_pts(58, 23, 73, 57, 6)), seat, seed + 5, outline=OUT, ow=1.0, wob=0.2, tex=0.25, light=(0, -1, 0.5))
     d = ImageDraw.Draw(img)
     for y in (30, 40, 50):
-        d.line([(S(62), S(y)), (S(74), S(y))], fill=rgba(shade(seat, 0.65)), width=SS)
+        d.line([(S(60), S(y)), (S(71), S(y))], fill=rgba(shade(seat, 0.65)), width=SS)
     paint_shape(img, SP(rrect_pts(88, 22, 93, 58, 2)), "#3a2418", seed + 6, outline=None, wob=0.1, tex=0.2)
-    paint_shape(img, SP(ellipse_pts(84, 31, 2.2, 6.5)), "#141414", seed + 7, outline=None, wob=0.05)
-    line(img, [(S(84), S(26)), (S(84), S(36))], "#141414", 1.2 * SS, 255)
+    paint_shape(img, SP(ellipse_pts(83, 31, 2.2, 6.5)), "#141414", seed + 7, outline=None, wob=0.05)
+    line(img, [(S(83), S(26)), (S(83), S(36))], "#141414", 1.2 * SS, 255)
     # folded tan top behind the seat
-    paint_shape(img, SP(rrect_pts(50, 22, 59, 58, 3)), "#b49a72", seed + 8, outline=OUT, ow=1.0, wob=0.2, tex=0.25)
-    # V windscreen
-    line(img, [(S(96), S(22)), (S(100), S(40)), (S(96), S(58))], CHROME, 1.6 * SS, 240, blur=0.2)
-    line(img, [(S(97.5), S(23)), (S(101.5), S(40)), (S(97.5), S(57))], "#9fb6c8", 1.2 * SS, 140, blur=0.3)
-    # fenders (dark two-tone), long and swept
-    for side, cy in ((-1, 13.5), (1, 66.5)):
-        paint_shape(img, SP(fender(34, cy, 22, 9.5, 0.3, 0.7, side)), fend, seed + 9 + cy, outline=OUT, ow=1.6, wob=0.3,
-                    tex=0.18, light=(0.3, -1, 0.5))
-        paint_shape(img, SP(fender(140, cy, 34, 10, 0.8, 0.3, side)), fend, seed + 11 + cy, outline=OUT, ow=1.6, wob=0.3,
-                    tex=0.18, light=(0.3, -1, 0.5))
-        # side-mounted spare wheel sitting in the front fender
-        sy = cy + (2.5 if side < 0 else -2.5)
-        paint_shape(img, SP(ellipse_pts(114, sy, 7.5, 5.5)), TYRE, seed + 13 + cy, outline=OUT, ow=1, wob=0.1, tex=0.2)
-        paint_shape(img, SP(ellipse_pts(114, sy, 4.6, 3.2)), "#ece6d6", seed + 15 + cy, outline=None, wob=0.05)
-        paint_shape(img, SP(ellipse_pts(114, sy, 2.4, 1.8)), CHROME, seed + 17 + cy, outline=None, wob=0.05)
+    paint_shape(img, SP(rrect_pts(47, 22, 57, 58, 3)), "#b49a72", seed + 8, outline=OUT, ow=1.0, wob=0.2, tex=0.25)
+    # V windscreen in a chrome frame, pointing ahead
+    line(img, [(S(95), S(22)), (S(100), S(40)), (S(95), S(58))], CHROME, 1.8 * SS, 240, blur=0.2)
+    line(img, [(S(96.8), S(23)), (S(101.8), S(40)), (S(96.8), S(57))], "#9fc4dc", 1.5 * SS, 200, blur=0.3)
+    # side-mounted spare wheels sitting in the front wings
+    for sy in (14.5, 65.5):
+        paint_shape(img, SP(ellipse_pts(116, sy, 7.5, 5.5)), TYRE, seed + 13 + sy, outline=OUT, ow=1, wob=0.1, tex=0.2)
+        paint_shape(img, SP(ellipse_pts(116, sy, 4.6, 3.2)), "#ece6d6", seed + 15 + sy, outline=None, wob=0.05)
+        paint_shape(img, SP(ellipse_pts(116, sy, 2.4, 1.8)), CHROME, seed + 17 + sy, outline=None, wob=0.05)
     # hood louvres and centre line
-    for x in range(118, 156, 4):
-        for y0 in (25.5, 49.5):
-            line(img, [(S(x), S(y0)), (S(x + 2), S(y0 + 5))], shade(body, 0.55), 1.3 * SS, 220, blur=0.2)
-    line(img, [(S(104), S(40)), (S(167), S(40))], CHROME, 1.3 * SS, 230, blur=0.2)
-    chrome_bar(img, 170.5, 14, 174.5, 66, seed + 18)
-    chrome_bar(img, 1.5, 30, 4.5, 50, seed + 19)
-    paint_shape(img, SP(rrect_pts(163, 32, 170, 48, 3)), CHROME, seed + 20, outline=OUT, ow=1, wob=0.1, light=(1, -1, 0.4))
-    for y in range(34, 47, 2):
-        ImageDraw.Draw(img).line([(S(164.5), S(y)), (S(168.5), S(y))], fill=rgba("#3a3e40"), width=1)
-    lamp(img, 161, 21, 5.2, seed + 21)
-    lamp(img, 161, 59, 5.2, seed + 22)
-    for y in (24, 56):
-        paint_shape(img, SP(ellipse_pts(12, y, 2.2, 1.8)), "#8a1a16", seed + 23, outline=OUT, ow=0.8, wob=0.1)
-    sheen(img, [(112, 30), (160, 31), (160, 34), (112, 34)], 70, 1.6)
-    sheen(img, [(12, 33), (50, 30), (50, 33), (12, 36)], 45, 1.8)
+    for x in range(122, 152, 4):
+        for y0 in (27, 48.5):
+            line(img, [(S(x), S(y0)), (S(x + 2), S(y0 + 4.5))], shade(body, 0.55), 1.3 * SS, 220, blur=0.2)
+    line(img, [(S(104), S(40)), (S(157), S(40))], CHROME, 1.3 * SS, 230, blur=0.2)
+    radiator(img, seed + 20, x0=160, half=10)
+    lamp(img, 158, 23, 5.4, seed + 21)
+    lamp(img, 158, 57, 5.4, seed + 22)
+    front_bumper(img, seed + 18, top=22.5, x=170)
+    sheen(img, [(112, 31), (152, 32), (152, 34.5), (112, 34)], 70, 1.6)
+    sheen(img, [(12, 33), (46, 30.5), (46, 33), (12, 36)], 45, 1.8)
     return finish(grain(img, 3, seed), CW, CH)
 
 

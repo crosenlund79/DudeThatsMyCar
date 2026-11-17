@@ -19,11 +19,11 @@ const FACADE_REPEAT := 128.0
 const SPECS := {
 	# Vehicles and people (nose / face pointing right, +X, centred).
 	"cars/sedan": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
-		"notes": "Sedan, top-down, nose right, centred, transparent background."},
+		"notes": "Sedan, top-down, nose right, centred, transparent background; front tyres left out (cars/wheel). Keep the nose recognisable: radiator, headlamps (31, +-7 display px from the centre) and windscreen at the right, red tail lamps (-34, +-11) at the left."},
 	"cars/sedan_b": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
 		"notes": "Sedan, second paint scheme; same contract."},
 	"cars/coupe": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
-		"notes": "Roadster, top-down, nose right, centred, transparent background."},
+		"notes": "Roadster, top-down, nose right, centred, transparent background; front tyres left out. Headlamps at (32, +-7.6), tail lamps at (-35.5, +-7.2) display px."},
 	"cars/coupe_b": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
 		"notes": "Roadster, second paint scheme; same contract."},
 	"cars/police": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),

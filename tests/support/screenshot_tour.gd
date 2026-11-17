@@ -176,6 +176,22 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(1900, 1065), PI)
 				await _frames(40)
 				await _shot("squad_car")
+			"cars":
+				# M004: the cars parked every which way, lights off: which end is the front?
+				var spots := [[Vector2(2240, 1470), 0.0], [Vector2(2360, 1470), PI], [Vector2(2470, 1500), -PI / 2],
+					[Vector2(2560, 1500), PI / 2], [Vector2(2680, 1490), 0.7], [Vector2(2800, 1490), PI + 0.5]]
+				var picks := ["sedan", "coupe", "police", "sedan", "coupe", "sedan"]
+				var used := []
+				for k in spots.size():
+					for c in main.cars:
+						if c.vehicle.id == picks[k] and not used.has(c):
+							used.append(c)
+							c.place(Transform2D(spots[k][1], spots[k][0]))
+							break
+				main.street.clear()
+				_teleport_walker(Vector2(2520, 1430), PI / 2)
+				await _frames(40)
+				await _shot("cars")
 			"club_door":
 				_teleport_walker(Vector2(2291, 455), -PI / 2)
 				await _frames(40)
