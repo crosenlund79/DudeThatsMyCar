@@ -4,7 +4,8 @@ extends SceneTree
 ##   godot --path . -s tests/support/screenshot_tour.gd -- <output dir> [shot names...]
 ## Shots: street (the starting view), walk (on foot by the roadster), drive
 ## (driving down Marlowe Avenue), garage, river, alley, wide, shoot (firing at
-## the Copper Owl, captured on the muzzle flash).
+## the Copper Owl, captured on the muzzle flash), beat / pursuit (the officer),
+## story (the M002 sequence: shots, the officer, the getaway, the alley, lost him).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -159,6 +160,8 @@ func _run(shots: Array) -> void:
 				cmd = PlayerCommand.make(Vector2(0, -1))
 				await _frames(50)
 				await _shot("escape")
+			"story":
+				await _story()
 			"wide":
 				_teleport_walker(Vector2(1650, 600), 0.0)
 				main.camera.foot_zoom = 0.45
@@ -166,3 +169,80 @@ func _run(shots: Array) -> void:
 				await _shot("wide")
 				main.camera.foot_zoom = 1.4
 	quit()
+
+
+func _drive(c: Car, points: Array, cruise: float, max_ticks: int) -> void:
+	var i := 0
+	for t in max_ticks:
+		var target: Vector2 = points[i]
+		if c.global_position.distance_to(target) < 45.0:
+			i += 1
+			if i >= points.size():
+				break
+			target = points[i]
+		var diff := angle_difference(c.model.heading, (target - c.global_position).angle())
+		var steer := 0.0
+		if diff > 0.05:
+			steer = 1.0
+		elif diff < -0.05:
+			steer = -1.0
+		var speed := c.model.forward_speed()
+		var want := cruise if absf(diff) < 0.45 else cruise * 0.45
+		var pedal := -1.0 if speed < want else (1.0 if speed > want + 50.0 else 0.0)
+		cmd = PlayerCommand.make(Vector2(steer, pedal))
+		await physics_frame
+	cmd = PlayerCommand.new()
+
+
+## The M002 sequence, as described for the milestone.
+func _story() -> void:
+	var cop: PoliceOfficer = main.officer
+	await _frames(90)
+	await _shot("story_1_officer_on_his_beat")
+	# a few shots at the Copper Owl's windows
+	var target := Vector2(2250, 380)
+	cmd = PlayerCommand.make(Vector2.ZERO, false, false, target)
+	_click = true
+	await _frames(26)
+	_click = true
+	_flash_seen = false
+	main.player.fired.connect(func(_m: Vector2, _d: Vector2) -> void: _flash_seen = true, CONNECT_ONE_SHOT)
+	for i in 30:
+		await physics_frame
+		if _flash_seen:
+			break
+	await process_frame
+	await _shot("story_2_shots_fired", false)
+	await _frames(40)
+	# run for the roadster, the copper coming
+	var car: Car = main.cars[0]
+	for i in 200:
+		var to: Vector2 = car.global_position + Vector2(0, -36) - main.walker.global_position
+		if to.length() < 6.0:
+			break
+		cmd = PlayerCommand.make(to.normalized(), false, false, cop.body.global_position)
+		await physics_frame
+		if i == 25:
+			await _shot("story_3_on_your_tail", false)
+	main.player.enter(car)
+	await _drive(car, [Vector2(2700, 650), Vector2(2950, 650)], 260.0, 90)
+	await _shot("story_4_getaway_down_marlowe")
+	# north up Wharf Street and into the back alley
+	await _drive(car, [Vector2(3150, 640), Vector2(3290, 560), Vector2(3300, 300), Vector2(3270, 175), Vector2(3150, 140)], 230.0, 600)
+	await _drive(car, [Vector2(2900, 138)], 140.0, 160)
+	await _shot("story_5_into_the_alley")
+	# meanwhile, back on Marlowe Avenue: the copper looking for you
+	for i in 600:
+		if cop.brain.state == OfficerBrain.State.SEARCH:
+			break
+		await physics_frame
+	main.camera.target = cop.body
+	await _frames(70)
+	await _shot("story_6_copper_searching")
+	main.camera.target = car
+	for i in 1200:
+		if cop.brain.state == OfficerBrain.State.RETURN:
+			break
+		await physics_frame
+	await _frames(20)
+	await _shot("story_7_you_lost_him")

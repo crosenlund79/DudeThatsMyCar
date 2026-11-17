@@ -16,3 +16,5 @@ Testing starts with the **first implemented module**, not with speculative start
 - **Screenshots** need a display: `xvfb-run -a godot --path . --rendering-driver opengl3 --resolution 1280x720 -s tests/support/screenshot_tour.gd -- <output dir> [street walk drive garage river alley hotel wide]`.
 - **Frame rate:** `xvfb-run -a godot --path . --rendering-driver opengl3 -s tests/support/perf_probe.gd` prints the frame rate on foot, driving, and with lamps, haze, vignette, ground and buildings switched off in turn.
 - **Asset list:** `docs/ASSET_SPECS.md` is generated from the catalogue (`godot --headless --path . -s tests/support/asset_specs_writer.gd`); a unit test fails when it is out of date.
+- **Skipped files:** GUT skips a test file that fails to parse and still reports "All tests passed". After adding or changing tests, check the script count in the summary (and the log for `Parse Error`).
+- **Long scenarios** (police pursuit, driving routes) run in simulated time with `--fixed-fps 60`; helpers `drive_route` (a careful W / A / S / D driver), `click` and `aim_for` live in `tests/support/city_test.gd`.

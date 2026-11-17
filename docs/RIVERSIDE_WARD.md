@@ -23,6 +23,7 @@ A few blocks of a fictional Near North Side neighbourhood, Chicago, 1932, at nig
 - **Calloway Street** and **Pruitt Street** (east–west), **Dorsey**, **Kessler** and **Wharf Street** (north–south): flats (red brick and greystone), shops, a few warehouses.
 - **Alleys** run east–west through the middle of the central blocks, brick-paved, lined with fire escapes, back doors, ash cans; behind the Copper Owl, a stack of crates and barrels from tonight's delivery.
 - **Gangways**: narrow passages between houses (about 26 px). A person fits; a car does not.
+- **The beat cop** walks a short round on the north side of Marlowe Avenue by the Kessler Street corner, between the newsstand and his police call box (M002). Shots within earshot bring him running; get out of his sight and he searches, gives up and goes back to his round.
 - **Doyle's Garage** on Pruitt Street, with its forecourt, a gas pump and two parked cars.
 - **Lakeshore Cold Storage**, a four-storey warehouse on the river at Wharf Street, with a loading apron along the quay (crates, barrels, a parked sedan).
 - **The river** along the east side; the **Marlowe Avenue Bridge** is raised for the night (both bascule leaves up), behind gates with red lanterns. Lamps and lit windows on the far bank.

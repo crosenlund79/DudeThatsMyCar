@@ -22,6 +22,7 @@ var car_panel: PanelContainer
 var car_label: Label
 var gun_panel: PanelContainer
 var gun_label: Label
+var police_panel: PanelContainer
 var police_label: Label
 var notice_label: Label
 var help_panel: PanelContainer
@@ -57,12 +58,11 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	gun_label = _label("", 18, CREAM)
 	gun_panel.add_child(gun_label)
 	gun_panel.visible = false
-	police_label = _label("", 22, Color("ff7a5c"))
-	police_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	police_label.add_theme_constant_override("outline_size", 7)
+	police_panel = _panel(Vector2.ZERO)
+	police_label = _label("", 20, Color("ff7a5c"))
 	police_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	police_label.visible = false
-	add_child(police_label)
+	police_panel.add_child(police_label)
+	police_panel.visible = false
 	notice_label = _label("", 20, Color("ffd9a0"))
 	notice_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	notice_label.add_theme_constant_override("outline_size", 6)
@@ -147,9 +147,10 @@ func set_police_status(state: int) -> void:
 			police_label.visible = true
 		_:
 			police_label.visible = false
+	police_panel.visible = police_label.visible
 	var screen := get_viewport().get_visible_rect().size
-	police_label.reset_size()
-	police_label.position = Vector2((screen.x - police_label.size.x) * 0.5, 18)
+	police_panel.reset_size()
+	police_panel.position = Vector2((screen.x - police_panel.size.x) * 0.5, 16)
 
 
 func set_paused(on: bool) -> void:
