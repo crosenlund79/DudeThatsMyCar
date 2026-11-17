@@ -131,6 +131,7 @@ func _ready() -> void:
 	hud = Hud.new()
 	add_child(hud)
 	hud.setup(resolver, layout.name)
+	hud.add_minimap(layout)
 	player.interaction = _interact
 	player.conversation = _converse
 	hud.dialogue_choice.connect(_answer)
@@ -385,6 +386,9 @@ func _update_view(delta: float) -> void:
 		prompt = "E   Get out"
 	var focus := player.body().global_position
 	var door := interiors.door_at(walker.global_position) if player.on_foot() else {}
+	var facing := walker.model.facing if player.on_foot() else player.car.model.heading
+	var speed := 0.0 if player.on_foot() else player.car.speed() / player.car.model.params.max_speed
+	hud.minimap.set_view(focus, facing, speed, officer.body.global_position, officer.brain.is_hunting(), delta)
 	var in_room: InteriorPlan = null
 	if player.on_foot() and interiors.current != null and interiors.current.contains(walker.global_position):
 		in_room = interiors.current

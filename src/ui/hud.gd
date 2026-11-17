@@ -21,6 +21,7 @@ const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE 
 var resolver: AssetResolver
 var place_label: Label
 var purse_label: Label
+var minimap: Minimap
 var clock_panel: PanelContainer
 var clock_label: Label
 var home_label: Label
@@ -171,6 +172,14 @@ func _place_dialogue() -> void:
 	dialogue_panel.position = Vector2((screen.x - dialogue_panel.size.x) * 0.5, screen.y - dialogue_panel.size.y - 24)
 
 
+## The minimap in the bottom-left corner (M004).
+func add_minimap(layout: DistrictLayout) -> void:
+	minimap = Minimap.new()
+	add_child(minimap)
+	minimap.setup(layout, resolver, _panel_style(), _font)
+	move_child(minimap, 0)  # under the dialogue panel and notices
+
+
 ## The clock at the top of the screen: "NIGHT 2   ·   11:40 PM", and a
 ## reminder to go home once it is late.
 func set_clock(night: int, time_text: String, late: bool) -> void:
@@ -205,14 +214,19 @@ func _label(text: String, size: int, color: Color) -> Label:
 	return l
 
 
-func _panel(at: Vector2) -> PanelContainer:
-	var p := PanelContainer.new()
+func _panel_style() -> StyleBoxTexture:
 	var sb := StyleBoxTexture.new()
 	sb.texture = resolver.get_texture("ui/panel")
 	var t := sb.texture.get_size() / 96.0
 	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 		sb.set_texture_margin(side, 24.0 * t.x)
 		sb.set_content_margin(side, 14.0)
+	return sb
+
+
+func _panel(at: Vector2) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := _panel_style()
 	p.add_theme_stylebox_override("panel", sb)
 	p.position = at
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -298,6 +312,8 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 	help_panel.position = Vector2(screen.x - help_panel.size.x - 18, 16)
 	pause_panel.reset_size()
 	pause_panel.position = (screen - pause_panel.size) * 0.5
+	if minimap != null:
+		minimap.position = Vector2(18, screen.y - Minimap.SIZE.y - 18)
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		wake_screen.size = screen
