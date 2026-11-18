@@ -52,6 +52,11 @@ var navigator: CityNavigator
 var officer: PoliceOfficer
 ## M006: Lefty Moran, the North Side gangster outside Doyle's Garage.
 var rival: Rival
+## M006: whose car is whose and which Danny has taken tonight.
+var thefts: CarThefts
+## Cars stolen tonight, and how many of those the police saw (for tests and notices).
+var theft_incidents := 0
+var thefts_witnessed := 0
 ## Named people carried off to the Doc's: id -> the night it happened.
 var ward_out := {}
 ## Times Danny went down (for tests).
@@ -108,6 +113,7 @@ func _ready() -> void:
 	add_child(markers)
 	markers.setup(layout, resolver)
 	_park_cars()
+	thefts = CarThefts.new(layout.cars)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
 	walker.place(layout.spawn, layout.spawn_facing)
@@ -282,6 +288,14 @@ func _plan(id: String) -> InteriorPlan:
 
 func _on_entered_car(c: Car) -> void:
 	soundscape.play("vehicles/door", -3.0)
+	var i := cars.find(c)
+	if thefts.get_in(i):
+		theft_incidents += 1
+		if officer.witness_theft(c.global_position):
+			thefts_witnessed += 1
+			hud.show_notice("The beat cop saw you take it!")
+		else:
+			hud.show_notice("Not your car. Nobody saw you take it.")
 	camera.target = c
 	(c.get_node("Lights") as VehicleLights).set_on(true)
 	vehicle_audio.attach(c)
@@ -482,6 +496,7 @@ func sleep() -> void:
 	end_talk()
 	stage.reset()  # the Bird is singing when the club opens
 	ward_out.clear()  # back from the Doc's, patched up (and they remember)
+	thefts.clear()  # the cars are back with their owners
 	for v in interiors.views:
 		v.reset_people()
 	rival.reset()
@@ -642,7 +657,9 @@ func _update_view(delta: float) -> void:
 		if not spot.is_empty():
 			prompt = "E   %s" % ("Interrupt the Bird" if spot.id == "bird" and stage.singing() else spot.prompt)
 		elif c != null:
-			prompt = "E   Get in the %s" % c.vehicle.params.display_name
+			var i := cars.find(c)
+			prompt = "E   Get in your %s" % c.vehicle.params.display_name if thefts.is_dannys(i) \
+				else "E   Take the %s (%s)" % [c.vehicle.params.display_name, "taken" if thefts.is_stolen(i) else "not yours"]
 	elif player.car.speed() < 30.0:
 		prompt = "E   Get out"
 	var focus := player.body().global_position

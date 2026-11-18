@@ -482,16 +482,17 @@ func _street_life() -> void:
 
 
 func _cars_and_spawn() -> void:
+	# M006: every car belongs to somebody ("owner"); Danny's own is the sedan outside his flat.
 	d.cars = [
-		{"type": "coupe", "paint": 0, "pos": Vector2(2425, 694), "rot": 0.0},    # outside Hotel Marlowe
-		{"type": "sedan", "paint": 0, "pos": Vector2(2150, 506), "rot": PI},     # outside the Copper Owl
-		{"type": "sedan", "paint": 1, "pos": Vector2(700, -235), "rot": 0.0},     # Calloway Street
-		{"type": "coupe", "paint": 1, "pos": Vector2(960, 1190), "rot": PI / 2},  # Doyle's forecourt
-		{"type": "sedan", "paint": 0, "pos": Vector2(1040, 1250), "rot": -PI / 2},
-		{"type": "sedan", "paint": 1, "pos": Vector2(3845, 150), "rot": PI / 2},  # warehouse apron
-		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1432), "rot": PI},     # Pruitt Street
-		{"type": "sedan", "paint": 1, "pos": Vector2(2585, 506), "rot": PI},     # M003: outside your flat
-		{"type": "police", "paint": 0, "pos": Vector2(1835, 1065), "rot": PI},  # M003: the squad car, in the alley behind Novak's
+		{"type": "coupe", "paint": 0, "pos": Vector2(2425, 694), "rot": 0.0, "owner": "a guest at the Hotel Marlowe"},
+		{"type": "sedan", "paint": 0, "pos": Vector2(2150, 506), "rot": PI, "owner": "a Copper Owl customer"},
+		{"type": "sedan", "paint": 1, "pos": Vector2(700, -235), "rot": 0.0, "owner": "somebody on Calloway Street"},
+		{"type": "coupe", "paint": 1, "pos": Vector2(960, 1190), "rot": PI / 2, "owner": "a customer of Doyle's Garage"},
+		{"type": "sedan", "paint": 0, "pos": Vector2(1040, 1250), "rot": -PI / 2, "owner": "a customer of Doyle's Garage"},
+		{"type": "sedan", "paint": 1, "pos": Vector2(3845, 150), "rot": PI / 2, "owner": "Lakeshore Cold Storage"},
+		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1432), "rot": PI, "owner": "somebody on Pruitt Street"},
+		{"type": "sedan", "paint": 1, "pos": Vector2(2585, 506), "rot": PI, "owner": "danny"},  # M003: outside your flat - yours
+		{"type": "police", "paint": 0, "pos": Vector2(1835, 1065), "rot": PI, "owner": "the police"},  # the squad car, in the alley behind Novak's
 	]
 	# The beat cop walks a short round on the north side of Marlowe Avenue by
 	# the Kessler Street corner, past the newsstand and his call box.

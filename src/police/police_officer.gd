@@ -90,6 +90,20 @@ func hear_gunshot(at: Vector2, loudness: float) -> bool:
 	return brain.hear_gunshot(body.global_position, at, loudness)
 
 
+## M006: someone breaks into a car at `car`. If he could see it (close
+## enough, no building between) he investigates; returns whether he saw it.
+func witness_theft(car: Vector2) -> bool:
+	if body.down:
+		return false
+	var me := body.global_position
+	var q := PhysicsRayQueryParameters2D.create(me, car, Layers.WORLD)
+	var clear := body.get_world_2d().direct_space_state.intersect_ray(q).is_empty()
+	if not CarThefts.witnessed(me, car, clear):
+		return false
+	brain.witness_theft(car)
+	return true
+
+
 ## M006: shot down, he lies where he fell; his torch goes out.
 func _on_struck_down() -> void:
 	torch.visible = false

@@ -53,6 +53,12 @@ func shot_at(from: Vector2) -> void:
 	_notice(from, state != State.CHASE)
 
 
+## M006: he saw somebody break into a car at `at`: he goes to look (and if he
+## sees the thief, gives chase as for gunfire).
+func witness_theft(at: Vector2) -> void:
+	_notice(at, state != State.CHASE)
+
+
 func _notice(at: Vector2, startle: bool) -> void:
 	last_known = at
 	last_heading = Vector2.ZERO
