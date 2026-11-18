@@ -318,12 +318,31 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 # ------------------------------------------------------------------ Mr. Lindqvist, hardware
 
 func _lindqvist(step: String, _context: Dictionary) -> Dictionary:
+	var job := rackets.job
 	match step:
 		"hello":
-			return _page("lindqvist", "Lindqvist Hardware. Nails, paint, rope. Something else, maybe?", [
+			var opts := [
 				{"id": "back", "text": "Is Eddie in the back?"},
 				{"id": "rope", "text": "Just looking at the rope."},
-			])
+			]
+			# M007: Rourke's job - who has been squeezing him, and his money
+			if job.stage == RourkeJob.Stage.ACCEPTED and not job.knows_culprit():
+				opts.push_front({"id": "job_ask", "text": JobLines.answer("lindqvist_ask")})
+			if job.recovered > 0 and job.money_went == "" and rackets.money >= job.recovered:
+				opts.push_front({"id": "job_return", "text": JobLines.answer("lindqvist_return") % Rackets.dollars(job.recovered)})
+			if job.outcome != "":
+				var said: String = {"deal": "lindqvist_deal", "backed_down": "lindqvist_rid", "beaten": "lindqvist_rid",
+					"killed": "lindqvist_killed"}[job.outcome]
+				return _job_page(said, opts)
+			if job.knows_culprit() and job.fight_lost_night >= 0:
+				return _job_page("lindqvist_waiting", opts)
+			return _page("lindqvist", "Lindqvist Hardware. Nails, paint, rope. Something else, maybe?", opts)
+		"job_ask":
+			job.learn("culprit")
+			return _job_page("lindqvist_tells", [], {"job": "learned"})
+		"job_return":
+			job.return_money(rackets)
+			return _job_page("lindqvist_returned", [], {"job": "returned"})
 		"back":
 			return _page("lindqvist", "Through the door. Knock first. And I didn't see you.")
 		"rope":
@@ -339,9 +358,13 @@ func _eddie(step: String, context: Dictionary) -> Dictionary:
 	var price := Rackets.dollars(r.rules.ammo_price)
 	match step:
 		"hello":
-			return _page("eddie", "Well, if it ain't the Copper Owl's errand boy. Pull up a chair. Don't touch the crate.", [
-				{"id": "wares", "text": "Let's see what you've got."},
-			])
+			var eopts := [{"id": "wares", "text": "Let's see what you've got."}]
+			if rackets.job.knows_culprit() and not rackets.job.learned.has("tip") and rackets.job.outcome == "":
+				eopts.append({"id": "job_lefty", "text": JobLines.answer("eddie_lefty")})
+			return _page("eddie", "Well, if it ain't the Copper Owl's errand boy. Pull up a chair. Don't touch the crate.", eopts)
+		"job_lefty":
+			rackets.job.learn("tip")
+			return _job_page("eddie_tip", [], {"job": "tip"})
 		"wares":
 			var page := _page("eddie", VoiceLines.text("eddie_sales"), [
 				{"id": "ammo", "text": "A box of .45 rounds. (%s for %d)" % [price, r.rules.ammo_box]},
@@ -404,9 +427,17 @@ func _bird(step: String, context: Dictionary) -> Dictionary:
 
 # ------------------------------------------------------------------ Lefty Moran, outside Doyle's Garage (M006)
 
-func _lefty(step: String, _context: Dictionary) -> Dictionary:
+func _lefty(step: String, context: Dictionary) -> Dictionary:
+	var job := rackets.job
+	var night: int = context.get("night", rackets.night)
 	match step:
 		"hello":
+			# M007: once Rourke's job has brought Danny to him
+			if job.outcome != "" and job.outcome != "killed":
+				return _job_page("lefty_after_" + job.outcome)
+			if job.can_confront():
+				return _job_page("lefty_after_lost" if job.fight_lost_night >= 0 else "lefty_open",
+					_lefty_choices(job, night))
 			return _page("lefty", "Keep walking, pal. This corner's spoken for.", [
 				{"id": "who", "text": "Spoken for by who?"},
 				{"id": "bye", "text": "Sure. Nice hat."},
@@ -414,7 +445,54 @@ func _lefty(step: String, _context: Dictionary) -> Dictionary:
 		"who":
 			return _page("lefty", "Lefty Moran. North Side. I don't take Rourke's money and I don't drink in his club. " +
 				"You want trouble, Mercer, you know where the garage is.")
+		"job_talk":
+			if not job.lefty_talks():
+				return _job_page("lefty_no_talk", _lefty_choices(job, night, false))
+			return _job_page("lefty_why", [
+				{"id": "job_deal", "text": JobLines.answer("lefty_deal")},
+				{"id": "job_money", "text": JobLines.answer("lefty_money")},
+			])
+		"job_deal":
+			job.record("talk", "deal", night)
+			job.resolve("deal", rackets)
+			return _job_page("lefty_deal", [], {"job": "settled"})
+		"job_money":
+			job.record("talk", "refused", night)
+			return _job_page("lefty_no_money", _lefty_choices(job, night, false))
+		"job_threaten":
+			if job.threat_works(context):
+				job.record("threat", "worked", night)
+				job.resolve("backed_down", rackets)
+				return _job_page("lefty_folds", [], {"job": "settled"})
+			job.bluff_called_night = night
+			job.record("threat", "called", night)
+			var hurt: bool = int(context.get("danny_worst", 0)) >= BodyCondition.Level.WOUNDED
+			return _job_page("lefty_calls_bluff_hurt" if hurt else "lefty_calls_bluff", _lefty_choices(job, night, false))
+		"job_fight":
+			if not job.lefty_fights(night):
+				return _job_page("lefty_no_fight", _lefty_choices(job, night, false))
+			return _job_page("lefty_fight", [{"id": "bye", "text": "(Raise your fists.)"}], {"fight": "lefty"})
+		# after the fistfight (main sends these when the dial is done)
+		"job_fight_won":
+			job.record("fight", "won", night)
+			job.resolve("beaten", rackets)
+			return _job_page("lefty_beaten", [], {"job": "settled"})
+		"job_fight_lost":
+			job.lost_fight(rackets)
+			return _job_page("lefty_won")
 	return {}
+
+
+## Danny's ways of settling it with Lefty (the talk, a threat, his fists, or leaving).
+func _lefty_choices(job: RourkeJob, night: int, with_talk: bool = true) -> Array:
+	var opts := []
+	if with_talk:
+		opts.append({"id": "job_talk", "text": JobLines.answer("lefty_confront") + " " + JobLines.answer("lefty_talk")})
+	if job.bluff_called_night != night:
+		opts.append({"id": "job_threaten", "text": JobLines.answer("lefty_threaten")})
+	if job.lefty_fights(night):
+		opts.append({"id": "job_fight", "text": JobLines.answer("lefty_fight")})
+	return opts
 
 
 # ------------------------------------------------------------------ Doc Pettibone, the vet on Pruitt Street (M006)

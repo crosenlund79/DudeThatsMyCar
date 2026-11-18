@@ -84,3 +84,120 @@ func test_saved_and_loaded() -> void:
 	var old := Rackets.new()
 	old.from_dict({"money": 500})
 	assert_eq(old.job.stage, RourkeJob.Stage.NOT_OFFERED, "a game saved before M007 starts without it")
+
+
+# ------------------------------------------------------------------ M007.3 learning and settling it
+
+func _taken() -> void:
+	talk.choose("rourke", "job_offer")
+	talk.choose("rourke", "job_accept")
+
+
+func test_lindqvist_and_eddie_tell_what_they_know() -> void:
+	assert_does_not_have(_ids(talk.open("lindqvist")), "job_ask", "nothing to ask before the job")
+	assert_does_not_have(_ids(talk.open("eddie")), "job_lefty")
+	_taken()
+	assert_has(_ids(talk.open("lindqvist")), "job_ask")
+	assert_does_not_have(_ids(talk.open("eddie")), "job_lefty", "Eddie: only once Danny has a name")
+	var told := talk.choose("lindqvist", "job_ask")
+	assert_eq(told.text, JobLines.text("lindqvist_tells"))
+	assert_true(r.job.knows_culprit())
+	assert_does_not_have(_ids(talk.open("lindqvist")), "job_ask", "asked once")
+	talk.choose("eddie", "job_lefty")
+	assert_true(r.job.learned.has("tip"))
+
+
+func test_lefty_before_the_job_is_just_lefty() -> void:
+	assert_eq(_ids(talk.open("lefty")), ["who", "bye"])
+	_taken()
+	assert_eq(_ids(talk.open("lefty")), ["who", "bye"], "Danny doesn't know it's him yet")
+	r.job.learn("culprit")
+	assert_eq(_ids(talk.open("lefty")), ["job_talk", "job_threaten", "job_fight", "bye"])
+
+
+func test_threats_depend_on_what_is_behind_them() -> void:
+	_taken()
+	r.job.learn("culprit")
+	var j := r.job
+	assert_false(j.threat_works({}), "empty hands, healthy: not enough")
+	assert_true(j.threat_works({"gun_drawn": true}), "a gun in his face")
+	j.learn("tip")
+	assert_true(j.threat_works({}), "knowing how he fights, and saying so")
+	assert_false(j.threat_works({"danny_worst": BodyCondition.Level.CRITICAL}), "not from a man who can barely stand")
+	assert_true(j.threat_works({"gun_drawn": true, "lefty_hurt": true, "danny_worst": BodyCondition.Level.CRITICAL}))
+	j.fight_lost_night = 1
+	assert_false(j.threat_works({"gun_drawn": true}), "he beat Danny once already")
+
+
+func test_settled_by_talk_threat_and_fists() -> void:
+	for how in ["deal", "backed_down", "beaten"]:
+		r = Rackets.new()
+		talk = Conversations.new(r)
+		_taken()
+		r.job.learn("culprit")
+		var money := r.money
+		r.job.resolve(how, r)
+		assert_eq(r.job.stage, RourkeJob.Stage.RESOLVED, how)
+		assert_eq(r.money - money, 0 if how == "deal" else RourkeJob.RECOVERABLE, how + ": what Lefty handed over")
+		assert_eq(r.job.objective().where, "copper_owl", how + ": tell Rourke")
+		assert_eq(talk.open("lefty").text, JobLines.text("lefty_after_" + how), how)
+		assert_eq(r.memory.recent("lindqvist", "favour", r.night), 1, how + ": the Swede is grateful")
+
+
+func test_a_lost_fight_leaves_the_job_open() -> void:
+	_taken()
+	r.job.learn("culprit")
+	var lost := talk.choose("lefty", "job_fight_lost")
+	assert_eq(lost.text, JobLines.text("lefty_won"))
+	assert_eq(r.job.outcome, "")
+	assert_true(r.job.can_confront(), "never stuck")
+	assert_false(r.job.lefty_fights(r.night), "not again tonight")
+	assert_true(r.job.lefty_fights(r.night + 1), "tomorrow, if he wants")
+	assert_eq(talk.open("lefty").text, JobLines.text("lefty_after_lost"))
+	assert_does_not_have(_ids(talk.open("lefty")), "job_fight")
+	assert_eq(talk.open("lindqvist").text, JobLines.text("lindqvist_waiting"), "Lefty told the Swede")
+
+
+func test_shooting_lefty() -> void:
+	_taken()
+	r.job.shot_lefty(r, false)
+	r.job.shot_lefty(r, false)
+	assert_eq(r.job.attempts.size(), 1, "the first wound is what counts")
+	assert_false(r.job.lefty_talks())
+	r.job.learn("culprit")
+	assert_eq(talk.choose("lefty", "job_talk").text, JobLines.text("lefty_no_talk"))
+	r.job.shot_lefty(r, true)
+	assert_eq(r.job.outcome, "killed")
+	assert_eq(talk.open("lindqvist").text, JobLines.text("lindqvist_killed"))
+
+
+func test_lefty_shot_dead_before_the_job_is_danny_s() -> void:
+	r.job.shot_lefty(r, true)
+	assert_eq(r.job.outcome, "", "not Danny's job to settle")
+	assert_eq(r.job.offer(r, true), "moot")
+
+
+func test_returning_the_money_to_lindqvist() -> void:
+	_taken()
+	r.job.learn("culprit")
+	r.job.resolve("beaten", r)
+	var opts := _ids(talk.open("lindqvist"))
+	assert_has(opts, "job_return")
+	var money := r.money
+	var page := talk.choose("lindqvist", "job_return")
+	assert_eq(page.text, JobLines.text("lindqvist_returned"))
+	assert_eq(money - r.money, RourkeJob.RECOVERABLE)
+	assert_eq(r.job.money_went, "lindqvist")
+	assert_does_not_have(_ids(talk.open("lindqvist")), "job_return", "once")
+
+
+func test_after_lying_danny_can_still_make_it_true() -> void:
+	_taken()
+	r.job.learn("culprit")
+	r.job.report("job_handled", r)
+	assert_eq(r.job.stage, RourkeJob.Stage.REPORTED)
+	assert_true(r.job.can_confront(), "before the Swede talks")
+	assert_eq(r.job.objective().where, "lefty")
+	r.job.resolve("deal", r)
+	r.job.end_night(r)
+	assert_false(r.rumours.items.any(func(x: Dictionary) -> bool: return x.kind == "job_still"), "nothing for the Swede to complain about")

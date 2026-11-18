@@ -117,9 +117,13 @@ func knows_culprit() -> bool:
 	return learned.has("culprit")
 
 
-## Danny can have it out with Lefty: the job is his and he knows who it is.
+## Danny can have it out with Lefty: the job is his and he knows who it is -
+## also after telling Rourke it was handled when it was not (he can still make
+## it true before the Swede talks).
 func can_confront() -> bool:
-	return stage == Stage.ACCEPTED and knows_culprit() and outcome == ""
+	if not knows_culprit() or outcome != "":
+		return false
+	return stage == Stage.ACCEPTED or (stage == Stage.REPORTED and told == "handled")
 
 
 # ------------------------------------------------------------------ settling it
@@ -203,12 +207,16 @@ func lost_fight(r: Rackets) -> void:
 	r.rumours.start("job_lost", "lefty", r.night)
 
 
-## Lefty shot by Danny (the M006 rules apply to the shooting itself).
+## Lefty shot by Danny (the M006 rules apply to the shooting itself): the
+## first wound and his death are recorded. Dead, the job is settled the hard
+## way - if it was Danny's to settle.
 func shot_lefty(r: Rackets, dead: bool) -> void:
+	if not dead and lefty_shot:
+		return
 	lefty_shot = true
 	record("gun", "killed" if dead else "wounded", r.night)
 	if dead and outcome == "":
-		if stage in [Stage.ACCEPTED]:
+		if stage == Stage.ACCEPTED or (stage == Stage.REPORTED and told == "handled"):
 			resolve("killed", r)
 		else:
 			r.boss.hear("Lefty Moran turned up dead on Pruitt Street", r.night)
@@ -380,6 +388,8 @@ func objective() -> Dictionary:
 		Stage.RESOLVED:
 			return {"text": "Tell Rourke how it went (the Copper Owl).", "where": "copper_owl"}
 		Stage.REPORTED:
+			if outcome == "" and told == "handled":
+				return {"text": "Rourke thinks it's handled. Lefty Moran is still collecting.", "where": "lefty"}
 			return {"text": "Rourke's job: done (%s)." % _verdict_words(), "where": ""}
 		Stage.DECLINED:
 			return {"text": "You turned down Rourke's job.", "where": ""}

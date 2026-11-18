@@ -85,6 +85,10 @@ const COLLAPSE_FEE := 500
 var fighting := false
 var fight_opponent: Walker
 var _fight_done: Callable
+## M007: a fight agreed in a talk, started when the talk ends ("lefty" or "").
+var _fight_pending := ""
+const FIGHT_TIP_BONUS := 14.0
+const FIGHT_HURT_PACE := 0.85
 ## The sound level chosen on the pause screen (index into AudioSettings.BUSES).
 var sound_row := 0
 var rackets: Rackets
@@ -181,6 +185,13 @@ func _ready() -> void:
 		street.hear_gunshot(muzzle))
 	rival.provoked.connect(func() -> void: hud.show_notice("Lefty Moran goes for his gun!"))
 	rival.struck_down.connect(func() -> void: hud.show_notice("Lefty Moran goes down and stays down."))
+	# M007: Danny's gun settles Rourke's job too (the M006 rules handle the shooting)
+	rival.body.hurt.connect(func(_region: String, _level: int) -> void:
+		if rival.body.last_shooter == walker:
+			_lefty_shot(false))
+	rival.struck_down.connect(func() -> void:
+		if rival.body.last_shooter == walker:
+			_lefty_shot(true))
 	player.fired.connect(func(muzzle: Vector2, dir: Vector2) -> void:
 		if not rival.is_down() and rival.near_miss(muzzle, dir):
 			rival.provoke())
@@ -477,6 +488,12 @@ func _answer(i: int) -> void:
 
 ## Effects of a conversation outside the money (police, rounds).
 func _apply(effects: Dictionary) -> void:
+	if effects.has("fight"):
+		_fight_pending = String(effects.fight)  # starts when Danny raises his fists
+	if effects.has("job"):
+		var step := rackets.job.objective()
+		if not step.is_empty():
+			hud.show_notice(step.text)
 	if effects.get("heal", false):
 		walker.condition.heal_all()
 		hud.show_notice("Patched up. Good as new, near enough.")
@@ -503,6 +520,8 @@ func _update_report(delta: float) -> void:
 
 
 func end_talk() -> void:
+	if _fight_pending == "lefty":
+		call_deferred("_fight_lefty")
 	if talking == "bird":
 		stage.release()
 	talking = ""
@@ -701,6 +720,37 @@ func start_fight(opponent: Walker, opponent_name: String, done: Callable, zone_b
 		hud.fight_dial.check_done.connect(_on_fight_check)
 		hud.fight_dial.finished.connect(_on_fight_over)
 	return true
+
+
+## M007: Lefty put up his fists ("Raise your fists" or walking away from the
+## line starts it). Knowing how he fights (Eddie's tip) widens the zone; a
+## wounded Lefty is slower.
+func _fight_lefty() -> void:
+	_fight_pending = ""
+	if rival == null or rival.is_down() or walker.global_position.distance_to(rival.body.global_position) > 90.0:
+		return
+	var bonus := FIGHT_TIP_BONUS if rackets.job.learned.has("tip") else 0.0
+	var pace := FIGHT_HURT_PACE if rival.body.condition.worst() >= BodyCondition.Level.WOUNDED else 1.0
+	start_fight(rival.body, Rival.NAME, _on_lefty_fight, bonus, pace)
+
+
+func _on_lefty_fight(won: bool, _results: Array) -> void:
+	talking = "lefty"
+	rival.body.aim_point = walker.global_position
+	_show(talk.choose("lefty", "job_fight_won" if won else "job_fight_lost", _talk_context()))
+	if won:
+		soundscape.play_deal("lefty", rackets.job.recovered, 0)
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
+	hud.show_notice(rackets.job.objective().get("text", ""))
+
+
+## M007: Danny shot Lefty (`dead`: and killed him).
+func _lefty_shot(dead: bool) -> void:
+	var was := rackets.job.outcome
+	rackets.job.shot_lefty(rackets, dead)
+	if was == "" and rackets.job.outcome == "killed":
+		hud.show_notice("Lefty Moran won't be collecting at Lindqvist's again. " + rackets.job.objective().get("text", ""))
+	save_game()
 
 
 func _on_fight_check(hit: bool, _index: int) -> void:
