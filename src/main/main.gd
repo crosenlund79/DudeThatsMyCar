@@ -680,6 +680,7 @@ func show_map(on: bool) -> void:
 	get_tree().paused = on
 	hud.show_map(on)
 	if on:
+		_job_on_map()
 		_update_map()
 
 
@@ -785,6 +786,23 @@ func show_status(on: bool) -> void:
 	status_open = on
 	get_tree().paused = on
 	hud.show_status(on, walker.condition)
+
+
+## M007: Rourke's job on the map - what next, and the place it concerns.
+func _job_on_map() -> void:
+	var step := rackets.job.objective()
+	var at := Vector2.INF
+	var lefty_at := Vector2.INF
+	if rackets.job.knows_culprit() and not rival.is_down():
+		lefty_at = RIVAL_POST[0]
+	match String(step.get("where", "")):
+		"lefty":
+			at = lefty_at
+		"copper_owl", "hardware":
+			for pl in hud.minimap.places:
+				if pl.id == step.where:
+					at = pl.pos
+	hud.ward_map.set_job(String(step.get("text", "")), at, lefty_at)
 
 
 func _update_map() -> void:

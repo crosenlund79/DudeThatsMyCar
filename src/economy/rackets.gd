@@ -254,6 +254,7 @@ func pay_boss(cents: int, claim: String = "") -> Dictionary:
 	money += out.cut
 	boss.purse -= out.cut
 	commission_earned += out.cut
+	out["job_reward"] = job.pay_owed(self)  # M007: his end of the Lindqvist job, if Rourke owed it
 	out["handed"] = cents
 	out["kept"] = kept
 	if out.caught:

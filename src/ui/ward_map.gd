@@ -5,7 +5,8 @@ extends Control
 ## places you can walk into, the beat cop where he is, Danny's own car, the
 ## named landmarks, the street names, and Danny as the arrow. A key at the
 ## side says what the badges mean. Presentation only: the game is paused
-## while it is open.
+## while it is open. M007: Rourke's job in a few words under the key, and a
+## thin copper ring round the place it concerns now (no route, no arrows).
 
 const PANEL := Color("1b1611", 0.94)
 const INK := Color("f1e4c6")
@@ -31,6 +32,11 @@ var car_heading := 0.0
 var police := Vector2.INF
 ## Extra landmarks without a door of their own: {pos, label, tex (or null)}.
 var landmarks: Array = []
+## M007: what Rourke's job needs next ("" for nothing), the place it concerns
+## (INF: none) and where Lefty Moran keeps his corner once Danny knows (INF).
+var job_text := ""
+var job_at := Vector2.INF
+var lefty_at := Vector2.INF
 var _font: Font
 
 
@@ -61,6 +67,13 @@ func _is_place(r: Rect2) -> bool:
 ## Adds a landmark with its own badge (the vet, the Morgue).
 func add_landmark(pos: Vector2, label: String, tex: Texture2D) -> void:
 	landmarks.append({"pos": pos, "label": label, "tex": tex})
+
+
+func set_job(text: String, at: Vector2, lefty: Vector2) -> void:
+	job_text = text
+	job_at = at
+	lefty_at = lefty
+	queue_redraw()
 
 
 func set_state(p_danny: Vector2, heading: float, p_car: Vector2, p_car_heading: float, p_police: Vector2) -> void:
@@ -102,6 +115,15 @@ func _draw() -> void:
 	for pl in minimap.places:
 		var at := to_screen(pl.pos)
 		draw_texture_rect(pl.tex, Rect2(at - Vector2(ICON * 0.81 * 0.5, ICON), Vector2(ICON * 0.81, ICON)), false)
+	if lefty_at != Vector2.INF:
+		var lp := to_screen(lefty_at)
+		draw_circle(lp, 4.0, COPPER)
+		draw_circle(lp, 4.0, Color("1b1611"), false, 1.0)
+		_label(lp + Vector2(0, 16), "Lefty Moran", 11, LANDMARK)
+	if job_at != Vector2.INF:
+		var jp := to_screen(job_at) - Vector2(0, ICON * 0.4)
+		draw_arc(jp, 21.0, 0.0, TAU, 40, Color(COPPER, 0.9), 2.0)
+		draw_arc(jp, 25.0, 0.0, TAU, 40, Color(COPPER, 0.35), 1.0)
 	if car != Vector2.INF:
 		var c := to_screen(car)
 		draw_set_transform(c, car_heading, Vector2.ONE)
@@ -160,7 +182,30 @@ func _draw_key() -> void:
 	draw_texture_rect(minimap._police_tex, Rect2(Vector2(x + 2.0, y + 2.0), Vector2(18, 18)), false)
 	_text(Vector2(x + 30.0, y + 16.0), "The beat cop", 14, INK)
 	y += 46.0
+	if job_text != "":
+		_text(Vector2(x, y), "ROURKE'S JOB", 14, COPPER)
+		y += 20.0
+		for line in _wrap(job_text, 13, KEY_WIDTH):
+			_text(Vector2(x, y), line, 13, INK)
+			y += 17.0
+		y += 16.0
 	_text(Vector2(x, y), "M or Esc   close", 13, DIM)
+
+
+## `s` broken into lines no wider than `width` at `px`.
+func _wrap(s: String, px: int, width: float) -> Array:
+	var lines := []
+	var line := ""
+	for word in s.split(" "):
+		var next := word if line == "" else line + " " + word
+		if _font != null and line != "" and _font.get_string_size(next, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > width:
+			lines.append(line)
+			line = word
+		else:
+			line = next
+	if line != "":
+		lines.append(line)
+	return lines
 
 
 func _place_name(id: String) -> String:

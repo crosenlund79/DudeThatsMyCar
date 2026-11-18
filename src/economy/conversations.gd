@@ -731,6 +731,8 @@ func _rourke_verdict(out: Dictionary, claim: String) -> Dictionary:
 		line = "You're short, Danny. %s goes on the slate." % D.call(out.owed)
 	if out.cut > 0:
 		line += " Here's your end: %s." % D.call(out.cut)
+	if int(out.get("job_reward", 0)) > 0:
+		line += " And %s for the Lindqvist business, like I said." % D.call(out.job_reward)
 	if b.ban:
 		line += " And Augie don't buy another bottle off you till we're square."
 	elif b.commission < Boss.COMMISSION:

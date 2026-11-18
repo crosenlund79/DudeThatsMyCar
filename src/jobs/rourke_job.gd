@@ -49,6 +49,12 @@ var bluff_called_night := -1
 var lefty_shot := false
 ## A line Rourke has waiting the next time Danny sits down (a lie found out).
 var rourke_news := ""
+## What Rourke still owes Danny for the job (his purse was empty): paid out of
+## the next envelope Danny hands him. Nothing is ever paid from thin air.
+var reward_owed := 0
+## What the report's reward came to: cash now, off Danny's debt, owed.
+var _paid_now := 0
+var _paid_off_debt := 0
 
 
 # ------------------------------------------------------------------ the offer
@@ -268,8 +274,9 @@ func report(claim: String, r: Rackets) -> Dictionary:
 			lies.append({"kind": "unresolved", "night": r.night, "found": false})
 			verdict = "pleased"
 			success = true  # as far as Rourke knows
-			reward = _pay(r, REWARD)
 			lines.append("report_handled")
+			reward = _pay(r, REWARD)
+			_reward_lines(lines)
 			return {"lines": lines, "reward": reward}
 	told = outcome
 	stage = Stage.REPORTED
@@ -299,14 +306,41 @@ func report(claim: String, r: Rackets) -> Dictionary:
 	success = true
 	r.memory.remember("rourke", "deal", r.night, "the Lindqvist job: " + outcome)
 	reward = _pay(r, KILLED_REWARD if outcome == "killed" else REWARD)
-	if reward > 0:
-		lines.append("report_reward")
+	_reward_lines(lines)
 	return {"lines": lines, "reward": reward}
 
 
-## Rourke pays out of what Danny has handed him (nothing from thin air).
+## Rourke pays out of what Danny has handed him (nothing from thin air);
+## what his purse cannot cover comes off what Danny owes him, and the rest
+## out of the next envelope. Returns the cash paid now.
 func _pay(r: Rackets, cents: int) -> int:
-	var paid := mini(cents, r.boss.purse)
+	var b := r.boss
+	_paid_now = mini(cents, b.purse)
+	b.purse -= _paid_now
+	r.money += _paid_now
+	var rest := cents - _paid_now
+	_paid_off_debt = mini(rest, b.arrears)
+	b.arrears -= _paid_off_debt
+	reward_owed += rest - _paid_off_debt
+	return _paid_now
+
+
+func _reward_lines(lines: Array) -> void:
+	if _paid_now > 0:
+		lines.append("report_reward")
+	if _paid_off_debt > 0:
+		lines.append("report_reward_debt")
+	if reward_owed > 0:
+		lines.append("report_reward_later")
+
+
+## Danny hands Rourke an envelope: what Rourke owes him for the job comes out
+## of it. Returns the cents paid.
+func pay_owed(r: Rackets) -> int:
+	var paid := mini(reward_owed, r.boss.purse)
+	if paid <= 0:
+		return 0
+	reward_owed -= paid
 	r.boss.purse -= paid
 	r.money += paid
 	return paid
@@ -321,7 +355,9 @@ func rourke_hears(kind: String, r: Rackets) -> String:
 			for lie in lies:
 				if lie.kind == "unresolved" and not lie.found:
 					lie.found = true
-					_caught(r, REWARD)
+					var unpaid := mini(reward_owed, REWARD)  # what he had not paid yet, he keeps
+					reward_owed -= unpaid
+					_caught(r, REWARD - unpaid)
 					verdict = "lied_to"
 					success = false
 					stage = Stage.ACCEPTED  # he still wants it done
@@ -414,7 +450,8 @@ func to_dict() -> Dictionary:
 		"learned": learned.keys(), "attempts": attempts.duplicate(true), "outcome": outcome, "resolved_night": resolved_night,
 		"recovered": recovered, "money_went": money_went, "told": told, "hid_money": hid_money, "verdict": verdict,
 		"success": success, "lies": lies.duplicate(true), "fight_lost_night": fight_lost_night,
-		"bluff_called_night": bluff_called_night, "lefty_shot": lefty_shot, "rourke_news": rourke_news}
+		"bluff_called_night": bluff_called_night, "lefty_shot": lefty_shot, "rourke_news": rourke_news,
+		"reward_owed": reward_owed}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -443,3 +480,4 @@ func from_dict(d: Dictionary) -> void:
 	bluff_called_night = int(d.get("bluff_called_night", -1))
 	lefty_shot = bool(d.get("lefty_shot", false))
 	rourke_news = String(d.get("rourke_news", ""))
+	reward_owed = maxi(0, int(d.get("reward_owed", 0)))
