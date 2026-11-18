@@ -308,7 +308,10 @@ func sleep() -> void:
 	interiors.snap()
 	camera.snap_to(walker)
 	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
-	hud.wake_up(rackets.night, clock.text())
+	var news := ""
+	if rackets.collected > 0:
+		news = "Rourke's boys were waiting on the stairs.\nThey took %s off you." % Rackets.dollars(rackets.collected)
+	hud.wake_up(rackets.night, clock.text(), news)
 	save_game()
 
 

@@ -191,8 +191,8 @@ func set_clock(night: int, time_text: String, late: bool) -> void:
 
 
 ## Wakes up to a new night: a moment of black with its title, then the city.
-func wake_up(night: int, time_text: String) -> void:
-	wake_label.text = "NIGHT %d\n%s\n\nThe street lamps are coming on." % [night, time_text]
+func wake_up(night: int, time_text: String, news: String = "") -> void:
+	wake_label.text = "NIGHT %d\n%s\n\n%s" % [night, time_text, news if news != "" else "The street lamps are coming on."]
 	_wake_left = 3.0
 	wake_screen.visible = true
 	wake_screen.modulate.a = 1.0

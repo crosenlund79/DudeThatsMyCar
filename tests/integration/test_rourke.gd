@@ -42,3 +42,18 @@ func test_owing_him_stops_the_rye_trade_at_the_club() -> void:
 	assert_string_contains(main._page.text, "Rourke")
 	await answer_with("sell")
 	assert_eq(main.rackets.bottles, 4, "Augie won't buy")
+
+
+func test_his_boys_collect_after_a_night_cut_off() -> void:
+	var b: Boss = main.rackets.boss
+	b.ban = true
+	b.ban_nights = 1
+	b.patience = 0
+	b.arrears = 700
+	b.expected = 700  # what he worked out at dusk: the debt (nothing else is due)
+	main.rackets.money = 2000
+	await talk_to("home", "bed")
+	await answer_with("sleep")
+	assert_eq(main.rackets.collected, 700)
+	assert_eq(main.rackets.money, 1300)
+	assert_string_contains(main.hud.wake_label.text, "Rourke's boys")

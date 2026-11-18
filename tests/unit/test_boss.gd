@@ -92,21 +92,30 @@ func test_he_catches_a_lie_about_the_club_at_once() -> void:
 	assert_lte(r.boss.trust, trust - 20)
 
 
-func test_he_finds_out_about_novak_nights_later() -> void:
+func test_he_finds_out_about_novak_nights_later_through_talk() -> void:
 	r.collect("grocery", true)
 	var paid: int = r.paid_amount["grocery"]
-	var seq: int = r.last_seq["grocery"]
-	var night := r.night
 	r.boss.trust = 70  # he believes the thin night for now
 	var out := r.pay_boss(0, "bad_business")
 	assert_true(out.accepted, "he has no reason to doubt it yet")
 	r.end_night()
-	r.end_night()
+	assert_eq(r.boss.caught, 0, "Novak has only told Sal, Augie and Lindqvist so far")
 	var arrears := r.boss.arrears
-	var found := r.boss.learn_paid("grocery", paid, night, seq)  # the talk reaches him
-	assert_eq(found, paid, "now he knows Novak paid and Danny kept it")
-	assert_eq(r.boss.arrears, arrears + paid, "and he wants it")
-	assert_eq(r.boss.caught, 1)
+	r.end_night()
+	assert_eq(r.boss.caught, 1, "Augie passed it on: now Rourke knows")
+	assert_gte(r.boss.arrears, arrears + paid, "and he wants what Danny kept")
+	assert_gt(r.memory.recent("rourke", "lie", r.night, 3), 0, "and remembers it")
+
+
+func test_his_books_do_not_count_old_news_twice() -> void:
+	r.collect("grocery", true)
+	var paid: int = r.paid_amount["grocery"]
+	var seq: int = r.last_seq["grocery"]
+	var night := r.night
+	r.boss.trust = 70
+	r.pay_boss(0, "bad_business")
+	r.rumours.items.clear()  # nobody talks: only the ledger
+	assert_eq(r.boss.learn_paid("grocery", paid, night, seq), paid)
 	assert_eq(r.boss.learn_paid("grocery", paid, night, seq), 0, "old news is not counted twice")
 
 

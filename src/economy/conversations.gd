@@ -75,6 +75,8 @@ func _augie(step: String, context: Dictionary) -> Dictionary:
 				opts.append({"id": "protection", "text": "Time to pay your insurance, Augie."})
 			opts.append({"id": "news", "text": "How's business?"})
 			var hello := "Evening. Keep it down, the swells are dancing."
+			if r.memory.recent("augie", "threat", r.night, 3) > 0 and not r.has_paid("copper_owl"):
+				hello = "Dimes. Last time you leaned on me in my own club. I ain't forgot."
 			if r.boss.ban:
 				hello = "Rourke's orders, Dimes: not one more bottle from you till you're square with him."
 			if c.is_short():
@@ -117,6 +119,9 @@ func _augie(step: String, context: Dictionary) -> Dictionary:
 				return _page("augie", "%s. That's all there is; a dry bar don't make money." % Rackets.dollars(got), [], {"paid": got})
 			return _page("augie", "%s. The till's thin, the band costs money. Same time tomorrow, I suppose." % Rackets.dollars(got), [], {"paid": got})
 		"news":
+			var talk := _talk_line(r.gossip("augie"))
+			if talk != "":
+				return _page("augie", talk)
 			if c.stock >= c.capacity - 2:
 				return _page("augie", "Busy. The cellar's full and so are the tables.")
 			if c.is_short():
@@ -140,7 +145,10 @@ func _sal(step: String, _context: Dictionary) -> Dictionary:
 			if r.barber_stock() > 2:
 				opts.append({"id": "buy_all", "text": "Give me all you can spare."})
 			var hello := "Shave and a haircut? Ah, it's you. Lower your voice, the walls have ears."
-			if r.barber_price() > r.rules.barber_price:
+			opts.append({"id": "news", "text": "Heard anything, Sal?"})
+			if r.is_regular():
+				hello = "My best customer! For a regular, a dime off the bottle."
+			elif r.barber_price() > r.rules.barber_price:
 				hello = "Ah, it's you. Only a couple left, so it's %s a bottle tonight." % price
 			elif r.barber_price() < r.rules.barber_price:
 				hello = "Ah, it's you. The cupboard's full to bursting; %s a bottle, as a friend." % price
@@ -158,7 +166,32 @@ func _sal(step: String, _context: Dictionary) -> Dictionary:
 			var cost := Rackets.dollars(k * each)
 			var tail := " That's the last of it tonight." if r.barber_stock() == 0 else ""
 			return _page("sal", "%d bottles of Canadian rye, wrapped in yesterday's Tribune. %s.%s" % [k, cost, tail], [], {"bought": k})
+		"news":
+			var talk := _talk_line(r.gossip("sal"))
+			if talk == "":
+				talk = "A barber hears everything, and tonight everything is nothing."
+			if r.memory.recent("sal", "heard_threat", r.night, 3) > 0:
+				talk += " And you, be gentle in my shop, eh? People talk."
+			return _page("sal", talk)
 	return {}
+
+
+## What someone tells Danny about a piece of talk ("" when none).
+func _talk_line(t: Dictionary) -> String:
+	if t.is_empty():
+		return ""
+	var where := rackets.town.get_business(t.business).name if t.business != "" and rackets.town.get_business(t.business) != null else ""
+	match t.kind:
+		"short":
+			return "Word is the truck came half empty at %s. Couldn't pay the driver." % where if where != "Novak's Grocery" \
+				else "Word is Novak's truck came half empty. The man couldn't pay the driver."
+		"threat":
+			return "Word is you were rough with them at %s." % where
+		"favour":
+			return "Word is you helped out at %s. Decent of you." % where
+		"lie":
+			return "Word is Rourke caught somebody short-changing him. Somebody, Dimes."
+	return ""
 
 
 # ------------------------------------------------------------------ Mr. Novak, the grocer
@@ -172,13 +205,38 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 				var again := "You again? I paid! There is nothing left in the till, look for yourself." if r.paid.grocery == "asked" \
 					else "Please. I have nothing more. Please go."
 				return _page("novak", again, [{"id": "apples", "text": "Just an apple, Mr. Novak."}])
+			var att := r.memory.attitude("novak", r.night)
 			var hello := "We're closing. Oh. It's you."
+			if att.fear >= 4.0:
+				hello = "Please. Not again. Not the shelves again."
+			elif att.goodwill >= 2.0:
+				hello = "Mr. Mercer! Come in, come in. I don't forget what you did."
 			if g.missed_delivery > 0:
 				hello = "Look at these shelves. The truck came half empty; I could not pay the driver."
-			return _page("novak", hello, [
-				{"id": "protection", "text": "It's Friday somewhere, Mr. Novak. Protection."},
-				{"id": "apples", "text": "Just an apple."},
-			])
+			var opts := [{"id": "protection", "text": "It's Friday somewhere, Mr. Novak. Protection."}]
+			if r.loans.has("novak"):
+				opts.append({"id": "repay", "text": "About that loan, Mr. Novak."})
+			elif r.shortfall_for_truck("grocery") > 0 or g.missed_delivery > 0:
+				var lend := _loan_amount()
+				if lend > 0 and r.money >= lend:
+					opts.append({"id": "lend", "text": "I could lend you %s for the truck." % Rackets.dollars(lend)})
+			opts.append({"id": "apples", "text": "Just an apple."})
+			return _page("novak", hello, opts)
+		"lend":
+			var amount := _loan_amount()
+			if r.lend("grocery", amount) == 0:
+				return _page("novak", "No, no. I cannot take it.")
+			return _page("novak", "You would do that? %s... I pay you back %s in two nights, with something for your trouble. I promise." % [
+				Rackets.dollars(amount), Rackets.dollars(int(r.loans.novak.owed))], [], {"lent": amount})
+		"repay":
+			if not r.loans.has("novak"):
+				return _page("novak", "We are square, Mr. Mercer. Thank you again.")
+			var back := r.collect_loan("novak")
+			if back == 0:
+				return _page("novak", "Not yet. If I pay you tonight, the truck does not come. Tomorrow, I swear it.")
+			if r.loans.has("novak"):
+				return _page("novak", "Here, %s of it. The rest when the till allows." % Rackets.dollars(back), [], {"repaid": back})
+			return _page("novak", "%s, all of it, as I said. You are an honest crook, Mr. Mercer." % Rackets.dollars(back), [], {"repaid": back})
 		"protection":
 			if r.has_paid("grocery"):
 				return _page("novak", "I paid already tonight!")
@@ -198,9 +256,12 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 		"lean":
 			if r.has_paid("grocery"):
 				return _page("novak", "I paid already tonight!")
+			var grateful: bool = r.memory.attitude("novak", r.night).goodwill >= 2.0
 			var got2 := r.collect("grocery", true)
 			if got2 == 0:
-				return _page("novak", "Take what? The till is empty! Look!\n(His eyes keep going to the door.)", [], {"paid": 0, "police": true})
+				return _page("novak", "Take what? The till is empty! Look!\n(His eyes keep going to the door.)", [], {"paid": 0, "police": not grateful})
+			if grateful:
+				return _page("novak", "%s. After what you did for me... take it. I say nothing to nobody." % Rackets.dollars(got2), [], {"paid": got2})
 			return _page("novak", "Take it! %s, everything, take it and go!\n(His eyes keep going to the door. He won't keep quiet about this.)" % Rackets.dollars(got2),
 				[], {"paid": got2, "police": true})
 		"apples":
@@ -289,6 +350,10 @@ func _rourke(step: String, _context: Dictionary) -> Dictionary:
 					line = "You're behind, Danny. I'm a patient man, but patience costs money."
 				_:
 					line = "Not one more bottle of yours goes through Augie's bar till we're square. My money."
+			if r.memory.recent("rourke", "lie", r.night, 4) > 0 and not b.settled:
+				line = "Dimes. I count twice now, thanks to you. " + line
+			elif r.memory.recent("rourke", "broken_promise", r.night, 2) > 0 and not b.settled:
+				line = "You said tomorrow, Dimes. It's tomorrow. " + line
 			if b.settled:
 				line = "You still owe me %s, Dimes." % D.call(b.arrears)
 			else:
@@ -328,6 +393,7 @@ func _rourke(step: String, _context: Dictionary) -> Dictionary:
 			return _rourke_verdict(r.pay_boss(r.held - keep2, "bad_business"), "thin")
 		"later":
 			var out := r.pay_boss(0)
+			r.promise_boss()
 			var line2 := "Tomorrow, then. %s, and don't make me come looking for you." % D.call(out.owed)
 			if b.ban:
 				line2 += " Till then Augie don't buy so much as a bottle off you."
@@ -378,3 +444,11 @@ func _rourke_verdict(out: Dictionary, claim: String) -> Dictionary:
 	elif b.commission < Boss.COMMISSION:
 		line += " Till you're straight with me, your end's half."
 	return _page("rourke", line, [], {"boss": out})
+
+
+## What Novak needs for tomorrow's truck, in whole dollars (at least $1).
+func _loan_amount() -> int:
+	var need := rackets.shortfall_for_truck("grocery")
+	if need <= 0:
+		need = rackets.town.get_business("grocery").missed_delivery * rackets.town.get_business("grocery").supply_cost
+	return int(ceil(need / 100.0)) * 100 if need > 0 else 0

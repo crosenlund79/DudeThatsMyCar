@@ -22,8 +22,10 @@ var expected := 0
 ## His share of the protection he hands back as Danny's end (percent).
 var commission := 20
 const COMMISSION := 20
-## Out of patience: no more of Danny's rye through his club till they are square.
+## Out of patience: no more of Danny's rye through his club till they are square,
+## and how many nights it has lasted (his collectors come after the first).
 var ban := false
+var ban_nights := 0
 ## What he believes about each business he collects from:
 ## id -> "good" | "short" | "broke", and when he learnt it (night).
 var belief := {}
@@ -132,6 +134,7 @@ func settle(cents: int, protection_part: int, claim: String, town: Neighbourhood
 		arrears = 0
 		patience = PATIENCE
 		ban = false
+		ban_nights = 0
 		trust = mini(100, trust + (5 if cents > want else 3))
 		if trust >= 50:
 			commission = COMMISSION
@@ -248,7 +251,7 @@ func mood() -> String:
 
 func to_dict() -> Dictionary:
 	return {"trust": trust, "patience": patience, "arrears": arrears, "expected": expected, "commission": commission,
-		"ban": ban, "belief": belief.duplicate(), "belief_night": belief_night.duplicate(), "heard": heard.duplicate(true),
+		"ban": ban, "ban_nights": ban_nights, "belief": belief.duplicate(), "belief_night": belief_night.duplicate(), "heard": heard.duplicate(true),
 		"settled": settled, "handed": handed, "recent": recent.duplicate(), "seen_rye": seen_rye, "knows_rye": knows_rye,
 		"caught": caught, "paid_log": paid_log.duplicate(true), "claims": claims.duplicate(true), "purse": purse}
 
@@ -260,6 +263,7 @@ func from_dict(d: Dictionary) -> void:
 	expected = int(d.get("expected", 0))
 	commission = int(d.get("commission", COMMISSION))
 	ban = bool(d.get("ban", false))
+	ban_nights = int(d.get("ban_nights", 0))
 	belief = (d.get("belief", {}) as Dictionary).duplicate()
 	belief_night = {}
 	for k in (d.get("belief_night", {}) as Dictionary):
