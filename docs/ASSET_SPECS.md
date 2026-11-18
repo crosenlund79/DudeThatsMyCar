@@ -26,6 +26,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `characters/clerk` | `custom/graphics/characters/clerk.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Lindqvist the hardware man in his dust coat. |
 | `characters/dealer` | `custom/graphics/characters/dealer.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Eddie, the back-room gun dealer: dark green suit and fedora. |
 | `characters/dutch` | `custom/graphics/characters/dutch.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | M009: Dutch, who keeps the night lunch counter in the Riverfront Yards: rolled sleeves, white apron, fair hair. |
+| `characters/feeney` | `custom/graphics/characters/feeney.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | M009: Mr. Feeney, who manages the Bijou in Halloran Square: midnight-blue dinner jacket, bow tie, sandy red hair. |
 | `characters/gangster` | `custom/graphics/characters/gangster.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Player on foot: 5 frames of 64x64 in a row (idle, step, passing, other step, passing), facing right, centred. |
 | `characters/gangster_armed` | `custom/graphics/characters/gangster_armed.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | The player with the pistol drawn: same frames, right arm reaching forward (the pistol is drawn separately). |
 | `characters/grocer` | `custom/graphics/characters/grocer.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Mr. Novak the grocer: apron and flat cap. |
@@ -124,6 +125,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/call_box` | `custom/graphics/props/call_box.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Police call box on its post. |
 | `props/crate` | `custom/graphics/props/crate.png` | 64x64 | sprite (image, scaled to its display size) | 26x26 | Wooden crate. |
 | `props/crates` | `custom/graphics/props/crates.png` | 96x96 | sprite (image, scaled to its display size) | 44x44 | Stack of crates. |
+| `props/film_can` | `custom/graphics/props/film_can.png` | 48x48 | sprite (image, scaled to its display size) | 15x15 | M009: the Bijou's lost reel - a flat round tin film can from above. |
 | `props/fire_escape` | `custom/graphics/props/fire_escape.png` | 128x40 | sprite (image, scaled to its display size) | 64x20 | Iron fire-escape landing; wall side at the top. |
 | `props/gas_pump` | `custom/graphics/props/gas_pump.png` | 48x48 | sprite (image, scaled to its display size) | 22x22 | Gas pump. |
 | `props/hydrant` | `custom/graphics/props/hydrant.png` | 40x40 | sprite (image, scaled to its display size) | 15x15 | Fire hydrant. |

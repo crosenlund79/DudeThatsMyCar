@@ -54,6 +54,10 @@ RIVAL = {"coat": "#a9804e", "coat_light": "#c89e68", "trouser": "#2a2420", "hat"
 # with the sleeves rolled up, a white apron, cropped fair hair.
 DUTCH = {"coat": "#7b8088", "coat_light": "#91969d", "arm": SKIN, "trouser": "#3a3a3e", "hat": "hair",
          "hat_color": "#d6c07e", "stripes": False, "front": "apron"}
+# M009: Mr. Feeney, who manages the Bijou in Halloran Square: a midnight-blue dinner jacket,
+# a bow tie, sandy red hair going thin.
+FEENEY = {"coat": "#1f2440", "coat_light": "#353c62", "trouser": "#16161c", "hat": "hair", "hat_color": "#b0643a",
+          "stripes": False, "front": "bowtie"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
                 "hat_color": "#1d1410", "stripes": False, "front": "pearls"}
 
@@ -298,4 +302,5 @@ ASSETS = {
     "characters/dealer": lambda: sheet(DEALER),
     "characters/patron_woman": lambda: sheet(PATRON_WOMAN),
     "characters/dutch": lambda: sheet(DUTCH),
+    "characters/feeney": lambda: sheet(FEENEY),
 }

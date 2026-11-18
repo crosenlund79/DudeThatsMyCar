@@ -68,6 +68,8 @@ const SPECS := {
 		"notes": "Eddie, the back-room gun dealer: dark green suit and fedora."},
 	"characters/dutch": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "M009: Dutch, who keeps the night lunch counter in the Riverfront Yards: rolled sleeves, white apron, fair hair."},
+	"characters/feeney": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "M009: Mr. Feeney, who manages the Bijou in Halloran Square: midnight-blue dinner jacket, bow tie, sandy red hair."},
 	"weapons/pistol": {"kind": "sprite", "template_size": Vector2i(48, 20), "display_size": Vector2(15, 6),
 		"notes": ".45 automatic from above, muzzle to the right; the left end sits in the hand."},
 	# Ground.
@@ -162,6 +164,7 @@ const SPECS := {
 	"props/call_box": {"kind": "sprite", "template_size": Vector2i(40, 40), "display_size": Vector2(18, 18), "notes": "Police call box on its post."},
 	"props/marquee": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Copper Owl canopy; wall side at the top."},
 	"props/marquee_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Canopy bulbs and lettering."},
+	"props/film_can": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(15, 15), "notes": "M009: the Bijou's lost reel - a flat round tin film can from above."},
 	"props/marquee_bijou": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "M008: the Bijou picture house's canopy (Halloran Square); wall side at the top."},
 	"props/marquee_bijou_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "M008: the Bijou canopy's bulbs and lettering."},
 	"decals/manhole": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(24, 24), "notes": "Manhole cover."},

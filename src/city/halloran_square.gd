@@ -56,6 +56,7 @@ func _build() -> void:
 	_ground_details()
 	_people_and_cars()
 	_incident_spots()
+	_contacts()
 	# the ways east into the Riverside Ward (Calloway Street ends at the ward's own barricade)
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, CALLOWAY - HALF - SW, 6, (HALF + SW) * 2.0)})
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, MARLOWE - AVENUE_HALF - SW, 6, (AVENUE_HALF + SW) * 2.0)})
@@ -227,6 +228,13 @@ func _ground_details() -> void:
 		d.decals.append({"kind": "decals/oil", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": 1.0})
 
 
+## M009: Mr. Feeney out on the pavement beside the Bijou's canopy, and the lost
+## reel where the film exchange's boy set it down, in St. Brendan's churchyard.
+func _contacts() -> void:
+	d.contacts = [{"id": "feeney", "look": "characters/feeney", "pos": Vector2(2915, MARLOWE - AVENUE_HALF - 30.0), "face": PI / 2}]
+	d.errands = [{"id": "film_can", "pos": Vector2(1215, 2470)}]
+
+
 ## M009: where the square's own small troubles happen; Mr. Feeney at the Bijou notices.
 func _incident_spots() -> void:
 	d.incident_spots = [
@@ -248,7 +256,7 @@ func _people_and_cars() -> void:
 	var south := MARLOWE + AVENUE_HALF + 23.0
 	d.walk_routes = [
 		PackedVector2Array([Vector2(1520, north), Vector2(2150, north)]),  # Marlowe, north side by the square
-		PackedVector2Array([Vector2(2370, north), Vector2(3010, north)]),  # Marlowe, north side: the Bijou
+		PackedVector2Array([Vector2(2370, north), Vector2(2855, north)]),  # Marlowe, north side: the Bijou (short of Mr. Feeney)
 		PackedVector2Array([Vector2(2370, south), Vector2(3010, south)]),  # Marlowe, south side: the bakery
 		PackedVector2Array([Vector2(1508, 2050), Vector2(1508, 2680)]),  # the square's west side
 		PackedVector2Array([Vector2(440, south), Vector2(1290, south)]),  # Marlowe, south side, west of the church

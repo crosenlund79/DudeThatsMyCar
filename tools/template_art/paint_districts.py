@@ -200,8 +200,28 @@ def bijou_marquee():
     return {"props/marquee_bijou": finish(img, w, h), "props/marquee_bijou_lit": finish(glow_from(lit, 3 * SS, 0.8), w, h)}
 
 
+def film_can(seed=51):
+    """M009: the Bijou's lost reel - a flat round tin film can from above,
+    dented, "BIJOU - LATE" chalked across the lid."""
+    w = h = 48
+    img = new(w, h)
+    soft_blob(img, S(25.5), S(26), S(20), S(19), "#000000", 90, 2.5 * SS)
+    paint_shape(img, SP(ellipse_pts(24, 24, 20, 19.5)), "#8d9296", seed, outline=OUT_C, ow=1.4, wob=0.35, tex=0.3,
+                strokes_n=8, stroke_cols=["#a9aeb2", "#6f7478"], light=(0.5, -1, 0.55))
+    paint_shape(img, SP(ellipse_pts(24, 24, 16.5, 16)), "#7b8084", seed + 1, outline=(60, 62, 64), ow=0.8, wob=0.25, tex=0.25,
+                light=(0.5, -1, 0.4))
+    paint_shape(img, SP(ellipse_pts(24, 24, 3.2, 3.2)), "#5c6064", seed + 2, outline=OUT_C, ow=0.6, wob=0.05)
+    text(img, (24, 16), "BIJOU", 6.5, "#efe8d6")
+    text(img, (24, 32), "LATE", 6.5, "#efe8d6")
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))  # a glint on the rim
+    ImageDraw.Draw(layer).polygon(SP([(10, 14), (20, 7), (23, 9), (13, 17)]), fill=rgba("#ffffff", 50))
+    img.alpha_composite(layer.filter(ImageFilter.GaussianBlur(1.0 * SS)))
+    return finish(grain(img, 2, seed), w, h)
+
+
 ASSETS = {
     "props/marquee_bijou": bijou_marquee,
+    "props/film_can": film_can,
     "facades/factory": pb._pack("factory", facade_factory),
     "facades/tenement": pb._pack("tenement", facade_tenement),
     "facades/stack": pb._pack("stack", facade_stack),
