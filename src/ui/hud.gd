@@ -25,6 +25,8 @@ var minimap: Minimap
 ## M006: the whole ward (M), and how Danny is (C).
 var ward_map: WardMap
 var status_screen: StatusScreen
+## M007: a fistfight's dial over the street.
+var fight_dial: FightDial
 var clock_panel: PanelContainer
 var clock_label: Label
 var home_label: Label
@@ -205,6 +207,9 @@ func add_minimap(layout: DistrictLayout) -> void:
 	status_screen = StatusScreen.new()
 	add_child(status_screen)
 	status_screen.setup(resolver, _font)
+	fight_dial = FightDial.new()
+	add_child(fight_dial)
+	fight_dial.setup(resolver, _font)
 
 
 ## The status screen open (true, showing `condition`) or closed.

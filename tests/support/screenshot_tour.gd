@@ -14,7 +14,7 @@ extends SceneTree
 ## opening (M005: the monologue over the ward, six moments and the hand-over),
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
-## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006).
+## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -232,6 +232,28 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(2820, 1470), -PI / 2)
 				await _frames(40)
 				await _shot("morgue")
+			"fight":
+				# M007: a fistfight with Lefty Moran outside Doyle's Garage, the dial over the street
+				_teleport_walker(main.rival.body.global_position + Vector2(-42, 0), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, main.rival.body.global_position)
+				await _frames(20)
+				main.start_fight(main.rival.body, "Lefty Moran", func(_w, _r): pass)
+				var dial: FightDial = main.hud.fight_dial
+				# land the first punch, then catch the second check mid-sweep
+				while dial.fight.phase != FistFight.Phase.RUNNING:
+					await process_frame
+				while not dial.fight.in_zone():
+					await process_frame
+				dial.press()
+				await _frames(4)
+				await _shot("fight_landed", false)
+				while dial.fight.phase != FistFight.Phase.RUNNING:
+					await process_frame
+				while dial.fight.needle < dial.fight.zone_start * 0.7:
+					await process_frame
+				await _shot("fight", false)
+				while main.fighting:
+					await process_frame
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)

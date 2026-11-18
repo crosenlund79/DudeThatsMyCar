@@ -430,13 +430,34 @@ def record_scratch():
     return fade_ends(band(x, 60, 7000, circular=False), fade_out=0.08)
 
 
+def punch(landed):
+    """M007: a fist in a fistfight. Landed: a hard slap of knuckles on a jaw with a body
+    thump under it. Taken: a duller blow to the ribs with the breath knocked out (no voice)."""
+    srng = np.random.default_rng(1932007 + (1 if landed else 2))
+    n = int(0.45 * RATE)
+    t = np.arange(n) / RATE
+    noise = srng.standard_normal(n)
+    if landed:
+        slap = band(noise, 900, 5000, circular=False) * np.exp(-t / 0.012) * 1.2
+        body = thump(0.45, 95, 0.05, 1.0)
+        x = slap + body * 0.9
+    else:
+        body = thump(0.45, 70, 0.08, 1.2)
+        cloth = band(noise, 300, 1800, circular=False) * np.exp(-t / 0.03) * 0.5
+        breath = band(srng.standard_normal(n), 400, 2500, circular=False) * np.exp(-((t - 0.12) / 0.06) ** 2) * 0.25
+        x = body + cloth + breath
+    return fade_ends(echo(x, [(0.03, 0.15), (0.06, 0.08)], hi=2500, circular=False), fade_out=0.05)
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "assets/audio"
     only = sys.argv[2] if len(sys.argv) > 2 else ""
     if only:
         # one sound only (the rest stay as they are): python3 make_ambience.py assets/audio music/record_scratch
+        makers = {"music/record_scratch": record_scratch, "fight/punch_landed": lambda: punch(True),
+                  "fight/punch_taken": lambda: punch(False)}
         write_ogg(os.path.join(root, os.path.dirname(only), "template_" + os.path.basename(only) + ".ogg"),
-                  [{"music/record_scratch": record_scratch}[only]()], 0.7)
+                  [makers[only]()], 0.7)
         return
     write_ogg(os.path.join(root, "ambience/template_street_night.ogg"), street_night(), 0.5)
     write_ogg(os.path.join(root, "ambience/template_alley.ogg"), alley(), 0.5)
@@ -451,6 +472,8 @@ def main():
     write_ogg(os.path.join(root, "places/template_bottles.ogg"), [bottles()], 0.5)
     write_ogg(os.path.join(root, "vehicles/template_door.ogg"), [car_door()], 0.7)
     write_ogg(os.path.join(root, "music/template_record_scratch.ogg"), [record_scratch()], 0.7)
+    write_ogg(os.path.join(root, "fight/template_punch_landed.ogg"), [punch(True)], 0.7)
+    write_ogg(os.path.join(root, "fight/template_punch_taken.ogg"), [punch(False)], 0.7)
 
 
 if __name__ == "__main__":

@@ -605,6 +605,63 @@ def status_figure():
     return {"ui/status_" + k: v for k, v in parts.items()}
 
 
+def fight_dial():
+    """M007: the fistfight dial - a ring of dark, worn brass with a copper bevel, aged cream
+    ticks round it and stepped Art Deco chevrons at the quarters, a sunburst boss in the
+    middle. 256 x 256; the game lights the zone and turns the needle over it (top = 0)."""
+    w = h = 256
+    img = new(w, h)
+    c = 128
+    soft_blob(img, S(c + 3), S(c + 5), S(124), S(124), "#000000", 140, 6 * SS)
+    paint_shape(img, SP(ellipse_pts(c, c, 120, 120, n=96)), "#5a4428", 1, outline=(26, 18, 10), ow=2.4, wob=0.25, tex=0.3,
+                strokes_n=26, stroke_cols=["#7a5c34", "#3e2e1a"], light=(0.4, -1, 0.5), inner_shadow=0.35)
+    paint_shape(img, SP(ellipse_pts(c, c, 112, 112, n=96)), "#9a6a3a", 2, outline=None, wob=0.2, tex=0.25,
+                light=(0.4, -1, 0.6))  # the copper bevel
+    paint_shape(img, SP(ellipse_pts(c, c, 104, 104, n=96)), "#2a2018", 3, outline=(26, 18, 10), ow=1.4, wob=0.2, tex=0.35,
+                strokes_n=18, stroke_cols=["#3a2c20", "#1e1610"], light=(0.4, -1, 0.3))  # the dark track
+    paint_shape(img, SP(ellipse_pts(c, c, 76, 76, n=80)), "#4a3822", 4, outline=(26, 18, 10), ow=1.6, wob=0.2, tex=0.3,
+                light=(0.4, -1, 0.5), inner_shadow=0.3)
+    # aged cream ticks: long at the quarters and eighths, short between
+    for k in range(48):
+        a = math.radians(k * 7.5 - 90)
+        long_ = k % 6 == 0
+        r0, r1 = (92, 104) if long_ else (98, 104)
+        line(img, [(S(c + math.cos(a) * r0), S(c + math.sin(a) * r0)), (S(c + math.cos(a) * r1), S(c + math.sin(a) * r1))],
+             "#e6d6b0", (2.2 if long_ else 1.2) * SS, 230 if long_ else 170)
+    # stepped Deco chevrons at the four quarters, on the brass ring
+    for q in range(4):
+        a = math.radians(q * 90 - 90)
+        ux, uy = math.cos(a), math.sin(a)
+        px, py = -uy, ux
+        for step, (r, half) in enumerate(((109, 7), (114, 4.5), (118, 2.2))):
+            pts = [(c + ux * r + px * half, c + uy * r + py * half), (c + ux * (r + 3.5), c + uy * (r + 3.5)),
+                   (c + ux * r - px * half, c + uy * r - py * half)]
+            paint_shape(img, SP(pts), "#e8d8b2", 10 + q * 3 + step, outline=None, wob=0.02)
+    # the sunburst boss
+    for k in range(16):
+        a = math.radians(k * 22.5)
+        line(img, [(S(c + math.cos(a) * 18), S(c + math.sin(a) * 18)), (S(c + math.cos(a) * 64), S(c + math.sin(a) * 64))],
+             "#6a5032", 2.0 * SS, 120)
+    paint_shape(img, SP(ellipse_pts(c, c, 16, 16)), "#b88a4a", 30, outline=(26, 18, 10), ow=1.4, wob=0.1, light=(0.4, -1, 0.7))
+    soft_blob(img, S(c - 40), S(c - 60), S(40), S(16), "#ffffff", 30, 6 * SS)  # a worn sheen
+    return finish(grain(img, 6, 31), w, h)
+
+
+def fight_needle():
+    """M007: the dial's needle - brass with an aged cream tip, pointing up from the centre
+    (the same 256 x 256 frame as the dial, so it turns about the middle)."""
+    w = h = 256
+    img = new(w, h)
+    c = 128
+    soft_blob(img, S(c + 3), S(c - 40), S(8), S(60), "#000000", 110, 3 * SS)
+    paint_shape(img, SP([(c - 6, c + 14), (c - 3.5, c - 70), (c, c - 100), (c + 3.5, c - 70), (c + 6, c + 14)]), "#c9974e", 1,
+                outline=(26, 18, 10), ow=1.4, wob=0.05, tex=0.1, light=(0.4, -1, 0.6))
+    paint_shape(img, SP([(c - 3.5, c - 70), (c, c - 100), (c + 3.5, c - 70), (c, c - 78)]), "#f4e8c8", 2, outline=None, wob=0.02)
+    paint_shape(img, SP(ellipse_pts(c, c, 11, 11)), "#8a5e30", 3, outline=(26, 18, 10), ow=1.4, wob=0.1, light=(0.4, -1, 0.7))
+    paint_shape(img, SP(ellipse_pts(c, c, 4, 4)), "#e8d8b2", 4, outline=None, wob=0.05)
+    return finish(img, w, h)
+
+
 def player_arrow():
     """The minimap's 'you are here': a cream arrowhead with a dark edge, pointing right."""
     w = h = 32
@@ -819,6 +876,8 @@ ASSETS = {
     "signs/vet": lambda: painted_roof_sign("vet", "PETTIBONE ANIMAL HOSPITAL", 16, 384, 64),
     "signs/morgue": lambda: painted_roof_sign("morgue", "THE MORGUE", 26, 256, 64, col="#d6dde4"),
     "ui/status_figure": status_figure,
+    "ui/fight_dial": fight_dial,
+    "ui/fight_needle": fight_needle,
     "ui/map_player": player_arrow,
     "ui/map_police": police_mark,
     "signs/grocery": lambda: painted_roof_sign("grocery", "NOVAK'S GROCERY", 18, 256, 64),

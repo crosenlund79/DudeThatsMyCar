@@ -153,6 +153,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/vet` | `custom/graphics/signs/vet.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M006: Pettibone Animal Hospital, painted roof lettering, transparent. |
 | `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |
 | `ui/crosshair` | `custom/graphics/ui/crosshair.png` | 64x64 | sprite (image, scaled to its display size) | 30x30 | Mouse aim reticle (screen px). |
+| `ui/fight_dial` | `custom/graphics/ui/fight_dial.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 fistfight dial (screen px): worn brass ring, copper bevel, cream ticks; the zone is lit by the game on the dark track at 92-104 px from the middle; top = where the needle starts. |
+| `ui/fight_needle` | `custom/graphics/ui/fight_needle.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 the dial's needle, pointing up from the middle of the same 256 x 256 frame (it turns about the centre). |
 | `ui/map_player` | `custom/graphics/ui/map_player.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Minimap: you, an arrowhead pointing right (screen px). |
 | `ui/map_police` | `custom/graphics/ui/map_police.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Minimap: the beat cop (screen px). |
 | `ui/marker_bar` | `custom/graphics/ui/marker_bar.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker (world and minimap): the Copper Owl. Badge on top, the pin's point at the bottom middle. |
@@ -187,6 +189,8 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `ambience/horn` | `custom/audio/ambience/horn.ogg` (or .wav / .mp3) | `template_horn.ogg` | no | Ambience | A car horn a few streets away (now and then; rarer late at night). |
 | `ambience/river` | `custom/audio/ambience/river.ogg` (or .wav / .mp3) | `template_river.ogg` | yes | Ambience | By the river: water against the quay, a factory's drone across it. |
 | `ambience/street_night` | `custom/audio/ambience/street_night.ogg` (or .wav / .mp3) | `template_street_night.ogg` | yes | Ambience | The street's bed at night: distant traffic, the city beyond the corner. Quieter after midnight; dull indoors. |
+| `fight/punch_landed` | `custom/audio/fight/punch_landed.ogg` (or .wav / .mp3) | `template_punch_landed.ogg` | no | Effects | M007: Danny's punch lands in a fistfight (under 0.5 s). |
+| `fight/punch_taken` | `custom/audio/fight/punch_taken.ogg` (or .wav / .mp3) | `template_punch_taken.ogg` | no | Effects | M007: Danny takes a punch (under 0.5 s; no voice). |
 | `music/copper_owl_jazz` | `custom/audio/music/copper_owl_jazz.ogg` (or .wav / .mp3) | `copper_owl_jazz.ogg` | yes | Music | The Copper Owl's singer, "Leave the Lights Low" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet. |
 | `music/record_scratch` | `custom/audio/music/record_scratch.ogg` (or .wav / .mp3) | `template_record_scratch.ogg` | no | Music | M006: the needle dragged off the record when Danny interrupts the Bird (under 1 s). Heard through the club's walls like the song. |
 | `places/bottles` | `custom/audio/places/bottles.ogg` (or .wav / .mp3) | `template_bottles.ogg` | no | Effects | Bottles of rye changing hands. |

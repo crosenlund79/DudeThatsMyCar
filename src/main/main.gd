@@ -79,6 +79,12 @@ var map_open := false
 var status_open := false
 ## Doc Pettibone's fee for patching Danny up after he went down (cents, at most).
 const COLLAPSE_FEE := 500
+## M007: a fistfight under way (the dial is up; nothing else moves Danny), its
+## rules, the man he is fighting and what to do when it is over.
+@export var fight_rules: FightRules = preload("res://src/fight/default_fight.tres")
+var fighting := false
+var fight_opponent: Walker
+var _fight_done: Callable
 ## The sound level chosen on the pause screen (index into AudioSettings.BUSES).
 var sound_row := 0
 var rackets: Rackets
@@ -605,6 +611,11 @@ func _load_gun() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if fighting:
+		# only Space, for the dial; no walking, shooting, maps or menus mid-fight
+		if event.is_action_pressed(CityInput.HANDBRAKE):
+			hud.fight_dial.press()
+		return
 	if opening != null:
 		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
 				or event.is_action_pressed(CityInput.HANDBRAKE) or event.is_action_pressed("ui_accept") \
@@ -657,6 +668,64 @@ func my_car() -> Car:
 		if thefts.is_dannys(i):
 			return cars[i]
 	return null
+
+
+## M007: a fistfight with `opponent` (a Walker) - the dial over the street,
+## five checks; `done` is called with (won, results) once it is over, after the
+## bruises are dealt out. False (and nothing happens) when a fight is already
+## on, Danny is not on foot or either man is down. Reusable for any opponent.
+func start_fight(opponent: Walker, opponent_name: String, done: Callable, zone_bonus: float = 0.0,
+		speed_scale: float = 1.0) -> bool:
+	if fighting or not player.on_foot() or walker.down or opponent == null or opponent.down:
+		return false
+	end_talk()
+	fighting = true
+	fight_opponent = opponent
+	_fight_done = done
+	player.set_physics_process(false)
+	walker.move = Vector2.ZERO
+	walker.velocity = Vector2.ZERO
+	if walker.gun != null:
+		walker.gun.holster()
+	walker.aim_point = opponent.global_position
+	opponent.aim_point = walker.global_position
+	opponent.move = Vector2.ZERO
+	if rival != null and opponent == rival.body:
+		rival.held = true
+	var seed_value := rackets.night * 1000 + int(walker.global_position.x) % 997
+	var f := FistFight.new(fight_rules, seed_value, zone_bonus - walker.condition.aim_spread() * 2.0, speed_scale)
+	hud.fight_dial.start(f, opponent_name)
+	if not hud.fight_dial.check_done.is_connected(_on_fight_check):
+		hud.fight_dial.check_done.connect(_on_fight_check)
+		hud.fight_dial.finished.connect(_on_fight_over)
+	return true
+
+
+func _on_fight_check(hit: bool, _index: int) -> void:
+	soundscape.play("fight/punch_landed" if hit else "fight/punch_taken", -2.0)
+	var who: Walker = fight_opponent if hit else walker
+	var other: Walker = walker if hit else fight_opponent
+	if who != null and other != null:
+		var away := (who.global_position - other.global_position).normalized()
+		who.sprite.position = away * 4.0
+		var t := create_tween()
+		t.tween_property(who.sprite, "position", Vector2.ZERO, 0.18)
+
+
+func _on_fight_over(won: bool, results: Array) -> void:
+	fighting = false
+	if rival != null:
+		rival.held = false
+	player.set_physics_process(true)
+	FightInjuries.apply_to_danny(walker.condition, results, won)
+	if fight_opponent != null:
+		FightInjuries.apply_to_opponent(fight_opponent.condition, results, won)
+	hud.show_notice("You won the fight." if won else "You lost the fight. C shows the damage.")
+	var done := _fight_done
+	_fight_done = Callable()
+	if done.is_valid():
+		done.call(won, results)
+	save_game()
 
 
 ## M006: how Danny is (C or Esc closes). The world waits meanwhile.

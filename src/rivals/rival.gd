@@ -19,6 +19,8 @@ var bullets: BulletWorld
 ## Returns the node Danny currently is (on foot or the car he drives).
 var target_source: Callable
 var _walker: RouteFollower
+## M007: held in a fistfight (or a talk): he stands his ground facing Danny.
+var held := false
 
 
 func setup(resolver: AssetResolver, gun_rules: GunRules, post: Array[Vector2], p_navigator: CityNavigator,
@@ -87,6 +89,12 @@ func _target() -> Node2D:
 
 func _physics_process(_delta: float) -> void:
 	if body.down:
+		return
+	if held:
+		body.move = Vector2.ZERO
+		var tt := _target()
+		if tt != null:
+			body.aim_point = tt.global_position
 		return
 	var dt := Car.FIXED_STEP
 	var me := body.global_position
