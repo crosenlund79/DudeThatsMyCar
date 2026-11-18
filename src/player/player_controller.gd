@@ -76,7 +76,44 @@ func _physics_process(_delta: float) -> void:
 		_drive(cmd)
 
 
+## M010: sitting on a bench or a chair ({} when not): he does not move or
+## shoot; E stands him up (through `interaction`), Space held lets time pass.
+var seat := {}
+var passing_time := false
+
+
+func sit(p_seat: Dictionary) -> void:
+	seat = p_seat
+	walker.move = Vector2.ZERO
+	walker.velocity = Vector2.ZERO
+	walker.model.velocity = Vector2.ZERO
+	walker.model.running = false
+	if walker.gun != null:
+		walker.gun.holster()
+	_set_walker_solid(false)
+	walker.place(seat.pos, seat.facing)
+	walker.aim_point = seat.pos + Vector2.from_angle(seat.facing) * 40.0
+
+
+## Up from the seat, in front of it.
+func stand() -> void:
+	if seat.is_empty():
+		return
+	var at: Vector2 = seat.stand
+	var face: float = seat.facing
+	seat = {}
+	passing_time = false
+	walker.place(at, face)
+	_set_walker_solid(true)
+
+
 func _walk(cmd: PlayerCommand) -> void:
+	if not seat.is_empty():
+		walker.move = Vector2.ZERO
+		passing_time = cmd.handbrake
+		if cmd.interact and interaction.is_valid():
+			interaction.call(walker.global_position)
+		return
 	walker.move = cmd.move
 	walker.model.running = cmd.sprint and cmd.move.length() > 0.1  # M010
 	walker.aim_point = cmd.aim

@@ -79,7 +79,7 @@ func test_every_district_in_its_true_place() -> void:
 	assert_eq(m.minimap.colour_at(Vector2(-2500, 600)), Minimap.STREET, "Marlowe Avenue runs on west")
 	var labels: Array = m.landmarks.map(func(l: Dictionary) -> String: return l.label)
 	for n in ["Doyle's Garage", "Hotel Marlowe", "The Morgue", "Great Lakes Tanning Co.", "North Branch Freight",
-			"The Bijou", "St. Brendan's Church", "Halloran Square"]:
+			"The Bijou", "St. Brendan's Church", "Halloran Park"]:  # M010: the square's middle is a park
 		assert_has(labels, n)
 	assert_eq(m.minimap.places.size(), 6, "the six places he can walk into, with their badges")
 	_close()

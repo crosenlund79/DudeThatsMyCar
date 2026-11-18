@@ -47,6 +47,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `city/cobbles` | `custom/graphics/city/cobbles.png` | 256x256 | tile (seamless in both directions) | 112 px per repeat | Granite setts (streetcar tracks). |
 | `city/curb` | `custom/graphics/city/curb.png` | 128x24 | strip (seamless left-right, drawn along a line) | 8 px wide | Stone curb; sidewalk side at the top. |
 | `city/fence` | `custom/graphics/city/fence.png` | 128x16 | strip (seamless left-right, drawn along a line) | 8 px wide | Wooden board fence. |
+| `city/grass` | `custom/graphics/city/grass.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | M010: a park lawn at night (Halloran Park): dark mown grass, a few fallen leaves; seamless. |
 | `city/lot` | `custom/graphics/city/lot.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Yards and lots: cinders, dirt, weeds. |
 | `city/quay` | `custom/graphics/city/quay.png` | 128x32 | strip (seamless left-right, drawn along a line) | 16 px wide | Stone river edge with railing; water side at the bottom. |
 | `city/rails` | `custom/graphics/city/rails.png` | 128x40 | strip (seamless left-right, drawn along a line) | 22 px wide | One streetcar track (two rails), transparent between. |
@@ -134,7 +135,9 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/crates` | `custom/graphics/props/crates.png` | 96x96 | sprite (image, scaled to its display size) | 44x44 | Stack of crates. |
 | `props/film_can` | `custom/graphics/props/film_can.png` | 48x48 | sprite (image, scaled to its display size) | 15x15 | M009: the Bijou's lost reel - a flat round tin film can from above. |
 | `props/fire_escape` | `custom/graphics/props/fire_escape.png` | 128x40 | sprite (image, scaled to its display size) | 64x20 | Iron fire-escape landing; wall side at the top. |
+| `props/flowerbed` | `custom/graphics/props/flowerbed.png` | 96x96 | sprite (image, scaled to its display size) | 54x54 | M010: a round stone-edged flowerbed in Halloran Park (low: not solid). |
 | `props/gas_pump` | `custom/graphics/props/gas_pump.png` | 48x48 | sprite (image, scaled to its display size) | 22x22 | Gas pump. |
+| `props/hedge` | `custom/graphics/props/hedge.png` | 160x36 | sprite (image, scaled to its display size) | 110x24 | M010: a low clipped hedge from above, long along +X (not solid). |
 | `props/hydrant` | `custom/graphics/props/hydrant.png` | 40x40 | sprite (image, scaled to its display size) | 15x15 | Fire hydrant. |
 | `props/lamp_base` | `custom/graphics/props/lamp_base.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Street lamp base. |
 | `props/lamp_head` | `custom/graphics/props/lamp_head.png` | 64x64 | sprite (image, scaled to its display size) | 22x22 | Street lamp lantern seen from above. |

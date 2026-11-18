@@ -554,6 +554,26 @@ func _run(shots: Array) -> void:
 				await _frames(40)
 				await _shot("truck_found", false)
 				cmd = PlayerCommand.new()
+			"park", "sitting":
+				# M010: Halloran Park in the middle of the square - lawns, paths, railings, benches;
+				# sitting: Danny on a bench by the north path, the night going by
+				main.weather.force("clear")
+				var hl: DistrictLayout = main.world.layouts.halloran
+				var pm: Vector2 = hl.landmarks.filter(func(l: Dictionary) -> bool: return l.label == "Halloran Park")[0].pos
+				_teleport_walker(pm + Vector2(-60, -230), PI / 2)
+				main.world.load_now("halloran")
+				await _frames(20)
+				if s == "sitting":
+					var near: Array = main._seats_near().filter(func(x: Dictionary) -> bool: return (x.pos as Vector2).distance_to(pm) < 200.0)
+					near.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a.pos as Vector2).y < (b.pos as Vector2).y)
+					_teleport_walker(near[0].stand, 0.0)
+					await _frames(2)
+					main._interact(main.walker.global_position)
+					cmd = PlayerCommand.make(Vector2.ZERO, false, true)
+					await _frames(40)
+				await _frames(20)
+				await _shot(s, false)
+				cmd = PlayerCommand.new()
 			"dump_truck", "school_bus":
 				# M009: Brennan's coal truck pulling out of its dock onto Front Street; the
 				# parish school bus pulling away from the kerb beside St. Brendan's

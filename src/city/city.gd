@@ -142,7 +142,7 @@ func _ground_block(i: int) -> void:
 
 func _ground_lots_and_water() -> void:
 	for l in layout.lots:
-		_fill_rect(l.rect, "city/sidewalk" if l.kind == "concrete" else "city/lot", Layers.Z_GROUND + 4)
+		_fill_rect(l.rect, {"concrete": "city/sidewalk", "grass": "city/grass"}.get(String(l.kind), "city/lot"), Layers.Z_GROUND + 4)
 	for w in layout.water:
 		_fill_rect(w, "city/water", Layers.Z_GROUND + 5, Color.WHITE, Layers.LIGHT_STREET | Layers.LIGHT_ROOF)
 

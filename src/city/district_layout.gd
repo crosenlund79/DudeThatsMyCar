@@ -47,7 +47,7 @@ var streets: Array = []
 var blocks: Array = []
 ## {rect: Rect2, name: String}
 var alleys: Array = []
-## {rect: Rect2, kind: "lot" | "concrete"}: yards, forecourts, the dock apron.
+## {rect: Rect2, kind: "lot" | "concrete" | "grass" (M010)}: yards, forecourts, the dock apron, lawns.
 var lots: Array = []
 ## Granite setts (Rect2) and streetcar tracks ([from, to]).
 var cobbles: Array = []

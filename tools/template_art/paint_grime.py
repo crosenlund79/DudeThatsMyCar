@@ -240,7 +240,66 @@ def fog_tile(seed=2410, size=256):
     return img
 
 
+# ---------------------------------------------------------------- M010: Halloran Park
+
+def grass_tile(seed=2420, size=256):
+    """A park lawn at night, seamless both ways: dark mown grass, soft lighter
+    patches and darker clumps, a few fallen leaves."""
+    import numpy as np
+    img = new(size, size)
+    n = tnoise(size, size, 6, seed, octaves=4)
+    base = ramp(n, ["#1f3020", "#26391f", "#2d4326", "#33492a"])
+    img = Image.fromarray(np.array(base), "RGBA").resize((size * SS, size * SS), Image.LANCZOS)
+    img = strokes(img, 900, ["#3c5530", "#1a2a18", "#4a6338"], 7, 1.2, seed + 1, angle=None, alpha=(30, 80), wrap=True)
+    rnd = random.Random(seed)
+    for k in range(10):
+        x, y = rnd.uniform(10, size - 10), rnd.uniform(10, size - 10)
+        soft_blob(img, S(x), S(y), S(rnd.uniform(1.5, 2.8)), S(rnd.uniform(1.0, 1.8)),
+                  rnd.choice(["#7a5a2a", "#8a6a34", "#5e4a26"]), 170, 0.5 * SS, rot=rnd.uniform(0, 3))
+    img = wrap_blur(img, 0.4 * SS)
+    return finish(img, size, size)
+
+
+def flowerbed(seed=2421):
+    """A round flowerbed edged with stone: dark soil, low clumps of autumn flowers."""
+    w = h = 96
+    img = new(w, h)
+    soft_blob(img, S(50), S(51), S(44), S(42), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(ellipse_pts(48, 48, 44, 43)), "#8e8a80", seed, outline=OUT, ow=1.2, wob=0.4, tex=0.3,
+                light=(0.4, -1, 0.5))
+    paint_shape(img, SP(ellipse_pts(48, 48, 38, 37)), "#2a1e16", seed + 1, outline=None, wob=0.6, tex=0.35)
+    rnd = random.Random(seed)
+    for k in range(40):
+        a = rnd.uniform(0, 6.28)
+        r = rnd.uniform(0, 31)
+        x, y = 48 + r * math.cos(a), 48 + r * math.sin(a)
+        paint_shape(img, SP(ellipse_pts(x, y, rnd.uniform(3, 5), rnd.uniform(3, 5), n=10)),
+                    rnd.choice(["#2f4a26", "#3a5a2c", "#28401f"]), seed + 2 + k, outline=None, wob=0.6, tex=0.2,
+                    light=(0.4, -1, 0.5))
+        if rnd.random() < 0.6:
+            soft_blob(img, S(x + rnd.uniform(-1.5, 1.5)), S(y + rnd.uniform(-1.5, 1.5)), S(1.6), S(1.6),
+                      rnd.choice(["#b8452e", "#d08a2c", "#c9b04a", "#8a3a5a"]), 220, 0.4 * SS)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def hedge(seed=2422):
+    """A low clipped privet hedge seen from above, long along +X."""
+    w, h = 160, 36
+    img = new(w, h)
+    soft_blob(img, S(82), S(21), S(78), S(14), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(rrect_pts(3, 5, 157, 31, 9)), "#26401f", seed, outline=OUT, ow=1.2, wob=0.9, tex=0.45,
+                strokes_n=16, stroke_cols=["#355a2a", "#1a2e16"], light=(0.3, -1, 0.6))
+    rnd = random.Random(seed)
+    for k in range(60):
+        x, y = rnd.uniform(8, 152), rnd.uniform(8, 28)
+        soft_blob(img, S(x), S(y), S(2.2), S(1.6), rnd.choice(["#3f6a30", "#4a7838", "#2e4e24"]), 120, 0.5 * SS)
+    return finish(grain(img, 3, seed), w, h)
+
+
 ASSETS = {
+    "city/grass": grass_tile,
+    "props/flowerbed": flowerbed,
+    "props/hedge": hedge,
     "fx/fog": fog_tile,
     "decals/grime": grime,
     "fences/boards": fence_boards,

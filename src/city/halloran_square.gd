@@ -88,12 +88,43 @@ func _blocks_and_alleys() -> void:
 
 
 ## The square: gravel walks under plane trees, benches, its own lamps.
+## M010: made a small park, Halloran Park - four lawns between the paths with a
+## gravel walk round them, flowerbeds and low hedges, a wrought-iron railing
+## with a gate at each path's end, more benches (you can sit on them), and a
+## footpath through it for the passers-by. The same place, the same trees.
+const PARK_GATE := 40.0
+
+
 func _square() -> void:
 	var inner := Rect2(COLS[1][0] + SW, ROWS[2][0] + SW, COLS[1][1] - COLS[1][0] - SW * 2, ROWS[2][1] - ROWS[2][0] - SW * 2)
 	d.lots.append({"rect": inner, "kind": "lot"})
 	var mid := inner.get_center()
+	var walk := 30.0
+	var path := 22.0
+	for sx in [-1.0, 1.0]:
+		for sy in [-1.0, 1.0]:
+			var x0: float = inner.position.x + walk if sx < 0 else mid.x + path + 12.0
+			var x1: float = mid.x - path - 12.0 if sx < 0 else inner.end.x - walk
+			var y0: float = inner.position.y + walk if sy < 0 else mid.y + path + 12.0
+			var y1: float = mid.y - path - 12.0 if sy < 0 else inner.end.y - walk
+			d.lots.append({"rect": Rect2(x0, y0, x1 - x0, y1 - y0), "kind": "grass"})
+			_prop("props/flowerbed", mid + Vector2(sx * 98.0, sy * 98.0), sx * sy * 0.6)
+			# low hedges along the lawns' outer sides
+			var hx: float = x0 + 10.0 if sx < 0 else x1 - 10.0
+			_prop("props/hedge", Vector2(hx, (y0 + y1) * 0.5), PI / 2)
 	d.lots.append({"rect": Rect2(inner.position.x, mid.y - 22, inner.size.x, 44), "kind": "concrete"})
 	d.lots.append({"rect": Rect2(mid.x - 22, inner.position.y, 44, inner.size.y), "kind": "concrete"})
+	# the railing round it, a gate where each path comes out
+	var c := [inner.position, Vector2(inner.end.x, inner.position.y), inner.end, Vector2(inner.position.x, inner.end.y)]
+	for i in 4:
+		var a: Vector2 = c[i]
+		var b: Vector2 = c[(i + 1) % 4]
+		var gate: Vector2 = Vector2(mid.x, a.y) if absf(a.y - b.y) < 1.0 else Vector2(a.x, mid.y)
+		var along := (b - a).normalized()
+		d.fences.append([a, gate - along * PARK_GATE, "iron"])
+		d.fences.append([gate + along * PARK_GATE, b, "iron"])
+	for p in [Vector2(-48, 120), Vector2(48, -120)]:  # benches along the north-south path
+		_prop("interiors/bench", mid + p, -PI / 2 if p.x < 0 else PI / 2, Vector2(66, 14))
 	for p in [Vector2(-170, -190), Vector2(170, -190), Vector2(-170, 190), Vector2(170, 190), Vector2(-60, -230),
 			Vector2(60, 230), Vector2(-230, 40), Vector2(230, -40)]:
 		_prop("props/tree", mid + p, float(int(p.x * 3.0 + p.y) % 6) * 0.5, 0.0, 64.0)
@@ -101,7 +132,7 @@ func _square() -> void:
 		_prop("interiors/bench", mid + p, 0.0 if p.x < 0 else PI, Vector2(66, 14))
 	for p in [Vector2(-60, 60), Vector2(60, -60)]:
 		d.lamps.append(mid + p)
-	d.landmarks.append({"pos": mid, "label": "Halloran Square"})
+	d.landmarks.append({"pos": mid, "label": "Halloran Park"})
 
 
 func _rows() -> void:
@@ -261,6 +292,7 @@ func _people_and_cars() -> void:
 		PackedVector2Array([Vector2(2370, south), Vector2(3010, south)]),  # Marlowe, south side: the bakery
 		PackedVector2Array([Vector2(1508, 2050), Vector2(1508, 2680)]),  # the square's west side
 		PackedVector2Array([Vector2(440, south), Vector2(1290, south)]),  # Marlowe, south side, west of the church
+		PackedVector2Array([Vector2(1825, 2038), Vector2(1825, 2692)]),  # M010: through the park, gate to gate
 	]
 	d.walkers = [
 		{"look": "characters/lady", "route": 0, "at": 0.3},
@@ -269,6 +301,7 @@ func _people_and_cars() -> void:
 		{"look": "characters/worker", "route": 2, "at": 0.6},
 		{"look": "characters/lady", "route": 3, "at": 0.5},
 		{"look": "characters/worker", "route": 4, "at": 0.4},
+		{"look": "characters/patron_woman", "route": 5, "at": 0.35},  # M010: a stroll through the park
 	]
 	var lane := 28.0
 	var e := MARLOWE + 45.0

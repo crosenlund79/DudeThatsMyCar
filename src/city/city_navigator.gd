@@ -35,6 +35,11 @@ func _init(p_layout: DistrictLayout, p_clearance: float = 12.0) -> void:
 		if p.kind == "props/barricade":
 			var half: Vector2 = (p.box as Vector2).rotated(p.rot).abs() * 0.5
 			_block(Rect2(p.pos - half, half * 2.0).grow(clearance))
+	# M010: fences and railings are walls to a walker (axis-aligned runs: the yards', the park's)
+	for f in layout.fences:
+		var fa: Vector2 = f[0]
+		var fb: Vector2 = f[1]
+		_block(Rect2(fa, Vector2.ZERO).expand(fb).grow(4.0 + clearance * 0.5))
 
 
 func _block(r: Rect2) -> void:

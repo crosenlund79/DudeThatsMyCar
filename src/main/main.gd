@@ -123,6 +123,10 @@ var weather: Weather
 var weather_view: WeatherView
 ## M010: Danny's eyes growing heavy towards dawn.
 var drowsy: DrowsyView
+## M010: sitting down - the seats of each built district, and how fast time
+## passes while he sits with Space held (game minutes per game minute).
+const FAST_TIME := 20.0
+var _seats := {}
 var fighting := false
 var fight_opponent: Walker
 var _fight_done: Callable
@@ -645,6 +649,12 @@ func _spot() -> Dictionary:
 	if rival != null and not rival.is_down() and not rival.is_hostile() \
 			and walker.global_position.distance_to(rival.body.global_position) < 40.0:
 		return {"id": "lefty", "prompt": "Talk to Lefty Moran"}
+	# M010: sitting: up again, or a seat to sit on
+	if not player.seat.is_empty():
+		return {"id": "stand", "prompt": "Stand up      Space (hold)   Let the time pass"}
+	var seat := Seats.near(_seats_near(), walker.global_position)
+	if not seat.is_empty():
+		return {"id": "seat", "seat": seat, "prompt": "Sit down"}
 	# M009: Dutch, Mr. Feeney and their errands
 	var op := opportunity_views.near(walker.global_position) if opportunity_views != null else {}
 	if not op.is_empty():
@@ -680,6 +690,10 @@ func _interact(_at: Vector2) -> bool:
 		talking = "lefty"
 		rival.body.aim_point = walker.global_position
 		_show(talk.open("lefty", _talk_context()))
+	elif spot.id == "seat":
+		player.sit(spot.seat)
+	elif spot.id == "stand":
+		player.stand()
 	elif spot.get("kind", "") == "contact":
 		talking = spot.id
 		var w := opportunity_views.contact(spot.id)
@@ -719,6 +733,7 @@ func talk_to_bird() -> void:
 
 ## M006: Danny is hit. Where, and how bad, on screen.
 func _on_danny_hurt(region: String, level: int) -> void:
+	player.stand()  # M010: nobody stays sitting when he is hit
 	hud.show_notice("Hit in the %s - %s." % [BodyCondition.NAMES[region], BodyCondition.label(level)])
 
 
@@ -919,7 +934,7 @@ func sleep() -> void:
 func _update_clock(delta: float) -> void:
 	if not paused and opening == null:
 		var before := clock.minute
-		clock.advance(delta)
+		clock.advance(delta * _time_scale())
 		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
 		_advance_incidents()
 		weather.advance(clock.minute)  # M010
@@ -1278,6 +1293,40 @@ func _scenery_truck_near(p: Vector2) -> bool:
 		if t.distance_to(p) < 72.0 and world.is_ready(world.district_at(t)):
 			return true
 	return false
+
+
+## M010: the seats of the built districts (benches in the street and the park, in the rooms).
+func _seats_near() -> Array:
+	var out := []
+	for id in world.ready_ids():
+		if not _seats.has(id):
+			_seats[id] = Seats.of(world.layouts[id])
+		out.append_array(_seats[id])
+	return out
+
+
+## M010: sitting with Space held, the night passes FAST_TIME times as fast -
+## but never past the next moment that must not be missed (it slows to normal
+## a couple of minutes before).
+func _time_scale() -> float:
+	if player.seat.is_empty() or not player.passing_time:
+		return 1.0
+	if next_moment() - clock.minute < 2.0:
+		return 1.0
+	return FAST_TIME
+
+
+## Game minutes of moments fast time must not skip (the café job's blast, ...).
+var moments: Array[float] = []
+
+
+## The game minute of the next moment fast time must not skip (INF: none).
+func next_moment() -> float:
+	var next := INF
+	for m in moments:
+		if m >= clock.minute - 0.01:
+			next = minf(next, m)
+	return next
 
 
 ## M010: while the drowsiness must keep out of the way (talk, a scene, the maps, a fight).
