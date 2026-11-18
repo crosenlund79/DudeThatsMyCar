@@ -184,3 +184,65 @@ func test_every_catalogued_sound_has_a_template() -> void:
 	var r := AssetResolver.new(_root)
 	for logical in AssetCatalog.AUDIO:
 		assert_not_null(r.get_audio(logical, AssetCatalog.AUDIO[logical].loop), logical)
+
+
+func test_the_users_recordings_ship_under_their_own_names() -> void:
+	var r := AssetResolver.new(_root)
+	var song := r.get_audio("music/copper_owl_jazz", true)
+	assert_true(song is AudioStreamOggVorbis, "the cleaned song")
+	assert_eq(AssetResolver.audio_fallback_path("music/copper_owl_jazz"), "res://assets/audio/music/copper_owl_jazz.ogg")
+	assert_almost_eq(song.get_length(), 254.15, 0.05)
+	assert_true(song.loop)
+	var voice := r.get_audio("voice/danny_opening")
+	assert_true(voice is AudioStreamMP3, "the monologue as recorded")
+	assert_almost_eq(voice.get_length(), 23.4, 0.15)
+	# the packaged monologue is the user's file byte for byte
+	var shipped := FileAccess.get_file_as_bytes("res://assets/audio/voice/danny_opening.mp3")
+	assert_eq(shipped.size(), 391428)
+	assert_eq(FileAccess.get_sha256("res://assets/audio/voice/danny_opening.mp3"),
+		"18d93b867f707cf5278b8a4fcc8ace44f4ec16b3c0b99a34f98ae261277d7b87")
+
+
+func test_an_mp3_override_replaces_the_song_and_loops() -> void:
+	DirAccess.make_dir_recursive_absolute(_root.path_join("audio/music"))
+	_write_bytes("audio/music/copper_owl_jazz.mp3", FileAccess.get_file_as_bytes("res://assets/audio/voice/danny_opening.mp3"))
+	var r := AssetResolver.new(_root)
+	assert_true(r.has_audio_override("music/copper_owl_jazz"))
+	var song := r.get_audio("music/copper_owl_jazz", true)
+	assert_true(song is AudioStreamMP3, "the user's MP3, loaded at runtime")
+	assert_almost_eq(song.get_length(), 23.4, 0.15)
+	assert_true(song.loop, "MP3 loops too")
+
+
+func test_an_invalid_song_override_falls_back_to_the_packaged_recording() -> void:
+	DirAccess.make_dir_recursive_absolute(_root.path_join("audio/music"))
+	_write_bytes("audio/music/copper_owl_jazz.mp3", "not a song at all".to_ascii_buffer())
+	var r := AssetResolver.new(_root)
+	var song := r.get_audio("music/copper_owl_jazz", true)
+	assert_true(song is AudioStreamOggVorbis, "the packaged song instead")
+	assert_almost_eq(song.get_length(), 254.15, 0.05)
+
+
+func test_a_wav_ambience_override_loops_whole() -> void:
+	DirAccess.make_dir_recursive_absolute(_root.path_join("audio/ambience"))
+	_write_bytes("audio/ambience/street_night.wav", _wav_bytes(22050))
+	var r := AssetResolver.new(_root)
+	var bed := r.get_audio("ambience/street_night", true) as AudioStreamWAV
+	assert_not_null(bed)
+	assert_eq(bed.loop_mode, AudioStreamWAV.LOOP_FORWARD)
+	assert_eq(bed.loop_end, 22050)
+
+
+func test_the_soundscape_plays_an_override_song() -> void:
+	DirAccess.make_dir_recursive_absolute(_root.path_join("audio/music"))
+	_write_bytes("audio/music/copper_owl_jazz.mp3", FileAccess.get_file_as_bytes("res://assets/audio/voice/danny_opening.mp3"))
+	var layout := RiversideWard.create()
+	var club: InteriorPlan = null
+	for p in layout.interiors:
+		if p.id == "copper_owl":
+			club = p
+	var s := Soundscape.new()
+	add_child_autofree(s)
+	s.setup(AssetResolver.new(_root), layout, club)
+	assert_true(s.music.stream is AudioStreamMP3, "the user's song in the club")
+	assert_true(s.music.playing)

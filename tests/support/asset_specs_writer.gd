@@ -65,12 +65,18 @@ static func render() -> String:
 	lines.append("")
 	lines.append("## Audio (OGG, WAV or MP3)")
 	lines.append("")
-	lines.append("| Logical name | Override path | Loops | Bus | Notes |")
-	lines.append("| --- | --- | --- | --- | --- |")
+	lines.append("Loops repeat over the whole file, so keep a loop's two ends matching (or both quiet). The defaults are")
+	lines.append("Claude-made `template_` sounds, except the Copper Owl's song and Danny's monologue: the user's recordings,")
+	lines.append("shipped under their own names (originals untouched in `assets/audio/_inbox/`).")
+	lines.append("")
+	lines.append("| Logical name | Override path | Default | Loops | Bus | Notes |")
+	lines.append("| --- | --- | --- | --- | --- | --- |")
 	var sounds := AssetCatalog.AUDIO.keys()
 	sounds.sort()
 	for n in sounds:
 		var a: Dictionary = AssetCatalog.AUDIO[n]
-		lines.append("| `%s` | `custom/audio/%s.ogg` (or .wav / .mp3) | %s | %s | %s |" % [n, n, "yes" if a.loop else "no", a.bus, a.notes])
+		var packaged := AssetResolver.audio_fallback_path(n).get_file()
+		lines.append("| `%s` | `custom/audio/%s.ogg` (or .wav / .mp3) | `%s` | %s | %s | %s |" % [n, n, packaged, "yes" if a.loop else "no",
+			a.bus, a.notes])
 	lines.append("")
 	return "\n".join(lines)

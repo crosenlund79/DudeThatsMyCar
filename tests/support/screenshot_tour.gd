@@ -26,6 +26,7 @@ func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	main = load("res://src/main/main.tscn").instantiate()
 	main.save_path = ""
+	main.settings_path = ""
 	main.command_source = func(_c: PlayerController) -> PlayerCommand:
 		var out := PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim, _click)
 		_click = false

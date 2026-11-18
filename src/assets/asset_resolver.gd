@@ -117,52 +117,30 @@ func get_audio(logical_name: String, loop: bool = false) -> AudioStream:
 	return result
 
 
-## Voice recordings (VoiceCatalog): the user's override in custom/audio/voice/
-## (OGG, WAV or MP3), else the packaged recording res://assets/audio/voice/<name>.mp3.
-## Null (never an error) when neither exists, so a missing line is just skipped.
-const VOICE_FALLBACK_ROOT := "res://assets/audio"
-const VOICE_EXTENSIONS: Array[String] = ["ogg", "wav", "mp3"]
-
-
-func get_voice(logical_name: String) -> AudioStream:
-	if _audio_cache.has(logical_name):
-		return _audio_cache[logical_name]
-	var stream: AudioStream = null
-	for extension in VOICE_EXTENSIONS:
-		var path := audio_override_path(logical_name, extension)
-		if FileAccess.file_exists(path):
-			stream = _stream_from_bytes(FileAccess.get_file_as_bytes(path), extension)
-			if stream != null:
-				break
-			push_warning("AssetResolver: invalid voice override '%s'; using the packaged recording." % path)
-	if stream == null:
-		for extension in VOICE_EXTENSIONS:
-			var packaged := VOICE_FALLBACK_ROOT.path_join(logical_name + "." + extension)
-			if ResourceLoader.exists(packaged):
-				stream = load(packaged) as AudioStream
-				break
-	_audio_cache[logical_name] = stream
-	return stream
-
-
 func audio_override_path(logical_name: String, extension: String) -> String:
 	return override_root.path_join(AUDIO_DIR).path_join(logical_name + "." + extension)
 
 
-## Packaged template for an audio name, whichever supported format it uses ("" if none).
+## Packaged sound for an audio name, whichever supported format it uses ("" if
+## none): the Claude-made template_<name>, or else a recording the user supplied
+## that ships with the game under its own name (the Copper Owl's song, Danny's
+## monologue: res://assets/audio/music/copper_owl_jazz.ogg). An override in
+## custom/audio/ replaces either kind the same way.
 static func audio_fallback_path(logical_name: String) -> String:
 	var dir := logical_name.get_base_dir()
-	for extension in AUDIO_EXTENSIONS:
-		var file := "template_" + logical_name.get_file() + "." + extension
-		var path := AUDIO_FALLBACK_ROOT.path_join(dir).path_join(file) if not dir.is_empty() else AUDIO_FALLBACK_ROOT.path_join(file)
-		if ResourceLoader.exists(path):
-			return path
+	for prefix in ["template_", ""]:
+		for extension in AUDIO_EXTENSIONS:
+			var file: String = prefix + logical_name.get_file() + "." + extension
+			var path := AUDIO_FALLBACK_ROOT.path_join(dir).path_join(file) if not dir.is_empty() else AUDIO_FALLBACK_ROOT.path_join(file)
+			if ResourceLoader.exists(path):
+				return path
 	return ""
 
 
 static func set_looping(stream: AudioStream) -> void:
-	if stream is AudioStreamOggVorbis:
+	if stream is AudioStreamOggVorbis or stream is AudioStreamMP3:
 		stream.loop = true
+		stream.loop_offset = 0.0
 	elif stream is AudioStreamWAV:
 		var wav := stream as AudioStreamWAV
 		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD

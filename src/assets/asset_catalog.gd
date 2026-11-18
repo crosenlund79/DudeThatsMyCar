@@ -197,6 +197,21 @@ const AUDIO := {
 	"weapons/bullet_impact": {"loop": false, "bus": "Effects", "notes": "A bullet striking brick."},
 	"police/whistle": {"loop": false, "bus": "Effects", "notes": "The officer's whistle when he spots you."},
 	"vehicles/impact_wall": {"loop": false, "bus": "Effects", "notes": "Car hits a wall or kerb object, under 1 s."},
+	# M005: the user's recordings (shipped under their own names), the night's soundscape and the sounds of dealings
+	"music/copper_owl_jazz": {"loop": true, "bus": "Music", "notes": "The Copper Owl's singer, \"Leave the Lights Low\" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet."},
+	"voice/danny_opening": {"loop": false, "bus": "Voice", "notes": "Danny's opening monologue on a new game (the user's recording, unaltered; about 23 s). The subtitles follow the shipped recording."},
+	"ambience/street_night": {"loop": true, "bus": "Ambience", "notes": "The street's bed at night: distant traffic, the city beyond the corner. Quieter after midnight; dull indoors."},
+	"ambience/alley": {"loop": true, "bus": "Ambience", "notes": "Back alleys: dripping water, the city a murmur behind the walls."},
+	"ambience/river": {"loop": true, "bus": "Ambience", "notes": "By the river: water against the quay, a factory's drone across it."},
+	"ambience/club_crowd": {"loop": true, "bus": "Ambience", "notes": "The Copper Owl's room: chatter, glasses, footsteps. Muffled with the music outside."},
+	"ambience/horn": {"loop": false, "bus": "Ambience", "notes": "A car horn a few streets away (now and then; rarer late at night)."},
+	"ambience/foghorn": {"loop": false, "bus": "Ambience", "notes": "A tug's whistle out on the river (heard near the water)."},
+	"ambience/clatter": {"loop": false, "bus": "Ambience", "notes": "A lid or a can clattering somewhere down an alley."},
+	"places/door": {"loop": false, "bus": "Effects", "notes": "Going in or out by a door: latch, hinges, the door falling to."},
+	"places/shop_bell": {"loop": false, "bus": "Effects", "notes": "The bell over a shop door (barber, grocer, hardware)."},
+	"places/register": {"loop": false, "bus": "Effects", "notes": "A shop's till when money changes hands."},
+	"places/bottles": {"loop": false, "bus": "Effects", "notes": "Bottles of rye changing hands."},
+	"vehicles/door": {"loop": false, "bus": "Effects", "notes": "Getting into or out of a car: the handle and a heavy door shutting."},
 }
 
 

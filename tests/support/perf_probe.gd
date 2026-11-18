@@ -7,6 +7,7 @@ var cmd := PlayerCommand.new()
 func _initialize() -> void:
 	main = load("res://src/main/main.tscn").instantiate()
 	main.save_path = ""
+	main.settings_path = ""
 	main.command_source = func(_c): return cmd
 	root.add_child(main)
 	_run.call_deferred()

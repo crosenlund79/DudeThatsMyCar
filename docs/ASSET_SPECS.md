@@ -156,14 +156,32 @@ image is its window light at night and is replaced separately. Cars and people f
 
 ## Audio (OGG, WAV or MP3)
 
-| Logical name | Override path | Loops | Bus | Notes |
-| --- | --- | --- | --- | --- |
-| `police/whistle` | `custom/audio/police/whistle.ogg` (or .wav / .mp3) | no | Effects | The officer's whistle when he spots you. |
-| `vehicles/engine_load` | `custom/audio/vehicles/engine_load.ogg` (or .wav / .mp3) | yes | Engine | Engine load layer, louder while accelerating. |
-| `vehicles/engine_loop` | `custom/audio/vehicles/engine_loop.ogg` (or .wav / .mp3) | yes | Engine | Engine foundation loop (pitch follows speed). |
-| `vehicles/impact_car` | `custom/audio/vehicles/impact_car.ogg` (or .wav / .mp3) | no | Effects | Car hits car, under 1 s. |
-| `vehicles/impact_wall` | `custom/audio/vehicles/impact_wall.ogg` (or .wav / .mp3) | no | Effects | Car hits a wall or kerb object, under 1 s. |
-| `vehicles/tire_squeal` | `custom/audio/vehicles/tire_squeal.ogg` (or .wav / .mp3) | yes | Effects | Tyre squeal while sliding. |
-| `weapons/bullet_impact` | `custom/audio/weapons/bullet_impact.ogg` (or .wav / .mp3) | no | Effects | A bullet striking brick. |
-| `weapons/pistol_reload` | `custom/audio/weapons/pistol_reload.ogg` (or .wav / .mp3) | no | Effects | Magazine out and in, slide racked. |
-| `weapons/pistol_shot` | `custom/audio/weapons/pistol_shot.ogg` (or .wav / .mp3) | no | Effects | A .45 shot in a brick street, about 1 s with its echo. |
+Loops repeat over the whole file, so keep a loop's two ends matching (or both quiet). The defaults are
+Claude-made `template_` sounds, except the Copper Owl's song and Danny's monologue: the user's recordings,
+shipped under their own names (originals untouched in `assets/audio/_inbox/`).
+
+| Logical name | Override path | Default | Loops | Bus | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `ambience/alley` | `custom/audio/ambience/alley.ogg` (or .wav / .mp3) | `template_alley.ogg` | yes | Ambience | Back alleys: dripping water, the city a murmur behind the walls. |
+| `ambience/clatter` | `custom/audio/ambience/clatter.ogg` (or .wav / .mp3) | `template_clatter.ogg` | no | Ambience | A lid or a can clattering somewhere down an alley. |
+| `ambience/club_crowd` | `custom/audio/ambience/club_crowd.ogg` (or .wav / .mp3) | `template_club_crowd.ogg` | yes | Ambience | The Copper Owl's room: chatter, glasses, footsteps. Muffled with the music outside. |
+| `ambience/foghorn` | `custom/audio/ambience/foghorn.ogg` (or .wav / .mp3) | `template_foghorn.ogg` | no | Ambience | A tug's whistle out on the river (heard near the water). |
+| `ambience/horn` | `custom/audio/ambience/horn.ogg` (or .wav / .mp3) | `template_horn.ogg` | no | Ambience | A car horn a few streets away (now and then; rarer late at night). |
+| `ambience/river` | `custom/audio/ambience/river.ogg` (or .wav / .mp3) | `template_river.ogg` | yes | Ambience | By the river: water against the quay, a factory's drone across it. |
+| `ambience/street_night` | `custom/audio/ambience/street_night.ogg` (or .wav / .mp3) | `template_street_night.ogg` | yes | Ambience | The street's bed at night: distant traffic, the city beyond the corner. Quieter after midnight; dull indoors. |
+| `music/copper_owl_jazz` | `custom/audio/music/copper_owl_jazz.ogg` (or .wav / .mp3) | `copper_owl_jazz.ogg` | yes | Music | The Copper Owl's singer, "Leave the Lights Low" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet. |
+| `places/bottles` | `custom/audio/places/bottles.ogg` (or .wav / .mp3) | `template_bottles.ogg` | no | Effects | Bottles of rye changing hands. |
+| `places/door` | `custom/audio/places/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Going in or out by a door: latch, hinges, the door falling to. |
+| `places/register` | `custom/audio/places/register.ogg` (or .wav / .mp3) | `template_register.ogg` | no | Effects | A shop's till when money changes hands. |
+| `places/shop_bell` | `custom/audio/places/shop_bell.ogg` (or .wav / .mp3) | `template_shop_bell.ogg` | no | Effects | The bell over a shop door (barber, grocer, hardware). |
+| `police/whistle` | `custom/audio/police/whistle.ogg` (or .wav / .mp3) | `template_whistle.wav` | no | Effects | The officer's whistle when he spots you. |
+| `vehicles/door` | `custom/audio/vehicles/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Getting into or out of a car: the handle and a heavy door shutting. |
+| `vehicles/engine_load` | `custom/audio/vehicles/engine_load.ogg` (or .wav / .mp3) | `template_engine_load.wav` | yes | Engine | Engine load layer, louder while accelerating. |
+| `vehicles/engine_loop` | `custom/audio/vehicles/engine_loop.ogg` (or .wav / .mp3) | `template_engine_loop.wav` | yes | Engine | Engine foundation loop (pitch follows speed). |
+| `vehicles/impact_car` | `custom/audio/vehicles/impact_car.ogg` (or .wav / .mp3) | `template_impact_car.ogg` | no | Effects | Car hits car, under 1 s. |
+| `vehicles/impact_wall` | `custom/audio/vehicles/impact_wall.ogg` (or .wav / .mp3) | `template_impact_wall.ogg` | no | Effects | Car hits a wall or kerb object, under 1 s. |
+| `vehicles/tire_squeal` | `custom/audio/vehicles/tire_squeal.ogg` (or .wav / .mp3) | `template_tire_squeal.wav` | yes | Effects | Tyre squeal while sliding. |
+| `voice/danny_opening` | `custom/audio/voice/danny_opening.ogg` (or .wav / .mp3) | `danny_opening.mp3` | no | Voice | Danny's opening monologue on a new game (the user's recording, unaltered; about 23 s). The subtitles follow the shipped recording. |
+| `weapons/bullet_impact` | `custom/audio/weapons/bullet_impact.ogg` (or .wav / .mp3) | `template_bullet_impact.wav` | no | Effects | A bullet striking brick. |
+| `weapons/pistol_reload` | `custom/audio/weapons/pistol_reload.ogg` (or .wav / .mp3) | `template_pistol_reload.wav` | no | Effects | Magazine out and in, slide racked. |
+| `weapons/pistol_shot` | `custom/audio/weapons/pistol_shot.ogg` (or .wav / .mp3) | `template_pistol_shot.wav` | no | Effects | A .45 shot in a brick street, about 1 s with its echo. |

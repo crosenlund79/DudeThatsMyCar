@@ -45,6 +45,8 @@ var police_label: Label
 var notice_label: Label
 var help_panel: PanelContainer
 var pause_panel: PanelContainer
+## The sound levels on the pause screen: [name, bar, percent] per bus.
+var sound_rows: Array = []
 var crosshair: TextureRect
 var _notice_left := 0.0
 var _help_left := 12.0
@@ -112,9 +114,25 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	var help := _label(HELP_TEXT, 15, CREAM)
 	help_panel.add_child(help)
 	pause_panel = _panel(Vector2.ZERO)
-	var pause := _label("PAUSED\n\nEsc   resume\nQ   quit", 24, CREAM)
+	var pause_box := VBoxContainer.new()
+	pause_box.add_theme_constant_override("separation", 10)
+	pause_panel.add_child(pause_box)
+	var pause := _label("PAUSED", 24, CREAM)
 	pause.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	pause_panel.add_child(pause)
+	pause_box.add_child(pause)
+	var sound_grid := GridContainer.new()
+	sound_grid.columns = 3
+	sound_grid.add_theme_constant_override("h_separation", 14)
+	pause_box.add_child(sound_grid)
+	for bus in AudioSettings.BUSES:
+		var row: Array[Label] = [_label(bus, 17, DIM), _label("", 17, DIM), _label("", 17, DIM)]
+		row[2].horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		for l in row:
+			sound_grid.add_child(l)
+		sound_rows.append(row)
+	var keys := _label("Up / Down   choose      Left / Right   quieter, louder\n\nEsc   resume      Q   quit", 15, CREAM)
+	keys.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pause_box.add_child(keys)
 	pause_panel.visible = false
 	crosshair = TextureRect.new()
 	crosshair.texture = resolver.get_texture("ui/crosshair")
@@ -284,6 +302,19 @@ func set_police_status(state: int) -> void:
 
 func set_paused(on: bool) -> void:
 	pause_panel.visible = on
+
+
+## The volume of each bus on the pause screen, the chosen one highlighted.
+func show_sound(settings: AudioSettings, selected: int) -> void:
+	for i in sound_rows.size():
+		var bus: String = AudioSettings.BUSES[i]
+		var v: float = settings.volume[bus]
+		var steps := int(round(v * 10.0))
+		var row: Array = sound_rows[i]
+		(row[1] as Label).text = "|".repeat(steps) + ".".repeat(10 - steps)
+		(row[2] as Label).text = "%d%%" % int(round(v * 100.0))
+		for l in row:
+			(l as Label).add_theme_color_override("font_color", COPPER if i == selected else DIM)
 
 
 ## Refreshes everything from the current state.

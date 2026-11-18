@@ -17,6 +17,8 @@ var command_source: Callable
 var override_root := ""
 ## Where progress is saved ("" = never; tests and screenshots).
 var save_path := SaveGame.DEFAULT_PATH
+## Where the sound levels are kept ("" = never saved; tests and screenshots).
+var settings_path := AudioSettings.DEFAULT_PATH
 
 var resolver: AssetResolver
 var settings: AudioSettings
@@ -30,6 +32,7 @@ var player: PlayerController
 var camera: CityCamera
 var hud: Hud
 var vehicle_audio: VehicleAudio
+var soundscape: Soundscape
 var bullets: BulletWorld
 var gunfire: GunfireView
 var navigator: CityNavigator
@@ -46,6 +49,8 @@ var clock: NightClock
 ## Reminders given tonight: 0 none, 1 "get home", 2 "dawn".
 var _warned := 0
 var paused := false
+## The sound level chosen on the pause screen (index into AudioSettings.BUSES).
+var sound_row := 0
 var rackets: Rackets
 var talk: Conversations
 ## Who the player is talking to ("" = nobody) and the page on screen.
@@ -62,7 +67,7 @@ var _saved := {}
 
 func _ready() -> void:
 	CityInput.ensure_actions()
-	settings = AudioSettings.new()
+	settings = AudioSettings.new(settings_path)
 	settings.load_settings()
 	settings.apply()
 	resolver = AssetResolver.new(override_root)
@@ -129,6 +134,10 @@ func _ready() -> void:
 	vehicle_audio = VehicleAudio.new()
 	add_child(vehicle_audio)
 	vehicle_audio.setup(resolver)
+	soundscape = Soundscape.new()
+	add_child(soundscape)
+	soundscape.setup(resolver, layout, _plan("copper_owl"))
+	soundscape.track_traffic(street.traffic)
 	hud = Hud.new()
 	add_child(hud)
 	hud.setup(resolver, layout.name)
@@ -145,7 +154,7 @@ func _ready() -> void:
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, interiors, walker, camera, player, vehicle_audio, bullets, gunfire, officer, street] + cars:
+	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, bullets, gunfire, officer, street] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -170,13 +179,22 @@ func _park_cars() -> void:
 		cars.append(c)
 
 
+func _plan(id: String) -> InteriorPlan:
+	for p in layout.interiors:
+		if (p as InteriorPlan).id == id:
+			return p
+	return null
+
+
 func _on_entered_car(c: Car) -> void:
+	soundscape.play("vehicles/door", -3.0)
 	camera.target = c
 	(c.get_node("Lights") as VehicleLights).set_on(true)
 	vehicle_audio.attach(c)
 
 
 func _on_exited_car(c: Car) -> void:
+	soundscape.play("vehicles/door", -3.0)
 	camera.target = walker
 	(c.get_node("Lights") as VehicleLights).set_on(false)
 	vehicle_audio.attach(null)
@@ -203,6 +221,7 @@ func _interact(_at: Vector2) -> bool:
 	if spot.is_empty():
 		return false
 	if spot.id == "door":
+		soundscape.play_door(spot.plan)
 		interiors.step_through(walker, spot)
 	elif spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
@@ -244,10 +263,13 @@ func _converse(cmd: PlayerCommand) -> bool:
 func _answer(i: int) -> void:
 	if talking == "" or i < 0 or i >= (_page.options as Array).size():
 		return
+	var money := rackets.money
+	var bottles := rackets.bottles
 	var next := talk.choose(talking, _page.options[i].id, _talk_context())
 	if next.get("effects", {}).get("sleep", false):
 		sleep()
 		return
+	soundscape.play_deal(talking, rackets.money - money, rackets.bottles - bottles)
 	_apply(next.get("effects", {}))
 	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
 	save_game()
@@ -357,11 +379,34 @@ func _unhandled_input(event: InputEvent) -> void:
 		paused = not paused
 		get_tree().paused = paused
 		hud.set_paused(paused)
+		hud.show_sound(settings, sound_row)
+	elif paused and _sound_input(event):
+		pass
 	elif event.is_action_pressed(CityInput.QUIT) and paused:
 		save_game()
 		get_tree().quit()
 	elif event.is_action_pressed(CityInput.HELP):
 		hud.toggle_help()
+
+
+## On the pause screen: Up / Down choose a sound level, Left / Right change it
+## by a tenth (heard at once, kept for next time). True when the key was used.
+func _sound_input(event: InputEvent) -> bool:
+	var n := AudioSettings.BUSES.size()
+	var bus: String = AudioSettings.BUSES[sound_row]
+	if event.is_action_pressed("ui_up"):
+		sound_row = (sound_row + n - 1) % n
+	elif event.is_action_pressed("ui_down"):
+		sound_row = (sound_row + 1) % n
+	elif event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		var step := 0.1 if event.is_action_pressed("ui_right") else -0.1
+		settings.set_volume(bus, snappedf(settings.volume[bus] + step, 0.1))
+		if settings_path != "":
+			settings.save_settings()
+	else:
+		return false
+	hud.show_sound(settings, sound_row)
+	return true
 
 
 func _notification(what: int) -> void:
@@ -404,3 +449,5 @@ func _update_view(delta: float) -> void:
 	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)
 	hud.show_gun(walker.gun if player.on_foot() else null)
+	soundscape.update_listener(focus, interiors.current if player.on_foot() else null, not player.on_foot(),
+		clock.activity(), delta)

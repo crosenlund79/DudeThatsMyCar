@@ -1,12 +1,15 @@
 class_name AudioSettings
 extends RefCounted
-## Volume and mute preferences for the Master, Music, Engine, Effects and Voice buses,
-## saved to a small config file (user://settings.cfg by default).
+## Volume and mute preferences for the Master, Music, Engine, Effects, Voice and
+## Ambience buses, saved to a small config file (user://settings.cfg by default).
 ## Presentation only: nothing here touches the simulation.
 
-const BUSES: Array[String] = ["Master", "Music", "Engine", "Effects", "Voice"]
+const BUSES: Array[String] = ["Master", "Music", "Engine", "Effects", "Voice", "Ambience"]
 const DEFAULT_PATH := "user://settings.cfg"
-const DEFAULT_VOLUME := {"Master": 0.8, "Music": 0.6, "Engine": 0.7, "Effects": 0.8, "Voice": 0.9}
+const DEFAULT_VOLUME := {"Master": 0.8, "Music": 0.6, "Engine": 0.7, "Effects": 0.8, "Voice": 0.9, "Ambience": 0.7}
+## A safety ceiling on the Master bus (dB): loud moments (a gunshot inside the
+## club while the band plays) are held just under full scale instead of clipping.
+const CEILING_DB := -0.5
 
 var path: String
 ## Linear volume 0..1 per bus.
@@ -21,7 +24,8 @@ func _init(p_path: String = DEFAULT_PATH) -> void:
 		muted[bus] = false
 
 
-## Creates the Music, Engine, Effects and Voice buses (routed to Master) if missing.
+## Creates the Music, Engine, Effects, Voice and Ambience buses (routed to
+## Master) if missing, and the limiter on Master.
 static func ensure_buses() -> void:
 	for bus in BUSES:
 		if AudioServer.get_bus_index(bus) == -1:
@@ -29,6 +33,13 @@ static func ensure_buses() -> void:
 			var index := AudioServer.bus_count - 1
 			AudioServer.set_bus_name(index, bus)
 			AudioServer.set_bus_send(index, "Master")
+	var master := AudioServer.get_bus_index("Master")
+	for i in AudioServer.get_bus_effect_count(master):
+		if AudioServer.get_bus_effect(master, i) is AudioEffectHardLimiter:
+			return
+	var limiter := AudioEffectHardLimiter.new()
+	limiter.ceiling_db = CEILING_DB
+	AudioServer.add_bus_effect(master, limiter)
 
 
 func load_settings() -> void:

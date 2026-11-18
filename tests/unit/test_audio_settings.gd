@@ -14,9 +14,9 @@ func after_each() -> void:
 	AudioSettings.new(_path).apply()  # restore default levels
 
 
-func test_defaults_cover_all_four_buses() -> void:
+func test_defaults_cover_all_six_buses() -> void:
 	var s := AudioSettings.new(_path)
-	assert_eq(AudioSettings.BUSES, ["Master", "Music", "Engine", "Effects", "Voice"] as Array[String])
+	assert_eq(AudioSettings.BUSES, ["Master", "Music", "Engine", "Effects", "Voice", "Ambience"] as Array[String])
 	for bus in AudioSettings.BUSES:
 		assert_between(s.volume[bus], 0.0, 1.0)
 		assert_false(s.muted[bus])
@@ -55,3 +55,29 @@ func test_apply_creates_buses_and_sets_volume_and_mute() -> void:
 	assert_almost_eq(AudioServer.get_bus_volume_db(fx), linear_to_db(0.5), 0.01)
 	assert_true(AudioServer.is_bus_mute(AudioServer.get_bus_index("Music")))
 	assert_eq(AudioServer.get_bus_send(fx), &"Master")
+
+
+func test_ambience_level_is_kept_and_a_limiter_guards_master() -> void:
+	var s := AudioSettings.new(_path)
+	s.volume["Ambience"] = 0.3
+	s.muted["Ambience"] = true
+	assert_eq(s.save_settings(), OK)
+	var t := AudioSettings.new(_path)
+	t.load_settings()
+	assert_almost_eq(t.volume["Ambience"], 0.3, 0.0001)
+	assert_true(t.muted["Ambience"])
+	# an old settings file without the Ambience entry keeps its default
+	var f := FileAccess.open(_path, FileAccess.WRITE)
+	f.store_string("[audio]\nmusic_volume=0.4\n")
+	f.close()
+	var u := AudioSettings.new(_path)
+	u.load_settings()
+	assert_almost_eq(u.volume["Ambience"], AudioSettings.DEFAULT_VOLUME["Ambience"], 0.0001)
+	u.apply()
+	assert_eq(AudioServer.get_bus_send(AudioServer.get_bus_index("Ambience")), &"Master")
+	var master := AudioServer.get_bus_index("Master")
+	var limiters := 0
+	for i in AudioServer.get_bus_effect_count(master):
+		if AudioServer.get_bus_effect(master, i) is AudioEffectHardLimiter:
+			limiters += 1
+	assert_eq(limiters, 1, "one limiter, however often the buses are set up")
