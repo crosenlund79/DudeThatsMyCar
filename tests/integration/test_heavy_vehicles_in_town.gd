@@ -56,14 +56,44 @@ func test_the_coal_truck_on_its_dock() -> void:
 	assert_eq(main.thefts_witnessed, witnessed + 1, "and the copper saw it")
 	cop.body.place(cop.body.global_position + Vector2(-2000, 0), 0.0)  # out of the way of the test drive
 	cop.reset()
-	# out of the dock onto Front Street and away west, with the normal pedals and wheel
+	# up Wharf Street and left onto Front Street, away west, with the normal pedals and wheel
 	var l: DistrictLayout = main.world.layouts.yards
 	var front_y: float = l.origin.y + 57.0  # Front Street, westbound side
 	var ticks: int = await drive_route(truck, [Vector2(truck.global_position.x, l.origin.y + 260.0),
 		Vector2(truck.global_position.x - 160.0, front_y), Vector2(truck.global_position.x - 700.0, front_y)], 150.0, 60 * 40)
-	assert_lt(ticks, 60 * 40, "out of the dock and round the corner")
+	assert_lt(ticks, 60 * 40, "up the street and round the corner")
 	assert_lt(absf(truck.global_position.y - front_y), 60.0, "on Front Street")
 	assert_false(l.is_in_building(truck.global_position))
+
+
+## M010: the truck the player could not find. It stands where a driver coming into the yards
+## sees it - at the kerb of Wharf Street, the road down from the ward, under a lamp, in the open -
+## and the works trucks that are only scenery say so, and point to it.
+func test_the_coal_truck_is_found() -> void:
+	var truck := _built("yards", "dump_truck")
+	var l: DistrictLayout = main.world.layouts.yards
+	var wharf: Rect2 = l.streets.filter(func(st: Dictionary) -> bool: return st.name == "Wharf Street")[0].rect
+	assert_true(wharf.has_point(truck.global_position), "on Wharf Street itself")
+	var lamp_near := l.lamps.any(func(p: Vector2) -> bool: return p.distance_to(truck.global_position) < 120.0)
+	assert_true(lamp_near, "under a street lamp")
+	for k in [-1.0, 1.0]:
+		var end: Vector2 = truck.global_position + Vector2(0, k * truck.vehicle.size.x * 0.5)
+		assert_false(l.is_in_building(end), "all of it in the open")
+	for loop in l.drive_loops:
+		var pts: PackedVector2Array = loop
+		for j in pts.size():
+			var a: Vector2 = pts[j]
+			var b: Vector2 = pts[(j + 1) % pts.size()]
+			var q := Geometry2D.get_closest_point_to_segment(truck.global_position, a, b)
+			assert_gt(q.distance_to(truck.global_position), truck.vehicle.size.y * 0.5 + 18.0, "clear of the traffic's lane")
+	# beside one of the freight yard's works trucks: scenery, and it says where to look
+	var scenery: Dictionary = l.props.filter(func(p: Dictionary) -> bool: return String(p.kind).begins_with("props/truck"))[0]
+	_go(scenery.pos + Vector2(0, 52), -PI / 2)
+	await wait_physics_frames(3)
+	assert_string_contains(main.hud.prompt_label.text, "chained up for the night")
+	await press_e()
+	assert_true(player().on_foot(), "it cannot be taken")
+	assert_string_contains(main.hud.notice_label.text, "Brennan's coal truck on Wharf Street")
 
 
 func test_the_school_bus_by_the_church() -> void:

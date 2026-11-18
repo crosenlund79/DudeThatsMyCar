@@ -481,6 +481,16 @@ func _run(shots: Array) -> void:
 				main.camera.zoom_override = 0.0
 				main.camera.snap_to(main.walker)
 				mid.queue_free()
+			"truck_found":
+				# M010: Brennan's coal truck at the kerb of Wharf Street, as a driver coming down from the ward sees it
+				var tl: DistrictLayout = main.world.layouts.yards
+				var tspec: Dictionary = tl.cars.filter(func(x: Dictionary) -> bool: return x.type == "dump_truck")[0]
+				_teleport_walker(tspec.pos + Vector2(-110, -260), PI / 2)
+				main.world.load_now("yards")
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, tspec.pos)
+				await _frames(40)
+				await _shot("truck_found", false)
+				cmd = PlayerCommand.new()
 			"dump_truck", "school_bus":
 				# M009: Brennan's coal truck pulling out of its dock onto Front Street; the
 				# parish school bus pulling away from the kerb beside St. Brendan's

@@ -649,6 +649,10 @@ func _spot() -> Dictionary:
 func _interact(_at: Vector2) -> bool:
 	var spot := _spot()
 	if spot.is_empty():
+		if player.enterable_car() == null and _scenery_truck_near(walker.global_position):
+			# M010: the yards' works trucks are scenery; say so, and where a truck can be had
+			hud.show_notice("The cab's chained and padlocked for the night. Brennan's coal truck on Wharf Street is another story.")
+			return true
 		return false
 	if spot.id == "door":
 		soundscape.play_door(spot.plan)
@@ -1212,6 +1216,24 @@ func _on_contact_hurt(id: String, w: Walker) -> void:
 		rackets.shot_person(id)
 
 
+## M010: the parked works trucks (scenery, not drivable) of every district, gathered once.
+var _scenery_trucks: Array[Vector2] = []
+
+
+## M010: one of the parked works trucks within reach of p (in a built district).
+func _scenery_truck_near(p: Vector2) -> bool:
+	if _scenery_trucks.is_empty() and world != null:
+		for id in world.order:
+			for pr in (world.layouts[id] as DistrictLayout).props:
+				if String(pr.kind).begins_with("props/truck"):
+					_scenery_trucks.append(pr.pos)
+		_scenery_trucks.append(Vector2.INF)  # gathered (even if there are none)
+	for t in _scenery_trucks:
+		if t.distance_to(p) < 72.0 and world.is_ready(world.district_at(t)):
+			return true
+	return false
+
+
 func my_car() -> Car:
 	for i in cars.size():
 		if thefts.is_dannys(i):
@@ -1396,6 +1418,8 @@ func _update_view(delta: float) -> void:
 		var c := player.enterable_car()
 		if not spot.is_empty():
 			prompt = "E   %s" % ("Interrupt the Bird" if spot.id == "bird" and stage.singing() else spot.prompt)
+		elif c == null and _scenery_truck_near(walker.global_position):
+			prompt = "A works truck - chained up for the night"
 		elif c != null:
 			var i := cars.find(c)
 			prompt = "E   Get in your %s" % c.vehicle.params.display_name if thefts.is_dannys(i) \

@@ -271,8 +271,10 @@ func _people_and_cars() -> void:
 	d.cars = [
 		{"type": "coupe", "paint": 1, "pos": Vector2(3000, 150), "rot": PI, "owner": "a clerk at North Branch Freight"},
 		{"type": "sedan", "paint": 0, "pos": Vector2(2200, 150), "rot": 0.0, "owner": "the night foreman at the tannery"},
-		# M009: Brennan's coal truck on its dock, nose out towards Front Street (drivable; once a static prop)
-		{"type": "dump_truck", "paint": 0, "pos": Vector2(5530, 450), "rot": -PI / 2, "owner": "Brennan Coal & Ice"},
+		# M009: Brennan's coal truck (drivable). M010: out of sight on the dock it was never found, so it
+		# stands at the kerb of Wharf Street - the yards' road from the ward - outside Brennan Coal & Ice,
+		# under a street lamp, nose north, clear of the traffic's lane
+		{"type": "dump_truck", "paint": 0, "pos": Vector2(WHARF + 62.0, 470), "rot": -PI / 2, "owner": "Brennan Coal & Ice"},
 	]
 	# the beat cop walks Front Street by the Kessler Street corner, past the freight depot's gate
 	d.police_beat = PackedVector2Array([Vector2(3460, 193), Vector2(3700, 193)])
