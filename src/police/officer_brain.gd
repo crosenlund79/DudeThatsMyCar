@@ -7,6 +7,12 @@ extends RefCounted
 ## follows the way you were heading and looks round (SEARCH). If he does not
 ## find you in time he gives up and walks back to his beat (RETURN).
 ## He only learns where you are by seeing you (or hearing a shot): never by magic.
+## M008: once he has *seen* a serious violent crime tonight (you shot somebody
+## where he could see it, or you shot at him) he is armed: in a chase he
+## keeps a gunfight's distance and fires his revolver when he has a clear
+## shot (Marksman rules: range, cadence, a moment to aim first, stepping
+## aside when a car or a person is in the way). Gunfire he only hears still
+## gets the unarmed pursuit. Losing you works exactly as before.
 
 enum State { PATROL, ALERTED, CHASE, SEARCH, RETURN }
 
@@ -28,11 +34,20 @@ var noticed_now := false
 var _noticed_pending := false
 ## True on the tick he gives up (for "You lost him").
 var gave_up_now := false
+## M008: he has seen a serious violent crime tonight and will shoot.
+var armed := false
+var marksman: Marksman
+var _was_seeing := false
 
 
-func _init(p_rules: PoliceRules, p_beat: PackedVector2Array) -> void:
+func _init(p_rules: PoliceRules, p_beat: PackedVector2Array, seed_value: int = 1932008) -> void:
 	rules = p_rules
 	beat = p_beat
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	marksman = Marksman.new({"keep_at": rules.armed_keep_at, "too_close": rules.armed_too_close,
+		"fire_range": rules.fire_range, "gap": rules.fire_gap, "jitter": rules.fire_jitter,
+		"first_shot": rules.first_shot, "move_speed": rules.armed_move_speed}, rng)
 
 
 func is_hunting() -> bool:
@@ -48,9 +63,31 @@ func hear_gunshot(me: Vector2, at: Vector2, loudness: float) -> bool:
 	return true
 
 
-## A bullet struck him (or right by him) coming from `from`.
-func shot_at(from: Vector2) -> void:
+## A bullet struck him (or right by him) coming from `from`; `by_player`:
+## it was yours (M008: that is a crime he saw - he draws).
+func shot_at(from: Vector2, by_player: bool = false) -> void:
+	if by_player:
+		_arm()
 	_notice(from, state != State.CHASE)
+
+
+## M008: he saw you shoot somebody (you were at `at`): he draws and comes after you.
+func witness_violence(at: Vector2) -> void:
+	_arm()
+	_notice(at, state != State.CHASE)
+
+
+func _arm() -> void:
+	if not armed:
+		armed = true
+		marksman.ready_up()
+
+
+## M008: you are down (or out of the fight): he stops, puts the revolver away and walks back.
+func stand_down() -> void:
+	if is_hunting():
+		state = State.RETURN
+	_was_seeing = false
 
 
 ## M006: he saw somebody break into a car at `at`: he goes to look (and if he
@@ -71,13 +108,30 @@ func _notice(at: Vector2, startle: bool) -> void:
 
 ## One decision tick. sees_player: he has you in sight right now (range and
 ## clear line of sight, checked by his body); player / player_velocity: where
-## you are and how you move (only used while he sees you).
-## Returns {target: where to go, speed, look: where to face, icon: "", "alert" or "search"}.
-func update(dt: float, me: Vector2, sees_player: bool, player: Vector2, player_velocity: Vector2) -> Dictionary:
+## you are and how you move (only used while he sees you); clear_shot (M008):
+## nothing stands in his line of fire.
+## Returns {target: where to go, speed, look: where to face, icon: "", "alert"
+## or "search", fire: pull the trigger now, draw: have the revolver out}.
+func update(dt: float, me: Vector2, sees_player: bool, player: Vector2, player_velocity: Vector2,
+		clear_shot: bool = true) -> Dictionary:
+	var out := _decide(dt, me, sees_player, player, player_velocity, clear_shot)
+	if not out.has("fire"):
+		out["fire"] = false
+	out["draw"] = armed and is_hunting()
+	return out
+
+
+func _decide(dt: float, me: Vector2, sees_player: bool, player: Vector2, player_velocity: Vector2,
+		clear_shot: bool) -> Dictionary:
 	noticed_now = _noticed_pending
 	_noticed_pending = false
 	gave_up_now = false
 	_look_phase += dt
+	if armed:
+		marksman.cool(dt)
+		if sees_player and not _was_seeing:
+			marksman.hold_fire(rules.first_shot * 0.6)  # takes aim again
+		_was_seeing = sees_player and is_hunting()
 	match state:
 		State.PATROL:
 			return _patrol(dt, me)
@@ -89,6 +143,10 @@ func update(dt: float, me: Vector2, sees_player: bool, player: Vector2, player_v
 				state = State.CHASE
 			return {"target": me, "speed": 0.0, "look": last_known, "icon": "alert"}
 		State.CHASE:
+			if sees_player and armed:
+				_saw(player, player_velocity)
+				var shot := marksman.engage(dt, me, player, clear_shot)
+				return {"target": shot.goal, "speed": shot.speed, "look": player, "icon": "alert", "fire": shot.fire}
 			if sees_player:
 				_saw(player, player_velocity)
 				var stop := me.distance_to(player) <= rules.close_distance

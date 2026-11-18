@@ -61,6 +61,9 @@ var thefts_witnessed := 0
 var ward_out := {}
 ## Times Danny went down (for tests).
 var collapses := 0
+## M008: the chance a round that hits the car Danny drives goes through to him.
+const DRIVER_HIT_CHANCE := 0.25
+var _luck := RandomNumberGenerator.new()
 const RIVAL_POST: Array[Vector2] = [Vector2(1180, 1392), Vector2(1330, 1392)]
 var street: StreetLife
 @export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
@@ -107,6 +110,7 @@ var _saved := {}
 
 func _ready() -> void:
 	CityInput.ensure_actions()
+	_luck.seed = 1932008
 	settings = AudioSettings.new(settings_path)
 	settings.load_settings()
 	settings.apply()
@@ -169,8 +173,9 @@ func _ready() -> void:
 	navigator = CityNavigator.new(layout, Walker.RADIUS + 3.0)
 	officer = PoliceOfficer.new()
 	add_child(officer)
-	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body)
-	player.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void: officer.hear_gunshot(muzzle, gun_rules.noise_radius))
+	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body, bullets)
+	_wire_officer(officer)
+	bullets.struck.connect(_on_bullet_struck)
 	street = StreetLife.new()
 	add_child(street)
 	street.setup(layout, resolver, clock, CAR_SCENE, VEHICLES, cars, [walker, officer.body] as Array[Walker])
@@ -179,6 +184,7 @@ func _ready() -> void:
 	rival = Rival.new()
 	add_child(rival)
 	rival.setup(resolver, gun_rules, RIVAL_POST, navigator, bullets, player.body)
+	rival.danny = walker
 	rival.fired.connect(gunfire.on_fired)
 	rival.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
 		officer.hear_gunshot(muzzle, gun_rules.noise_radius)
@@ -227,8 +233,7 @@ func _ready() -> void:
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
 	player.notice.connect(hud.show_notice)
-	officer.state_changed.connect(hud.set_police_status)
-	officer.gave_up.connect(func() -> void: hud.show_notice("You lost him."))
+	_wire_officer_hud(officer)
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -239,6 +244,50 @@ func _ready() -> void:
 	_update_view(0.0)
 	if opening_enabled and _saved.is_empty():
 		_start_opening()
+
+
+## M008: a beat cop in the game: he hears Danny's shots (and takes the close
+## ones personally), and his own revolver is seen and heard like anybody's.
+func _wire_officer(o: PoliceOfficer) -> void:
+	o.player_walker = walker
+	player.fired.connect(func(muzzle: Vector2, dir: Vector2) -> void:
+		if not o.near_miss(muzzle, dir):
+			o.hear_gunshot(muzzle, gun_rules.noise_radius))
+	o.fired.connect(gunfire.on_fired)
+	o.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
+		if street != null:
+			street.hear_gunshot(muzzle))
+
+
+func _wire_officer_hud(o: PoliceOfficer) -> void:
+	o.state_changed.connect(func(s: int) -> void: hud.set_police_status(s, _any_officer_armed()))
+	o.gave_up.connect(func() -> void: hud.show_notice("You lost him."))
+	o.drew_gun.connect(func() -> void:
+		hud.show_notice("The copper draws his revolver!")
+		hud.set_police_status(o.brain.state, true))
+
+
+## The beat cops in the loaded districts (M008).
+func officers() -> Array[PoliceOfficer]:
+	var out: Array[PoliceOfficer] = [officer]
+	return out
+
+
+func _any_officer_armed() -> bool:
+	return officers().any(func(o: PoliceOfficer) -> bool: return o.is_armed() and o.brain.is_hunting())
+
+
+## M008: a round struck something. Danny's rounds in a person are a crime any
+## beat cop who could see it will answer with his revolver; somebody else's
+## round in the car Danny is driving may go through to him.
+func _on_bullet_struck(collider: Object, at: Vector2, direction: Vector2, shooter: Node) -> void:
+	if shooter == walker and collider is Walker and collider != walker:
+		for o in officers():
+			if o.body != collider:
+				o.witness_violence((collider as Walker).global_position, walker.global_position)
+	elif shooter != null and shooter != walker and not player.on_foot() and collider == player.car:
+		if _luck.randf() < DRIVER_HIT_CHANCE:
+			walker.hit_by_bullet(walker.global_position + direction * -2.0, direction, shooter)
 
 
 ## A new game: Danny tells you who he is while the camera drifts over the ward
@@ -403,6 +452,10 @@ func _on_danny_hurt(region: String, level: int) -> void:
 func _danny_down() -> void:
 	collapses += 1
 	end_talk()
+	if not player.on_foot():
+		player.eject()  # M008: shot at the wheel
+	for o in officers():
+		o.stand_down()  # he thinks he got you
 	walker.condition.patch_up()
 	walker.down = false
 	if walker.gun != null:

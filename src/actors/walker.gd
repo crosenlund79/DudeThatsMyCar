@@ -105,10 +105,11 @@ func muzzle_position() -> Vector2:
 
 
 func hit_by_bullet(at: Vector2, direction: Vector2, shooter: Node = null) -> void:
+	if not down:
+		last_shooter = shooter  # M008: known to whoever hears about the shot below
 	shot_at.emit(at, direction)
 	if down:
 		return
-	last_shooter = shooter
 	var right := Vector2.from_angle(model.facing + PI * 0.5)
 	var region := BodyCondition.region_for((at - global_position).dot(right), rng.randf())
 	condition.shoot(region, rng.randf())

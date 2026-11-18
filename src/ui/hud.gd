@@ -313,10 +313,10 @@ func show_gun(gun: Gun) -> void:
 
 
 ## The pursuit line at the top of the screen, from the officer's state.
-func set_police_status(state: int) -> void:
+func set_police_status(state: int, armed: bool = false) -> void:
 	match state:
 		OfficerBrain.State.ALERTED, OfficerBrain.State.CHASE:
-			police_label.text = "A COPPER IS ON YOUR TAIL"
+			police_label.text = "THE COPPER IS SHOOTING AT YOU" if armed else "A COPPER IS ON YOUR TAIL"
 			police_label.add_theme_color_override("font_color", Color("ff7a5c"))
 			police_label.visible = true
 		OfficerBrain.State.SEARCH:

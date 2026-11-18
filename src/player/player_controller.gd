@@ -180,6 +180,23 @@ func exit_car() -> bool:
 	return true
 
 
+## M008: out of the car at once, wherever it is (Danny went down at the wheel;
+## the game puts him somewhere else straight after). The car stops where it is.
+func eject() -> void:
+	if car == null:
+		return
+	var c := car
+	c.driven = false
+	c.clear_command()
+	car = null
+	leaving = false
+	walker.place(c.global_position, c.rotation)
+	walker.visible = true
+	walker.active = true
+	_set_walker_solid(true)
+	exited_car.emit(c)
+
+
 ## A spot is clear when it is open ground in the district, nothing solid
 ## (wall, prop, another car) is there, and no wall stands between the
 ## driver's seat and the spot.

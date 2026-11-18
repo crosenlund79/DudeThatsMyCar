@@ -68,6 +68,15 @@ func trigger() -> void:
 	_idle = 0.0
 
 
+## M008: draws the gun without firing (someone who holds his fire until he has a shot).
+func draw() -> void:
+	if state == State.HOLSTERED:
+		state = State.DRAWING
+		_timer = rules.draw_time
+		_pull = -1.0
+		_idle = 0.0
+
+
 ## Puts the gun away at once (getting into a car). Ammunition is kept.
 func holster() -> void:
 	state = State.HOLSTERED

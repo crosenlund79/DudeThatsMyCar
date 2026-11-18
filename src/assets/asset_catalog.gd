@@ -36,6 +36,8 @@ const SPECS := {
 		"notes": "The player with the pistol drawn: same frames, right arm reaching forward (the pistol is drawn separately)."},
 	"characters/police": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "Police officer: 5 frames like the player's, facing right, centred."},
+	"characters/police_armed": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "M008: the police officer with his revolver drawn (right arm forward; the gun is drawn separately)."},
 	"characters/bartender": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "Augie the bartender: white sleeves, black vest, bow tie; frames like the player's."},
 	"characters/patron_man": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),

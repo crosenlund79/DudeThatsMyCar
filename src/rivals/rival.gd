@@ -21,6 +21,8 @@ var target_source: Callable
 var _walker: RouteFollower
 ## M007: held in a fistfight (or a talk): he stands his ground facing Danny.
 var held := false
+## M008: Danny on foot (only his rounds provoke Lefty; null: anybody's).
+var danny: Node
 
 
 func setup(resolver: AssetResolver, gun_rules: GunRules, post: Array[Vector2], p_navigator: CityNavigator,
@@ -42,7 +44,8 @@ func setup(resolver: AssetResolver, gun_rules: GunRules, post: Array[Vector2], p
 	_walker = RouteFollower.new(navigator)
 	_walker.reset(body.global_position)
 	body.hurt.connect(func(_region: String, _level: int) -> void:
-		if body.last_shooter != null and body.last_shooter != body:
+		# M008: only Danny's rounds make it personal (a stray police round does not)
+		if body.last_shooter != null and body.last_shooter != body and (danny == null or body.last_shooter == danny):
 			provoke())
 	body.struck_down.connect(func() -> void:
 		brain.fall()
@@ -68,11 +71,7 @@ func provoke() -> void:
 
 ## A shot from `muzzle` along `direction` passed within `near` px of him: that counts.
 func near_miss(muzzle: Vector2, direction: Vector2, near: float = 36.0) -> bool:
-	var to := body.global_position - muzzle
-	var along := to.dot(direction.normalized())
-	if along < 0.0 or along > 700.0:
-		return false
-	return (to - direction.normalized() * along).length() <= near
+	return Marksman.passes_near(body.global_position, muzzle, direction, near)
 
 
 func can_see(p: Vector2) -> bool:

@@ -34,13 +34,16 @@ var grudge := false
 var last_seen := Vector2.ZERO
 var _pause := 0.0
 var _lost := 0.0
-var _cooldown := 0.0
 var _rng := RandomNumberGenerator.new()
+## M008: his gunfight (the shared Marksman rules, with his numbers).
+var marksman: Marksman
 
 
 func _init(p_post: Array[Vector2] = [], seed_value: int = 1932006) -> void:
 	post = p_post
 	_rng.seed = seed_value
+	marksman = Marksman.new({"keep_at": KEEP_AT, "too_close": TOO_CLOSE, "fire_range": FIRE_RANGE, "gap": FIRE_GAP,
+		"jitter": FIRE_JITTER, "first_shot": FIRST_SHOT, "move_speed": MOVE_SPEED}, _rng)
 
 
 func is_hostile() -> bool:
@@ -52,7 +55,7 @@ func provoke(danny: Vector2) -> void:
 	if state == State.DOWN:
 		return
 	if state != State.HOSTILE:
-		_cooldown = FIRST_SHOT
+		marksman.ready_up()
 	state = State.HOSTILE
 	grudge = true
 	last_seen = danny
@@ -89,7 +92,7 @@ func update(dt: float, me: Vector2, danny: Vector2, sees: bool, badly_hurt: bool
 		state = State.FLEEING
 		_lost = 0.0
 		return update(dt, me, danny, sees, badly_hurt)
-	_cooldown -= dt
+	marksman.cool(dt)
 	if not sees:
 		_lost += dt
 		if _lost > CALM_AFTER:
@@ -98,19 +101,7 @@ func update(dt: float, me: Vector2, danny: Vector2, sees: bool, badly_hurt: bool
 		return {"goal": last_seen, "speed": MOVE_SPEED, "look": last_seen, "fire": false}
 	_lost = 0.0
 	last_seen = danny
-	var d := me.distance_to(danny)
-	var goal := me
-	var speed := 0.0
-	if d > KEEP_AT + 60.0:
-		goal = danny
-		speed = MOVE_SPEED
-	elif d < TOO_CLOSE:
-		goal = me + (me - danny).normalized() * 80.0
-		speed = MOVE_SPEED
-	var fire := _cooldown <= 0.0 and d < FIRE_RANGE
-	if fire:
-		_cooldown = FIRE_GAP + _rng.randf() * FIRE_JITTER
-	return {"goal": goal, "speed": speed, "look": danny, "fire": fire}
+	return marksman.engage(dt, me, danny)
 
 
 ## Minding his own business: strolls between his spots and stands a while at each.

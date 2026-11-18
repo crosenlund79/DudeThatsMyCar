@@ -8,6 +8,8 @@ extends Node2D
 ## The tracers and sounds are drawn by GunfireView.
 
 signal impact(position: Vector2, normal: Vector2, collider: Object, direction: Vector2)
+## M008: the same moment, with who fired it (null: unknown) - for witnesses and the driver of a hit car.
+signal struck(collider: Object, position: Vector2, direction: Vector2, shooter: Node)
 signal spent(position: Vector2)
 
 const MASK := Layers.WORLD | Layers.CARS | Layers.PEOPLE
@@ -62,6 +64,8 @@ func _physics_process(delta: float) -> void:
 
 func _hit(hit: Dictionary, dir: Vector2, shooter: Node = null) -> void:
 	var collider: Object = hit.collider
+	var who: Node = shooter if is_instance_valid(shooter) else null
 	if collider != null and collider.has_method("hit_by_bullet"):
-		collider.hit_by_bullet(hit.position, dir, shooter if is_instance_valid(shooter) else null)
+		collider.hit_by_bullet(hit.position, dir, who)
 	impact.emit(hit.position, hit.normal, collider, dir)
+	struck.emit(collider, hit.position, dir, who)

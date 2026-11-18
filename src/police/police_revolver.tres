@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="GunRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/weapons/gun_rules.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = ".38 police revolver"
+magazine = 6
+spare_rounds = -1
+fire_interval = 0.5
+reload_time = 3.2
+draw_time = 0.5
+holster_after = 10.0
+bullet_speed = 1450.0
+bullet_range = 560.0
+spread_degrees = 4.5
+noise_radius = 760.0

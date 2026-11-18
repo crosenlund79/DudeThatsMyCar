@@ -282,6 +282,7 @@ ASSETS = {
     "characters/gangster": sheet,
     "characters/gangster_armed": lambda: sheet(GANGSTER, True),
     "characters/police": lambda: sheet(POLICE),
+    "characters/police_armed": lambda: sheet(POLICE, True),
     "characters/bartender": lambda: sheet(BARTENDER),
     "characters/patron_man": lambda: sheet(PATRON_MAN),
     "characters/barber": lambda: sheet(BARBER),
