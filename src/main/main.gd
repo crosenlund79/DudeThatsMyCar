@@ -59,6 +59,10 @@ var world: DistrictStreamer
 ## and their people where he can see them.
 var incidents: StreetIncidents
 var incident_views: IncidentViews
+## M009: the people Danny can take his own work from, and their errands.
+var opportunity_views: OpportunityViews
+## M009: a car within this much of Novak's door counts as "out front" for Dutch's crate.
+const CRATE_DROP_REACH := 280.0
 ## The incident Danny is stepping into ("" for none).
 var _incident_talking := ""
 ## M009: what stepping in brings or costs (cents).
@@ -270,6 +274,15 @@ func _ready() -> void:
 	incident_views.officer_for = _officer_of
 	incident_views.person_struck.connect(func(id: String) -> void: _end_incident(incidents.break_off(id, "shooting")))
 	incident_views.process_mode = Node.PROCESS_MODE_PAUSABLE
+	opportunity_views = OpportunityViews.new()
+	opportunity_views.setup(resolver, rackets)
+	opportunity_views.is_out = func(id: String) -> bool: return ward_out.has(id)
+	opportunity_views.contact_hurt.connect(_on_contact_hurt)
+	opportunity_views.contact_down.connect(func(id: String, _w: Walker) -> void:
+		ward_out[id] = rackets.night
+		if talking == id:
+			end_talk()
+		hud.show_notice("%s goes down, badly hurt. Somebody runs for the Doc." % talk.speaker(id)))
 	var morgue := layout.building_named("The Morgue")
 	if morgue >= 0:
 		hud.city_map.add_landmark(layout.buildings[morgue].rect.get_center(), "The Morgue", resolver.get_texture("ui/marker_morgue"))
@@ -402,6 +415,7 @@ func _on_district_ready(id: String) -> void:
 	for c in cars:
 		if c.has_meta("away") and l.bounds.has_point(c.global_position):
 			_put_away(c, false)
+	opportunity_views.district_ready(id, l, world.loaded[id].node)  # M009
 	if l.police_beat.is_empty():
 		return
 	var o := PoliceOfficer.new()
@@ -446,6 +460,8 @@ func _on_district_unloading(id: String) -> void:
 			_put_away(c, true)
 	if incident_views != null:
 		incident_views.drop_district(b)  # its incidents go on as state
+	if opportunity_views != null:
+		opportunity_views.district_gone(id)
 	bullets.drop_in(b)
 	camera.set_bounds.call_deferred(world.bounds())
 
@@ -610,6 +626,12 @@ func _spot() -> Dictionary:
 	if rival != null and not rival.is_down() and not rival.is_hostile() \
 			and walker.global_position.distance_to(rival.body.global_position) < 40.0:
 		return {"id": "lefty", "prompt": "Talk to Lefty Moran"}
+	# M009: Dutch, Mr. Feeney and their errands
+	var op := opportunity_views.near(walker.global_position) if opportunity_views != null else {}
+	if not op.is_empty():
+		op["prompt"] = {"dutch": "Talk to Dutch", "feeney": "Talk to Mr. Feeney", "crate": "Load the crate into a car",
+			"film_can": "Pick up the film can"}.get(op.id, "Talk")
+		return op
 	# M009: one of the city's incidents going on right here
 	var inc := incident_views.incident_near(walker.global_position, 48.0) if incident_views != null else {}
 	if not inc.is_empty() and inc.mercer == "" and inc.phase < (StreetIncidents.PHASES[inc.kind] as Array).size() - 1:
@@ -635,6 +657,14 @@ func _interact(_at: Vector2) -> bool:
 		talking = "lefty"
 		rival.body.aim_point = walker.global_position
 		_show(talk.open("lefty", _talk_context()))
+	elif spot.get("kind", "") == "contact":
+		talking = spot.id
+		var w := opportunity_views.contact(spot.id)
+		if w != null:
+			w.aim_point = walker.global_position
+		_show(talk.open(spot.id, _talk_context()))
+	elif spot.get("kind", "") == "errand":
+		_take_errand(spot.id, spot.pos)
 	elif spot.id == "incident":
 		talking = "incident"
 		_incident_talking = spot.incident
@@ -723,7 +753,8 @@ func _talk_context() -> Dictionary:
 		"treatment": walker.condition.treatment_price(), "lefty_dead": rival != null and rival.is_down(),
 		"lefty_hurt": rival != null and rival.body.condition.worst() >= BodyCondition.Level.WOUNDED,
 		"danny_worst": walker.condition.worst(), "night": rackets.night, "money": rackets.money,
-		"incident_kind": incidents.get_incident(_incident_talking).get("kind", "") if _incident_talking != "" else ""}
+		"incident_kind": incidents.get_incident(_incident_talking).get("kind", "") if _incident_talking != "" else "",
+		"crate_outside": _crate_car_at(_novak_door()) != null}
 
 
 func _show(page: Dictionary) -> void:
@@ -768,6 +799,8 @@ func _answer(i: int) -> void:
 func _apply(effects: Dictionary) -> void:
 	if effects.has("incident"):
 		_step_in(String(effects.incident))
+	if effects.has("opportunity"):
+		_opportunity(String(effects.opportunity))
 	if effects.has("fight"):
 		_fight_pending = String(effects.fight)  # starts when Danny raises his fists
 	if effects.has("job"):
@@ -822,6 +855,8 @@ func sleep() -> void:
 	stage.reset()  # the Bird is singing when the club opens
 	ward_out.clear()  # back from the Doc's, patched up (and they remember)
 	thefts.clear()  # the cars are back with their owners
+	for c in cars:
+		_set_cargo(c, false)  # M009: whatever was in a boot was fetched in the night
 	for v in interiors.views:
 		v.reset_people()
 	rival.reset()
@@ -862,6 +897,8 @@ func _update_clock(delta: float) -> void:
 		clock.advance(delta)
 		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
 		_advance_incidents()
+		for e in rackets.opportunities.advance(clock.minute):  # M009: too late is too late
+			_opportunity_over(e)
 	if clock.is_dawn() and _warned < 2:
 		_warned = 2
 		hud.show_notice("Dawn's breaking. Get home to bed before the city wakes up.")
@@ -1076,6 +1113,103 @@ func show_map(on: bool) -> void:
 
 
 ## Danny's own car (null if there is none).
+# ------------------------------------------------------------------ M009: Danny's own work
+
+## E at an errand: Dutch's crate goes into the boot of the car at the kerb;
+## the Bijou's film can into Danny's coat.
+func _take_errand(id: String, at: Vector2) -> void:
+	match id:
+		"crate":
+			var best: Car = null
+			for c in cars:
+				if c.has_meta("away") or c.vehicle.id == "police":
+					continue
+				if c.global_position.distance_to(at) < OpportunityViews.LOAD_REACH \
+						and (best == null or c.global_position.distance_to(at) < best.global_position.distance_to(at)):
+					best = c
+			if best == null:
+				hud.show_notice("You'll want a car up at the kerb for that. It's a heavy crate.")
+				return
+			if rackets.opportunities.load_crate():
+				_set_cargo(best, true)
+				soundscape.play("vehicles/door", -3.0)
+				hud.show_notice("You and Dutch heave the crate into the boot. Novak's Grocery, before two.")
+				save_game()
+		"film_can":
+			if rackets.opportunities.find_reel():
+				hud.show_notice("A flat tin film can, \"BIJOU - LATE\" chalked on the lid. Mr. Feeney's reel.")
+				save_game()
+
+
+func _opportunity(what: String) -> void:
+	match what:
+		"take_crate":
+			rackets.opportunities.take_crate()
+		"take_reel":
+			rackets.opportunities.take_reel()
+		"deliver_crate":
+			var c := _crate_car_at(_novak_door())
+			if c != null and rackets.deliver_crate() >= 0:
+				_set_cargo(c, false)
+				hud.show_notice("Dutch's crate delivered.")
+		"return_reel":
+			if rackets.return_reel() > 0:
+				hud.show_notice("The late show goes on at the Bijou.")
+
+
+## An opportunity ran out on its own (the clock): remembered and talked about;
+## if Danny had taken it on, he is told.
+func _opportunity_over(e: Dictionary) -> void:
+	var promised: bool = e.what == "crate" and e.outcome == "dropped" or e.what == "reel" and rackets.opportunities.reel_promised
+	rackets.opportunity_over(e)
+	match [e.what, e.outcome]:
+		["crate", "dropped"]:
+			for c in cars:
+				_set_cargo(c, false)
+			hud.show_notice("Two o'clock. Novak's shut - Dutch's nephew will be fetching his crate.")
+		["reel", "cancelled"]:
+			if promised:
+				hud.show_notice("Eleven o'clock. No reel at the Bijou - the late show's off.")
+
+
+## A car's boot with Dutch's crate in it (a crate strapped on the luggage rack, seen from above).
+func _set_cargo(c: Car, on: bool) -> void:
+	var s := c.get_node_or_null("Cargo") as Sprite2D
+	if not on:
+		if c.has_meta("cargo"):
+			c.remove_meta("cargo")
+		if s != null:
+			s.queue_free()
+		return
+	c.set_meta("cargo", "crate")
+	if s == null:
+		s = Sprite2D.new()
+		s.name = "Cargo"
+		s.texture = resolver.get_texture("props/crate")
+		s.scale = AssetCatalog.scale_for(s.texture, Vector2(17, 17))
+		s.position = Vector2(-c.vehicle.size.x * 0.5 - 4.0, 0.0)
+		c.add_child(s)
+
+
+## A car with Dutch's crate in it, parked near `at` (null if none).
+func _crate_car_at(at: Vector2) -> Car:
+	for c in cars:
+		if c.has_meta("cargo") and not c.has_meta("away") and c.global_position.distance_to(at) < CRATE_DROP_REACH:
+			return c
+	return null
+
+
+func _novak_door() -> Vector2:
+	var g := _plan("grocery")
+	return g.outside_door(0, 20.0) if g != null else Vector2.INF
+
+
+## M009: Dutch or Mr. Feeney hit: if Danny did it, they (and the talk) remember.
+func _on_contact_hurt(id: String, w: Walker) -> void:
+	if w.last_shooter == walker and rackets.memory.recent(id, "shot", rackets.night, 1) == 0:
+		rackets.shot_person(id)
+
+
 func my_car() -> Car:
 	for i in cars.size():
 		if thefts.is_dannys(i):
@@ -1253,6 +1387,7 @@ func _update_view(delta: float) -> void:
 		s.view = camera.view_rect()
 	if not get_tree().paused:
 		incident_views.refresh(camera.eye(), player.body().global_position, delta)  # M009
+		opportunity_views.refresh(player.body().global_position)
 	var prompt := ""
 	if player.on_foot():
 		var spot := _spot()

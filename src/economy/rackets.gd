@@ -51,6 +51,7 @@ func _init(p_rules: EconomyRules = null) -> void:
 	boss = Boss.new()
 	boss.observe_club(town.club(), night)
 	boss.expect(town)
+	opportunities.begin_night(night)
 
 
 static func dollars(cents: int) -> String:
@@ -296,7 +297,10 @@ func buy_ammo(spare: int) -> int:
 ## Morning: the rest of the night's trade, the day's business all over the
 ## ward, and the next evening starts fresh. Returns the businesses' reports.
 func end_night() -> Array:
+	for e in opportunities.advance(INF):  # M009: whatever was left undone tonight resolves
+		opportunity_over(e)
 	night += 1
+	opportunities.begin_night(night)
 	sold_by_barber = 0
 	bought_by_bar = 0
 	paid.clear()
@@ -342,6 +346,8 @@ func end_night() -> Array:
 var doctor_fees := 0
 ## M007: Rourke's first job for Danny (offered, taken, settled, reported - saved).
 var job := RourkeJob.new()
+## M009: work Danny can take or leave from people who are not Rourke.
+var opportunities := Opportunities.new()
 
 
 ## Pays the vet `cents` (as far as Danny's pocket goes). Returns what was paid.
@@ -388,7 +394,54 @@ func street_incident_over(inc: Dictionary) -> void:
 		memory.remember(local, read.memory, night, String(inc.spot.place))
 
 
+## M009: Danny brings Dutch's crate to Novak's: Novak pays from his till (as
+## far as it goes) and has a few more tins on his shelves; Dutch hears it went
+## well, Novak starts the talk. Returns what Danny was paid (cents).
+func deliver_crate() -> int:
+	if not opportunities.deliver_crate():
+		return 0
+	var g := town.get_business("grocery")
+	var pay := mini(Opportunities.CRATE_PAY, g.cash)
+	g.cash -= pay
+	money += pay
+	g.stock = mini(g.capacity, g.stock + Opportunities.CRATE_STOCK) if g.capacity > 0 else g.stock + Opportunities.CRATE_STOCK
+	memory.remember("dutch", "kept_promise", night, "the crate")
+	memory.remember("novak", "deal", night, "Dutch's crate")
+	rumours.start("crate_run", "novak", night, {"text": "for Dutch"})
+	return pay
+
+
+## M009: Danny brings Mr. Feeney the late show's reel in time: the Bijou's
+## box office pays (money from outside the ward). Returns what he was paid.
+func return_reel() -> int:
+	if not opportunities.return_reel():
+		return 0
+	money += Opportunities.REEL_PAY
+	memory.remember("feeney", "favour", night, "the reel")
+	if opportunities.reel_promised:
+		memory.remember("feeney", "kept_promise", night, "the reel")
+	rumours.start("reel_returned", "feeney", night)
+	return Opportunities.REEL_PAY
+
+
+## M009: an opportunity resolved on its own (too late): who remembers it, what is said.
+func opportunity_over(e: Dictionary) -> void:
+	match [e.what, e.outcome]:
+		["crate", "dropped"]:
+			memory.remember("dutch", "broken_promise", night, "the crate")
+			rumours.start("crate_dropped", "dutch", night)
+		["reel", "cancelled"]:
+			if opportunities.reel_promised:
+				memory.remember("feeney", "broken_promise", night, "the reel")
+			rumours.start("reel_cancelled", "feeney", night)
+
+
 func _hear(person: String, r: Dictionary) -> void:
+	if person == "rourke" and r.kind in ["crate_run", "reel_returned"]:
+		# M009: Danny's own work, as far as talk carries it - a remark, not a betrayal
+		boss.hear("Dimes is hauling crates up from the yards for some lunch-counter Dutchman" if r.kind == "crate_run"
+			else "Dimes is running errands for a picture house in Halloran Square", night)
+		return
 	if person == "rourke" and String(r.kind).begins_with("street_"):
 		# M009: he hears what the ward says - only what comes to Augie's ears, nights later
 		var says := {"street_exchange_robbed": "Dimes stuck up a handoff %s", "street_exchange_hushed": "Dimes took a cut of somebody's business %s",
@@ -428,12 +481,26 @@ func _hear(person: String, r: Dictionary) -> void:
 
 
 ## The newest piece of talk a person can pass on to Danny (or {}).
+## What a person has heard and will pass on to Danny: talk about Danny first,
+## newest first; the city's own news (M009: a fight he had no part in, a show
+## cancelled) only when there is nothing about him.
 func gossip(person: String) -> Dictionary:
+	var news := {}
 	for r in rumours.known_to(person):
-		if r.origin != person and (r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
-				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still"] or String(r.kind).begins_with("street_")):
+		if r.origin == person:
+			continue
+		if r.kind in BACKGROUND_TALK:
+			if news.is_empty():
+				news = r
+		elif r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
+				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still", "crate_run", "crate_dropped",
+				"reel_returned"] or String(r.kind).begins_with("street_"):
 			return r
-	return {}
+	return news
+
+
+## M009: talk about the city, not about Danny.
+const BACKGROUND_TALK := ["reel_cancelled", "street_argument_blows", "street_stop_taken_in"]
 
 
 func to_dict() -> Dictionary:
@@ -442,7 +509,8 @@ func to_dict() -> Dictionary:
 		"paid_total": paid_total.duplicate(), "town": town.to_dict(), "boss": boss.to_dict(), "held": held,
 		"skimmed": skimmed, "commission_earned": commission_earned, "seq": seq, "last_seq": last_seq.duplicate(),
 		"memory": memory.to_dict(), "rumours": rumours.to_dict(), "loans": loans.duplicate(true),
-		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees, "job": job.to_dict()}
+		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees, "job": job.to_dict(),
+		"opportunities": opportunities.to_dict()}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -452,6 +520,8 @@ func from_dict(d: Dictionary) -> void:
 	doctor_fees = int(d.get("doctor_fees", 0))
 	job = RourkeJob.new()
 	job.from_dict(d.get("job", {}))
+	opportunities = Opportunities.new()
+	opportunities.from_dict(d.get("opportunities", {"night": int(d.get("night", night))}))
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
 	sold_by_barber = int(d.get("sold_by_barber", 0))

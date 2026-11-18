@@ -27,6 +27,11 @@ var smoke: Array = []
 ## vector), local (the named person who notices how it ends and talks, or ""),
 ## place (how people name it: "outside Novak's Grocery")}.
 var incident_spots: Array = []
+## M009: the people Danny can take work from in this district, standing out
+## in the street: {id, look (character sheet), pos, face (angle)}; and where
+## their errands lie: {id ("crate", "film_can"), pos}.
+var contacts: Array = []
+var errands: Array = []
 ## Whole visible world (camera limits). Everything inside is drawn.
 var bounds := Rect2()
 ## Where people and cars can be (exits are refused outside it).
@@ -188,7 +193,7 @@ func shift(offset: Vector2) -> DistrictLayout:
 			p.pos += offset
 		for sg in b.signs:
 			sg.pos += offset
-	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots]:
+	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots, contacts, errands]:
 		for item in list2:
 			item.pos += offset
 	for e in exits:

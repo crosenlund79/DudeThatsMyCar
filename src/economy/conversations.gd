@@ -14,7 +14,8 @@ extends RefCounted
 ## greeting for the first time opens on that greeting, then their usual page.
 
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
-	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "pettibone": "Doc Pettibone", "bed": "Home"}
+	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "pettibone": "Doc Pettibone", "bed": "Home",
+	"dutch": "Dutch", "feeney": "Mr. Feeney"}
 
 var rackets: Rackets
 
@@ -81,6 +82,10 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _vet(step, context)
 		"incident":
 			return _incident(step, context)
+		"dutch":
+			return _dutch(step, context)
+		"feeney":
+			return _feeney(step, context)
 		"bed":
 			return _bed(step, context)
 	return {}
@@ -237,6 +242,15 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is you gave the Swede his money back. Nobody gives anything back. People are talking."
 		"job_still":
 			return "Word is the Swede's still paying the North Side. Thought you'd want to know."
+		# M009: Danny's own work, as the ward tells it
+		"crate_run":
+			return "Word is you're hauling crates up from the yards for Dutch. Novak's shelves never looked so good."
+		"crate_dropped":
+			return "Word is Dutch down at the yards is sore at you. Something about a crate that went for a ride."
+		"reel_returned":
+			return "Word is you saved the late show at the Bijou over in Halloran Square. Feeney's telling the whole square."
+		"reel_cancelled":
+			return "Word is the Bijou in Halloran Square had to cancel its late show. The reel never came. Twenty-two refunds."
 		# M009: the city's own incidents, as the ward tells them
 		"street_argument_blows":
 			return "Word is two fellas came to blows %s. Over a dented fender, if you can believe it." % t.text
@@ -273,7 +287,7 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 			if r.has_paid("grocery"):
 				var again := "You again? I paid! There is nothing left in the till, look for yourself." if r.paid.grocery == "asked" \
 					else "Please. I have nothing more. Please go."
-				return _page("novak", again, [{"id": "apples", "text": "Just an apple, Mr. Novak."}])
+				return _page("novak", again, _crate_option(context) + [{"id": "apples", "text": "Just an apple, Mr. Novak."}])
 			var att := r.memory.attitude("novak", r.night)
 			var hello := "We're closing. Oh. It's you."
 			if att.fear >= 4.0:
@@ -282,7 +296,7 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 				hello = "Mr. Mercer! Come in, come in. I don't forget what you did."
 			if g.missed_delivery > 0:
 				hello = "Look at these shelves. The truck came half empty; I could not pay the driver."
-			var opts := [{"id": "protection", "text": "It's Friday somewhere, Mr. Novak. Protection."}]
+			var opts := _crate_option(context) + [{"id": "protection", "text": "It's Friday somewhere, Mr. Novak. Protection."}]
 			if r.loans.has("novak"):
 				opts.append({"id": "repay", "text": "About that loan, Mr. Novak."})
 			elif r.shortfall_for_truck("grocery") > 0 or g.missed_delivery > 0:
@@ -291,6 +305,14 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 					opts.append({"id": "lend", "text": "I could lend you %s for the truck." % Rackets.dollars(lend)})
 			opts.append({"id": "apples", "text": "Just an apple."})
 			return _page("novak", hello, opts)
+		"crate":
+			if r.opportunities.crate != "loaded" or not context.get("crate_outside", false):
+				return _page("novak", "A crate? I don't see no crate, Mr. Mercer. Bring it round the side, not in here.")
+			var pay := mini(Opportunities.CRATE_PAY, g.cash)
+			var line := "From Dutch? Peaches! God bless the Dutchman. We heave it in the back between us, and Novak counts %s into your hand." % Rackets.dollars(pay)
+			if pay < Opportunities.CRATE_PAY:
+				line = "From Dutch? Peaches... We heave it in the back. \"%s is all the till has, Mr. Mercer. Dutch will understand.\"" % Rackets.dollars(pay)
+			return _page("novak", line, [], {"opportunity": "deliver_crate"})
 		"lend":
 			var amount := _loan_amount()
 			if r.lend("grocery", amount) == 0:
@@ -557,6 +579,92 @@ func _incident(step: String, context: Dictionary) -> Dictionary:
 
 
 const STOP_BRIBE := 100
+
+
+# ------------------------------------------------------------------ M009: Dutch and Mr. Feeney
+
+## Novak's answer when Dutch's crate is in a car out front.
+func _crate_option(context: Dictionary) -> Array:
+	if rackets.opportunities.crate == "loaded" and context.get("crate_outside", false):
+		return [{"id": "crate", "text": "I've got a crate out front for you. From Dutch, at the yards."}]
+	return []
+
+
+## Dutch, at his night lunch counter on Foundry Street.
+func _dutch(step: String, context: Dictionary) -> Dictionary:
+	var r := rackets
+	var o := r.opportunities
+	match step:
+		"hello":
+			var sore := r.memory.recent("dutch", "broken_promise", r.night, 4) > 0
+			var good := r.memory.recent("dutch", "kept_promise", r.night, 6) > 0
+			match o.crate:
+				"waiting":
+					var ask := "A big man in a grease-spotted apron wipes his hands. \"You got wheels, mister? I got a crate needs to go up to Novak's grocery in Riverside. Tinned goods, off a boxcar - don't ask which boxcar. Novak pays %s at his door. Before two, mind; he don't open after.\"" % Rackets.dollars(Opportunities.CRATE_PAY)
+					if good:
+						ask = "\"Mercer! Novak says you're reliable. Got another one for him - same deal, %s at his door, before two.\"" % Rackets.dollars(Opportunities.CRATE_PAY)
+					elif sore:
+						ask = "\"You. Last time my crate went for a ride round Riverside all night.\" He looks you over. \"...I got another. You want it, you deliver it this time. Before two.\""
+					return _page("dutch", ask, [{"id": "take", "text": "I'll take it up."}, {"id": "what", "text": "What's really in it?"},
+						{"id": "bye", "text": "Not tonight, Dutch."}])
+				"taken":
+					return _page("dutch", "\"It's there by the door. Bring a car up to the kerb and we'll heave it in the boot.\"")
+				"loaded":
+					return _page("dutch", "\"Go on, Novak's waiting. Back way, quiet like. Before two.\"")
+				"delivered":
+					return _page("dutch", "\"Novak telephoned the drugstore to say it came. Peaches all round. Coffee's on the house tonight.\"")
+				"gone":
+					return _page("dutch", "\"Too late, pal. My nephew took it up in the ice truck. Coffee's a nickel, pie's a dime.\"")
+				"dropped":
+					return _page("dutch", "\"My nephew had to go find my crate in Riverside at three in the morning. Don't come round here making promises.\"")
+			if sore:
+				return _page("dutch", "\"Coffee's a nickel. Crates I give to people who deliver them.\"")
+			return _page("dutch", "\"Coffee's a nickel, pie's a dime. Nothing else tonight, mister.\"")
+		"what":
+			return _page("dutch", "\"Peaches. Mostly peaches. Some of 'em even say peaches on the tin.\"",
+				[{"id": "take", "text": "Peaches it is. I'll take it."}, {"id": "bye", "text": "Not tonight."}])
+		"take":
+			if o.crate != "waiting":
+				return _page("dutch", "\"Too late for that, pal.\"")
+			return _page("dutch", "\"Good man. It's by the door. Bring a car up to the kerb here and we'll heave it in the boot.\"",
+				[], {"opportunity": "take_crate"})
+	return {}
+
+
+## Mr. Feeney, who manages the Bijou on Marlowe Avenue in Halloran Square.
+func _feeney(step: String, context: Dictionary) -> Dictionary:
+	var r := rackets
+	var o := r.opportunities
+	match step:
+		"hello":
+			var sore := r.memory.recent("feeney", "broken_promise", r.night, 4) > 0
+			match o.reel:
+				"lost":
+					var ask := "A small man in a dinner jacket is wringing his hands under the marquee. \"The reel for the late show never came! The exchange's boy says he set the can down behind St. Brendan's, the dolt. I can't leave a full lobby. %s if it's in my hands before eleven.\"" % Rackets.dollars(Opportunities.REEL_PAY)
+					if sore:
+						ask = "\"You again. The exchange's boy has lost a reel again - behind St. Brendan's, again. I suppose you'll say you'll fetch it. Before eleven, %s.\"" % Rackets.dollars(Opportunities.REEL_PAY)
+					return _page("feeney", ask, [{"id": "take", "text": "I'll find your reel."}, {"id": "bye", "text": "Not my line of work."}])
+				"looking":
+					return _page("feeney", "\"Behind St. Brendan's, he said. Eleven o'clock, mister. Eleven!\"")
+				"found":
+					return _page("feeney", "\"Is that...?\"", [{"id": "give", "text": "One reel, slightly dusty."}])
+				"returned":
+					return _page("feeney", "\"The late show's running. Listen to them laugh. Any night you like, mister, there's a seat for you.\"")
+				"cancelled":
+					var line := "\"No reel, no late show. Twenty-two refunds.\" He looks at you. \"Some help you were.\"" if o.reel_promised \
+						else "\"No reel, no late show. Twenty-two refunds. I could weep.\""
+					return _page("feeney", line)
+			return _page("feeney", "\"Tonight at nine and eleven, 'Gentlemen of the Night'. Fifteen cents, mister, and worth every one.\"")
+		"take":
+			if o.reel != "lost":
+				return _page("feeney", "\"Too late for that now.\"")
+			return _page("feeney", "\"Bless you! Behind the church, he said. Before eleven!\"", [], {"opportunity": "take_reel"})
+		"give":
+			if o.reel != "found":
+				return {}
+			return _page("feeney", "Feeney clutches the can like a newborn. \"Saved! %s, and a seat any night you like.\" He hurries it up to the booth." % Rackets.dollars(Opportunities.REEL_PAY),
+				[], {"opportunity": "return_reel"})
+	return {}
 
 
 func _incident_page(who: String, text: String, options: Array = [], effects: Dictionary = {}) -> Dictionary:

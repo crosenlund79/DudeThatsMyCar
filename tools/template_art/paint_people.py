@@ -50,6 +50,10 @@ VET = {"coat": "#ebe6da", "coat_light": "#f8f5ee", "arm": "#ebe6da", "trouser": 
 # M006: Lefty Moran, a North Side gangster: camel overcoat, a white fedora, a cigar.
 RIVAL = {"coat": "#a9804e", "coat_light": "#c89e68", "trouser": "#2a2420", "hat": "fedora", "hat_color": "#ece6da",
          "stripes": False, "front": "tie", "cigar": True}
+# M009: Dutch, who keeps the night lunch counter in the Riverfront Yards: a grey work shirt
+# with the sleeves rolled up, a white apron, cropped fair hair.
+DUTCH = {"coat": "#7b8088", "coat_light": "#91969d", "arm": SKIN, "trouser": "#3a3a3e", "hat": "hair",
+         "hat_color": "#d6c07e", "stripes": False, "front": "apron"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
                 "hat_color": "#1d1410", "stripes": False, "front": "pearls"}
 
@@ -293,4 +297,5 @@ ASSETS = {
     "characters/clerk": lambda: sheet(CLERK),
     "characters/dealer": lambda: sheet(DEALER),
     "characters/patron_woman": lambda: sheet(PATRON_WOMAN),
+    "characters/dutch": lambda: sheet(DUTCH),
 }

@@ -55,6 +55,7 @@ func _build() -> void:
 	_ground_details()
 	_people_and_cars()
 	_incident_spots()
+	_contacts()
 	# the ways north into the Riverside Ward (Dorsey Street is closed by the ward's own barricade)
 	for x in [DORSEY, KESSLER, WHARF]:
 		d.exits.append({"to": "riverside", "rect": Rect2(x - HALF - 46.0, 0, HALF * 2.0 + 92.0, 6)})
@@ -224,6 +225,12 @@ func _ground_details() -> void:
 		d.decals.append({"kind": "decals/litter", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": 1.0})
 
 
+## M009: Dutch out on the pavement in front of his night lunch, his crate by the door.
+func _contacts() -> void:
+	d.contacts = [{"id": "dutch", "look": "characters/dutch", "pos": Vector2(2985, FOUNDRY - HALF - 26.0), "face": PI / 2}]
+	d.errands = [{"id": "crate", "pos": Vector2(3045, FOUNDRY - HALF - 28.0)}]
+
+
 ## M009: where the yards' own small troubles happen; Dutch at the lunch counter notices.
 func _incident_spots() -> void:
 	d.incident_spots = [
@@ -241,10 +248,11 @@ func _incident_spots() -> void:
 
 
 func _people_and_cars() -> void:
-	# a couple of night-shift men on Front Street, one by the lunch counter
+	# a couple of night-shift men on Front Street, one by the lunch counter (M009: he turns
+	# back short of Dutch, who stands out in front of it)
 	d.walk_routes = [
 		PackedVector2Array([Vector2(1900, 194), Vector2(3200, 194)]),
-		PackedVector2Array([Vector2(2300, FOUNDRY - HALF - 24), Vector2(3240, FOUNDRY - HALF - 24)]),
+		PackedVector2Array([Vector2(2300, FOUNDRY - HALF - 24), Vector2(2915, FOUNDRY - HALF - 24)]),
 	]
 	d.walkers = [
 		{"look": "characters/worker", "route": 0, "at": 0.3},

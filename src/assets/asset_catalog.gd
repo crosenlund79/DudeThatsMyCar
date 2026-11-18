@@ -66,6 +66,8 @@ const SPECS := {
 		"notes": "Lindqvist the hardware man in his dust coat."},
 	"characters/dealer": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "Eddie, the back-room gun dealer: dark green suit and fedora."},
+	"characters/dutch": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "M009: Dutch, who keeps the night lunch counter in the Riverfront Yards: rolled sleeves, white apron, fair hair."},
 	"weapons/pistol": {"kind": "sprite", "template_size": Vector2i(48, 20), "display_size": Vector2(15, 6),
 		"notes": ".45 automatic from above, muzzle to the right; the left end sits in the hand."},
 	# Ground.
