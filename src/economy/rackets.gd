@@ -309,6 +309,7 @@ func end_night() -> Array:
 			var b := town.get_business(rep.id)
 			incidents.append({"kind": "short_delivery", "business": rep.id, "night": night})
 			rumours.start("short", b.keeper, night, {"business": rep.id})
+	job.end_night(self)
 	# a night of talk
 	for learnt in rumours.spread():
 		_hear(learnt.to, learnt.rumour)
@@ -338,6 +339,8 @@ func end_night() -> Array:
 
 ## M006: what Danny has paid Doc Pettibone, all nights (cents; it leaves his pocket for good).
 var doctor_fees := 0
+## M007: Rourke's first job for Danny (offered, taken, settled, reported - saved).
+var job := RourkeJob.new()
 
 
 ## Pays the vet `cents` (as far as Danny's pocket goes). Returns what was paid.
@@ -373,6 +376,9 @@ func shot_person(who: String) -> void:
 ## Someone hears a piece of talk.
 func _hear(person: String, r: Dictionary) -> void:
 	if person == "rourke":
+		if String(r.kind).begins_with("job_"):
+			job.rourke_hears(r.kind, self)
+			return
 		match r.kind:
 			"shot":
 				boss.hear("Dimes shot %s" % r.text.capitalize(), night)
@@ -388,9 +394,12 @@ func _hear(person: String, r: Dictionary) -> void:
 				boss.hear("Dimes is lending money to %s" % town.get_business(r.business).name, night)
 		return
 	match r.kind:
-		"threat", "shot":
+		"threat", "shot", "job_backed_down", "job_beaten", "job_killed":
 			if r.origin != person:
 				memory.remember(person, "heard_threat", night)
+		"job_deal", "job_returned":
+			if r.origin != person:
+				memory.remember(person, "heard_favour", night)
 		"favour":
 			if r.origin != person:
 				memory.remember(person, "heard_favour", night)
@@ -399,7 +408,8 @@ func _hear(person: String, r: Dictionary) -> void:
 ## The newest piece of talk a person can pass on to Danny (or {}).
 func gossip(person: String) -> Dictionary:
 	for r in rumours.known_to(person):
-		if r.origin != person and r.kind in ["short", "threat", "favour", "lie", "shot"]:
+		if r.origin != person and r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
+				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still"]:
 			return r
 	return {}
 
@@ -410,7 +420,7 @@ func to_dict() -> Dictionary:
 		"paid_total": paid_total.duplicate(), "town": town.to_dict(), "boss": boss.to_dict(), "held": held,
 		"skimmed": skimmed, "commission_earned": commission_earned, "seq": seq, "last_seq": last_seq.duplicate(),
 		"memory": memory.to_dict(), "rumours": rumours.to_dict(), "loans": loans.duplicate(true),
-		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees}
+		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees, "job": job.to_dict()}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -418,6 +428,8 @@ func to_dict() -> Dictionary:
 func from_dict(d: Dictionary) -> void:
 	money = int(d.get("money", money))
 	doctor_fees = int(d.get("doctor_fees", 0))
+	job = RourkeJob.new()
+	job.from_dict(d.get("job", {}))
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
 	sold_by_barber = int(d.get("sold_by_barber", 0))

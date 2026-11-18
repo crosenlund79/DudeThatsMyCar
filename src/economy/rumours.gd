@@ -14,6 +14,8 @@ const LINKS := {
 	"rourke": ["augie"],
 	"lindqvist": ["novak", "eddie"],
 	"eddie": ["lindqvist", "augie"],
+	# M007: Lefty Moran talks to Eddie (who sells to everybody), and Eddie talks to Augie
+	"lefty": ["eddie"],
 }
 
 ## {id, kind, about, business, cents, night, seq, text, known: [people]}

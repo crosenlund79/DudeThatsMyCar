@@ -432,7 +432,9 @@ func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
 func _talk_context() -> Dictionary:
 	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0,
 		"time": clock.text(), "late": clock.is_late(), "first_meeting": voice_lines.due(Conversations.greeting_line(talking)),
-		"treatment": walker.condition.treatment_price()}
+		"treatment": walker.condition.treatment_price(), "lefty_dead": rival != null and rival.is_down(),
+		"lefty_hurt": rival != null and rival.body.condition.worst() >= BodyCondition.Level.WOUNDED,
+		"danny_worst": walker.condition.worst(), "night": rackets.night}
 
 
 func _show(page: Dictionary) -> void:

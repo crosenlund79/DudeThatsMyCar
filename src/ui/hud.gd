@@ -173,6 +173,8 @@ func _build_dialogue() -> void:
 ## Shows a conversation page ({speaker, text, options: [{id, text}]}).
 func show_dialogue(page: Dictionary) -> void:
 	speaker_label.text = String(page.speaker).to_upper()
+	if String(page.get("tone", "")) != "":
+		speaker_label.text += "   (%s)" % page.tone  # M007: how the line is said
 	line_label.text = "\u201c%s\u201d" % page.text
 	var options: Array = page.options
 	for i in option_labels.size():

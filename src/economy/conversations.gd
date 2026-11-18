@@ -221,6 +221,20 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is you helped out at %s. Decent of you." % where
 		"lie":
 			return "Word is Rourke caught somebody short-changing him. Somebody, Dimes."
+		"job_deal":
+			return "Word is you sat down with Lefty Moran and talked him off the Swede's back. Talked! In this ward."
+		"job_backed_down":
+			return "Word is you leaned on Lefty Moran and he folded like a deck chair."
+		"job_beaten":
+			return "Word is you beat Lefty Moran with your bare hands on Pruitt Street. With your hands, Dimes."
+		"job_killed":
+			return "Word is Lefty Moran's in the Morgue. And the North Side's asking who put him there."
+		"job_lost":
+			return "Word is Lefty Moran gave you a hiding. You might want to see the Doc."
+		"job_returned":
+			return "Word is you gave the Swede his money back. Nobody gives anything back. People are talking."
+		"job_still":
+			return "Word is the Swede's still paying the North Side. Thought you'd want to know."
 		"shot":
 			return "Word is you put a bullet in %s. People are scared of you, Dimes. Scared ain't the same as loyal." % speaker(t.text)
 	return ""
@@ -453,15 +467,93 @@ func _bed(step: String, context: Dictionary) -> Dictionary:
 
 # ------------------------------------------------------------------ Rourke, at his corner table in the Copper Owl
 
-func _rourke(step: String, _context: Dictionary) -> Dictionary:
+## M007: a page for one of the job's lines (its words, and its performance tag shown beside the speaker).
+func _job_page(id: String, options: Array = [], effects: Dictionary = {}) -> Dictionary:
+	var line: Dictionary = JobLines.LINES[id]
+	var page := _page(line.who, line.text, options, effects)
+	if String(line.tone) != "":
+		page["tone"] = line.tone
+	return page
+
+
+## M007: the job's option on Rourke's page (it takes the place of "How's business?"), or {}.
+func _rourke_job_option() -> Dictionary:
+	var job := rackets.job
+	if not job.rourke_has_business(rackets.night):
+		return {}
+	match job.stage:
+		RourkeJob.Stage.NOT_OFFERED, RourkeJob.Stage.OFFERED:
+			return {"id": "job_offer", "text": JobLines.answer("job_offer")}
+		RourkeJob.Stage.ACCEPTED, RourkeJob.Stage.RESOLVED:
+			return {"id": "job_report", "text": JobLines.answer("job_report")}
+	return {}
+
+
+## M007: what Danny can say about the job (ids from RourkeJob.report_options).
+func _job_report_options() -> Array:
+	var job := rackets.job
+	var truth := JobLines.answer("truth_" + job.outcome) if job.outcome != "" else ""
+	if job.money_went == "lindqvist":
+		truth += " " + JobLines.answer("truth_returned")
+	var opts := []
+	for id in job.report_options():
+		var text := JobLines.answer(id)
+		match id:
+			"job_truth":
+				text = truth
+			"job_truth_hand":
+				text = JobLines.answer(id) % [truth, Rackets.dollars(job.recovered)]
+			"job_truth_keep":
+				text = JobLines.answer(id) % truth
+		opts.append({"id": id, "text": text})
+	return opts
+
+
+func _rourke(step: String, context: Dictionary) -> Dictionary:
 	var r := rackets
 	var b := r.boss
 	var want := b.expected + b.rye_end()
 	var D := Rackets.dollars
+	var job := r.job
+	match step:
+		"job_offer":
+			var said := job.offer(r, context.get("lefty_dead", false))
+			if said == "moot":
+				return _job_page("moot")
+			return _job_page("offer", [
+				{"id": "job_accept", "text": JobLines.answer("job_accept")},
+				{"id": "job_postpone", "text": JobLines.answer("job_postpone")},
+				{"id": "job_decline", "text": JobLines.answer("job_decline")},
+			])
+		"job_accept":
+			return _job_page(job.accept(r), [], {"job": "accepted"})
+		"job_postpone":
+			return _job_page(job.postpone(r), [], {"job": "postponed"})
+		"job_decline":
+			return _job_page(job.decline(r), [], {"job": "declined"})
+		"job_report":
+			return _job_page("waiting", _job_report_options())
+		"job_working", "job_handled", "job_truth", "job_truth_hand", "job_truth_keep":
+			var out := job.report(step, r)
+			var words := []
+			for id in out.lines:
+				words.append(JobLines.text(id))
+			var page := _page("rourke", " ".join(words), [], {"job": "reported", "reward": out.reward})
+			page["tone"] = JobLines.tone(out.lines[0])
+			return page
+	if step == "hello" and job.rourke_news != "":
+		var news := job.take_rourke_news()
+		var opts_n := []
+		var jo := _rourke_job_option()
+		if not jo.is_empty():
+			opts_n.append(jo)
+		return _job_page(news, opts_n)
 	match step:
 		"hello":
+			var job_opt := _rourke_job_option()
 			if b.settled and b.arrears == 0:
-				return _page("rourke", "We're square for tonight, Dimes. Go earn.", [{"id": "news", "text": "How's business, Mr. Rourke?"}])
+				return _page("rourke", "We're square for tonight, Dimes. Go earn.",
+					[job_opt if not job_opt.is_empty() else {"id": "news", "text": "How's business, Mr. Rourke?"}])
 			var line := ""
 			match b.mood():
 				"warm":
@@ -485,7 +577,7 @@ func _rourke(step: String, _context: Dictionary) -> Dictionary:
 			if r.held > 0 or r.money >= want:
 				opts.append({"id": "envelope", "text": "Here's your envelope."})
 			opts.append({"id": "later", "text": "Not tonight, Mr. Rourke. I'll have it tomorrow."})
-			opts.append({"id": "news", "text": "How's business, Mr. Rourke?"})
+			opts.append(job_opt if not job_opt.is_empty() else {"id": "news", "text": "How's business, Mr. Rourke?"})
 			return _page("rourke", line, opts)
 		"envelope":
 			var opts2 := []
