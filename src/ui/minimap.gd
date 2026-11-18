@@ -7,14 +7,15 @@ extends Control
 ## to the rim when they are off the map, so you can head for them), the beat
 ## cop's badge, and you as an arrow in the middle that turns with you.
 ## Street names along the roads. Presentation only.
+## M008: every district has its own painted image, placed where the district
+## lies in the world, so the map runs on across a border; every loaded beat
+## cop shows.
 
 ## Size on screen (px) and the frame round it.
 const SIZE := Vector2(200, 200)
 const BORDER := 10.0
-## World px per pixel of the painted map image, and the void painted round
-## the district so the view never runs off the image.
+## World px per pixel of the painted map images.
 const IMAGE_SCALE := 4.0
-const MARGIN := 1000.0
 ## World px per screen px: on foot, and in a car at full speed.
 const ZOOM_FOOT := 8.0
 const ZOOM_FAST := 11.5
@@ -34,9 +35,10 @@ const WATER := Color("26404e")
 const STEEL := Color("6b6e74")
 const LABEL := Color("3a2a1a")
 
+## The Riverside Ward (its rooms give the places), and every district's map:
+## {layout, image, texture, rect (world)}.
 var layout: DistrictLayout
-var map_image: Image
-var map_texture: ImageTexture
+var districts: Array = []
 ## World point at the middle of the map, how many world px a screen px is,
 ## and which way the player faces (radians, 0 = east).
 var centre := Vector2.ZERO
@@ -46,6 +48,8 @@ var heading := 0.0
 var places: Array = []
 var police := Vector2.INF
 var police_hunting := false
+## M008: the other loaded districts' beat cops: [{pos, hunting}].
+var other_police: Array = []
 var _player_tex: Texture2D
 var _police_tex: Texture2D
 var _frame: StyleBoxTexture
@@ -60,8 +64,7 @@ func setup(p_layout: DistrictLayout, resolver: AssetResolver, frame: StyleBoxTex
 	custom_minimum_size = SIZE
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	map_image = paint(layout)
-	map_texture = ImageTexture.create_from_image(map_image)
+	add_district(layout)
 	_player_tex = resolver.get_texture("ui/map_player")
 	_police_tex = resolver.get_texture("ui/map_police")
 	_frame = frame.duplicate() as StyleBoxTexture
@@ -78,10 +81,16 @@ func setup(p_layout: DistrictLayout, resolver: AssetResolver, frame: StyleBoxTex
 				"id": p.id})
 
 
-## The district painted once: one image pixel per IMAGE_SCALE world px.
+## M008: a district's map, painted once from its plan (it need not be built).
+func add_district(d: DistrictLayout) -> void:
+	var img := paint(d)
+	districts.append({"layout": d, "image": img, "texture": ImageTexture.create_from_image(img), "rect": d.bounds})
+
+
+## The district painted once: one image pixel per IMAGE_SCALE world px, its bounds exactly.
 static func paint(d: DistrictLayout) -> Image:
-	var origin := d.bounds.position - Vector2(MARGIN, MARGIN)
-	var px := Vector2i(((d.bounds.size + Vector2(MARGIN, MARGIN) * 2.0) / IMAGE_SCALE).ceil())
+	var origin := d.bounds.position
+	var px := Vector2i((d.bounds.size / IMAGE_SCALE).ceil())
 	var img := Image.create(px.x, px.y, false, Image.FORMAT_RGBA8)
 	img.fill(VOID)
 	var to_px := func(r: Rect2) -> Rect2i:
@@ -114,9 +123,13 @@ static func paint(d: DistrictLayout) -> Image:
 
 ## The colour painted under a world point (for tests and for reading the map).
 func colour_at(world: Vector2) -> Color:
-	var p := ((world - layout.bounds.position + Vector2(MARGIN, MARGIN)) / IMAGE_SCALE).floor()
-	p = p.clamp(Vector2.ZERO, Vector2(map_image.get_size() - Vector2i.ONE))
-	return map_image.get_pixelv(Vector2i(p))
+	for dist in districts:
+		var r: Rect2 = dist.rect
+		if r.has_point(world):
+			var img: Image = dist.image
+			var p := ((world - r.position) / IMAGE_SCALE).floor().clamp(Vector2.ZERO, Vector2(img.get_size() - Vector2i.ONE))
+			return img.get_pixelv(Vector2i(p))
+	return VOID
 
 
 ## Where a world point shows on the map (local px; the player is in the middle).
@@ -154,11 +167,17 @@ func place_on_map(world: Vector2) -> Dictionary:
 
 
 func _draw() -> void:
-	if map_texture == null:
+	if districts.is_empty():
 		return
-	var origin := layout.bounds.position - Vector2(MARGIN, MARGIN)
-	var src := Rect2((centre - SIZE * 0.5 * zoom - origin) / IMAGE_SCALE, SIZE * zoom / IMAGE_SCALE)
-	draw_texture_rect_region(map_texture, Rect2(Vector2.ZERO, SIZE), src)
+	draw_rect(Rect2(Vector2.ZERO, SIZE), VOID)
+	var view := Rect2(centre - SIZE * 0.5 * zoom, SIZE * zoom)
+	for dist in districts:
+		var r: Rect2 = dist.rect
+		var part := r.intersection(view)
+		if not part.has_area():
+			continue
+		var src := Rect2((part.position - r.position) / IMAGE_SCALE, part.size / IMAGE_SCALE)
+		draw_texture_rect_region(dist.texture, Rect2(to_map(part.position), part.size / zoom), src)
 	_draw_street_names()
 	# the places, then the copper, then you on top
 	for pl in places:
@@ -168,11 +187,14 @@ func _draw() -> void:
 		var sz := Vector2(s * 0.81, s)
 		var col := Color(1, 1, 1, 1.0 if where.on_map else 0.7)
 		draw_texture_rect(tex, Rect2((where.at as Vector2) - Vector2(sz.x * 0.5, sz.y), sz), false, col)
+	var cops := other_police.duplicate()
 	if police != Vector2.INF:
-		var cp := to_map(police)
+		cops.push_front({"pos": police, "hunting": police_hunting})
+	for cop in cops:
+		var cp := to_map(cop.pos)
 		if Rect2(Vector2.ZERO, SIZE).grow(-BORDER).has_point(cp):
 			var c := Color(1, 1, 1)
-			if police_hunting:
+			if cop.hunting:
 				c = Color(1.0, 0.45, 0.4) if fmod(_time, 0.6) < 0.3 else Color(1, 1, 1)
 			draw_texture_rect(_police_tex, Rect2(cp - Vector2(POLICE_ICON, POLICE_ICON) * 0.5, Vector2(POLICE_ICON, POLICE_ICON)), false, c)
 	draw_set_transform(SIZE * 0.5, heading, Vector2.ONE)
@@ -190,9 +212,16 @@ func _draw_street_names() -> void:
 	if _font == null:
 		return
 	var view := Rect2(centre - SIZE * 0.5 * zoom, SIZE * zoom)
-	for s in layout.streets:
+	var streets := []
+	for dist in districts:
+		var dl: DistrictLayout = dist.layout
+		for s in dl.streets:
+			var cut := (s.rect as Rect2).intersection(dl.play_area.grow(60.0))
+			if cut.has_area():
+				streets.append({"name": s.name, "rect": cut})
+	for s in streets:
 		var r: Rect2 = s.rect
-		if not r.intersects(view) or r.position.x > layout.play_area.end.x:
+		if not r.intersects(view):
 			continue
 		var label := DistrictLayout.short_name(s.name).to_upper()
 		if r.size.x > r.size.y:

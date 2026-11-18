@@ -103,7 +103,7 @@ func test_a_night_of_dangerous_company() -> void:
 	await wait_physics_frames(20)
 	# the map
 	main._unhandled_input(_key(CityInput.MAP))
-	assert_true(main.hud.ward_map.visible)
+	assert_true(main.hud.city_map.visible)
 	main._unhandled_input(_key(CityInput.MAP))
 	# home to bed: a new night
 	await talk_to("home", "bed")

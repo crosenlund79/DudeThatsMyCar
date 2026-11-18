@@ -23,7 +23,7 @@ var place_label: Label
 var purse_label: Label
 var minimap: Minimap
 ## M006: the whole ward (M), and how Danny is (C).
-var ward_map: WardMap
+var city_map: CityMap
 var status_screen: StatusScreen
 ## M007: a fistfight's dial over the street.
 var fight_dial: FightDial
@@ -203,9 +203,9 @@ func add_minimap(layout: DistrictLayout) -> void:
 	add_child(minimap)
 	minimap.setup(layout, resolver, _panel_style(), _font)
 	move_child(minimap, 0)  # under the dialogue panel and notices
-	ward_map = WardMap.new()
-	add_child(ward_map)
-	ward_map.setup(minimap, _font)
+	city_map = CityMap.new()
+	add_child(city_map)
+	city_map.setup(minimap, _font)
 	status_screen = StatusScreen.new()
 	add_child(status_screen)
 	status_screen.setup(resolver, _font)
@@ -222,11 +222,12 @@ func show_status(on: bool, condition: BodyCondition = null) -> void:
 		status_screen.show_condition(condition)
 
 
-## The ward map open (true) or closed.
-func show_map(on: bool) -> void:
-	ward_map.visible = on
+## The city map open (true) or closed (M008: on Danny, with the mouse to drag it round).
+func show_map(on: bool, danny: Vector2 = Vector2.ZERO, district: Rect2 = Rect2()) -> void:
+	city_map.visible = on
 	if on:
-		ward_map.layout_for(get_viewport().get_visible_rect().size)
+		city_map.layout_for(get_viewport().get_visible_rect().size)
+		city_map.open_on(danny, district if district.has_area() else city_map.city_rect)
 
 
 ## The clock at the top of the screen: "NIGHT 2   ·   11:40 PM", and a
@@ -384,8 +385,8 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 	pause_panel.position = (screen - pause_panel.size) * 0.5
 	if minimap != null:
 		minimap.position = Vector2(18, screen.y - Minimap.SIZE.y - 18)
-	if ward_map != null and ward_map.visible:
-		ward_map.layout_for(screen)
+	if city_map != null and city_map.visible:
+		city_map.layout_for(screen)
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		wake_screen.size = screen

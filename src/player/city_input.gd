@@ -19,11 +19,13 @@ const HELP := "help"
 const QUIT := "quit"
 const MAP := "map"
 const STATUS := "status"
+## M008: on the city map, back to Danny.
+const RECENTRE := "map_recentre"
 const CHOICES := ["choice_1", "choice_2", "choice_3", "choice_4"]
 
 const KEYS := {
 	UP: [KEY_W, KEY_UP], DOWN: [KEY_S, KEY_DOWN], LEFT: [KEY_A, KEY_LEFT], RIGHT: [KEY_D, KEY_RIGHT],
-	INTERACT: [KEY_E], HANDBRAKE: [KEY_SPACE], MENU: [KEY_ESCAPE], HELP: [KEY_F1], QUIT: [KEY_Q], MAP: [KEY_M], STATUS: [KEY_C],
+	INTERACT: [KEY_E], HANDBRAKE: [KEY_SPACE], MENU: [KEY_ESCAPE], HELP: [KEY_F1], QUIT: [KEY_Q], MAP: [KEY_M], STATUS: [KEY_C], RECENTRE: [KEY_R],
 	"choice_1": [KEY_1, KEY_KP_1], "choice_2": [KEY_2, KEY_KP_2], "choice_3": [KEY_3, KEY_KP_3], "choice_4": [KEY_4, KEY_KP_4],
 }
 

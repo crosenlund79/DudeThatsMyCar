@@ -55,7 +55,7 @@ func test_one_night_one_problem() -> void:
 	await press_e()
 	# the map: where to go now
 	main._unhandled_input(_key(CityInput.MAP))
-	assert_eq(main.hud.ward_map.job_at, main.RIVAL_POST[0])
+	assert_eq(main.hud.city_map.job_at, main.RIVAL_POST[0])
 	main._unhandled_input(_key(CityInput.MAP))
 	# Lefty Moran: walk up to him and press E
 	var lefty: Rival = main.rival
@@ -139,6 +139,6 @@ func test_one_night_one_problem() -> void:
 	assert_eq(main.rackets.job.attempts.size(), 1)
 	assert_true(main.rackets.job.learned.has("tip"))
 	main._unhandled_input(_key(CityInput.MAP))
-	assert_string_contains(main.hud.ward_map.job_text, "done")
+	assert_string_contains(main.hud.city_map.job_text, "done")
 	main._unhandled_input(_key(CityInput.MAP))
 	main.save_path = ""

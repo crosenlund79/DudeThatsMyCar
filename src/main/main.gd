@@ -151,6 +151,7 @@ func _ready() -> void:
 	world.district_ready.connect(_on_district_ready)
 	world.district_unloading.connect(_on_district_unloading)
 	world.district_entered.connect(_on_district_entered)
+	_load_districts()
 	_park_cars()
 	thefts = CarThefts.new(layout.cars)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
@@ -248,7 +249,12 @@ func _ready() -> void:
 	hud.add_minimap(layout)
 	var morgue := layout.building_named("The Morgue")
 	if morgue >= 0:
-		hud.ward_map.add_landmark(layout.buildings[morgue].rect.get_center(), "The Morgue", resolver.get_texture("ui/marker_morgue"))
+		hud.city_map.add_landmark(layout.buildings[morgue].rect.get_center(), "The Morgue", resolver.get_texture("ui/marker_morgue"))
+	# M008: the neighbouring districts on the maps, painted from their plans (not built)
+	for id in world.order:
+		if id != layout.id:
+			hud.minimap.add_district(world.layouts[id])
+	hud.city_map.refresh_districts()
 	player.interaction = _interact
 	player.conversation = _converse
 	hud.dialogue_choice.connect(_answer)
@@ -830,7 +836,34 @@ func save_game() -> void:
 		data["ward"] = {"out": ward_out.duplicate(), "rival": rival.to_dict()}
 	if walker != null and walker.gun != null:
 		data["gun"] = {"ammo": walker.gun.ammo, "spare": walker.gun.spare}
+	if world != null:
+		data["districts"] = _districts_to_save()
 	SaveGame.write(save_path, data)
+
+
+## M008: what each neighbouring district keeps for tonight - whether its beat
+## cop is down, and where - from the live district if it is loaded.
+func _districts_to_save() -> Dictionary:
+	var out := {}
+	for id in world.order:
+		if id == layout.id:
+			continue
+		var o: PoliceOfficer = _districts.get(id, {}).get("officer")
+		var past: Dictionary = world.state.get(id, {}).get("officer", {})
+		if o != null and is_instance_valid(o):
+			past = {"down": o.is_down(), "pos": o.body.global_position, "night": rackets.night}
+		if past.get("down", false):
+			out[id] = {"officer": {"down": true, "x": past.pos.x, "y": past.pos.y, "night": int(past.night)}}
+	return out
+
+
+## M008: tonight's district state from the save (an earlier night's is forgotten).
+func _load_districts() -> void:
+	var ds: Dictionary = _saved.get("districts", {})
+	for id in ds:
+		var o: Dictionary = ds[id].get("officer", {})
+		if world.layouts.has(id) and int(o.get("night", -1)) == rackets.night and o.get("down", false):
+			world.state[id] = {"officer": {"down": true, "pos": Vector2(float(o.x), float(o.y)), "night": rackets.night}}
 
 
 func _load_game() -> void:
@@ -882,6 +915,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				or (event is InputEventMouseButton and event.pressed):
 			opening.skip()
 		return
+	if map_open and event.is_action_pressed(CityInput.RECENTRE):
+		hud.city_map.recentre()
+		return
 	if map_open and (event.is_action_pressed(CityInput.MAP) or event.is_action_pressed(CityInput.MENU)):
 		show_map(false)
 		return
@@ -917,10 +953,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func show_map(on: bool) -> void:
 	map_open = on
 	get_tree().paused = on
-	hud.show_map(on)
+	var here := world.layout_at(player.body().global_position)
+	hud.show_map(on, player.body().global_position, here.bounds if here != null else layout.bounds)
 	if on:
 		_job_on_map()
 		_update_map()
+	# M008: the mouse drags the city map round while it is open
+	if not command_source.is_valid():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if on else Input.MOUSE_MODE_HIDDEN
 
 
 ## Danny's own car (null if there is none).
@@ -1041,15 +1081,18 @@ func _job_on_map() -> void:
 			for pl in hud.minimap.places:
 				if pl.id == step.where:
 					at = pl.pos
-	hud.ward_map.set_job(String(step.get("text", "")), at, lefty_at)
+	hud.city_map.set_job(String(step.get("text", "")), at, lefty_at)
 
 
 func _update_map() -> void:
 	var mine := my_car()
 	var body := player.body()
-	hud.ward_map.set_state(body.global_position, walker.model.facing if player.on_foot() else player.car.model.heading,
-		mine.global_position if mine != null and mine != player.car else Vector2.INF, mine.rotation if mine != null else 0.0,
-		officer.body.global_position if not officer.is_down() else Vector2.INF)
+	var cops := []
+	for o in officers():
+		if not o.is_down():
+			cops.append(o.body.global_position)
+	hud.city_map.set_state(body.global_position, walker.model.facing if player.on_foot() else player.car.model.heading,
+		mine.global_position if mine != null and mine != player.car else Vector2.INF, mine.rotation if mine != null else 0.0, cops)
 
 
 ## On the pause screen: Up / Down choose a sound level, Left / Right change it
@@ -1112,6 +1155,11 @@ func _update_view(delta: float) -> void:
 	var door := interiors.door_at(walker.global_position) if player.on_foot() else {}
 	var facing := walker.model.facing if player.on_foot() else player.car.model.heading
 	var speed := 0.0 if player.on_foot() else player.car.speed() / player.car.model.params.max_speed
+	var others := []
+	for o in officers():
+		if o != officer and not o.is_down():
+			others.append({"pos": o.body.global_position, "hunting": o.brain.is_hunting()})
+	hud.minimap.other_police = others
 	hud.minimap.set_view(focus, facing, speed, officer.body.global_position if not officer.is_down() else Vector2.INF,
 		officer.brain.is_hunting(), delta)
 	var in_room: InteriorPlan = null

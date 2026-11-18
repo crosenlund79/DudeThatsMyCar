@@ -197,13 +197,13 @@ func _run(shots: Array) -> void:
 					main.rival.body.hit_by_bullet(main.rival.body.global_position, Vector2.RIGHT, main.walker)
 				await _frames(20)
 				await _shot("lefty_down")
-			"ward_map":
+			"ward_map", "city_map":
 				# M006: the map of the whole ward (M)
 				_teleport_walker(Vector2(2350, 600), PI * 0.3)
 				await _frames(10)
 				main.show_map(true)
 				await _frames(5)
-				await _shot("ward_map", false)
+				await _shot(s, false)
 				main.show_map(false)
 			"vet":
 				# M006: Doc Pettibone's surgery, Danny wounded and asking to be patched up
@@ -324,6 +324,20 @@ func _run(shots: Array) -> void:
 				_teleport_walker(at2, PI)
 				await _frames(40)
 				await _shot(s)
+			"city_map_wide", "city_map_square":
+				# M008: the city map zoomed out over all three districts, and looking at Halloran Square
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
+				await _frames(10)
+				main.show_map(true)
+				var cm: CityMap = main.hud.city_map
+				if s == "city_map_wide":
+					cm.zoom_at(cm.map_rect.get_center(), 100.0)
+				else:
+					cm.centre = Vector2(-3000, 900)
+					cm.zoom_at(cm.map_rect.get_center(), 0.8)
+				await _frames(5)
+				await _shot(s, false)
+				main.show_map(false)
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)

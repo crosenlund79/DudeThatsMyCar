@@ -75,5 +75,5 @@ func test_the_morgue_is_a_landmark() -> void:
 	var b: Dictionary = main.layout.buildings[i]
 	assert_true(b.signs.any(func(s: Dictionary) -> bool: return s.kind == "signs/morgue"), "its sign over the doors")
 	assert_null(main.layout.interior_at((b.rect as Rect2).get_center()), "nobody goes in")
-	var labels: Array = main.hud.ward_map.landmarks.map(func(l: Dictionary) -> String: return l.label)
+	var labels: Array = main.hud.city_map.landmarks.map(func(l: Dictionary) -> String: return l.label)
 	assert_has(labels, "The Morgue", "on the ward map")

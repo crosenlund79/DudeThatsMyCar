@@ -245,9 +245,13 @@ func _work(budget: int) -> void:
 	job.frames += 1
 	while job.next < job.steps.size():
 		var s0 := Time.get_ticks_usec()
-		(job.steps[job.next] as Callable).call()
+		var step: Callable = job.steps[job.next]
+		step.call()
 		job.next += 1
-		job.worst_step_usec = maxi(job.worst_step_usec, Time.get_ticks_usec() - s0)
+		var took := Time.get_ticks_usec() - s0
+		if took > job.worst_step_usec:
+			job.worst_step_usec = took
+			job["slowest"] = step.get_method()
 		if Time.get_ticks_usec() - t0 >= budget:
 			break
 	if job.next >= job.steps.size():
@@ -279,6 +283,7 @@ func _finish(job: Dictionary) -> void:
 	st.frames = job.frames
 	st.worst_frame_usec = job.worst_frame_usec
 	st.worst_step_usec = job.worst_step_usec
+	st.slowest_step = job.get("slowest", "")
 	_update_frontier()
 	district_ready.emit(job.id)
 

@@ -81,7 +81,7 @@ func test_the_map_says_what_next_and_rourke_hears_how_it_went() -> void:
 	assert_string_contains(main.hud.notice_label.text, "Lindqvist", "what next, as a notice")
 	await press_e()
 	main._unhandled_input(_key(CityInput.MAP))
-	var map: WardMap = main.hud.ward_map
+	var map: CityMap = main.hud.city_map
 	assert_string_contains(map.job_text, "Lindqvist")
 	var hardware: Vector2 = main.hud.minimap.places.filter(func(p: Dictionary) -> bool: return p.id == "hardware")[0].pos
 	assert_eq(map.job_at, hardware, "a ring round the hardware store")
