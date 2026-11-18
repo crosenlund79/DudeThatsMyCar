@@ -21,6 +21,11 @@ var landmarks: Array = []
 ## M008: how bright this district's street lamps burn (1 = the Riverside Ward),
 ## and smokestacks that smoke all night: {pos, height}.
 var lamp_energy := 1.0
+## M010: how dirty the streets are (1 = the industrial yards; StreetGrime), and
+## the district's scattered rubbish once made ({frame, pos, rot, scale}).
+var grime_level := 0.6
+var grime: Array = []
+var _grime_made := false
 var smoke: Array = []
 ## M009: places the city's own small troubles happen: {id, kinds (["argument",
 ## "exchange", "stop"]), pos, along (the line two people stand on, a unit
@@ -50,7 +55,7 @@ var rails: Array = []
 ## River water (Rect2) and solid quay railings along it ([from, to]).
 var water: Array = []
 var quays: Array = []
-## Solid board fences ([from, to]).
+## Solid fences ([from, to] or [from, to, kind]; M010 kinds: "boards" (the default), "chain", "iron").
 var fences: Array = []
 ## {rect, storeys, facade, roof, front (Vector2: the street side, ZERO = all
 ##  sides alike), props: [{kind, pos, rot}], signs: [{kind, pos, rot, lift}], name}
@@ -84,6 +89,24 @@ var cars: Array = []
 var police_beat := PackedVector2Array()
 var spawn := Vector2.ZERO
 var spawn_facing := 0.0
+
+
+## M010: the district's ground shadows (Shadows.ground), made the first time they are asked for.
+var _shadow_tris: Array = []
+
+
+func ground_shadows() -> Array:
+	if _shadow_tris.is_empty():
+		_shadow_tris = Shadows.ground(self)
+	return _shadow_tris
+
+
+## M010: the district's rubbish, scattered the first time it is asked for.
+func grime_items() -> Array:
+	if not _grime_made:
+		grime = StreetGrime.scatter(self)
+		_grime_made = true
+	return grime
 
 
 func building_height(b: Dictionary) -> float:

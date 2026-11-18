@@ -44,6 +44,7 @@ func _build() -> void:
 	d.bounds = Rect2(0, 0, WIDTH, HEIGHT)
 	d.play_area = Rect2(WEST_EDGE, EMBANKMENT_Y, WIDTH - WEST_EDGE, SOUTH_EDGE - EMBANKMENT_Y)
 	d.lamp_energy = 1.05
+	d.grime_level = 0.4  # M010: a residential quarter, swept now and then
 	_streets()
 	_blocks_and_alleys()
 	_square()

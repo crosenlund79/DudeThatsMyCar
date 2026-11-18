@@ -31,6 +31,13 @@ var _raised: Array = []
 ## Wet-street reflections of lamps: {node, pos, height}
 var _reflections: Array = []
 var _ground: Node2D
+## M010: fences standing up (their faces drawn in perspective like the walls).
+const FENCE_HEIGHT := 32.0  # a little taller than life, so its face reads from above
+const FENCE_REPEAT := 64.0
+const FENCE_ART := {"boards": "fences/boards", "chain": "fences/chain", "iron": "fences/iron"}
+var _fence_faces: Array = []
+var _fence_layer: DrawLayer
+var _view := Rect2()
 var _props: Node2D
 var _lights: Node2D
 ## Layout index of each entry in `buildings` (they are built lowest first).
@@ -163,9 +170,15 @@ func _ground_details() -> void:
 		s.scale *= float(dcl.get("scale", 1.0))
 		if dcl.kind == "decals/puddle":
 			s.modulate = Color(1, 1, 1, 0.85)
+	_shadow_mesh = Shadows.mesh_of(layout.ground_shadows())
 	var ao := DrawLayer.new(_draw_building_shadows, Layers.Z_SHADOW, false, 0)
 	ao.name = "BuildingShadows"
 	_ground.add_child(ao)
+	# M010: the street's rubbish, all of it one layer drawn once from one sheet (no collision;
+	# scattered at start-up with the district's other data)
+	var grime := DrawLayer.new(_draw_grime, Layers.Z_DECAL + 1)
+	grime.name = "Grime"
+	_ground.add_child(grime)
 
 
 ## Rounded rectangle outline (clockwise on screen).
@@ -315,16 +328,102 @@ func _line(points: PackedVector2Array, t: Texture2D, logical: String, z: int) ->
 
 
 ## Soft dark band round every building's foot (contact shadow / grime).
+## M010: and the shadows cast the way every shadow falls (Shadows.DIR) from the
+## buildings and the fences - one mesh, made with the district's data - and soft
+## shadows under the solid street furniture.
 func _draw_building_shadows(ci: CanvasItem) -> void:
-	var dark := Color(0.0, 0.0, 0.02, 0.55)
-	var clear := Color(0.0, 0.0, 0.02, 0.0)
-	var w := 18.0
-	for b in layout.buildings:
-		var c := rect_points(b.rect)
-		var o := rect_points((b.rect as Rect2).grow(w))
-		for i in 4:
-			var j := (i + 1) % 4
-			ci.draw_polygon(PackedVector2Array([c[i], c[j], o[j], o[i]]), PackedColorArray([dark, dark, clear, clear]))
+	if _shadow_mesh == null:
+		_shadow_mesh = Shadows.mesh_of(layout.ground_shadows())
+	ci.draw_mesh(_shadow_mesh, null)
+	var grid := Shadows.lamp_grid(layout.lamps + layout.alley_lamps)
+	var blob := SoftShadow.texture()
+	for pr in layout.props:
+		var size := Vector2.ZERO
+		if pr.has("box"):
+			size = pr.box
+		elif float(pr.get("radius", 0.0)) > 0.0:
+			size = Vector2.ONE * float(pr.radius) * 2.0
+		if size == Vector2.ZERO or float(pr.get("height", 0.0)) > 0.0:
+			continue
+		var at: Vector2 = pr.pos + Shadows.DIR * (minf(size.x, size.y) * 0.3 + 3.0)
+		ci.draw_set_transform(at, float(pr.get("rot", 0.0)), Vector2.ONE)
+		var s2 := size * 1.2 + Vector2(6, 6)
+		ci.draw_texture_rect(blob, Rect2(-s2 * 0.5, s2), false, Color(1, 1, 1, 0.75 * Shadows.fill(pr.pos, grid)))
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+var _shadow_mesh: ArrayMesh
+
+
+## M010: the street's rubbish (StreetGrime), each item a frame of one sheet.
+func _draw_grime(ci: CanvasItem) -> void:
+	var sheet := tex(StreetGrime.SHEET)
+	if sheet == null:
+		return
+	var fw := sheet.get_width() / float(StreetGrime.FRAMES)
+	var fh := float(sheet.get_height())
+	for it in layout.grime_items():
+		var size := StreetGrime.SIZE * float(it.scale)
+		ci.draw_set_transform(it.pos, it.rot, Vector2.ONE)
+		ci.draw_texture_rect_region(sheet, Rect2(-size * 0.5, -size * 0.5, size, size), Rect2(int(it.frame) * fw, 0, fw, fh),
+			Color(0.95, 0.93, 0.9))
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## M010: a fence as seen from above, where the camera looks straight down on it: a dark
+## base, a lit top rail and posts at intervals, in its own materials - so you can see
+## where it stands (drawn once).
+func _draw_fence_tops(ci: CanvasItem) -> void:
+	for f in _fence_faces:
+		var a: Vector2 = f.a
+		var b: Vector2 = f.b
+		var along := (b - a).normalized()
+		var length := a.distance_to(b)
+		match String(f.kind):
+			"chain":
+				ci.draw_line(a, b, Color(0.05, 0.05, 0.06, 0.8), 9.0)
+				ci.draw_line(a, b, Color(0.62, 0.66, 0.68, 0.6), 5.0)  # the mesh
+				ci.draw_line(a, b, Color(0.86, 0.89, 0.9), 2.0)  # the top pipe
+				_posts(ci, a, along, length, 48.0, 3.8, Color(0.9, 0.92, 0.94), true)
+			"iron":
+				ci.draw_line(a, b, Color(0.04, 0.04, 0.05, 0.85), 6.0)
+				ci.draw_line(a, b, Color(0.32, 0.34, 0.38), 2.2)
+				_posts(ci, a, along, length, 64.0, 4.0, Color(0.66, 0.64, 0.6), false)
+			_:
+				ci.draw_line(a, b, Color(0.05, 0.035, 0.025, 0.9), 14.0)
+				ci.draw_line(a, b, Color(0.42, 0.32, 0.22), 7.0)  # the planks' tops
+				ci.draw_line(a - along.orthogonal() * 3.0, b - along.orthogonal() * 3.0, Color(0.86, 0.72, 0.52), 1.8)  # the lit edge
+				_posts(ci, a, along, length, 32.0, 5.0, Color(0.6, 0.47, 0.33), false)
+
+
+func _posts(ci: CanvasItem, a: Vector2, along: Vector2, length: float, every: float, half: float, col: Color, round: bool) -> void:
+	var t := 0.0
+	while t <= length + 0.5:
+		var p := a + along * minf(t, length)
+		if round:
+			ci.draw_circle(p, half, col)
+		else:
+			ci.draw_rect(Rect2(p - Vector2(half, half), Vector2(half, half) * 2.0), col)
+			ci.draw_rect(Rect2(p - Vector2(half, half), Vector2(half, half) * 2.0), Color(0.08, 0.06, 0.05), false, 1.0)
+		t += every
+
+
+## M010: the fences' upright faces, in perspective (redrawn as the camera moves, only when near).
+func _draw_fence_faces(ci: CanvasItem) -> void:
+	for f in _fence_faces:
+		if not _view.grow(260.0).intersects(f.rect):
+			continue
+		var a: Vector2 = f.a
+		var b: Vector2 = f.b
+		var pts := PackedVector2Array([a, b, Perspective.project(b, FENCE_HEIGHT, eye, eye_height),
+			Perspective.project(a, FENCE_HEIGHT, eye, eye_height)])
+		if absf(BuildingView._area(pts)) < 1.0:
+			continue  # seen edge-on: its foot on the ground shows it
+		var u := a.distance_to(b) / FENCE_REPEAT
+		var uvs := PackedVector2Array([Vector2(0, 1), Vector2(u, 1), Vector2(u, 0), Vector2(0, 0)])
+		var foot := Color(0.78, 0.78, 0.8)
+		var top := Color(1.12, 1.1, 1.08)
+		ci.draw_polygon(pts, PackedColorArray([foot, foot, top, top]), uvs, f.tex)
 
 
 # ------------------------------------------------------------------ buildings
@@ -492,12 +591,25 @@ func _build_quays_fences_and_spill() -> void:
 		var a: Vector2 = q[0]
 		var b: Vector2 = q[1]
 		_solid_box((a + b) * 0.5, Vector2(a.distance_to(b), 6.0), (b - a).angle())
-	# M008: board fences round the yards (solid)
+	# M008: board fences round the yards (solid). M010: standing up where you can see them -
+	# boards, chain-link or iron railings - their faces drawn in perspective like the walls,
+	# along the same line as the collision
 	for f in layout.fences:
 		var fa: Vector2 = f[0]
 		var fb: Vector2 = f[1]
-		_strip(PackedVector2Array([fa, fb]), "city/fence", Layers.Z_PROP, false)
+		var kind: String = f[2] if (f as Array).size() > 2 else "boards"
+		if kind == "boards":
+			_strip(PackedVector2Array([fa, fb]), "city/fence", Layers.Z_PROP, false)
 		_solid_box((fa + fb) * 0.5, Vector2(fa.distance_to(fb), 8.0), (fb - fa).angle())
+		_fence_faces.append({"a": fa, "b": fb, "kind": kind, "tex": tex(FENCE_ART.get(kind, "fences/boards")),
+			"rect": Rect2(fa, Vector2.ZERO).expand(fb).grow(FENCE_HEIGHT)})
+	if not _fence_faces.is_empty():
+		_fence_layer = DrawLayer.new(_draw_fence_faces, Layers.Z_WALL)
+		_fence_layer.name = "FenceFaces"
+		_props.add_child(_fence_layer)
+		var tops := DrawLayer.new(_draw_fence_tops, Layers.Z_PROP + 1)
+		tops.name = "FenceTops"
+		_props.add_child(tops)
 	# warm light from shop windows on the pavement
 	for b in layout.buildings:
 		if not b.facade in SHOPFRONTS or b.front == Vector2.ZERO:
@@ -565,6 +677,9 @@ func _build_alley_lamps() -> void:
 func update_view(p_eye: Vector2, p_eye_height: float, view: Rect2) -> void:
 	eye = p_eye
 	eye_height = p_eye_height
+	_view = view
+	if _fence_layer != null and _fence_faces.any(func(f: Dictionary) -> bool: return view.grow(260.0).intersects(f.rect)):
+		_fence_layer.queue_redraw()
 	for b in buildings:
 		b.set_view(eye, eye_height, view)
 	var near := view.grow(260.0)

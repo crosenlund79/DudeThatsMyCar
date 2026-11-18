@@ -42,6 +42,7 @@ func setup(p_vehicle: VehicleType, texture: Texture2D, paint_name: String = "") 
 	var shadow_tex := SoftShadow.texture()
 	shadow.texture = shadow_tex
 	shadow.scale = (vehicle.size + Vector2(14, 12)) / Vector2(shadow_tex.get_size())
+	aim_shadow()
 	if vehicle.collision_chamfer >= 0.0:
 		# M009: a long boxy body (lorry, bus) - a box with its corners cut, along +X
 		var h := vehicle.collision * 0.5
@@ -68,6 +69,14 @@ func place(at: Transform2D) -> void:
 		model.heading = global_rotation
 		model.velocity = Vector2.ZERO
 		model.yaw_rate = 0.0
+	aim_shadow()
+
+
+## M010: the soft shadow under the car falls the same way as every other
+## shadow in the city (Shadows.DIR), whichever way the car faces.
+func aim_shadow() -> void:
+	if shadow != null:
+		shadow.position = (Shadows.DIR * 6.0).rotated(-global_rotation)
 
 
 func clear_command() -> void:
@@ -120,3 +129,4 @@ func _physics_process(_delta: float) -> void:
 		if motion.length_squared() < 0.0001:
 			break
 	model.position = global_position
+	aim_shadow()

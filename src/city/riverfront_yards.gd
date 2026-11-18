@@ -42,6 +42,7 @@ func _build() -> void:
 	d.bounds = Rect2(0, 0, WIDTH, HEIGHT)
 	d.play_area = Rect2(WEST_EDGE, 0, RIVER_X - WEST_EDGE, EMBANKMENT_Y)
 	d.lamp_energy = 0.78
+	d.grime_level = 1.0  # M010: coal dust, soot and debris: the dirtiest streets in the city
 	_streets()
 	_blocks()
 	_river()
@@ -98,8 +99,8 @@ func _works() -> void:
 	d.lots.append({"rect": Rect2(2591, front_y + 300, 628, 727 - front_y - 300), "kind": "lot"})
 	_building(Rect2(2620, 560, 46, 46), 8, "stack", "tar", Vector2.ZERO, {"name": "Tannery stack", "bare": true})
 	d.smoke.append({"pos": Vector2(2643, 583), "height": 8 * DistrictLayout.STOREY + 26.0})
-	d.fences.append([Vector2(2591, front_y + 300), Vector2(2591, 727)])
-	d.fences.append([Vector2(3219, front_y + 300), Vector2(3219, 727)])
+	d.fences.append([Vector2(2591, front_y + 300), Vector2(2591, 727), "chain"])  # M010: chain-link round the works
+	d.fences.append([Vector2(3219, front_y + 300), Vector2(3219, 727), "chain"])
 	# south of the lane: a cooperage and a boiler house facing Foundry Street
 	_row(1831, FOUNDRY - HALF - 46.0, 793, [[420, 2, "warehouse", "tin"], [26], [380, 3, "factory", "gravel"], [24],
 		[538, 2, "brick_brown", "tar", {"name": "Dutch's Night Lunch", "awning": "red", "depth": 140}]])

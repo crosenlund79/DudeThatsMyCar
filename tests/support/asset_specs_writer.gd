@@ -11,6 +11,7 @@ const KIND_TEXT := {
 	"strip": "seamless left-right, drawn along a line",
 	"facade": "seamless left-right wall: top half one upper storey, bottom half the ground storey",
 	"light": "additive night light; transparent where dark",
+	"fence": "seamless left-right fence face, drawn upright along a fence line (ground at the bottom edge)",
 }
 
 
@@ -53,6 +54,8 @@ static func render() -> String:
 				world = "%d px wide" % int(s.strip_width)
 			"facade":
 				world = "%d px per repeat" % int(AssetCatalog.FACADE_REPEAT)
+			"fence":
+				world = "%d px per repeat, %d px high" % [int(s.fence_repeat), int(s.fence_height)]
 			"sheet":
 				world = "%d frames, each %dx%d" % [s.frames, int(s.display_size.x), int(s.display_size.y)]
 			_:

@@ -63,9 +63,11 @@ static func create(resolver: AssetResolver, logical: String = "characters/gangst
 	w.add_child(shape)
 	var shadow := Sprite2D.new()
 	shadow.texture = SoftShadow.texture()
-	shadow.scale = Vector2(36, 36) / Vector2(shadow.texture.get_size())
-	shadow.position = Vector2(2, 3)
-	shadow.modulate = Color(1, 1, 1, 0.8)
+	# M010: a little longer than wide, cast the way every shadow falls (Shadows.DIR)
+	shadow.scale = Vector2(42, 28) / Vector2(shadow.texture.get_size())
+	shadow.rotation = Shadows.DIR.angle()
+	shadow.position = Shadows.DIR * 6.0
+	shadow.modulate = Color(1, 1, 1, 0.85)
 	w.add_child(shadow)
 	w.sprite = Sprite2D.new()
 	w.sprite.name = "Sprite"

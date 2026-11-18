@@ -10,4 +10,8 @@ extends RefCounted
 
 ## Every district's layout, the Riverside Ward's (already made) first.
 static func layouts(riverside: DistrictLayout) -> Array:
-	return [riverside, RiverfrontYards.create(), HalloranSquare.create()]
+	var all := [riverside, RiverfrontYards.create(), HalloranSquare.create()]
+	for l in all:
+		(l as DistrictLayout).grime_items()  # M010: scattered once at start-up (data, like the map images)
+		(l as DistrictLayout).ground_shadows()
+	return all
