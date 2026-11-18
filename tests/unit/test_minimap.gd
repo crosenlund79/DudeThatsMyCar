@@ -66,6 +66,9 @@ func test_every_marked_place_is_on_the_map_with_its_own_badge() -> void:
 		by_id[p.id] = p
 	for plan in d.interiors:
 		var ip: InteriorPlan = plan
+		if ip.marker == "":
+			assert_false(by_id.has(ip.id), "%s (M010: a back room) has no badge" % ip.id)
+			continue
 		assert_true(by_id.has(ip.id), "%s is on the map" % ip.id)
 		assert_eq((by_id[ip.id].tex as Texture2D).resource_path.get_file(), "template_%s.png" % ip.marker.get_file(),
 			"%s: the same badge as over its door" % ip.id)

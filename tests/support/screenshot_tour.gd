@@ -554,6 +554,38 @@ func _run(shots: Array) -> void:
 				await _frames(40)
 				await _shot("truck_found", false)
 				cmd = PlayerCommand.new()
+			"back_room", "poker_game":
+				# M010: the Copper Owl's back room - the regulars at the green-shaded lamp; poker_game:
+				# Danny sat in, a few hands on, his turn on the flop or later
+				main.weather.force("clear")
+				var bplan: InteriorPlan = main.interiors.view_of("back_room").plan
+				_teleport_walker(bplan.spots[0].pos + Vector2(30, 0), -PI / 2 - 0.5)
+				await _frames(30)
+				if s == "poker_game":
+					main.rackets.money = 1500
+					_teleport_walker(bplan.spots[0].pos, -PI / 2)
+					await _frames(3)
+					main._interact(main.walker.global_position)
+					await _frames(5)
+					var pv: PokerView = main.hud.poker_view
+					pv.choose_buy_in(1)
+					pv.think = Vector2(0.05, 0.1)
+					pv.between_hands = 0.3
+					var dealt := 0
+					for f in 4000:
+						var tb: Holdem = main.poker.table
+						if tb == null:
+							break
+						if tb.running() and tb.to_act == main.poker.danny:
+							if main.poker.hands >= 3 and tb.street >= Holdem.FLOP:
+								break
+							pv.act(2 if tb.legal(main.poker.danny).check else (2 if tb.legal(main.poker.danny).call <= 20 else 1))
+						await _frames(1)
+					pv.think = Vector2(0.7, 1.4)
+					await _frames(10)
+				await _shot(s, false)
+				if s == "poker_game":
+					main.leave_poker()
 			"park", "sitting":
 				# M010: Halloran Park in the middle of the square - lawns, paths, railings, benches;
 				# sitting: Danny on a bench by the north path, the night going by

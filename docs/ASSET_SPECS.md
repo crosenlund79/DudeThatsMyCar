@@ -101,11 +101,13 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/bench` | `custom/graphics/interiors/bench.png` | 160x40 | sprite (image, scaled to its display size) | 70x18 | Waiting bench with a newspaper. |
 | `interiors/cabinet` | `custom/graphics/interiors/cabinet.png` | 64x52 | sprite (image, scaled to its display size) | 30x24 | Tall cupboard (Sal keeps the rye in it). |
 | `interiors/card_table` | `custom/graphics/interiors/card_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Back-room card table with two chairs, centred. |
+| `interiors/chair` | `custom/graphics/interiors/chair.png` | 36x36 | sprite (image, scaled to its display size) | 16x16 | M010 a bentwood chair, its back at the top (turned by the game). |
 | `interiors/coat_rack` | `custom/graphics/interiors/coat_rack.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Coat stand with two coats. |
 | `interiors/door` | `custom/graphics/interiors/door.png` | 64x12 | sprite (image, scaled to its display size) | 28x5 | Door leaf from above; hinge at the left end (stretched to the doorway). |
 | `interiors/exam_table` | `custom/graphics/interiors/exam_table.png` | 128x64 | sprite (image, scaled to its display size) | 62x31 | M006: the vet's steel examining table with a sheet and a strap. |
 | `interiors/flat_table` | `custom/graphics/interiors/flat_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Kitchen table with two chairs, centred. |
 | `interiors/floor_boards` | `custom/graphics/interiors/floor_boards.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Worn pine floorboards (shops, the flat). |
+| `interiors/floor_carpet` | `custom/graphics/interiors/floor_carpet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | M010 worn wine-red carpet with a faded diamond lattice (the back room). |
 | `interiors/floor_parquet` | `custom/graphics/interiors/floor_parquet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Oak parquet (the Copper Owl). |
 | `interiors/floor_tile` | `custom/graphics/interiors/floor_tile.png` | 128x128 | tile (seamless in both directions) | 64 px per repeat | Black-and-cream checkerboard tile (the barbershop). |
 | `interiors/gun_crate` | `custom/graphics/interiors/gun_crate.png` | 112x56 | sprite (image, scaled to its display size) | 50x25 | Open crate of wrapped pistols and boxes of rounds. |
@@ -114,6 +116,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/microphone` | `custom/graphics/interiors/microphone.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | M006: the Bird's ribbon microphone on its stand, from above; the grille faces the singer (right). |
 | `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
 | `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
+| `interiors/poker_table` | `custom/graphics/interiors/poker_table.png` | 160x160 | sprite (image, scaled to its display size) | 72x72 | M010 the Copper Owl's back-room poker table: baize, rail, chips, cards, an ashtray (the chairs are separate), centred. |
 | `interiors/produce` | `custom/graphics/interiors/produce.png` | 132x56 | sprite (image, scaled to its display size) | 60x25 | Three crates of apples, potatoes and cabbages. |
 | `interiors/radio` | `custom/graphics/interiors/radio.png` | 44x34 | sprite (image, scaled to its display size) | 18x14 | Cathedral radio, grille towards the bottom. |
 | `interiors/rug` | `custom/graphics/interiors/rug.png` | 160x100 | sprite (image, scaled to its display size) | 72x45 | Oval rag rug (flat on the floor). |
@@ -121,6 +124,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/shelf_grocery` | `custom/graphics/interiors/shelf_grocery.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of tins and boxes. |
 | `interiors/shelf_hardware` | `custom/graphics/interiors/shelf_hardware.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of paint, rope, nails and tools. |
 | `interiors/shop_counter` | `custom/graphics/interiors/shop_counter.png` | 220x56 | sprite (image, scaled to its display size) | 96x24 | Shop counter with cash register and scale; the shopkeeper's side at the top. |
+| `interiors/sideboard` | `custom/graphics/interiors/sideboard.png` | 112x40 | sprite (image, scaled to its display size) | 56x20 | M010 a sideboard of bottles, glasses and a cigar box, wall side at the top. |
+| `interiors/smoke` | `custom/graphics/interiors/smoke.png` | 128x128 | sprite (image, scaled to its display size) | 110x110 | M010 a soft drift of cigar smoke hanging over the card table (mostly transparent). |
 | `interiors/stool` | `custom/graphics/interiors/stool.png` | 36x36 | sprite (image, scaled to its display size) | 14x14 | Bar stool. |
 | `interiors/stove` | `custom/graphics/interiors/stove.png` | 60x56 | sprite (image, scaled to its display size) | 26x24 | Small kitchen range with a kettle. |
 | `interiors/table_club` | `custom/graphics/interiors/table_club.png` | 128x128 | sprite (image, scaled to its display size) | 56x56 | Round club table with lamp and three chairs, centred. |
@@ -185,7 +190,10 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/tannery` | `custom/graphics/signs/tannery.png` | 384x64 | sprite (image, scaled to its display size) | 230x38 | M008: Great Lakes Tanning Co., painted roof lettering, transparent. |
 | `signs/vet` | `custom/graphics/signs/vet.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M006: Pettibone Animal Hospital, painted roof lettering, transparent. |
 | `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |
+| `ui/card_back` | `custom/graphics/ui/card_back.png` | 72x100 | sprite (image, scaled to its display size) | 50x70 | M010 the back of the Copper Owl's deck (screen px). |
+| `ui/card_face` | `custom/graphics/ui/card_face.png` | 72x100 | sprite (image, scaled to its display size) | 50x70 | M010 a blank card face (screen px), aged cream with a thin border; the game prints the rank and pips. |
 | `ui/crosshair` | `custom/graphics/ui/crosshair.png` | 64x64 | sprite (image, scaled to its display size) | 30x30 | Mouse aim reticle (screen px). |
+| `ui/dealer_button` | `custom/graphics/ui/dealer_button.png` | 48x48 | sprite (image, scaled to its display size) | 24x24 | M010 the dealer's button. |
 | `ui/fight_dial` | `custom/graphics/ui/fight_dial.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 fistfight dial (screen px): worn brass ring, copper bevel, cream ticks; the zone is lit by the game on the dark track at 92-104 px from the middle; top = where the needle starts. |
 | `ui/fight_needle` | `custom/graphics/ui/fight_needle.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 the dial's needle, pointing up from the middle of the same 256 x 256 frame (it turns about the centre). |
 | `ui/map_player` | `custom/graphics/ui/map_player.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Minimap: you, an arrowhead pointing right (screen px). |
@@ -198,6 +206,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/marker_morgue` | `custom/graphics/ui/marker_morgue.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 landmark badge: The Morgue (slate grey: a landmark, not a business; ward map only). |
 | `ui/marker_vet` | `custom/graphics/ui/marker_vet.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 place marker: Pettibone Animal Hospital (a paw print). |
 | `ui/panel` | `custom/graphics/ui/panel.png` | 96x96 | sprite (image, scaled to its display size) | 96x96 | Nine-patch panel, 24 px margins. |
+| `ui/poker_chip` | `custom/graphics/ui/poker_chip.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | M010 a clay chip from above, light grey (tinted by the game for its value). |
+| `ui/poker_felt` | `custom/graphics/ui/poker_felt.png` | 960x440 | sprite (image, scaled to its display size) | 880x400 | M010 the card table on screen: green baize in an oval padded rail (screen px). |
 | `ui/search` | `custom/graphics/ui/search.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he is looking for you. |
 | `ui/status_head` | `custom/graphics/ui/status_head.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: Danny from the front, his head and hat only (all six pieces line up on one canvas; light grey, tinted by the game). |
 | `ui/status_left_arm` | `custom/graphics/ui/status_left_arm.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his left arm (on the viewer's right). |
@@ -205,6 +215,10 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/status_right_arm` | `custom/graphics/ui/status_right_arm.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his right arm, the gun arm (viewer's left). |
 | `ui/status_right_leg` | `custom/graphics/ui/status_right_leg.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his right leg. |
 | `ui/status_torso` | `custom/graphics/ui/status_torso.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his body. |
+| `ui/suit_clubs` | `custom/graphics/ui/suit_clubs.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | M010 a club pip. |
+| `ui/suit_diamonds` | `custom/graphics/ui/suit_diamonds.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | M010 a diamond pip. |
+| `ui/suit_hearts` | `custom/graphics/ui/suit_hearts.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | M010 a heart pip. |
+| `ui/suit_spades` | `custom/graphics/ui/suit_spades.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | M010 a spade pip (screen px, scaled by the game). |
 | `weapons/pistol` | `custom/graphics/weapons/pistol.png` | 48x20 | sprite (image, scaled to its display size) | 15x6 | .45 automatic from above, muzzle to the right; the left end sits in the hand. |
 
 ## Audio (OGG, WAV or MP3)
@@ -231,6 +245,8 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `places/door` | `custom/audio/places/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Going in or out by a door: latch, hinges, the door falling to. |
 | `places/register` | `custom/audio/places/register.ogg` (or .wav / .mp3) | `template_register.ogg` | no | Effects | A shop's till when money changes hands. |
 | `places/shop_bell` | `custom/audio/places/shop_bell.ogg` (or .wav / .mp3) | `template_shop_bell.ogg` | no | Effects | The bell over a shop door (barber, grocer, hardware). |
+| `poker/cards` | `custom/audio/poker/cards.ogg` (or .wav / .mp3) | `template_cards.ogg` | no | Effects | M010: a card dealt across the baize (a flick and a slide). |
+| `poker/chips` | `custom/audio/poker/chips.ogg` (or .wav / .mp3) | `template_chips.ogg` | no | Effects | M010: chips pushed into the pot at the back-room card table (under 0.5 s). |
 | `police/whistle` | `custom/audio/police/whistle.ogg` (or .wav / .mp3) | `template_whistle.wav` | no | Effects | The officer's whistle when he spots you. |
 | `vehicles/door` | `custom/audio/vehicles/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Getting into or out of a car: the handle and a heavy door shutting. |
 | `vehicles/engine_load` | `custom/audio/vehicles/engine_load.ogg` (or .wav / .mp3) | `template_engine_load.wav` | yes | Engine | Engine load layer, louder while accelerating. |

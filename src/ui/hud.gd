@@ -27,6 +27,7 @@ var city_map: CityMap
 var status_screen: StatusScreen
 ## M007: a fistfight's dial over the street.
 var fight_dial: FightDial
+var poker_view: PokerView
 var clock_panel: PanelContainer
 var clock_label: Label
 var home_label: Label
@@ -226,6 +227,9 @@ func add_minimap(layout: DistrictLayout) -> void:
 	fight_dial = FightDial.new()
 	add_child(fight_dial)
 	fight_dial.setup(resolver, _font)
+	poker_view = PokerView.new()
+	add_child(poker_view)
+	poker_view.setup(resolver, _font)
 
 
 ## The status screen open (true, showing `condition`) or closed.
@@ -401,6 +405,8 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 		minimap.position = Vector2(18, screen.y - Minimap.SIZE.y - 18)
 	if city_map != null and city_map.visible:
 		city_map.layout_for(screen)
+	if poker_view != null and poker_view.visible and poker_view.size != screen:
+		poker_view.layout_for(screen)
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		wake_screen.size = screen

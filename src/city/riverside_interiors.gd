@@ -7,6 +7,7 @@ extends RefCounted
 
 static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(copper_owl(d))
+	d.interiors.append(back_room(d))
 	d.interiors.append(barber_shop(d))
 	d.interiors.append(grocery(d))
 	d.interiors.append(hardware_store(d))
@@ -32,6 +33,7 @@ static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 	p.doors = [
 		{"side": Vector2.DOWN, "at": 2291.0, "width": 30.0},  # under the canopy on Marlowe Avenue
 		{"side": Vector2.UP, "at": 2400.0, "width": 26.0},  # back door to the alley
+		{"side": Vector2.LEFT, "at": 269.0, "width": 26.0, "inner": true},  # M010: through to the back room
 	]
 	p.furniture = [
 		{"kind": "interiors/back_bar", "pos": Vector2(2249, 186), "box": Vector2(180, 18)},
@@ -68,6 +70,51 @@ static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 		{"id": "bird", "pos": Vector2(2343, 336), "radius": 22.0, "prompt": "Talk to the Bird"},
 	]
 	return p
+
+
+## M010: the Copper Owl's back room, through the door in the club's west wall
+## (in the back of the building next door, which keeps its outside look):
+## worn carpet, one green-shaded lamp low over the card table, a sideboard of
+## bottles, cigar smoke. Three regulars play No-Limit Hold'em here every night
+## (PokerNight); the empty chair facing the door is for whoever sits in. A
+## fourth man takes a chair that comes free, once a night.
+static func back_room(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("back_room", "The Copper Owl's Back Room")
+	p.building = d.building_at(Vector2(2066, 300))
+	p.building_rect = d.buildings[p.building].rect  # x 1981..2151, y 168..439
+	p.room = Rect2(1981, 168, 170, 150)  # the back of the house; the front stays shut
+	p.floor = "interiors/floor_carpet"
+	p.doors = [{"side": Vector2.RIGHT, "at": 269.0, "width": 26.0, "inner": true}]
+	var t := TABLE
+	p.furniture = [
+		{"kind": "interiors/poker_table", "pos": t, "radius": 28.0},
+		{"kind": "interiors/chair", "pos": t + Vector2(0, 44), "rot": PI},  # Danny's, facing the door's side
+		{"kind": "interiors/chair", "pos": t + Vector2(-44, 0), "rot": -PI / 2},
+		{"kind": "interiors/chair", "pos": t + Vector2(0, -44)},
+		{"kind": "interiors/chair", "pos": t + Vector2(44, 0), "rot": PI / 2},
+		{"kind": "interiors/sideboard", "pos": Vector2(1995, 214), "rot": -PI / 2, "box": Vector2(56, 20)},
+		{"kind": "interiors/coat_rack", "pos": Vector2(2136, 186), "radius": 6.0},
+		{"kind": "interiors/palm", "pos": Vector2(1998, 296), "radius": 8.0},
+		{"kind": "interiors/smoke", "pos": t + Vector2(6, -4), "z": 11},
+	]
+	p.lamps = [
+		{"pos": t, "color": Color(0.86, 1.0, 0.72), "energy": 1.2, "radius": 120.0},  # the green-shaded lamp
+		{"pos": Vector2(2000, 214), "color": Color(1.0, 0.68, 0.42), "energy": 0.45, "radius": 70.0},
+	]
+	p.people = [
+		{"id": "irv", "name": "Irv Feldman", "look": "characters/clerk", "pos": t + Vector2(-44, 0), "facing": 0.0},
+		{"id": "red", "name": "Red Gallagher", "look": "characters/worker", "pos": t + Vector2(0, -44), "facing": PI / 2},
+		{"id": "pete", "name": "Lucky Pete", "look": "characters/patron_man", "pos": t + Vector2(44, 0), "facing": PI},
+		{"id": "moe", "name": "Moe Brandt", "look": "characters/barber", "pos": t + Vector2(0, -44), "facing": PI / 2},
+	]
+	p.spots = [
+		{"id": "poker", "pos": t + Vector2(0, 54), "radius": 24.0, "prompt": "Sit in at the card game"},
+	]
+	return p
+
+
+## The back room's card table; the chairs stand round it 44 px out (Danny's to the south).
+const TABLE := Vector2(2062, 243)
 
 
 ## Sal's Barber Shop, a block west of the club on Marlowe Avenue: two chairs

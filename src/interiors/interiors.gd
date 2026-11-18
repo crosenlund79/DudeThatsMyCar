@@ -40,6 +40,8 @@ func build(p_layout: DistrictLayout, city: City, resolver: AssetResolver) -> voi
 		# warm light on the pavement at every door you can walk through, and
 		# the open door drawn in the wall so the entrance shows on the facade
 		for i in p.doors.size():
+			if p.doors[i].get("inner", false):
+				continue  # M010: a door between two rooms: no light on a pavement, no doorway on a facade
 			var side: Vector2 = p.doors[i].side
 			var pool := Sprite2D.new()
 			pool.texture = resolver.get_texture("fx/glow")
@@ -87,10 +89,13 @@ func door_at(p: Vector2, reach: float = 24.0) -> Dictionary:
 	for plan in layout.interiors:
 		var ip: InteriorPlan = plan
 		for i in ip.doors.size():
+			var inner: bool = ip.doors[i].get("inner", false)
 			if p.distance_to(ip.outside_door(i, 10.0)) <= reach and not ip.contains(p):
-				return {"plan": ip, "index": i, "outside": true, "prompt": "Enter %s" % ip.name}
+				return {"plan": ip, "index": i, "outside": true, "prompt": ("Through to %s" if inner else "Enter %s") % ip.name}
 			if ip == current and p.distance_to(ip.inside_door(i, 10.0)) <= reach:
-				return {"plan": ip, "index": i, "outside": false, "prompt": "Go out"}
+				var beyond := plan_at(ip.outside_door(i, 18.0)) if inner else null
+				return {"plan": ip, "index": i, "outside": false,
+					"prompt": "Through to %s" % beyond.name if beyond != null else "Go out"}
 	return {}
 
 

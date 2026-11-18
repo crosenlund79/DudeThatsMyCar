@@ -163,6 +163,14 @@ func building_named(building_name: String) -> int:
 	return -1
 
 
+## M010: the building standing at p (-1: none).
+func building_at(p: Vector2) -> int:
+	for i in buildings.size():
+		if (buildings[i].rect as Rect2).has_point(p):
+			return i
+	return -1
+
+
 func is_in_water(p: Vector2, margin: float = 0.0) -> bool:
 	for w in water:
 		if (w as Rect2).grow(margin).has_point(p):

@@ -64,6 +64,8 @@ func test_e_at_any_door_goes_in_and_out() -> void:
 	for plan in main.layout.interiors:
 		var p: InteriorPlan = plan
 		for i in p.doors.size():
+			if p.doors[i].get("inner", false):
+				continue  # M010: the door between the Copper Owl and its back room (test_card_game)
 			walker().place(p.outside_door(i, 14.0), 0.0)
 			main.interiors.update_player(walker().global_position)
 			await wait_physics_frames(3)

@@ -110,6 +110,8 @@ var paused := false
 ## M006: the ward map, or the status screen, is open (the world is paused under it).
 var map_open := false
 var status_open := false
+## M010: the Copper Owl's back-room card game, night by night.
+var poker := PokerNight.new()
 ## Doc Pettibone's fee for patching Danny up after he went down (cents, at most).
 const COLLAPSE_FEE := 500
 ## M007: a fistfight under way (the dial is up; nothing else moves Danny), its
@@ -189,6 +191,8 @@ func _ready() -> void:
 	weather = Weather.new()
 	weather.begin_night(rackets.night, float(night_rules.start_minute))
 	weather.force(weather_override)
+	poker.from_dict(_saved.get("poker", {}))
+	poker.begin_night(rackets.night)
 	_park_cars()
 	thefts = CarThefts.new(layout.cars)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
@@ -280,6 +284,7 @@ func _ready() -> void:
 		add_child(bird_show)
 		bird_show.setup(bird, stage)
 	_load_ward()
+	_sync_card_players()  # M010: Moe comes in late
 	hud = Hud.new()
 	add_child(hud)
 	hud.setup(resolver, layout.name)
@@ -317,6 +322,9 @@ func _ready() -> void:
 	player.interaction = _interact
 	player.conversation = _converse
 	hud.dialogue_choice.connect(_answer)
+	hud.poker_view.bought_in.connect(_on_bought_in)
+	hud.poker_view.leave_requested.connect(leave_poker)
+	hud.poker_view.sound.connect(func(kind: String) -> void: soundscape.play("poker/" + kind, -4.0))
 	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
@@ -644,7 +652,7 @@ func _spot() -> Dictionary:
 		return {}
 	if interiors.current != null:
 		var s := interiors.current.spot_at(walker.global_position)
-		if not s.is_empty() and (s.id == "bed" or interiors.view_of(interiors.current.id).person_ok(s.id)):
+		if not s.is_empty() and (s.id == "bed" or s.id == "poker" or interiors.view_of(interiors.current.id).person_ok(s.id)):
 			return s
 	if rival != null and not rival.is_down() and not rival.is_hostile() \
 			and walker.global_position.distance_to(rival.body.global_position) < 40.0:
@@ -692,6 +700,8 @@ func _interact(_at: Vector2) -> bool:
 		_show(talk.open("lefty", _talk_context()))
 	elif spot.id == "seat":
 		player.sit(spot.seat)
+	elif spot.id == "poker":
+		open_poker()
 	elif spot.id == "stand":
 		player.stand()
 	elif spot.get("kind", "") == "contact":
@@ -729,6 +739,90 @@ func talk_to_bird() -> void:
 	else:
 		stage.hold()
 	start_talk("bird", {"interrupted": interrupted})
+
+
+## M010: E at the empty chair in the Copper Owl's back room: Danny sits down
+## and the buy-in comes up (or why he cannot play tonight).
+func open_poker() -> void:
+	if hud.poker_view.is_open() or interiors.current == null or interiors.current.id != "back_room":
+		return
+	var chair: Vector2 = RiversideInteriors.TABLE + Vector2(0, 44)
+	player.sit({"pos": chair, "facing": -PI / 2, "stand": chair + Vector2(0, 16), "kind": "chair"})
+	hud.poker_view.layout_for(get_viewport().get_visible_rect().size)
+	hud.poker_view.open(poker, rackets.money)
+	if not command_source.is_valid():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _on_bought_in(amount: int) -> void:
+	if amount <= 0 or not poker.sit_down(amount, rackets.money):
+		hud.poker_view.close()
+		player.stand()
+		if not command_source.is_valid():
+			Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+		return
+	rackets.money -= amount
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
+	hud.poker_view.begin_play()
+	save_game()
+
+
+## Danny gets up from the card table (mid-hand he folds): his chips back into his pocket.
+func leave_poker() -> void:
+	if not hud.poker_view.is_open():
+		return
+	var was_seated := poker.seated()
+	var before := poker.net
+	var chips := poker.leave()
+	rackets.money += chips
+	hud.poker_view.close()
+	player.stand()
+	if not command_source.is_valid():
+		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
+	if was_seated:
+		var won := poker.net - before
+		hud.show_notice("You get up from the table %s." % (
+			"%s ahead" % Rackets.dollars(won) if won > 0 else ("%s down" % Rackets.dollars(-won) if won < 0 else "even")))
+	_sync_card_players()
+	save_game()
+
+
+## The card players in their chairs: whoever is still about tonight; the late
+## man in the chair of the first to go home.
+func _sync_card_players() -> void:
+	var view := interiors.view_of("back_room")
+	if view == null:
+		return
+	var free_chair := {}
+	for p in PokerNight.REGULARS:
+		var w: Walker = view.people.get(p.id)
+		var here: bool = not poker.gone.has(p.id) and int(poker.purses.get(p.id, 0)) + _chips_of(p.id) > 0
+		if w != null and not w.down:
+			_present(w, here)
+		if not here and free_chair.is_empty():
+			free_chair = view.plan.person(p.id)
+	var moe: Walker = view.people.get(PokerNight.LATE.id)
+	if moe != null and not moe.down:
+		var in_game := poker.late_joined and not poker.gone.has(PokerNight.LATE.id)
+		if in_game and not free_chair.is_empty() and not moe.visible:
+			moe.place(free_chair.pos, free_chair.facing)
+			moe.aim_point = (free_chair.pos as Vector2) + Vector2.from_angle(free_chair.facing) * 50.0
+		_present(moe, in_game)
+
+
+func _chips_of(id: String) -> int:
+	if not poker.seated():
+		return 0
+	for st in poker.table.seats:
+		if st.get("id", "") == id and not st.out:
+			return int(st.stack) + int(st.total)
+	return 0
+
+
+func _present(w: Walker, on: bool) -> void:
+	w.visible = on
+	w.collision_layer = Layers.PEOPLE if on else 0
 
 
 ## M006: Danny is hit. Where, and how bad, on screen.
@@ -773,6 +867,10 @@ func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
 	var w: Walker = view.people.get(id)
 	if not named:
 		return
+	if view.plan.id == "back_room":
+		poker.gone[id] = "hurt"  # M010: carried off: no more cards for him tonight
+		if poker.seated():
+			leave_poker()
 	ward_out[id] = rackets.night
 	if w != null and w.last_shooter == walker:
 		rackets.shot_person(id)
@@ -807,6 +905,8 @@ func _show(page: Dictionary) -> void:
 
 ## While talking, the player's keys answer (1-4) or walk away (E).
 func _converse(cmd: PlayerCommand) -> bool:
+	if hud.poker_view.is_open():
+		return true  # M010: sitting in at the card table
 	if talking == "":
 		return false
 	if cmd.choice > 0:
@@ -904,6 +1004,8 @@ func sleep() -> void:
 	incidents.begin_night(rackets.night, float(night_rules.start_minute), float(night_rules.dawn_minute))
 	weather.begin_night(rackets.night, float(night_rules.start_minute))
 	weather.force(weather_override)
+	poker.begin_night(rackets.night)  # M010: the card players are back with fresh money
+	_sync_card_players()
 	_warned = 0
 	_report_from = null
 	for i in cars.size():
@@ -940,6 +1042,8 @@ func _update_clock(delta: float) -> void:
 		weather.advance(clock.minute)  # M010
 		for e in rackets.opportunities.advance(clock.minute):  # M009: too late is too late
 			_opportunity_over(e)
+	if clock.minute >= float(night_rules.home_minute):
+		poker.closing = true  # M010: the card game breaks up at the hour to go home
 	if clock.is_dawn() and _warned < 2:
 		_warned = 2
 		hud.show_notice("Dawn's breaking. Get home to bed before the city wakes up.")
@@ -950,7 +1054,9 @@ func _update_clock(delta: float) -> void:
 
 
 func save_game() -> void:
-	var data := {"rackets": rackets.to_dict(), "voices": voice_lines.to_dict()}
+	var data := {"rackets": rackets.to_dict(), "voices": voice_lines.to_dict(), "poker": poker.to_dict()}
+	if poker.seated():
+		data.rackets.money += poker.stake_for_save()  # M010: his chips count as his money; a hand under way is void
 	if walker != null:
 		data["danny"] = walker.condition.to_dict()
 	if rival != null:
@@ -1124,6 +1230,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		# only Space, for the dial; no walking, shooting, maps or menus mid-fight
 		if event.is_action_pressed(CityInput.HANDBRAKE):
 			hud.fight_dial.press()
+		return
+	if hud.poker_view.is_open():
+		hud.poker_view.handle_key(event)  # M010: at the card table only the table's keys
 		return
 	if opening != null:
 		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
@@ -1331,7 +1440,7 @@ func next_moment() -> float:
 
 ## M010: while the drowsiness must keep out of the way (talk, a scene, the maps, a fight).
 func _drowsy_held() -> bool:
-	return talking != "" or opening != null or map_open or status_open or fighting
+	return talking != "" or opening != null or map_open or status_open or fighting or hud.poker_view.is_open()
 
 
 func my_car() -> Car:
@@ -1491,6 +1600,8 @@ func _notification(what: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if hud.poker_view.is_open():
+		_sync_card_players()  # M010: busted players go home, the late man pulls up a chair
 	if not paused and stage.update(delta):
 		soundscape.resume_music()  # the band counts her back in
 		if bird_show != null:
@@ -1521,7 +1632,10 @@ func _update_view(delta: float) -> void:
 		incident_views.refresh(camera.eye(), player.body().global_position, delta)  # M009
 		opportunity_views.refresh(player.body().global_position)
 	var prompt := ""
-	if player.on_foot():
+	hud.minimap.visible = not hud.poker_view.is_open()  # M010: the card table has the screen
+	if hud.poker_view.is_open():
+		pass
+	elif player.on_foot():
 		var spot := _spot()
 		var c := player.enterable_car()
 		if not spot.is_empty():

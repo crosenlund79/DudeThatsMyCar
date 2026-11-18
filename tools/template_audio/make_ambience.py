@@ -470,13 +470,38 @@ def punch(landed):
     return fade_ends(echo(x, [(0.03, 0.15), (0.06, 0.08)], hi=2500, circular=False), fade_out=0.05)
 
 
+def chips():
+    """M010: clay poker chips pushed into the pot: a short run of dull clacks on the felt."""
+    srng = np.random.default_rng(1932010)
+    x = np.zeros(int(0.45 * RATE))
+    at = 0.0
+    for i in range(5):
+        base = srng.uniform(2300, 3100)
+        clack = partials(0.05, [base, base * 1.6, base * 2.4], [0.012, 0.009, 0.006], [1.0, 0.5, 0.3], 0.01)
+        clack += band(srng.standard_normal(len(clack)), 1500, 6000, circular=False) * np.exp(-np.arange(len(clack)) / (0.006 * RATE)) * 0.6
+        place(x, clack * (1.0 - i * 0.12), at * RATE, wrap=False)
+        at += srng.uniform(0.025, 0.06)
+    return fade_ends(x, fade_out=0.05)
+
+
+def cards():
+    """M010: a card dealt across the baize: the flick off the deck and a short slide."""
+    srng = np.random.default_rng(1932011)
+    n = int(0.22 * RATE)
+    t = np.arange(n) / RATE
+    flick = band(srng.standard_normal(n), 2000, 7000, circular=False) * np.exp(-t / 0.006)
+    slide = band(srng.standard_normal(n), 900, 4000, circular=False) * np.exp(-((t - 0.07) / 0.035) ** 2) * 0.35
+    return fade_ends(flick + slide, fade_out=0.04)
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "assets/audio"
     only = sys.argv[2] if len(sys.argv) > 2 else ""
     if only:
         # one sound only (the rest stay as they are): python3 make_ambience.py assets/audio music/record_scratch
         makers = {"music/record_scratch": record_scratch, "fight/punch_landed": lambda: punch(True),
-                  "fight/punch_taken": lambda: punch(False), "ambience/rain": rain}
+                  "fight/punch_taken": lambda: punch(False), "ambience/rain": rain,
+                  "poker/chips": chips, "poker/cards": cards}
         made = makers[only]()
         write_ogg(os.path.join(root, os.path.dirname(only), "template_" + os.path.basename(only) + ".ogg"),
                   made if isinstance(made, list) else [made], 0.5 if isinstance(made, list) else 0.7)
@@ -497,6 +522,8 @@ def main():
     write_ogg(os.path.join(root, "music/template_record_scratch.ogg"), [record_scratch()], 0.7)
     write_ogg(os.path.join(root, "fight/template_punch_landed.ogg"), [punch(True)], 0.7)
     write_ogg(os.path.join(root, "fight/template_punch_taken.ogg"), [punch(False)], 0.7)
+    write_ogg(os.path.join(root, "poker/template_chips.ogg"), [chips()], 0.6)
+    write_ogg(os.path.join(root, "poker/template_cards.ogg"), [cards()], 0.5)
 
 
 if __name__ == "__main__":

@@ -110,6 +110,11 @@ func test_every_riverside_room_can_be_walked_into_and_used() -> void:
 		assert_gt(reach.size(), 20, "%s: room to move inside the door" % p.id)
 		for i in p.doors.size():
 			var out := p.outside_door(i, 20.0)
+			if p.doors[i].get("inner", false):
+				# M010: a door between two rooms (the Copper Owl and its back room) opens into the other room
+				var other := d.interior_at(out)
+				assert_true(other != null and other != p, "%s door %d opens into the next room" % [p.id, i])
+				continue
 			assert_true(d.is_open_ground(out, Walker.RADIUS), "%s door %d opens onto open ground" % [p.id, i])
 			assert_false(d.is_in_building(out, 4.0) and d.interior_at(out) == null, "%s door %d is not blocked by a neighbour" % [p.id, i])
 		for s in p.spots:
