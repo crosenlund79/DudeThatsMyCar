@@ -29,6 +29,8 @@ const ZOOM_STEP := 1.2
 ## Labels show only when the map is close enough to read them.
 const STREETS_BELOW := 9.0
 const LANDMARKS_BELOW := 12.0
+## M010: closer than this (world px per screen px) every building has its name or address.
+const BUILDINGS_BELOW := 4.2
 
 var minimap: Minimap
 ## The map's area on the screen, the world point at its middle and the scale
@@ -47,6 +49,10 @@ var car_heading := 0.0
 var officers: Array = []
 ## Landmarks: {pos, label, tex (or null)}.
 var landmarks: Array = []
+## M010: every building's label (BuildingNames): {rect, label}; drawn close up.
+var building_labels: Array = []
+## The label boxes drawn last time (screen px; tests check they never overlap).
+var drawn_labels: Array[Rect2] = []
 ## M007: what Rourke's job needs next, the place it concerns and Lefty's corner (INF: none).
 var job_text := ""
 var job_at := Vector2.INF
@@ -74,10 +80,17 @@ func refresh_districts() -> void:
 	for l in landmarks:
 		named[l.label] = true
 	var first := true
+	building_labels.clear()
 	for dist in minimap.districts:
 		var layout: DistrictLayout = dist.layout
 		city_rect = layout.bounds if first else city_rect.merge(layout.bounds)
 		first = false
+		var labels := BuildingNames.all(layout)
+		for i in layout.buildings.size():
+			var br: Rect2 = layout.buildings[i].rect
+			if br.size.x > 2500.0 or br.size.y > 2500.0:
+				continue  # embankments: they have their own landmark names
+			building_labels.append({"rect": br, "label": labels[i]})
 		for b in layout.buildings:
 			var label := String(b.get("name", ""))
 			if label == "" or named.has(label) or label in ["Railroad embankment", "Bridge tender", "Tannery stack", "St. Brendan's tower"]:
@@ -226,6 +239,10 @@ func _draw() -> void:
 	_draw_borders(view)
 	if scale_px < STREETS_BELOW:
 		_draw_street_names(view)
+	var taken: Array[Rect2] = []
+	if scale_px < BUILDINGS_BELOW:
+		_draw_building_labels(view, taken)
+	drawn_labels = taken
 	for l in landmarks:
 		var at := to_screen(l.pos)
 		if not map_rect.has_point(at):
@@ -238,6 +255,8 @@ func _draw() -> void:
 		var at2 := to_screen(pl.pos)
 		if map_rect.has_point(at2):
 			draw_texture_rect(pl.tex, Rect2(at2 - Vector2(ICON * 0.81 * 0.5, ICON), Vector2(ICON * 0.81, ICON)), false)
+			if scale_px < LANDMARKS_BELOW:  # M010: the businesses by name from medium zoom
+				_label(at2 + Vector2(0, 14), _place_name(pl.id), 11, LANDMARK)
 	if lefty_at != Vector2.INF and map_rect.has_point(to_screen(lefty_at)):
 		var lp := to_screen(lefty_at)
 		draw_circle(lp, 4.0, COPPER)
@@ -269,6 +288,38 @@ func _draw() -> void:
 	draw_rect(Rect2(map_rect.end.x, 0, size.x - map_rect.end.x, size.y), PANEL)
 	draw_rect(map_rect.grow(3.0), COPPER, false, 2.0)
 	_draw_key()
+
+
+## M010: close up, every building's name or address inside its outline - as
+## many lines as fit, none on top of another, none on a landmark already named.
+func _draw_building_labels(view: Rect2, taken: Array[Rect2]) -> void:
+	var named := {}
+	for l in landmarks:
+		named[l.label] = true
+	var px := 10 if scale_px > 2.8 else 11
+	for bl in building_labels:
+		var br: Rect2 = bl.rect
+		if not br.intersects(view) or named.has(bl.label) or _is_place(br):
+			continue  # landmarks and the places with a badge are named already
+		var sr := Rect2(to_screen(br.position), br.size / scale_px)
+		if sr.size.x < 34.0 or sr.size.y < 16.0:
+			continue
+		var lines := _wrap(bl.label, px, sr.size.x - 6.0)
+		var h := lines.size() * (px + 2.0)
+		if h > sr.size.y - 4.0:
+			lines = lines.slice(0, maxi(1, int((sr.size.y - 4.0) / (px + 2.0))))
+			h = lines.size() * (px + 2.0)
+		var widest := 0.0
+		for line in lines:
+			widest = maxf(widest, _font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x if _font != null else 0.0)
+		var box := Rect2(sr.get_center() - Vector2(widest * 0.5, h * 0.5), Vector2(widest, h)).grow(2.0)
+		if not map_rect.encloses(box) or taken.any(func(t: Rect2) -> bool: return t.intersects(box)):
+			continue
+		taken.append(box)
+		var y := box.position.y + 2.0 + px
+		for line in lines:
+			_label(Vector2(sr.get_center().x, y), line, px, Color(INK, 0.82))
+			y += px + 2.0
 
 
 ## Each district's edge as a dashed copper line, and its name across it.

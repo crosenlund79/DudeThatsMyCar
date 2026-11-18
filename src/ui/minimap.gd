@@ -122,6 +122,23 @@ static func paint(d: DistrictLayout) -> Image:
 
 
 ## The colour painted under a world point (for tests and for reading the map).
+## M010: something worth a look nearby - a ring that spreads once and fades
+## where it happens (on the map), or an arrow on the rim pointing towards it
+## while it lasts (off the map, same district). Not a quest marker.
+const PING_TIME := 2.4
+const PING_COLOUR := Color("e8743c")
+var pings: Array = []
+var arrows: Array[Vector2] = []
+
+
+func ping(world: Vector2) -> void:
+	pings.append({"pos": world, "age": 0.0})
+
+
+func set_arrows(world_points: Array[Vector2]) -> void:
+	arrows = world_points
+
+
 func colour_at(world: Vector2) -> Color:
 	for dist in districts:
 		var r: Rect2 = dist.rect
@@ -147,6 +164,9 @@ func set_view(p_centre: Vector2, p_heading: float, speed_ratio: float, p_police:
 	police = p_police
 	police_hunting = hunting
 	_time += delta
+	for pg in pings:
+		pg.age = float(pg.age) + delta
+	pings = pings.filter(func(pg: Dictionary) -> bool: return float(pg.age) < PING_TIME)
 	queue_redraw()
 
 
@@ -197,6 +217,20 @@ func _draw() -> void:
 			if cop.hunting:
 				c = Color(1.0, 0.45, 0.4) if fmod(_time, 0.6) < 0.3 else Color(1, 1, 1)
 			draw_texture_rect(_police_tex, Rect2(cp - Vector2(POLICE_ICON, POLICE_ICON) * 0.5, Vector2(POLICE_ICON, POLICE_ICON)), false, c)
+	for pg in pings:  # M010
+		var t: float = float(pg.age) / PING_TIME
+		var at := to_map(pg.pos)
+		draw_arc(at, 3.0 + 15.0 * t, 0.0, TAU, 28, Color(PING_COLOUR, 1.0 - t), 2.0)
+		draw_circle(at, 2.5, Color(PING_COLOUR, 1.0 - t))
+	for ap in arrows:
+		var rim: Dictionary = place_on_map(ap)
+		if rim.on_map:
+			continue
+		var dir := ((rim.at as Vector2) - SIZE * 0.5).normalized()
+		var tip: Vector2 = (rim.at as Vector2) + dir * 6.0
+		var side := dir.orthogonal() * 5.0
+		draw_colored_polygon(PackedVector2Array([tip, tip - dir * 10.0 + side, tip - dir * 10.0 - side]), PING_COLOUR)
+		draw_polyline(PackedVector2Array([tip, tip - dir * 10.0 + side, tip - dir * 10.0 - side, tip]), Color("1d1712"), 1.0)
 	draw_set_transform(SIZE * 0.5, heading, Vector2.ONE)
 	draw_texture_rect(_player_tex, Rect2(-Vector2(PLAYER_ICON, PLAYER_ICON) * 0.5, Vector2(PLAYER_ICON, PLAYER_ICON)), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

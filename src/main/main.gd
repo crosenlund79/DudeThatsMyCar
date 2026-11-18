@@ -952,6 +952,32 @@ func save_game() -> void:
 ## M009: the city's incidents move on with the clock; one that ends is
 ## talked about by whoever saw it. A stop breaks off if its copper is called
 ## away (gunfire) or down.
+## M010: the incidents Danny has noticed (by noise or sight), so the minimap
+## can point them out: a ping when he first notices one in its range, an arrow
+## on its rim while one in this district goes on out of it.
+var _noticed := {}
+
+
+func _notice_incidents() -> void:
+	if hud == null or hud.minimap == null:
+		return
+	var danny := player.body().global_position
+	var arrows: Array[Vector2] = []
+	for inc in incidents.active:
+		if String(inc.spot.district) != world.current:
+			continue
+		if not _noticed.has(inc.id) and IncidentNotice.noticed(inc, incidents.phase_name(inc), danny):
+			_noticed[inc.id] = true
+			if hud.minimap.place_on_map(inc.spot.pos).on_map:
+				hud.minimap.ping(inc.spot.pos)
+		if _noticed.has(inc.id) and not hud.minimap.place_on_map(inc.spot.pos).on_map:
+			arrows.append(inc.spot.pos)
+	hud.minimap.set_arrows(arrows)
+	for id in _noticed.keys():
+		if incidents.get_incident(id).is_empty():
+			_noticed.erase(id)
+
+
 func _advance_incidents() -> void:
 	var danny := player.body().global_position if player != null else Vector2.INF
 	for inc in incidents.active.duplicate():
@@ -1470,6 +1496,8 @@ func _update_view(delta: float) -> void:
 	hud.minimap.other_police = others
 	hud.minimap.set_view(focus, facing, speed, officer.body.global_position if not officer.is_down() else Vector2.INF,
 		officer.brain.is_hunting(), delta)
+	if not get_tree().paused:
+		_notice_incidents()  # M010: after the minimap knows where Danny is
 	var in_room: InteriorPlan = null
 	if player.on_foot() and interiors.current != null and interiors.current.contains(walker.global_position):
 		in_room = interiors.current
