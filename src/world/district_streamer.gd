@@ -51,6 +51,11 @@ var stats := {}
 var frontier: StaticBody2D
 ## Whether to stream at all (tests of a single district switch it off).
 var enabled := true
+## Districts being taken apart a little each frame after they were let go
+## (their nodes, deepest first), so freeing one never stalls a frame.
+var _dying: Array[Node] = []
+var _dying_count := 0
+const FREE_BUDGET_USEC := 2000
 
 
 func setup(p_resolver: AssetResolver, p_layouts: Array) -> void:
@@ -181,6 +186,9 @@ func update(focus: Vector2) -> void:
 			unload(spare[0])
 	if not _job.is_empty() and not want.has(_job.id) and distance_to(_job.id, focus) > UNLOAD_DISTANCE:
 		_abandon_job()
+	if _job.is_empty() and not _dying.is_empty():
+		_free_some(FREE_BUDGET_USEC)  # what was let go is cleared away before anything new is built
+		return
 	if _job.is_empty():
 		for id in want:
 			if not loaded.has(id) and loaded.size() < MAX_LOADED:
@@ -194,6 +202,8 @@ func update(focus: Vector2) -> void:
 func load_now(id: String) -> void:
 	if loaded.has(id):
 		return
+	while not _dying.is_empty():
+		_free_some(1 << 30)
 	if not _job.is_empty() and _job.id != id:
 		_abandon_job()
 	if _job.is_empty():
@@ -202,17 +212,51 @@ func load_now(id: String) -> void:
 		_work(1 << 30)
 
 
+## Lets a district go: the game forgets its people at once; its nodes stop,
+## vanish and are taken apart a slice a frame (FREE_BUDGET_USEC).
 func unload(id: String) -> void:
 	if not loaded.has(id) or loaded[id].get("adopted", false):
 		return
 	var t0 := Time.get_ticks_usec()
 	district_unloading.emit(id)
-	var node: Node = loaded[id].node
+	var node: Node2D = loaded[id].node
 	loaded.erase(id)
-	remove_child(node)
-	node.free()
+	_retire(node)
 	_stat(id).unload_usec = Time.get_ticks_usec() - t0
 	_update_frontier()
+
+
+func _retire(node: Node2D) -> void:
+	_dying_count += 1
+	node.name = "Retired_%d" % _dying_count  # its name is free at once for a new build
+	node.visible = false
+	node.process_mode = Node.PROCESS_MODE_DISABLED
+	_dying.append(node)
+
+
+## Up to `budget` microseconds of taking retired districts apart.
+func _free_some(budget: int) -> void:
+	var t0 := Time.get_ticks_usec()
+	while not _dying.is_empty() and Time.get_ticks_usec() - t0 < budget:
+		var n: Node = _dying.back()
+		if not is_instance_valid(n):
+			_dying.pop_back()
+			continue
+		if n.get_child_count() > 0:
+			var c := n.get_child(n.get_child_count() - 1)
+			if n.get_child_count() > 24 or c.get_child_count() > 0:
+				n.remove_child(c)
+				_dying.append(c)
+				continue
+		_dying.pop_back()
+		if n.is_inside_tree():
+			n.get_parent().remove_child(n)
+		n.free()
+
+
+## Whether anything is still being taken apart (tests).
+func is_freeing() -> bool:
+	return not _dying.is_empty()
 
 
 # ------------------------------------------------------------------ building
@@ -226,6 +270,7 @@ func _start(id: String) -> void:
 	var city := City.new()
 	city.name = "City"
 	node.add_child(city)
+	resolver.prefetch(_graphics_of(layout))  # the disk work on worker threads, meanwhile
 	var steps: Array[Callable] = city.build_steps(layout, resolver, false)
 	if extra_steps.is_valid():
 		steps.append_array(extra_steps.call(layout, node))
@@ -236,6 +281,28 @@ func _start(id: String) -> void:
 	var task := WorkerThreadPool.add_task(func() -> void: holder[0] = CityNavigator.new(layout, c))
 	_job = {"id": id, "node": node, "city": city, "steps": steps, "next": 0, "nav": holder, "nav_task": task,
 		"started_usec": Time.get_ticks_usec(), "frames": 0, "worst_frame_usec": 0, "worst_step_usec": 0, "work_usec": 0}
+
+
+## The graphics a district's buildings and street furniture use.
+static func _graphics_of(layout: DistrictLayout) -> Array:
+	var names := {}
+	for b in layout.buildings:
+		for style in [b.facade, "rear", "party"]:
+			names["facades/" + style] = true
+			names["facades/" + style + "_lit"] = true
+		names["roofs/" + b.roof] = true
+		for p in b.props:
+			names[p.kind] = true
+			names[p.kind + "_lit"] = true
+		for sg in b.signs:
+			names[sg.kind] = true
+			names[sg.kind + "_lit"] = true
+	for p in layout.props:
+		names[p.kind] = true
+		names[p.kind + "_lit"] = true
+	for dcl in layout.decals:
+		names[dcl.kind] = true
+	return names.keys()
 
 
 ## Up to `budget` microseconds of building (at least one step).
@@ -293,8 +360,7 @@ func _abandon_job() -> void:
 	_job = {}
 	WorkerThreadPool.wait_for_task_completion(job.nav_task)
 	district_unloading.emit(job.id)  # whatever the extra steps made so far is let go
-	remove_child(job.node)
-	(job.node as Node).free()
+	_retire(job.node)
 
 
 ## Freed in the middle of building a district (a game closed, a test over):

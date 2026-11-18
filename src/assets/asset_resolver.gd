@@ -54,6 +54,23 @@ func get_texture(logical_name: String) -> Texture2D:
 	return texture
 
 
+## M008: starts loading these graphics' templates on worker threads (a
+## district about to be built), so the build itself does not wait on the
+## disk. Overridden graphics and those already loaded are left alone.
+func prefetch(logical_names: Array) -> int:
+	var started := 0
+	for logical_name in logical_names:
+		if _cache.has(logical_name) or not AssetCatalog.SPECS.has(logical_name):
+			continue
+		if GRAPHICS_EXTENSIONS.any(func(e: String) -> bool: return FileAccess.file_exists(override_path(logical_name, e))):
+			continue
+		var path := fallback_path(logical_name)
+		if ResourceLoader.exists(path) and ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			if ResourceLoader.load_threaded_request(path) == OK:
+				started += 1
+	return started
+
+
 ## True when a valid user override supplies this graphic (resolves it if needed).
 ## True when the user supplies this sound (custom/audio/..., any supported format).
 func has_audio_override(logical_name: String) -> bool:

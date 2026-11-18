@@ -311,7 +311,7 @@ func _run(shots: Array) -> void:
 			"yards", "yards_dock", "yards_sidings", "border_south":
 				# M008: the Riverfront Yards (streamed in as Danny comes near, here at once)
 				main.world.load_now("yards")
-				var at := {"yards": Vector2(1650, 3060), "yards_dock": Vector2(3640, 3150), "yards_sidings": Vector2(3300, 4720),
+				var at := {"yards": Vector2(1650, 3060), "yards_dock": Vector2(3640, 3150), "yards_sidings": Vector2(900, 4860),
 					"border_south": Vector2(1650, 2640)}[s] as Vector2
 				_teleport_walker(at, PI * 0.5)
 				await _frames(40)
@@ -338,6 +338,37 @@ func _run(shots: Array) -> void:
 				await _frames(5)
 				await _shot(s, false)
 				main.show_map(false)
+			"crossing":
+				# M008: Danny's sedan crossing from the ward into the yards on Kessler Street, lights on
+				main.world.load_now("yards")
+				var sedan: Car = main.cars[7]
+				sedan.place(Transform2D(PI / 2, Vector2(1690, 2660)))
+				sedan.model.position = Vector2(1690, 2660)
+				_teleport_walker(Vector2(1640, 2600), 0.0)
+				await _frames(2)
+				main.player.enter(sedan)
+				main.camera.snap_to(sedan)
+				await _frames(40)
+				await _shot("crossing")
+				main.player.exit_car()
+			"police_shooting":
+				# M008: the beat cop on Marlowe Avenue saw Danny shoot a man: he draws and fires
+				var cop: PoliceOfficer = main.officer
+				var victim := Walker.create(main.resolver, "characters/worker", {"glow": false})
+				main.add_child(victim)
+				victim.place(cop.body.global_position + Vector2(40, 140), 0.0)
+				_teleport_walker(cop.body.global_position + Vector2(140, 250), -PI * 0.6)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, victim.global_position)
+				await _frames(5)
+				cop.brain.witness_violence(main.walker.global_position)
+				var fired := [false]
+				cop.fired.connect(func(_m: Vector2, _d: Vector2) -> void: fired[0] = true)
+				for i in 400:
+					if fired[0]:
+						break
+					await process_frame
+				await _shot("police_shooting", false)
+				victim.queue_free()
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)

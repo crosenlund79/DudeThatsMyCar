@@ -1,8 +1,8 @@
-# Seamless district loading — feasibility assessment (M006, investigation only)
+# Seamless district loading — assessment (M006) and what was built (M008)
 
-**Status: investigation.** Nothing here is implemented or approved. No second district and no
-streaming framework were built in M006. This records what the current code does, the approach
-recommended if the user approves a later milestone, its likely size, and the risks.
+**Status: implemented in Milestone 008** (approved by the user, "M008: Beyond Riverside Ward"). The
+M006 assessment below is kept as it was written; the section "What M008 built" at the end records
+how the recommendation was followed, where it was changed and what was measured.
 
 ## What the game does today
 
@@ -121,3 +121,62 @@ A milestone of its own, comparable to M006: roughly
   people and places in the layout so they move with it.
 - The closed edges (embankment, river, barricades) can stay as they are on every side that does
   not lead to a neighbour.
+
+## What M008 built
+
+Followed the recommendation, with these choices:
+
+- **One world, districts at an origin.** The Riverside Ward stays at (0, 0) with every coordinate
+  unchanged. `DistrictLayout` gained `id`, `origin`, `exits`, `landmarks`, `lamp_energy` and
+  `smoke`; a district is drawn up in its own coordinates and placed with `shift(origin)`
+  (`to_local` / `to_world` convert). The Riverfront Yards sit at (-1700, 2700), straight below the
+  ward; Halloran Square at (-4900, -1300), beside it. Their streets continue the ward's lines and
+  widths exactly. The ward's own drawing helpers moved into a `DistrictBuilder` base the
+  neighbours share; the ward's layout is byte-for-byte unchanged apart from its opened exits.
+- **`DistrictStreamer`** (`src/world/`, not an Autoload) holds every district's layout (data,
+  about 2.5 ms each for the neighbours, made at start-up together with each one's map image, 2-4 ms) and builds a
+  district's nodes only when Danny comes within 1300 px of its play area, about 4 ms a frame:
+  `City.build` became a list of small ordered steps (ground by street and block, one building at a
+  time, props and lamps in batches); the game adds steps for the district's street life and
+  parked cars; its walking grid is built on a `WorkerThreadPool` thread; its graphics are
+  prefetched with `ResourceLoader.load_threaded_request`. The district appears (and its frontier
+  wall opens) only when complete. At most two districts are loaded; the ward is built at start-up
+  and adopted as pinned, so with three districts it is always one of the two (every way between
+  the neighbours runs through it). A district left 1900 px behind is let go: the game forgets its
+  people at once, its node stops and vanishes and is taken apart about 2 ms a frame.
+- **Entities across borders.** Cars are never freed: a district's parked cars join the game's car
+  list the first time it is built, and any car standing in a district that is let go (the
+  district's own, or one Danny left there) is put away exactly where it is and brought back with
+  the district, so nothing is ever duplicated. Bullets in flight in a freed district are dropped.
+  Each district has its own beat cop on its own walking grid; nobody routes off his own grid (a
+  pursuing officer, or Lefty, stops at his district's edge, watches and gives up as usual).
+- **State.** What a district keeps for the night (its beat cop shot down, and where) is held while
+  it is unloaded and saved with the game; sleeping clears it (a new man on every beat). Cars go
+  back to their owners each evening as before. A saved game still starts at home in the ward.
+- **Services.** The camera's limits follow the loaded districts; getting out of a car asks the
+  streamer for open ground; the minimap and the new city map draw every district from its own
+  painted image; the soundscape listens to the district Danny is in; the HUD names it.
+
+### Measured (development container, software OpenGL under xvfb, 1280 x 720)
+
+From `tests/support/district_probe.gd` (driving across each border with the normal controls):
+
+| | Riverfront Yards | Halloran Square |
+| --- | --- | --- |
+| Build: work, frames | 29.3 ms over 7 frames | 36.7 ms over 9 frames |
+| Build: worst frame of building work | 5.4 ms | 5.8 ms |
+| Build: start to finish | 0.39 s | 0.63 s |
+| Rebuild (textures cached) | 29.1 ms over 6 frames | - |
+| Frame time before / while building (mean) | 62.2 / 65.6 ms | 73.4 / 79.2 ms |
+| Worst frame before / while building | 84.8 / 71.9 ms | 89.7 / 86.0 ms |
+| Letting go | 1.6 ms, then taken apart over 18 frames (2 ms each) | - |
+| Memory with the ward + it | +8.7 MB static, +1557 nodes | +7.6 MB, +1759 nodes |
+
+One district (the ward): 87.1 MB static, 3476 nodes; after letting the yards go: 89.3 MB, 3502
+nodes (their two cars put away and their textures kept). Before spreading the work, letting a
+district go cost 15.7 ms in one frame and the first build's slowest step (loading its textures
+from disk) 4.1 ms; both were fixed as above. Frame rate on the same machine at the same kind of
+spot: the ward's Marlowe Avenue 13-16 fps, Halloran Square's 14.7-16.3 fps, the yards 19 fps
+(fewer lamps); clearing a district's street life gains about 1 fps, its lamps about 3.5 fps. The
+software renderer's frame times vary a lot between runs; a real GPU has still never been measured
+(see `docs/BACKLOG.md`).
