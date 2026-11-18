@@ -6,8 +6,12 @@ extends CharacterBody2D
 ## people switch to their armed sheet and show the pistol while it is drawn.
 
 const RADIUS := 9.0
-## World px walked per animation frame.
-const STRIDE := 9.0
+## World px walked per animation frame (frames 1-4: a step every two frames).
+## M006: was 9 px, which at the walking pace of 108 px/s gave about six steps
+## a second - feet running while he walks. 24 px gives about 2.25 steps a
+## second at that pace, a walking cadence, and stays proportional to speed
+## (the officer's run steps faster).
+const STRIDE := 24.0
 
 ## A bullet struck this person (position, direction of travel).
 signal shot_at(at: Vector2, direction: Vector2)
