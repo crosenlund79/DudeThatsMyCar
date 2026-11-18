@@ -15,6 +15,7 @@ extends SceneTree
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
 ## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007),
+## weather_clear / weather_rain / weather_fog / weather_rain_fog / fog_alley / fog_headlights (M010),
 ## wheels / wheels_lock (M009: the front tyres, straight and at full lock), dump_truck, school_bus,
 ## incident / incident_broken_up / incident_stop, dutch / crate, feeney / film_can (M009).
 
@@ -481,6 +482,28 @@ func _run(shots: Array) -> void:
 				main.camera.zoom_override = 0.0
 				main.camera.snap_to(main.walker)
 				mid.queue_free()
+			"weather_clear", "weather_rain", "weather_fog", "weather_rain_fog", "fog_alley", "fog_headlights":
+				# M010: the four kinds of night on Marlowe Avenue by the Copper Owl; the fog in a back alley;
+				# a car's headlights in the fog
+				main.weather.force({"weather_clear": "clear", "weather_rain": "rain", "weather_fog": "fog",
+					"weather_rain_fog": "rain_fog", "fog_alley": "fog", "fog_headlights": "rain_fog"}[s])
+				if s == "fog_alley":
+					_teleport_walker(Vector2(1800, 135), 0.0)
+				elif s == "fog_headlights":
+					var fc: Car = main.cars[0]
+					fc.place(Transform2D(PI, Vector2(2420, 640)))
+					main.walker.place(fc.global_position + Vector2(0, -34), 0.0)
+					await _frames(2)
+					main.player.enter(fc)
+					cmd = PlayerCommand.make(Vector2(0, -1))
+					await _frames(50)
+					cmd = PlayerCommand.make(Vector2(0, 0.4))
+					await _frames(10)
+				else:
+					_teleport_walker(Vector2(2250, 560), -PI / 2)
+				await _frames(40)
+				await _shot(s, false)
+				cmd = PlayerCommand.new()
 			"truck_found":
 				# M010: Brennan's coal truck at the kerb of Wharf Street, as a driver coming down from the ward sees it
 				var tl: DistrictLayout = main.world.layouts.yards

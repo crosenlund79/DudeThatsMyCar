@@ -17,8 +17,13 @@ const LAMP_SPACING := 7.3
 ## Half the angle each beam spreads (radians).
 const BEAM_HALF_ANGLE := 0.38
 
+## M010: how wet the road is (the weather sets it for every car): headlights
+## throw a long glare on wet asphalt ahead of the car.
+static var wet := 0.0
+
 var car: Car
 var beam: PointLight2D
+var _glare: Array[Sprite2D] = []
 var _lamps: Array[Sprite2D] = []
 var _tails: Array[Sprite2D] = []
 static var _cone: Texture2D
@@ -44,6 +49,11 @@ func setup(p_car: Car, glow: Texture2D) -> void:
 		_lamps.append(_glow(glow, p, Color(1.0, 0.96, 0.84, 1.0), 13.0))  # small: two lamps, not one blur
 	for p in car.vehicle.taillights:
 		_tails.append(_glow(glow, p, Color(1.0, 0.15, 0.1, 0.7), 14.0))
+	for p in car.vehicle.headlights:  # M010: on a wet road, a streak of glare ahead of each lamp
+		var g := _glow(glow, p + Vector2(46, 0), Color(1.0, 0.92, 0.78, 0.0), 1.0)
+		g.scale = Vector2(92.0, 9.0) / Vector2(glow.get_size())
+		g.z_index = 0
+		_glare.append(g)
 	car.add_child(self)
 	set_on(false)
 
@@ -68,6 +78,8 @@ func set_on(on: bool) -> void:
 func _process(_delta: float) -> void:
 	if not visible:
 		return
+	for g in _glare:
+		g.modulate.a = 0.32 * wet
 	var braking := car.brake and car.model.forward_speed() > 5.0 or car.handbrake
 	for t in _tails:
 		t.modulate.a = 1.0 if braking else 0.55

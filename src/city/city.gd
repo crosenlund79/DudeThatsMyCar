@@ -355,6 +355,50 @@ func _draw_building_shadows(ci: CanvasItem) -> void:
 var _shadow_mesh: ArrayMesh
 
 
+static func _plain_mesh(tris: PackedVector2Array) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	if tris.is_empty():
+		return mesh
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = tris
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+## M010: the weather on this district: fog gathered at the buildings' feet, and
+## how wet the street looks (the lamps' reflections brighter in the rain).
+var _fog_feet: DrawLayer
+var _fog_mesh: ArrayMesh
+## M010: the street fog itself, over this district's open ground (FogCover).
+var fog_layer: DrawLayer
+var _wet := -1.0
+
+
+func set_weather(rain: float, fog: float, fog_color: Color, fog_material: Material = null) -> void:
+	if _fog_feet == null and fog > 0.0:
+		_fog_mesh = Shadows.mesh_of(layout.fog_feet())
+		_fog_feet = DrawLayer.new(func(ci: CanvasItem) -> void: ci.draw_mesh(_fog_mesh, null), Layers.Z_STEAM + 1)
+		_fog_feet.name = "FogFeet"
+		_props.add_child(_fog_feet)
+		if fog_material != null:
+			var cover := layout.fog_cover()
+			var cover_mesh := _plain_mesh(cover)
+			fog_layer = DrawLayer.new(func(ci: CanvasItem) -> void: ci.draw_mesh(cover_mesh, null), Layers.Z_STEAM + 1)
+			fog_layer.name = "Fog"
+			fog_layer.material = fog_material
+			_props.add_child(fog_layer)
+	if _fog_feet != null:
+		_fog_feet.visible = fog > 0.01
+		_fog_feet.modulate = Color(fog_color.r, fog_color.g, fog_color.b, fog * 0.9)
+	if fog_layer != null:
+		fog_layer.visible = fog > 0.01
+	if absf(rain - _wet) > 0.01:
+		_wet = rain
+		for r in _reflections:
+			(r.node as Sprite2D).modulate.a = 0.5 + 0.35 * rain
+
+
+
+
 ## M010: the street's rubbish (StreetGrime), each item a frame of one sheet.
 func _draw_grime(ci: CanvasItem) -> void:
 	var sheet := tex(StreetGrime.SHEET)

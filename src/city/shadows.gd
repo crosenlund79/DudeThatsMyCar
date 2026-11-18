@@ -138,3 +138,39 @@ static func mesh_of(tris: Array) -> ArrayMesh:
 	arrays[Mesh.ARRAY_COLOR] = tris[1]
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return mesh
+
+
+## M010: where street fog gathers - a soft band out from the foot of every
+## building (not under the next roof) - as white triangles [vertices, colours];
+## the weather gives them their colour and strength.
+static func fog_feet(layout: DistrictLayout) -> Array:
+	var verts := PackedVector2Array()
+	var cols := PackedColorArray()
+	var roofs := {}
+	for b in layout.buildings:
+		var r2: Rect2 = b.rect
+		for x in range(floori(r2.position.x / CELL), floori(r2.end.x / CELL) + 1):
+			for y in range(floori(r2.position.y / CELL), floori(r2.end.y / CELL) + 1):
+				if not roofs.has(Vector2i(x, y)):
+					roofs[Vector2i(x, y)] = []
+				roofs[Vector2i(x, y)].append(r2)
+	var thick := Color(1, 1, 1, 0.5)
+	var thin := Color(1, 1, 1, 0.0)
+	for b in layout.buildings:
+		var r: Rect2 = b.rect
+		if r.size.x > 3000.0 or r.size.y > 3000.0:
+			continue  # embankments and backdrops
+		var c := [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
+		var outs := [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
+		for i in 4:
+			var a: Vector2 = c[i]
+			var e: Vector2 = c[(i + 1) % 4]
+			var out: Vector2 = outs[i] * 48.0
+			var n := maxi(1, ceili(a.distance_to(e) / 80.0))
+			for k in n:
+				var p0 := a.lerp(e, float(k) / n)
+				var p1 := a.lerp(e, float(k + 1) / n)
+				if _under_roof((p0 + p1) * 0.5 + out * 0.1, r, roofs):
+					continue
+				_quad(verts, cols, [p0, p1, p1 + out, p0 + out], [thick, thick, thin, thin])
+	return [verts, cols]

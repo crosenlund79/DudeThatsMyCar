@@ -21,7 +21,7 @@ const BUS_CLUB_ROOM := "ClubRoom"
 const BUS_STREET := "Street"
 const MUSIC := "music/copper_owl_jazz"
 const CROWD := "ambience/club_crowd"
-const BEDS := {"street": "ambience/street_night", "alley": "ambience/alley", "river": "ambience/river"}
+const BEDS := {"street": "ambience/street_night", "alley": "ambience/alley", "river": "ambience/river", "rain": "ambience/rain"}
 const DISTANT := {"horn": "ambience/horn", "foghorn": "ambience/foghorn", "clatter": "ambience/clatter"}
 const DISTANT_DB := {"horn": -9.0, "foghorn": -7.0, "clatter": -11.0}
 ## Shops with a bell over the door.
@@ -203,8 +203,13 @@ func set_speech(on: bool) -> void:
 
 ## Every frame: where the listener is (`p`), the room he is in (null outdoors),
 ## whether he drives, and the street activity of the hour.
+## M010: how hard it is raining (0..1), set by the weather.
+var rain := 0.0
+
+
 func update_listener(p: Vector2, room: InteriorPlan, driving: bool, activity: float, delta: float) -> void:
 	listening = SoundscapeMix.listen(layout, club_plan, p, room, driving, activity)
+	listening["rain"] = rain
 	var target := SoundscapeMix.targets(listening)
 	if level.is_empty():
 		level = target.duplicate()

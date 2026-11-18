@@ -101,6 +101,26 @@ func ground_shadows() -> Array:
 	return _shadow_tris
 
 
+## M010: where the street fog gathers at the buildings' feet (Shadows.fog_feet), made once.
+var _fog_tris: Array = []
+
+
+func fog_feet() -> Array:
+	if _fog_tris.is_empty():
+		_fog_tris = Shadows.fog_feet(self)
+	return _fog_tris
+
+
+## M010: the open ground the street fog may lie over (FogCover), made once.
+var _fog_cover := PackedVector2Array()
+
+
+func fog_cover() -> PackedVector2Array:
+	if _fog_cover.is_empty():
+		_fog_cover = FogCover.of(self)
+	return _fog_cover
+
+
 ## M010: the district's rubbish, scattered the first time it is asked for.
 func grime_items() -> Array:
 	if not _grime_made:

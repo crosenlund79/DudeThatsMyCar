@@ -31,6 +31,8 @@ const IN_CAR_DB := -8.0
 const STREET_DB := -12.0
 const ALLEY_DB := -11.0
 const RIVER_DB := -10.0
+## M010: the rain at full (outdoors; through the windows indoors, dull - the street bus).
+const RAIN_DB := -8.0
 ## Indoors the street comes through the windows, dull; a closed car muffles less.
 const INDOOR_STREET_CUTOFF := 650.0
 const CAR_STREET_CUTOFF := 2800.0
@@ -82,6 +84,8 @@ static func targets(l: Dictionary) -> Dictionary:
 	out.street_db = _db(STREET_DB, street_lin)
 	out.alley_db = _db(ALLEY_DB, alley_lin)
 	out.river_db = _db(RIVER_DB, river_lin)
+	var rain_lin := float(l.get("rain", 0.0)) * (0.45 if indoors else (0.7 if l.driving else 1.0))
+	out.rain_db = _db(RAIN_DB, rain_lin)
 	out.street_cutoff = INDOOR_STREET_CUTOFF if indoors else (CAR_STREET_CUTOFF if l.driving else OPEN)
 	return out
 

@@ -212,7 +212,36 @@ def fence_iron(seed=2403):
     return finish(img, FW, FH)
 
 
+def fog_tile(seed=2410, size=256):
+    """M010: soft cloudy banks of fog, seamless in both directions (grey = how thick;
+    the game drifts two copies of it over the streets at different scales)."""
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    acc = np.zeros((size, size))
+    amp, total = 1.0, 0.0
+    for cells in (4, 8, 16, 32):
+        grid = rng.random((cells, cells))
+        # bicubic-ish upsampling of a periodic grid: wrap-around keeps it seamless
+        reps = size // cells
+        x = (np.arange(size) / reps) % cells
+        i0 = np.floor(x).astype(int)
+        f = x - i0
+        f = f * f * (3 - 2 * f)
+        i1 = (i0 + 1) % cells
+        row = grid[:, i0] * (1 - f) + grid[:, i1] * f
+        layer = row[i0, :] * (1 - f)[:, None] + row[i1, :] * f[:, None]
+        acc += layer * amp
+        total += amp
+        amp *= 0.5
+    acc /= total
+    acc = (acc - acc.min()) / (acc.max() - acc.min())
+    g = (acc * 255).astype(np.uint8)
+    img = Image.fromarray(np.dstack([g, g, g, np.full_like(g, 255)]), "RGBA")
+    return img
+
+
 ASSETS = {
+    "fx/fog": fog_tile,
     "decals/grime": grime,
     "fences/boards": fence_boards,
     "fences/chain": fence_chain,

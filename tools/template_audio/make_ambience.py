@@ -209,6 +209,27 @@ def alley():
     return out
 
 
+def rain():
+    """M010: steady rain on the street at night: a broad hiss, a low rush from
+    the gutters and drains, and drops ticking on tin, glass and puddles."""
+    n = int(12.0 * RATE)
+    out = []
+    for side in range(2):
+        hiss = band(coloured(n, 0.6), lo=1200, hi=9000) * (1.0 + periodic(n, [(2, 0.08), (5, 0.05)], side)) * 0.22
+        rush = band(coloured(n, 1.6), lo=90, hi=700) * (0.9 + periodic(n, [(3, 0.12)], side + 1)) * 0.35
+        ticks = np.zeros(n)
+        at = rng.uniform(0, 0.05)
+        while at < 12.0:
+            k = int(0.03 * RATE)
+            t = np.arange(k) / RATE
+            f0 = rng.uniform(1800, 5200)
+            tick = np.sin(2 * np.pi * f0 * t) * np.exp(-t / rng.uniform(0.003, 0.009)) * rng.uniform(0.04, 0.16)
+            place(ticks, tick, at * RATE)
+            at += rng.exponential(0.035)
+        out.append(hiss + rush + band(ticks, lo=800, hi=8000))
+    return out
+
+
 def river():
     """The river at the quay: water slapping against the stone, a low gurgle,
     and a factory's drone from the far bank."""
@@ -455,13 +476,15 @@ def main():
     if only:
         # one sound only (the rest stay as they are): python3 make_ambience.py assets/audio music/record_scratch
         makers = {"music/record_scratch": record_scratch, "fight/punch_landed": lambda: punch(True),
-                  "fight/punch_taken": lambda: punch(False)}
+                  "fight/punch_taken": lambda: punch(False), "ambience/rain": rain}
+        made = makers[only]()
         write_ogg(os.path.join(root, os.path.dirname(only), "template_" + os.path.basename(only) + ".ogg"),
-                  [makers[only]()], 0.7)
+                  made if isinstance(made, list) else [made], 0.5 if isinstance(made, list) else 0.7)
         return
     write_ogg(os.path.join(root, "ambience/template_street_night.ogg"), street_night(), 0.5)
     write_ogg(os.path.join(root, "ambience/template_alley.ogg"), alley(), 0.5)
     write_ogg(os.path.join(root, "ambience/template_river.ogg"), river(), 0.5)
+    write_ogg(os.path.join(root, "ambience/template_rain.ogg"), rain(), 0.5)
     write_ogg(os.path.join(root, "ambience/template_club_crowd.ogg"), club_crowd(), 0.5)
     write_ogg(os.path.join(root, "ambience/template_horn.ogg"), [horn()], 0.6)
     write_ogg(os.path.join(root, "ambience/template_foghorn.ogg"), [foghorn()], 0.6)

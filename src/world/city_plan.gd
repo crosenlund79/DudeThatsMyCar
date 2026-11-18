@@ -14,4 +14,6 @@ static func layouts(riverside: DistrictLayout) -> Array:
 	for l in all:
 		(l as DistrictLayout).grime_items()  # M010: scattered once at start-up (data, like the map images)
 		(l as DistrictLayout).ground_shadows()
+		(l as DistrictLayout).fog_feet()
+		(l as DistrictLayout).fog_cover()
 	return all

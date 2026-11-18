@@ -115,6 +115,12 @@ const COLLAPSE_FEE := 500
 ## M007: a fistfight under way (the dial is up; nothing else moves Danny), its
 ## rules, the man he is fighting and what to do when it is over.
 @export var fight_rules: FightRules = preload("res://src/fight/default_fight.tres")
+## M010: the night's weather (Weather), and how it is shown; a state here
+## ("clear", "rain", "fog", "rain_fog") holds all night instead of the course
+## (tests, screenshots).
+@export var weather_override := ""
+var weather: Weather
+var weather_view: WeatherView
 var fighting := false
 var fight_opponent: Walker
 var _fight_done: Callable
@@ -174,6 +180,9 @@ func _ready() -> void:
 	incidents = StreetIncidents.new(StreetIncidents.spots_of(all_layouts))
 	incidents.begin_night(rackets.night, float(night_rules.start_minute), float(night_rules.dawn_minute),
 		StreetIncidents.saved_history(_saved.get("incidents", {}), rackets.night))
+	weather = Weather.new()
+	weather.begin_night(rackets.night, float(night_rules.start_minute))
+	weather.force(weather_override)
 	_park_cars()
 	thefts = CarThefts.new(layout.cars)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
@@ -276,6 +285,9 @@ func _ready() -> void:
 	incident_views.officer_for = _officer_of
 	incident_views.person_struck.connect(func(id: String) -> void: _end_incident(incidents.break_off(id, "shooting")))
 	incident_views.process_mode = Node.PROCESS_MODE_PAUSABLE
+	weather_view = WeatherView.new()  # M010
+	add_child(weather_view)
+	weather_view.setup(weather, resolver.get_texture("fx/fog"))
 	opportunity_views = OpportunityViews.new()
 	opportunity_views.setup(resolver, rackets)
 	opportunity_views.is_out = func(id: String) -> bool: return ward_out.has(id)
@@ -870,6 +882,8 @@ func sleep() -> void:
 	rackets.end_night()
 	clock.reset()
 	incidents.begin_night(rackets.night, float(night_rules.start_minute), float(night_rules.dawn_minute))
+	weather.begin_night(rackets.night, float(night_rules.start_minute))
+	weather.force(weather_override)
 	_warned = 0
 	_report_from = null
 	for i in cars.size():
@@ -903,6 +917,7 @@ func _update_clock(delta: float) -> void:
 		clock.advance(delta)
 		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
 		_advance_incidents()
+		weather.advance(clock.minute)  # M010
 		for e in rackets.opportunities.advance(clock.minute):  # M009: too late is too late
 			_opportunity_over(e)
 	if clock.is_dawn() and _warned < 2:
@@ -1409,6 +1424,12 @@ func _update_view(delta: float) -> void:
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
 	for s in streets():
 		s.view = camera.view_rect()
+	# M010: the weather over the built districts
+	var cities := [city]
+	for id in world.ready_ids():
+		if id != layout.id:
+			cities.append(world.city_of(id))
+	weather_view.refresh(camera.view_rect(), camera.eye(), camera.zoom.x, cities)
 	if not get_tree().paused:
 		incident_views.refresh(camera.eye(), player.body().global_position, delta)  # M009
 		opportunity_views.refresh(player.body().global_position)
@@ -1450,6 +1471,7 @@ func _update_view(delta: float) -> void:
 	if map_open:
 		_update_map()
 	soundscape.set_speech(opening != null or voice.speaking())
+	soundscape.rain = weather.rain_strength()  # M010
 	if opening != null:
 		camera.zoom_override = opening.zoom
 		# the camera is the listener: the night as it drifts past
