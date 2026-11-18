@@ -122,6 +122,9 @@ var poker := PokerNight.new()
 ## M010: Rosie's Café (Rourke's job): the scene, and the blast's short film while it plays.
 var cafe_scene: CafeScene
 var cafe_film: Cinematic
+## M010: the police car, the fire engine and the ambulance that come to it.
+var emergency := EmergencyResponse.new()
+var emergency_views: EmergencyViews
 ## Doc Pettibone's fee for patching Danny up after he went down (cents, at most).
 const COLLAPSE_FEE := 500
 ## M007: a fistfight under way (the dial is up; nothing else moves Danny), its
@@ -326,6 +329,10 @@ func _ready() -> void:
 	cafe_scene = CafeScene.new()  # M010
 	add_child(cafe_scene)
 	cafe_scene.setup(world.layouts.halloran, resolver, rackets.cafe)
+	emergency_views = EmergencyViews.new()
+	add_child(emergency_views)
+	emergency_views.setup(resolver, emergency)
+	emergency_views.fire_out.connect(cafe_scene.extinguish)
 	opportunity_views = OpportunityViews.new()
 	opportunity_views.setup(resolver, rackets)
 	opportunity_views.is_out = func(id: String) -> bool: return ward_out.has(id)
@@ -981,6 +988,7 @@ func _end_cafe_film() -> void:
 func _cafe_goes_off() -> void:
 	var at := cafe_scene.car_pos
 	cafe_scene.play_blast()
+	_dispatch_emergency(at)
 	for s in streets():
 		s.hear_gunshot(at)
 	for o in officers():
@@ -996,6 +1004,16 @@ func _cafe_goes_off() -> void:
 		walker.condition.hurt("left_arm", 20)
 		walker.hurt.emit("torso", walker.condition.level("torso"))
 	save_game()
+
+
+## M010: the police car, the fire engine and the ambulance set off for the
+## scene along Marlowe Avenue (one after the other) and stay there tonight.
+func _dispatch_emergency(at: Vector2) -> void:
+	var h: DistrictLayout = world.layouts.halloran
+	var stops := {}
+	for id in ["police", "fire", "ambulance"]:
+		stops[id] = h.cafe_point("stop_" + id).pos
+	emergency.dispatch(rackets.night, clock.minute, at, EmergencyResponse.routes_for(h.cafe_point("approach").pos, stops))
 
 
 ## M006: Danny is hit. Where, and how bad, on screen.
@@ -1190,6 +1208,7 @@ func sleep() -> void:
 	poker.begin_night(rackets.night)  # M010: the card players are back with fresh money
 	_sync_card_players()
 	moments.clear()
+	emergency.clear()  # the street is cleared by morning
 	_warned = 0
 	_report_from = null
 	for i in cars.size():
@@ -1231,6 +1250,7 @@ func _update_clock(delta: float) -> void:
 			if clock.minute >= rackets.cafe.due(rackets.night) and cafe_film == null:
 				_cafe_due()
 			cafe_scene.refresh(rackets.night, clock.minute)
+			emergency_views.update(rackets.night, clock.minute, delta)
 	if clock.minute >= float(night_rules.home_minute):
 		poker.closing = true  # M010: the card game breaks up at the hour to go home
 	if clock.is_dawn() and _warned < 2:

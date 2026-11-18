@@ -16,7 +16,8 @@ extends SceneTree
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
 ## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007),
 ## weather_clear / weather_rain / weather_fog / weather_rain_fog / fog_alley / fog_headlights, drowsy, map_labels,
-## map_medium, ping (M010),
+## map_medium, ping, truck_found, park / sitting, back_room / poker_game, thompson,
+## cafe_packard / cafe_blast / cafe_aftermath, emergency (M010),
 ## wheels / wheels_lock (M009: the front tyres, straight and at full lock), dump_truck, school_bus,
 ## incident / incident_broken_up / incident_stop, dutch / crate, feeney / film_can (M009).
 
@@ -649,6 +650,36 @@ func _run(shots: Array) -> void:
 						_teleport_walker(car_at + Vector2(150, 150), -PI / 2 - 0.6)
 						await _frames(60)
 				await _shot(s, false)
+			"emergency":
+				# M010: after the blast at Rosie's: the police car, the fire engine and the ambulance at the
+				# kerb with their lamps going, the coppers keeping people back, the firemen at the wreck
+				main.weather.force("clear")
+				main.street.clear()
+				var hl3: DistrictLayout = main.world.layouts.halloran
+				var car3: Vector2 = hl3.cafe_point("car").pos
+				_teleport_walker(hl3.cafe_point("bench").pos + Vector2(0, 28), PI)
+				main.world.load_now("halloran")
+				main.clock.set_time(22 * 60.0 + 30.0)
+				await _frames(10)
+				main.rackets.money = 2000
+				main.rackets.take_cafe_job()
+				main.rackets.buy_parcel()
+				main.rackets.plant_parcel(main.clock.minute, false)
+				main.clock.set_time(main.rackets.cafe.due(main.rackets.night) - 0.02)
+				for f in 60:
+					await _frames(1)
+					if main.cafe_film != null:
+						break
+				if main.cafe_film != null:
+					main.cafe_film.skip()
+				for f in 60 * 30:
+					await _frames(1)
+					if main.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"):
+						break
+				await _frames(480)  # the crews walk over to their places
+				_teleport_walker(car3 + Vector2(260, 170), -PI / 2 - 0.4)
+				await _frames(30)
+				await _shot("emergency", false)
 			"park", "sitting":
 				# M010: Halloran Park in the middle of the square - lawns, paths, railings, benches;
 				# sitting: Danny on a bench by the north path, the night going by

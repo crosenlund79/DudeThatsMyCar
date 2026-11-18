@@ -58,6 +58,13 @@ DUTCH = {"coat": "#7b8088", "coat_light": "#91969d", "arm": SKIN, "trouser": "#3
 # a bow tie, sandy red hair going thin.
 FEENEY = {"coat": "#1f2440", "coat_light": "#353c62", "trouser": "#16161c", "hat": "hair", "hat_color": "#b0643a",
           "stripes": False, "front": "bowtie"}
+# M010: the emergency's people. A fireman in a black rubber coat with brass clasps
+# and a leather fire helmet (long brim at the back, brass shield at the front); an
+# ambulance attendant in a white jacket and a white peaked cap.
+FIREMAN = {"coat": "#1e1e22", "coat_light": "#34343a", "trouser": "#1a1a1d", "hat": "helmet", "hat_color": "#2a2420",
+           "stripes": False, "front": "buttons"}
+ATTENDANT = {"coat": "#e6e2d8", "coat_light": "#f6f3ec", "arm": "#e6e2d8", "trouser": "#2c2c32", "hat": "cap",
+             "hat_color": "#ece8de", "stripes": False, "front": "buttons"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
                 "hat_color": "#1d1410", "stripes": False, "front": "pearls"}
 
@@ -158,6 +165,20 @@ def _hat(img, cx, cy, look):
                     light=(0.4, -1, 0.6))
         paint_shape(img, SP(ellipse_pts(cx + 6.5, cy, 1.6, 2.0)), "#e2c068", 84, outline=OUT, ow=0.6, wob=0.05)
         soft_blob(img, S(cx + 1.5), S(cy - 2.5), S(2.2), S(1.4), "#ffffff", 40, 0.8 * SS)
+        return finish(img, F, F)
+    if look["hat"] == "helmet":
+        # M010: a leather fire helmet from above: a long brim sweeping out at the back,
+        # the ribbed crown, a brass shield standing up at the front
+        paint_shape(img, SP(ellipse_pts(cx + 9.5, cy, 2.0, 1.7)), SKIN, 7, outline=OUT, ow=0.8, wob=0.1, tex=0.1)
+        paint_shape(img, SP(ellipse_pts(cx - 3.0, cy, 12.0, 9.6)), shade(HAT, 0.9), 90, outline=OUT, ow=1.3, wob=0.2,
+                    tex=0.2, light=(0.4, -1, 0.5))
+        paint_shape(img, SP(ellipse_pts(cx, cy, 7.0, 7.2)), HAT, 91, outline=OUT, ow=1.1, wob=0.15, tex=0.2,
+                    light=(0.4, -1, 0.6), inner_shadow=0.2)
+        for k in (-3.5, 0.0, 3.5):
+            line(img, [(S(cx - 5.5), S(cy + k)), (S(cx + 5.5), S(cy + k))], shade(HAT, 1.5), 0.8 * SS, 160)
+        paint_shape(img, SP(rrect_pts(cx + 6.0, cy - 3.2, cx + 9.0, cy + 3.2, 1)), "#d8b050", 92, outline=OUT, ow=0.7,
+                    wob=0.05, light=(0.4, -1, 0.7))
+        soft_blob(img, S(cx + 1), S(cy - 3), S(2.4), S(1.4), "#ffffff", 45, 0.8 * SS)
         return finish(img, F, F)
     if look["hat"] == "cloche":
         # a close-fitting bell hat with a ribbon, the face just showing at the front
@@ -303,4 +324,6 @@ ASSETS = {
     "characters/patron_woman": lambda: sheet(PATRON_WOMAN),
     "characters/dutch": lambda: sheet(DUTCH),
     "characters/feeney": lambda: sheet(FEENEY),
+    "characters/fireman": lambda: sheet(FIREMAN),
+    "characters/attendant": lambda: sheet(ATTENDANT),
 }

@@ -274,6 +274,11 @@ func _cafe() -> void:
 		{"id": "car", "pos": Vector2(600, MARLOWE - 92.0), "rot": 0.0},
 		{"id": "door", "pos": Vector2(660, MARLOWE - AVENUE_HALF - SW + 8.0)},
 		{"id": "bench", "pos": bench},
+		# M010: the emergency comes in along Marlowe Avenue from the ward and stops in a line at the kerb
+		{"id": "approach", "pos": Vector2(WIDTH - 40.0, MARLOWE - 45.0)},
+		{"id": "stop_police", "pos": Vector2(770, MARLOWE - 72.0)},
+		{"id": "stop_fire", "pos": Vector2(945, MARLOWE - 64.0)},
+		{"id": "stop_ambulance", "pos": Vector2(1115, MARLOWE - 68.0)},
 	]
 
 
