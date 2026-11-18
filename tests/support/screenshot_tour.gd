@@ -13,7 +13,8 @@ extends SceneTree
 ## grocery_marker (at Novak's door), drive_markers (markers from the car),
 ## opening (M005: the monologue over the ward, six moments and the hand-over),
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
-## bird / bird_talk (M006: the Bird singing; interrupted).
+## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
+## Moran outside Doyle's Garage; shooting, then shot down: lefty_down).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -176,6 +177,26 @@ func _run(shots: Array) -> void:
 				await _frames(30)
 				await _shot("bird_talk")
 				main.end_talk()
+			"lefty":
+				# M006: Lefty Moran outside Doyle's Garage, Danny walking up
+				_teleport_walker(main.rival.body.global_position + Vector2(-80, 0), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, main.rival.body.global_position)
+				await _frames(60)
+				await _shot("lefty")
+			"gunfight":
+				# M006: Lefty hostile and shooting; then shot down
+				_teleport_walker(main.rival.body.global_position + Vector2(-170, 0), 0.0)
+				main.rival.provoke()
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, main.rival.body.global_position)
+				_click = true
+				await _frames(150)
+				await _shot("gunfight")
+				for i in 6:
+					if main.rival.is_down():
+						break
+					main.rival.body.hit_by_bullet(main.rival.body.global_position, Vector2.RIGHT, main.walker)
+				await _frames(20)
+				await _shot("lefty_down")
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)

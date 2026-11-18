@@ -102,7 +102,7 @@ func _shoot(aim: Vector2) -> void:
 	if aim.distance_to(walker.global_position) < walker.gun.rules.muzzle_offset.length() + 4.0 or dir.length() < 1.0:
 		dir = Vector2.from_angle(walker.model.facing)
 	if bullets != null:
-		bullets.fire(walker.global_position, muzzle, dir, walker.gun.rules, [walker.get_rid()])
+		bullets.fire(walker.global_position, muzzle, dir, walker.gun.rules, [walker.get_rid()], walker.condition.aim_spread(), walker)
 	fired.emit(muzzle, dir.normalized())
 
 

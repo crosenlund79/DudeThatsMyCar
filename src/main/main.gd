@@ -50,6 +50,13 @@ var bullets: BulletWorld
 var gunfire: GunfireView
 var navigator: CityNavigator
 var officer: PoliceOfficer
+## M006: Lefty Moran, the North Side gangster outside Doyle's Garage.
+var rival: Rival
+## Named people carried off to the Doc's: id -> the night it happened.
+var ward_out := {}
+## Times Danny went down (for tests).
+var collapses := 0
+const RIVAL_POST: Array[Vector2] = [Vector2(1180, 1392), Vector2(1330, 1392)]
 var street: StreetLife
 @export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
 ## The player's handgun.
@@ -104,6 +111,10 @@ func _ready() -> void:
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
 	walker.place(layout.spawn, layout.spawn_facing)
+	walker.falls = false  # M006: Danny goes down, but the game decides what that means
+	walker.rng.seed = 1932001
+	walker.hurt.connect(_on_danny_hurt)
+	walker.struck_down.connect(_danny_down)
 	_load_gun()
 	interiors.update_player(walker.global_position)
 	interiors.snap()
@@ -144,6 +155,20 @@ func _ready() -> void:
 	street.setup(layout, resolver, clock, CAR_SCENE, VEHICLES, cars, [walker, officer.body] as Array[Walker])
 	street.view = camera.view_rect()
 	player.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void: street.hear_gunshot(muzzle))
+	rival = Rival.new()
+	add_child(rival)
+	rival.setup(resolver, gun_rules, RIVAL_POST, navigator, bullets, player.body)
+	rival.fired.connect(gunfire.on_fired)
+	rival.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
+		officer.hear_gunshot(muzzle, gun_rules.noise_radius)
+		street.hear_gunshot(muzzle))
+	rival.provoked.connect(func() -> void: hud.show_notice("Lefty Moran goes for his gun!"))
+	rival.struck_down.connect(func() -> void: hud.show_notice("Lefty Moran goes down and stays down."))
+	player.fired.connect(func(muzzle: Vector2, dir: Vector2) -> void:
+		if not rival.is_down() and rival.near_miss(muzzle, dir):
+			rival.provoke())
+	for v in interiors.views:
+		v.person_down.connect(_on_person_down.bind(v))
 	vehicle_audio = VehicleAudio.new()
 	add_child(vehicle_audio)
 	vehicle_audio.setup(resolver)
@@ -159,6 +184,7 @@ func _ready() -> void:
 		bird_show = BirdPerformance.new()
 		add_child(bird_show)
 		bird_show.setup(bird, stage)
+	_load_ward()
 	hud = Hud.new()
 	add_child(hud)
 	hud.setup(resolver, layout.name)
@@ -175,7 +201,7 @@ func _ready() -> void:
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, voice, bullets, gunfire, officer, street] + cars:
+	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, voice, bullets, gunfire, officer, street, rival] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -270,13 +296,17 @@ func _on_exited_car(c: Car) -> void:
 
 ## The interaction spot the player stands at (on foot): someone to talk to or
 ## the bed inside a room, else a door to go in or out by; {} when none.
+## M006: nobody to talk to who is down or carried off; Lefty in the street.
 func _spot() -> Dictionary:
 	if not player.on_foot():
 		return {}
 	if interiors.current != null:
 		var s := interiors.current.spot_at(walker.global_position)
-		if not s.is_empty():
+		if not s.is_empty() and (s.id == "bed" or interiors.view_of(interiors.current.id).person_ok(s.id)):
 			return s
+	if rival != null and not rival.is_down() and not rival.is_hostile() \
+			and walker.global_position.distance_to(rival.body.global_position) < 40.0:
+		return {"id": "lefty", "prompt": "Talk to Lefty Moran"}
 	var door := interiors.door_at(walker.global_position)
 	if not door.is_empty():
 		door["id"] = "door"
@@ -293,6 +323,10 @@ func _interact(_at: Vector2) -> bool:
 		interiors.step_through(walker, spot)
 	elif spot.id == "bird":
 		talk_to_bird()
+	elif spot.id == "lefty":
+		talking = "lefty"
+		rival.body.aim_point = walker.global_position
+		_show(talk.open("lefty", _talk_context()))
 	elif spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
 	return true
@@ -316,6 +350,50 @@ func talk_to_bird() -> void:
 	else:
 		stage.hold()
 	start_talk("bird", {"interrupted": interrupted})
+
+
+## M006: Danny is hit. Where, and how bad, on screen.
+func _on_danny_hurt(region: String, level: int) -> void:
+	hud.show_notice("Hit in the %s - %s." % [BodyCondition.NAMES[region], BodyCondition.label(level)])
+
+
+## M006: Danny goes down. He is not killed: he comes to at home, patched up in
+## a hurry by whoever dragged him there, an hour later. His wounds are
+## grazes now; the night goes on.
+func _danny_down() -> void:
+	collapses += 1
+	end_talk()
+	walker.condition.patch_up()
+	walker.down = false
+	if walker.gun != null:
+		walker.gun.holster()
+	clock.set_time(minf(clock.minute + 60.0, float(night_rules.dawn_minute)))
+	rival.brain.state = RivalBrain.State.IDLE if not rival.is_down() else rival.brain.state  # he thinks he got you
+	walker.place(layout.spawn, layout.spawn_facing)
+	interiors.update_player(walker.global_position)
+	interiors.snap()
+	camera.snap_to(walker)
+	hud.wake_up(rackets.night, clock.text(), "You came to in your own bed.\nSomebody dragged you home and stopped the bleeding.")
+	save_game()
+
+
+## M006: someone in a room was struck down. One of the ward's own people (named)
+## is carried off to the Doc's for the night - and if Danny did it, the ward
+## and Rourke will remember. The Bird down means no more music tonight.
+func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
+	var w: Walker = view.people.get(id)
+	if not named:
+		return
+	ward_out[id] = rackets.night
+	if w != null and w.last_shooter == walker:
+		rackets.shot_person(id)
+	if id == "bird":
+		stage.knock_out()
+		soundscape.stop_music()
+	if talking == id:
+		end_talk()
+	hud.show_notice("%s goes down, badly hurt. Somebody runs for the Doc." % talk.speaker(id))
+	save_game()
 
 
 func _talk_context() -> Dictionary:
@@ -403,6 +481,11 @@ func end_talk() -> void:
 func sleep() -> void:
 	end_talk()
 	stage.reset()  # the Bird is singing when the club opens
+	ward_out.clear()  # back from the Doc's, patched up (and they remember)
+	for v in interiors.views:
+		v.reset_people()
+	rival.reset()
+	walker.condition.rest()  # grazes heal overnight; wounds wait for the Doc
 	rackets.end_night()
 	clock.reset()
 	_warned = 0
@@ -443,6 +526,10 @@ func _update_clock(delta: float) -> void:
 
 func save_game() -> void:
 	var data := {"rackets": rackets.to_dict(), "voices": voice_lines.to_dict()}
+	if walker != null:
+		data["danny"] = walker.condition.to_dict()
+	if rival != null:
+		data["ward"] = {"out": ward_out.duplicate(), "rival": rival.to_dict()}
 	if walker != null and walker.gun != null:
 		data["gun"] = {"ammo": walker.gun.ammo, "spare": walker.gun.spare}
 	SaveGame.write(save_path, data)
@@ -456,6 +543,25 @@ func _load_game() -> void:
 		voice_lines.from_dict(_saved.voices)
 	elif _saved.has("rackets"):
 		voice_lines.assume_old_acquaintances()  # a game from before the voices
+
+
+## M006: Danny's wounds, Lefty's fate and who is out tonight, from the save.
+func _load_ward() -> void:
+	if _saved.has("danny"):
+		walker.condition.from_dict(_saved.danny)
+	var ward: Dictionary = _saved.get("ward", {})
+	rival.from_dict(ward.get("rival", {}))
+	ward_out = {}
+	for id in ward.get("out", {}):
+		if int(ward.out[id]) == rackets.night:
+			ward_out[id] = rackets.night
+	for v in interiors.views:
+		var still := v.plan.people.map(func(p: Dictionary) -> String: return p.id).filter(func(id: String) -> bool: return ward_out.has(id))
+		if not still.is_empty():
+			v.reset_people(still)
+	if ward_out.has("bird"):
+		stage.knock_out()
+		soundscape.stop_music()
 
 
 ## Puts the saved rounds back in the gun (after the player exists).
@@ -543,7 +649,8 @@ func _update_view(delta: float) -> void:
 	var door := interiors.door_at(walker.global_position) if player.on_foot() else {}
 	var facing := walker.model.facing if player.on_foot() else player.car.model.heading
 	var speed := 0.0 if player.on_foot() else player.car.speed() / player.car.model.params.max_speed
-	hud.minimap.set_view(focus, facing, speed, officer.body.global_position, officer.brain.is_hunting(), delta)
+	hud.minimap.set_view(focus, facing, speed, officer.body.global_position if not officer.is_down() else Vector2.INF,
+		officer.brain.is_hunting(), delta)
 	var in_room: InteriorPlan = null
 	if player.on_foot() and interiors.current != null and interiors.current.contains(walker.global_position):
 		in_room = interiors.current

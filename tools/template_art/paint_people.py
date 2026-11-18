@@ -44,6 +44,9 @@ BOSS = {"coat": "#2a292f", "coat_light": "#3e3d46", "trouser": "#1c1b20", "hat":
         "stripes": False, "front": "tie", "cigar": True}
 PATRON_MAN = {"coat": "#1b1b20", "coat_light": "#34343c", "trouser": "#16161a", "hat": "hair", "hat_color": "#6a4c32",
               "stripes": False, "front": "bowtie"}
+# M006: Lefty Moran, a North Side gangster: camel overcoat, a white fedora, a cigar.
+RIVAL = {"coat": "#a9804e", "coat_light": "#c89e68", "trouser": "#2a2420", "hat": "fedora", "hat_color": "#ece6da",
+         "stripes": False, "front": "tie", "cigar": True}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
                 "hat_color": "#1d1410", "stripes": False, "front": "pearls"}
 
@@ -270,6 +273,8 @@ def singer_sheet():
 
 ASSETS = {
     "characters/singer": singer_sheet,
+    "characters/rival": lambda: sheet(RIVAL),
+    "characters/rival_armed": lambda: sheet(RIVAL, True),
     "characters/gangster": sheet,
     "characters/gangster_armed": lambda: sheet(GANGSTER, True),
     "characters/police": lambda: sheet(POLICE),

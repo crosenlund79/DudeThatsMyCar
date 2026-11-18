@@ -68,7 +68,7 @@ func clear_command() -> void:
 
 
 ## A bullet struck the car: a tiny nudge (the sparks and sound are presentation).
-func hit_by_bullet(_at: Vector2, direction: Vector2) -> void:
+func hit_by_bullet(_at: Vector2, direction: Vector2, _shooter: Node = null) -> void:
 	if model != null:
 		model.velocity += direction.normalized() * 4.0
 

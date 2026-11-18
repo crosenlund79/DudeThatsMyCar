@@ -14,7 +14,7 @@ extends RefCounted
 ## greeting for the first time opens on that greeting, then their usual page.
 
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
-	"rourke": "Rourke", "bird": "The Bird", "bed": "Home"}
+	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "bed": "Home"}
 
 var rackets: Rackets
 
@@ -75,6 +75,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _rourke(step, context)
 		"bird":
 			return _bird(step, context)
+		"lefty":
+			return _lefty(step, context)
 		"bed":
 			return _bed(step, context)
 	return {}
@@ -217,6 +219,8 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is you helped out at %s. Decent of you." % where
 		"lie":
 			return "Word is Rourke caught somebody short-changing him. Somebody, Dimes."
+		"shot":
+			return "Word is you put a bullet in %s. People are scared of you, Dimes. Scared ain't the same as loyal." % speaker(t.text)
 	return ""
 
 
@@ -379,6 +383,21 @@ func _bird(step: String, context: Dictionary) -> Dictionary:
 		"song":
 			return _page("bird", "'Leave the Lights Low.' It's for whoever's still sitting there at closing time. Most nights that's Rourke.",
 				[chat[0], chat[2]])
+	return {}
+
+
+# ------------------------------------------------------------------ Lefty Moran, outside Doyle's Garage (M006)
+
+func _lefty(step: String, _context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			return _page("lefty", "Keep walking, pal. This corner's spoken for.", [
+				{"id": "who", "text": "Spoken for by who?"},
+				{"id": "bye", "text": "Sure. Nice hat."},
+			])
+		"who":
+			return _page("lefty", "Lefty Moran. North Side. I don't take Rourke's money and I don't drink in his club. " +
+				"You want trouble, Mercer, you know where the garage is.")
 	return {}
 
 

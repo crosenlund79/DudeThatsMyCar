@@ -16,6 +16,7 @@ func setup(resolver: AssetResolver, look: String, route: PackedVector2Array, at:
 	brain.nearest_on_route(at)
 	body = Walker.create(resolver, look, {"glow": false})
 	body.name = "Body"
+	body.rng.seed = seed
 	add_child(body)
 	body.place(at, 0.0)
 	body.shot_at.connect(func(hit: Vector2, direction: Vector2) -> void: brain.hear_gunshot(body.global_position, hit - direction * 200.0))
@@ -37,6 +38,7 @@ func set_active(on: bool) -> void:
 func reset() -> void:
 	brain = PedestrianBrain.new(brain.route, brain._rng.seed)
 	brain.nearest_on_route(start)
+	body.revive()  # M006: if shot last night, another passer-by walks this way
 	body.place(start, 0.0)
 	set_active(true)
 
@@ -48,7 +50,7 @@ func hear_gunshot(at: Vector2) -> void:
 
 ## One physics tick; cars: [{pos, vel}].
 func tick(dt: float, cars: Array) -> void:
-	if not active:
+	if not active or body.down:
 		return
 	var me := body.global_position
 	var out := brain.update(dt, me, cars)

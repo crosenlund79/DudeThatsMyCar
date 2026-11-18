@@ -336,10 +336,34 @@ func end_night() -> Array:
 	return reports
 
 
+## M006: Danny shot `who`, one of the ward's own people. They are carried
+## off to the Doc's for the night (the game does that) and will not forget
+## it; the talk goes round; Rourke takes it badly - worst of all if it was
+## him, or one of his own at the Copper Owl.
+const ROURKES_OWN := ["augie", "bird"]
+
+
+func shot_person(who: String) -> void:
+	memory.remember(who, "shot", night)
+	rumours.start("shot", who, night, {"text": who})
+	if who == "rourke":
+		boss.trust = 0
+		boss.patience = 0
+	elif who in ROURKES_OWN:
+		boss.trust = maxi(0, boss.trust - 20)
+		boss.patience = maxi(0, boss.patience - 1)
+	else:
+		boss.trust = maxi(0, boss.trust - 8)
+	boss.hear("Dimes shot %s" % who.capitalize(), night)
+	boss._pressure()
+
+
 ## Someone hears a piece of talk.
 func _hear(person: String, r: Dictionary) -> void:
 	if person == "rourke":
 		match r.kind:
+			"shot":
+				boss.hear("Dimes shot %s" % r.text.capitalize(), night)
 			"paid":
 				if boss.learn_paid(r.business, int(r.cents), int(r.night), int(r.seq)) > 0:
 					memory.remember("rourke", "lie", night, "found out")
@@ -352,7 +376,7 @@ func _hear(person: String, r: Dictionary) -> void:
 				boss.hear("Dimes is lending money to %s" % town.get_business(r.business).name, night)
 		return
 	match r.kind:
-		"threat":
+		"threat", "shot":
 			if r.origin != person:
 				memory.remember(person, "heard_threat", night)
 		"favour":
@@ -363,7 +387,7 @@ func _hear(person: String, r: Dictionary) -> void:
 ## The newest piece of talk a person can pass on to Danny (or {}).
 func gossip(person: String) -> Dictionary:
 	for r in rumours.known_to(person):
-		if r.origin != person and r.kind in ["short", "threat", "favour", "lie"]:
+		if r.origin != person and r.kind in ["short", "threat", "favour", "lie", "shot"]:
 			return r
 	return {}
 

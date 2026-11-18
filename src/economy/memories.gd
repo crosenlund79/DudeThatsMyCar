@@ -17,6 +17,7 @@ const WEIGHTS := {
 	"lie": [0.0, -1.0, -3.0],
 	"kept_promise": [0.0, 0.5, 1.5],
 	"broken_promise": [0.0, -1.5, -2.0],
+	"shot": [5.0, -4.0, -3.0],
 }
 const FADE := 0.75
 

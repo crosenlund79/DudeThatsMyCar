@@ -15,6 +15,9 @@ const STRIDE := 24.0
 
 ## A bullet struck this person (position, direction of travel).
 signal shot_at(at: Vector2, direction: Vector2)
+## M006: the round left a wound (region, BodyCondition.Level) - and a fatal one.
+signal hurt(region: String, level: int)
+signal struck_down
 
 var model := WalkerModel.new()
 ## Command for this tick (set by the player controller or tests).
@@ -32,6 +35,15 @@ var pistol: Sprite2D
 var _sheet: Texture2D
 var _armed_sheet: Texture2D
 var _walked := 0.0
+## M006: where this person is hurt, who shot them last, and whether a fatal
+## wound lays them down (false for Danny: the game decides what happens to him).
+var condition := BodyCondition.new()
+var last_shooter: Node = null
+var falls := true
+var down := false
+var rng := RandomNumberGenerator.new()
+var _stain: Sprite2D
+var _layer := 0
 
 
 ## options: "glow" (bool, a faint light round the person, default true),
@@ -92,8 +104,79 @@ func muzzle_position() -> Vector2:
 	return global_position + gun.rules.muzzle_offset.rotated(model.facing)
 
 
-func hit_by_bullet(at: Vector2, direction: Vector2) -> void:
+func hit_by_bullet(at: Vector2, direction: Vector2, shooter: Node = null) -> void:
 	shot_at.emit(at, direction)
+	if down:
+		return
+	last_shooter = shooter
+	var right := Vector2.from_angle(model.facing + PI * 0.5)
+	var region := BodyCondition.region_for((at - global_position).dot(right), rng.randf())
+	condition.shoot(region, rng.randf())
+	_flash()
+	hurt.emit(region, condition.level(region))
+	if condition.is_fatal():
+		down = true
+		struck_down.emit()
+		if falls:
+			lie_down()
+
+
+## A brief red flush where the round went in (no gore).
+func _flash() -> void:
+	if sprite == null:
+		return
+	sprite.modulate = Color(1.7, 0.55, 0.5)
+	var t := create_tween()
+	t.tween_property(sprite, "modulate", Color(0.6, 0.56, 0.54) if down else Color.WHITE, 0.3)
+
+
+## Struck down: they fall where they stood and lie still - turned on their
+## side, darker, a dark patch on the ground beneath (no gore) - no longer in
+## the way of bullets, people or cars.
+func lie_down() -> void:
+	down = true
+	active = false
+	velocity = Vector2.ZERO
+	move = Vector2.ZERO
+	if _layer == 0:
+		_layer = collision_layer
+	collision_layer = 0
+	sprite.frame = 0
+	sprite.rotation = model.facing + PI * 0.5
+	sprite.scale = base_scale * Vector2(1.4, 0.78)
+	sprite.position = Vector2.from_angle(model.facing) * -5.0
+	sprite.modulate = Color(0.6, 0.56, 0.54)
+	if pistol != null:
+		pistol.visible = false
+	if _stain == null:
+		_stain = Sprite2D.new()
+		_stain.name = "Stain"
+		_stain.texture = SoftShadow.texture()
+		_stain.modulate = Color(0.16, 0.02, 0.02, 1.0)
+		_stain.z_as_relative = false
+		_stain.z_index = Layers.Z_REFLECTION + 1  # above the lamps' light pools, under people
+		add_child(_stain)
+		move_child(_stain, 0)
+	_stain.scale = Vector2(74, 50) / Vector2(_stain.texture.get_size())
+	_stain.rotation = model.facing + PI * 0.5
+	_stain.position = Vector2.from_angle(model.facing) * 9.0 + Vector2(2, 3)
+	_stain.visible = true
+
+
+## Up again, unhurt (a new night).
+func revive() -> void:
+	condition.heal_all()
+	down = false
+	active = true
+	if _layer != 0:
+		collision_layer = _layer
+	sprite.scale = base_scale
+	sprite.position = Vector2.ZERO
+	sprite.modulate = Color.WHITE
+	sprite.rotation = model.facing
+	if _stain != null:
+		_stain.visible = false
+	last_shooter = null
 
 
 ## Shows the drawn pistol (or puts it away) to match the gun.
@@ -124,7 +207,7 @@ func _physics_process(delta: float) -> void:
 	if not active:
 		return
 	model.aim_at(global_position, aim_point)
-	velocity = model.update(delta, move)
+	velocity = model.update(delta, move * condition.speed_factor())
 	var before := global_position
 	move_and_slide()
 	model.velocity = velocity

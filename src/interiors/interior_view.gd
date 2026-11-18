@@ -22,6 +22,13 @@ var alpha := 0.0
 var inside := false
 var lights: Array[PointLight2D] = []
 var people := {}  # id -> Walker
+## M006: someone in the room was struck down (id). A named person (one of the
+## ward's own: Augie, Rourke, the Bird, the shopkeepers) is not killed: they
+## go down badly hurt, are carried off to the Doc's a few seconds later and
+## are out for the rest of the night (`out`). Anybody else stays where they fell.
+signal person_down(id: String, named: bool)
+const CARRIED_OFF_AFTER := 4.0
+var out := {}
 ## Whoever may push the doors open (the player's body, set by the game).
 var visitors: Array[Node2D] = []
 var _doors: Array = []  # {node: Sprite2D, hinge_open: float, at: Vector2}
@@ -73,9 +80,46 @@ func setup(p_plan: InteriorPlan, p_host: BuildingView, resolver: AssetResolver) 
 		add_child(w)
 		w.place(p.pos, p.facing)
 		w.aim_point = p.pos + Vector2.from_angle(p.facing) * 50.0
+		w.rng.seed = hash(plan.id + String(p.id))
+		var named := String(p.get("name", "")) != ""
+		w.struck_down.connect(_on_struck_down.bind(String(p.id), named))
 		people[p.id] = w
 	visible = false
 	_apply()
+
+
+func _on_struck_down(id: String, named: bool) -> void:
+	if named:
+		out[id] = true
+		var w: Walker = people[id]
+		get_tree().create_timer(CARRIED_OFF_AFTER, false).timeout.connect(func() -> void:
+			if out.has(id) and is_instance_valid(w):
+				w.visible = false)
+	person_down.emit(id, named)
+
+
+## Whether someone is there to talk to (not down, not carried off).
+func person_ok(id: String) -> bool:
+	var w: Walker = people.get(id)
+	return w != null and not w.down and not out.has(id)
+
+
+## A new night: everybody back in their place, unhurt - except the named
+## people still `still_out` (id list), who stay away.
+func reset_people(still_out: Array = []) -> void:
+	out.clear()
+	for p in plan.people:
+		var w: Walker = people.get(p.id)
+		if w == null:
+			continue
+		w.revive()
+		w.visible = true
+		w.place(p.pos, p.facing)
+		w.aim_point = (p.pos as Vector2) + Vector2.from_angle(p.facing) * 50.0
+		if p.id in still_out:
+			out[p.id] = true
+			w.visible = false
+			w.lie_down()
 
 
 ## Turns a person to face a point (talking to the player).

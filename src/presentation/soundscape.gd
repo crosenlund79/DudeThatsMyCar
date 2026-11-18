@@ -173,6 +173,12 @@ func interrupt_music() -> bool:
 	return true
 
 
+## The song stops dead, no scratch (the singer shot on the bandstand).
+func stop_music() -> void:
+	music_stopped = true
+	music.stop()
+
+
 ## The band counts her back in: the song starts again from the top (once).
 func resume_music() -> bool:
 	if not music_stopped:

@@ -13,6 +13,8 @@ const RESUME_DELAY := 2.5
 
 var state := State.SINGING
 var resume_left := 0.0
+## M006: she was shot and carried off: no more singing tonight.
+var out := false
 ## Times Danny has stopped her song tonight.
 var interruptions := 0
 
@@ -37,9 +39,15 @@ func hold() -> void:
 		state = State.STOPPED
 
 
+## Shot down on the bandstand: the song stops and she is gone for the night.
+func knock_out() -> void:
+	out = true
+	state = State.STOPPED
+
+
 ## The talk is over: she goes back to the microphone.
 func release() -> void:
-	if state == State.STOPPED:
+	if state == State.STOPPED and not out:
 		state = State.RESUMING
 		resume_left = RESUME_DELAY
 
@@ -58,6 +66,7 @@ func update(delta: float) -> bool:
 ## A new night: she is singing when the club opens.
 func reset() -> void:
 	interruptions = 0
+	out = false
 	if state != State.SINGING:
 		state = State.RESUMING
 		resume_left = 0.0

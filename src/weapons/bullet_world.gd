@@ -12,7 +12,7 @@ signal spent(position: Vector2)
 
 const MASK := Layers.WORLD | Layers.CARS | Layers.PEOPLE
 
-## {pos, dir, speed, left, exclude}
+## {pos, dir, speed, left, exclude, shooter}
 var bullets: Array = []
 var rng := RandomNumberGenerator.new()
 
@@ -22,15 +22,18 @@ func _ready() -> void:
 
 
 ## Fires from a shooter at body_pos whose muzzle is at muzzle, along direction.
-## A muzzle pressed into a wall fires into the wall.
-func fire(body_pos: Vector2, muzzle: Vector2, direction: Vector2, rules: GunRules, exclude: Array[RID] = []) -> void:
-	var spread := deg_to_rad(rules.spread_degrees)
+## A muzzle pressed into a wall fires into the wall. M006: `extra_spread`
+## (degrees) for a wounded gun arm; `shooter` is told to whatever is hit.
+func fire(body_pos: Vector2, muzzle: Vector2, direction: Vector2, rules: GunRules, exclude: Array[RID] = [],
+		extra_spread: float = 0.0, shooter: Node = null) -> void:
+	var spread := deg_to_rad(rules.spread_degrees + extra_spread)
 	var dir := direction.normalized().rotated(rng.randf_range(-spread, spread))
 	var blocked := ray(body_pos, muzzle, exclude, Layers.WORLD)
 	if not blocked.is_empty():
-		_hit(blocked, dir)
+		_hit(blocked, dir, shooter)
 		return
-	bullets.append({"pos": muzzle, "dir": dir, "speed": rules.bullet_speed, "left": rules.bullet_range, "exclude": exclude})
+	bullets.append({"pos": muzzle, "dir": dir, "speed": rules.bullet_speed, "left": rules.bullet_range, "exclude": exclude,
+		"shooter": shooter})
 
 
 func ray(from: Vector2, to: Vector2, exclude: Array[RID], mask: int = MASK) -> Dictionary:
@@ -46,7 +49,7 @@ func _physics_process(delta: float) -> void:
 		var to: Vector2 = b.pos + b.dir * travel
 		var hit := ray(b.pos, to, b.exclude)
 		if not hit.is_empty():
-			_hit(hit, b.dir)
+			_hit(hit, b.dir, b.get("shooter"))
 			continue
 		b.pos = to
 		b.left -= travel
@@ -57,8 +60,8 @@ func _physics_process(delta: float) -> void:
 	bullets = still
 
 
-func _hit(hit: Dictionary, dir: Vector2) -> void:
+func _hit(hit: Dictionary, dir: Vector2, shooter: Node = null) -> void:
 	var collider: Object = hit.collider
 	if collider != null and collider.has_method("hit_by_bullet"):
-		collider.hit_by_bullet(hit.position, dir)
+		collider.hit_by_bullet(hit.position, dir, shooter if is_instance_valid(shooter) else null)
 	impact.emit(hit.position, hit.normal, collider, dir)
