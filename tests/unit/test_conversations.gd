@@ -43,10 +43,23 @@ func test_selling_to_augie_pays_and_says_so() -> void:
 	assert_eq(r.money, money + 4 * r.rules.bar_price)
 	assert_string_contains(page.text, Rackets.dollars(4 * r.rules.bar_price))
 	r.bottles = 3
-	r.bought_by_bar = r.rules.bar_demand
+	r.club().stock = r.club().capacity
 	page = talk.choose("augie", "sell")
 	assert_string_contains(page.text, "full")
 	assert_eq(r.bottles, 3, "no sale when his cellar is full")
+	r.club().stock = 0
+	r.club().cash = 0
+	page = talk.choose("augie", "sell")
+	assert_string_contains(page.text, "till")
+	assert_eq(r.bottles, 3, "nor when his till is empty")
+
+
+func test_a_dry_cellar_pays_over_the_odds() -> void:
+	r.club().stock = 1
+	r.bottles = 2
+	assert_string_contains(talk.open("augie").text, "dry")
+	var page := talk.choose("augie", "sell")
+	assert_string_contains(page.text, Rackets.dollars(2 * r.rules.bar_price_dry))
 
 
 func test_leaning_on_augie_pays_more_but_sours_the_price() -> void:
@@ -54,17 +67,17 @@ func test_leaning_on_augie_pays_more_but_sours_the_price() -> void:
 	assert_true(_ids(page).has("ask"))
 	assert_true(_ids(page).has("lean"))
 	page = talk.choose("augie", "lean")
-	assert_eq(page.effects.get("paid"), r.rules.bar_protection_leaned)
+	assert_eq(page.effects.get("paid"), r.club().protection * 3 / 2)
 	assert_string_contains(page.text, "forget top dollar")
 	r.bottles = 2
 	page = talk.choose("augie", "sell")
-	assert_string_contains(page.text, Rackets.dollars(r.rules.bar_price_sore))
+	assert_string_contains(page.text, Rackets.dollars(r.rules.bar_price - r.rules.bar_sore_discount))
 	page = talk.choose("augie", "ask")
 	assert_string_contains(page.text, "paid you already")
 
 
 func test_sal_sells_until_the_cupboard_is_bare() -> void:
-	r.rules.barber_stock = 10
+	r.sal().stock = 9
 	r.money = 100000
 	var hello := talk.open("sal")
 	_check_page(hello)
@@ -102,7 +115,7 @@ func test_novak_pays_once_and_runs_for_the_copper_if_pushed() -> void:
 	var page := talk.choose("novak", "protection")
 	assert_true(_ids(page).has("ask") and _ids(page).has("lean"))
 	page = talk.choose("novak", "lean", {"gun_drawn": true})
-	assert_eq(page.effects.get("paid"), r.rules.grocer_protection_leaned)
+	assert_eq(page.effects.get("paid"), r.town.get_business("grocery").protection * 3 / 2)
 	assert_true(page.effects.get("police", false), "he won't keep quiet about it")
 	assert_false(_ids(talk.open("novak")).has("protection"), "nothing more tonight")
 	assert_eq(talk.choose("novak", "ask").get("effects", {}).get("paid", 0), 0)
@@ -110,8 +123,18 @@ func test_novak_pays_once_and_runs_for_the_copper_if_pushed() -> void:
 
 func test_asking_novak_nicely_keeps_the_peace() -> void:
 	var page := talk.choose("novak", "ask")
-	assert_eq(page.effects.get("paid"), r.rules.grocer_protection)
+	assert_eq(page.effects.get("paid"), r.town.get_business("grocery").protection)
 	assert_false(page.effects.get("police", false))
+
+
+func test_a_broke_novak_cannot_pay_and_says_why() -> void:
+	var g := r.town.get_business("grocery")
+	g.cash = 100
+	g.missed_delivery = 4
+	assert_string_contains(talk.open("novak").text, "truck")
+	var page := talk.choose("novak", "ask")
+	assert_eq(page.effects.get("paid"), 0)
+	assert_string_contains(page.text, "truck")
 
 
 func test_eddie_sells_rounds_not_a_catalogue() -> void:

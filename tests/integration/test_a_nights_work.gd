@@ -71,7 +71,7 @@ func test_a_nights_work() -> void:
 	await answer_with("ask")
 	await answer_with("bye")
 	var takings: int = main.rackets.money - start
-	assert_eq(takings, 6 * (main.economy_rules.bar_price - main.economy_rules.barber_price) + main.economy_rules.bar_protection,
+	assert_eq(takings, 6 * (main.economy_rules.bar_price - main.economy_rules.barber_price) + main.rackets.club().protection,
 		"a profit on the rye and the protection money")
 	# home to bed
 	await _walk_path([Vector2(2280, 330), club.inside_door(0, 30.0), club.outside_door(0, 30.0), Vector2(2380, 470),

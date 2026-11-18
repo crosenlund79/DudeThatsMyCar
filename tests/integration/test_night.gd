@@ -63,7 +63,7 @@ func test_sleeping_brings_the_next_evening_and_keeps_what_he_carries() -> void:
 	assert_eq(main.rackets.bottles, 4, "bottles kept")
 	assert_eq(walker().gun.spare, 3, "rounds kept")
 	assert_false(main.rackets.has_paid("grocery"), "protection is due again")
-	assert_eq(main.rackets.barber_stock(), main.economy_rules.barber_stock, "Sal has a fresh cupboard")
+	assert_gt(main.rackets.barber_stock(), 0, "Sal's man brought more rye in the day")
 	assert_true(c.global_position.distance_to(home_spot) < 1.0, "the roadster is back at its curb")
 	assert_eq(main.officer.brain.state, OfficerBrain.State.PATROL, "the copper is back on his round")
 	assert_eq(main.interiors.current.id, "home", "waking at home")

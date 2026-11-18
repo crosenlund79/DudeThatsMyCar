@@ -63,6 +63,7 @@ func _page(who: String, text: String, options: Array = [], effects: Dictionary =
 
 func _augie(step: String, context: Dictionary) -> Dictionary:
 	var r := rackets
+	var c := r.club()
 	match step:
 		"hello":
 			var opts := []
@@ -72,18 +73,24 @@ func _augie(step: String, context: Dictionary) -> Dictionary:
 				opts.append({"id": "protection", "text": "Time to pay your insurance, Augie."})
 			opts.append({"id": "news", "text": "How's business?"})
 			var hello := "Evening. Keep it down, the swells are dancing."
+			if c.is_short():
+				hello = "Thank God. The cellar's near dry and the swells are thirsty."
 			if r.has_paid("copper_owl"):
 				hello = "You again. I paid already, remember?" if r.paid.copper_owl == "leaned" else "Evening. What'll it be?"
 			return _page("augie", hello, opts)
 		"sell":
 			if r.bar_demand() == 0:
-				return _page("augie", "Cellar's full tonight, pal. Bring me more tomorrow night.")
+				if c.stock >= c.capacity:
+					return _page("augie", "Cellar's full tonight, pal. Bring me more tomorrow night.")
+				return _page("augie", "I'd take it, but the till's empty. Come back when I've sold a few.")
 			var price := r.bar_price()
 			var k := r.sell_bottles()
 			var paid_out := Rackets.dollars(k * price)
-			if price < r.rules.bar_price:
+			if r.paid.get("copper_owl", "") == "leaned":
 				return _page("augie", "%d bottles at %s a piece. That's what a shakedown buys you. %s, and not a cent more." % [k, Rackets.dollars(price), paid_out],
 					[], {"sold": k})
+			if price > r.rules.bar_price:
+				return _page("augie", "You're a lifesaver. %d bottles, and I'll pay over the odds: %s." % [k, paid_out], [], {"sold": k})
 			return _page("augie", "The real McCoy, straight off the boat? I'll take %d. Here's %s." % [k, paid_out], [], {"sold": k})
 		"protection":
 			if r.has_paid("copper_owl"):
@@ -92,20 +99,26 @@ func _augie(step: String, context: Dictionary) -> Dictionary:
 				{"id": "ask", "text": "Fires. Broken windows. You know how it is."},
 				{"id": "lean", "text": "Don't make me ask twice." if not context.get("gun_drawn", false) else "(Rest the .45 on the bar.)"},
 			])
-		"ask":
-			var got := r.collect("copper_owl", false)
+		"ask", "lean":
+			if r.has_paid("copper_owl"):
+				return _page("augie", "I paid you already. Come back tomorrow night.")
+			var leaned := step == "lean"
+			var got := r.collect("copper_owl", leaned)
 			if got == 0:
-				return _page("augie", "I paid you already. Come back tomorrow night.")
+				return _page("augie", "With what? Look at the till. Not a dime till the cellar's full again.", [], {"paid": 0})
+			if leaned:
+				return _page("augie", "All right, all right! %s. And you can forget top dollar for your hooch tonight." % Rackets.dollars(got),
+					[], {"paid": got})
+			if got < c.protection:
+				return _page("augie", "%s. That's all there is; a dry bar don't make money." % Rackets.dollars(got), [], {"paid": got})
 			return _page("augie", "%s. The till's thin, the band costs money. Same time tomorrow, I suppose." % Rackets.dollars(got), [], {"paid": got})
-		"lean":
-			var got2 := r.collect("copper_owl", true)
-			if got2 == 0:
-				return _page("augie", "I paid you already. Come back tomorrow night.")
-			return _page("augie", "All right, all right! %s. And you can forget top dollar for your hooch tonight." % Rackets.dollars(got2),
-				[], {"paid": got2})
 		"news":
-			if r.bar_demand() == 0:
+			if c.stock >= c.capacity - 2:
 				return _page("augie", "Busy. The cellar's full and so are the tables.")
+			if c.is_short():
+				return _page("augie", "Rotten. No rye, no swells. My man got pinched; Sal down the street keeps a cupboard, if you follow me.")
+			if c.trend() < 0:
+				return _page("augie", "Thin. The band costs more than the bar brings in some nights.")
 			return _page("augie", "Could use a few more bottles of rye. Sal down the street keeps a cupboard, if you follow me.")
 	return {}
 
@@ -114,25 +127,31 @@ func _augie(step: String, context: Dictionary) -> Dictionary:
 
 func _sal(step: String, _context: Dictionary) -> Dictionary:
 	var r := rackets
-	var price := Rackets.dollars(r.rules.barber_price)
+	var price := Rackets.dollars(r.barber_price())
 	match step:
 		"hello":
 			if r.barber_stock() == 0:
-				return _page("sal", "Shave and a haircut? Ah, it's you. The cupboard's bare till tomorrow night.")
+				return _page("sal", "Shave and a haircut? Ah, it's you. The cupboard's bare till my man comes from Cicero.")
 			var opts := [{"id": "buy2", "text": "Two bottles of the good stuff. (%s each)" % price}]
 			if r.barber_stock() > 2:
 				opts.append({"id": "buy_all", "text": "Give me all you can spare."})
-			return _page("sal", "Shave and a haircut? Ah, it's you. Lower your voice, the walls have ears.", opts)
+			var hello := "Shave and a haircut? Ah, it's you. Lower your voice, the walls have ears."
+			if r.barber_price() > r.rules.barber_price:
+				hello = "Ah, it's you. Only a couple left, so it's %s a bottle tonight." % price
+			elif r.barber_price() < r.rules.barber_price:
+				hello = "Ah, it's you. The cupboard's full to bursting; %s a bottle, as a friend." % price
+			return _page("sal", hello, opts)
 		"buy2", "buy_all":
 			var want := 2 if step == "buy2" else r.rules.carry_limit
 			if r.barber_stock() == 0:
 				return _page("sal", "The cupboard's bare till tomorrow night.")
 			if r.room_to_carry() == 0:
 				return _page("sal", "You can't hide another bottle under that coat, friend.")
-			if r.money < r.rules.barber_price:
+			if r.money < r.barber_price():
 				return _page("sal", "Cash on the barrelhead, friend. %s a bottle." % price)
+			var each := r.barber_price()
 			var k := r.buy_bottles(want)
-			var cost := Rackets.dollars(k * r.rules.barber_price)
+			var cost := Rackets.dollars(k * each)
 			var tail := " That's the last of it tonight." if r.barber_stock() == 0 else ""
 			return _page("sal", "%d bottles of Canadian rye, wrapped in yesterday's Tribune. %s.%s" % [k, cost, tail], [], {"bought": k})
 	return {}
@@ -142,13 +161,17 @@ func _sal(step: String, _context: Dictionary) -> Dictionary:
 
 func _novak(step: String, context: Dictionary) -> Dictionary:
 	var r := rackets
+	var g := r.town.get_business("grocery")
 	match step:
 		"hello":
 			if r.has_paid("grocery"):
 				var again := "You again? I paid! There is nothing left in the till, look for yourself." if r.paid.grocery == "asked" \
 					else "Please. I have nothing more. Please go."
 				return _page("novak", again, [{"id": "apples", "text": "Just an apple, Mr. Novak."}])
-			return _page("novak", "We're closing. Oh. It's you.", [
+			var hello := "We're closing. Oh. It's you."
+			if g.missed_delivery > 0:
+				hello = "Look at these shelves. The truck came half empty; I could not pay the driver."
+			return _page("novak", hello, [
 				{"id": "protection", "text": "It's Friday somewhere, Mr. Novak. Protection."},
 				{"id": "apples", "text": "Just an apple."},
 			])
@@ -160,14 +183,20 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 				{"id": "lean", "text": "(Sweep a row of tins off the shelf.)" if not context.get("gun_drawn", false) else "(Show him the .45.)"},
 			])
 		"ask":
+			if r.has_paid("grocery"):
+				return _page("novak", "I paid already tonight!")
 			var got := r.collect("grocery", false)
 			if got == 0:
-				return _page("novak", "I paid already tonight!")
+				return _page("novak", "I have nothing. If I pay you, the truck does not come tomorrow, and then I have nothing forever.", [], {"paid": 0})
+			if got < g.protection:
+				return _page("novak", "%s. That is all; the rest is for the driver in the morning." % Rackets.dollars(got), [], {"paid": got})
 			return _page("novak", "Here. %s. My wife will kill me. Same as always, yes? Same as always." % Rackets.dollars(got), [], {"paid": got})
 		"lean":
+			if r.has_paid("grocery"):
+				return _page("novak", "I paid already tonight!")
 			var got2 := r.collect("grocery", true)
 			if got2 == 0:
-				return _page("novak", "I paid already tonight!")
+				return _page("novak", "Take what? The till is empty! Look!\n(His eyes keep going to the door.)", [], {"paid": 0, "police": true})
 			return _page("novak", "Take it! %s, everything, take it and go!\n(His eyes keep going to the door. He won't keep quiet about this.)" % Rackets.dollars(got2),
 				[], {"paid": got2, "police": true})
 		"apples":
@@ -206,6 +235,8 @@ func _eddie(step: String, context: Dictionary) -> Dictionary:
 		"ammo":
 			if spare < 0:
 				return _page("eddie", "You're carrying enough lead to sink a rowboat already.")
+			if r.eddie().stock <= 0:
+				return _page("eddie", "Crate's empty. My fella brings a box a day; come back tomorrow night.")
 			if r.money < r.rules.ammo_price:
 				return _page("eddie", "Money first, pal. This ain't the Salvation Army.")
 			var k := r.buy_ammo(spare)

@@ -68,6 +68,7 @@ func _ready() -> void:
 	resolver = AssetResolver.new(override_root)
 	rackets = Rackets.new(economy_rules)
 	clock = NightClock.new(night_rules)
+	rackets.town.night_minutes = float(night_rules.dawn_minute - night_rules.start_minute)
 	talk = Conversations.new(rackets)
 	_load_game()
 	layout = RiversideWard.create()
@@ -313,7 +314,9 @@ func sleep() -> void:
 
 func _update_clock(delta: float) -> void:
 	if not paused:
+		var before := clock.minute
 		clock.advance(delta)
+		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
 	if clock.is_dawn() and _warned < 2:
 		_warned = 2
 		hud.show_notice("Dawn's breaking. Get home to bed before the city wakes up.")

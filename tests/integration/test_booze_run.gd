@@ -29,7 +29,7 @@ func test_protection_once_a_night() -> void:
 	await talk_to("copper_owl", "augie")
 	await answer_with("protection")
 	await answer_with("ask")
-	assert_eq(main.rackets.money, start + main.economy_rules.bar_protection)
+	assert_eq(main.rackets.money, start + main.rackets.club().protection)
 	await press_e()
 	assert_eq(main.talking, "", "E walks away")
 	await talk_to("copper_owl", "augie")

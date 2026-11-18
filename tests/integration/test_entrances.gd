@@ -53,7 +53,7 @@ func test_novak_protection_through_the_front_door() -> void:
 	await press_e()
 	await answer_with("protection")
 	await answer_with("ask")
-	assert_eq(main.rackets.money, start + main.economy_rules.grocer_protection)
+	assert_eq(main.rackets.money, start + main.rackets.town.get_business("grocery").protection)
 	await press_e()
 	await press_e()
 	var ids: Array = main._page.options.map(func(o: Dictionary) -> String: return o.id)
