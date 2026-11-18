@@ -12,7 +12,8 @@ extends SceneTree
 ## cars (M004: the cars in six headings, lights off), grocery_door,
 ## grocery_marker (at Novak's door), drive_markers (markers from the car),
 ## opening (M005: the monologue over the ward, six moments and the hand-over),
-## rourke (M005: settling up at his table), sound_levels (M005: the pause screen).
+## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
+## bird / bird_talk (M006: the Bird singing; interrupted).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -159,6 +160,21 @@ func _run(shots: Array) -> void:
 				main._answer(0)  # "the envelope"
 				await _frames(10)
 				await _shot("rourke")
+				main.end_talk()
+			"bird":
+				# M006: the Bird singing on the bandstand, Danny at a table
+				_teleport_walker(Vector2(2300, 340), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2384, 333))
+				await _frames(90)
+				await _shot("bird")
+			"bird_talk":
+				# M006: the record scratched, the Bird giving Danny a piece of her mind
+				_teleport_walker(Vector2(2343, 336), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2384, 333))
+				await _frames(20)
+				main.talk_to_bird()
+				await _frames(30)
+				await _shot("bird_talk")
 				main.end_talk()
 			"sound_levels":
 				# M005: the pause screen with the six sound levels

@@ -17,7 +17,11 @@ var model := WalkerModel.new()
 var move := Vector2.ZERO
 var aim_point := Vector2.ZERO
 var active := true
+## False when something else poses the sprite (the Bird performing).
+var animate := true
 var sprite: Sprite2D
+## The sprite's scale for its display size.
+var base_scale := Vector2.ONE
 ## The handgun (null: unarmed), its rules and how it looks.
 var gun: Gun = null
 var pistol: Sprite2D
@@ -54,6 +58,7 @@ static func create(resolver: AssetResolver, logical: String = "characters/gangst
 	w.sprite.texture = tex
 	w.sprite.hframes = frames
 	w.sprite.scale = AssetCatalog.scale_for(tex, AssetCatalog.display_size(logical) * Vector2(frames, 1))
+	w.base_scale = w.sprite.scale
 	w.add_child(w.sprite)
 	w._sheet = tex
 	if options.has("armed_sheet"):
@@ -119,6 +124,8 @@ func _physics_process(delta: float) -> void:
 	var before := global_position
 	move_and_slide()
 	model.velocity = velocity
+	if not animate:
+		return
 	sprite.rotation = model.facing
 	_pose()
 	var moved := global_position.distance_to(before)

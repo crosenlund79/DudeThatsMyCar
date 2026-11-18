@@ -609,7 +609,26 @@ def radio(seed=109):
     return finish(img, w, h)
 
 
+def microphone(seed=61):
+    """A 1930s ribbon microphone on a tall stand, from above: the round base, the chrome
+    stem seen end-on and the grille box at the top facing the singer (at the right)."""
+    w = h = 48
+    img = new(w, h)
+    soft_blob(img, S(25), S(26), S(13), S(13), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(ellipse_pts(24, 24, 11, 11)), "#2a2622", seed, outline=OUT, ow=1.2, wob=0.15, tex=0.1, light=(0.3, -1, 0.5))
+    paint_shape(img, SP(ellipse_pts(24, 24, 3, 3)), "#b8b4aa", seed + 1, outline=OUT, ow=0.8, wob=0.05, light=(0.3, -1, 0.7))
+    # the grille: a rounded chrome box with its slots, a little above the stand (towards the singer)
+    paint_shape(img, SP(rrect_pts(27, 18, 37, 30, 2.5)), "#c9c4b8", seed + 2, outline=OUT, ow=1.1, wob=0.05, tex=0.05,
+                light=(0.3, -1, 0.7))
+    d = ImageDraw.Draw(img)
+    for y in range(20, 29, 2):
+        d.line([(S(29), S(y)), (S(35), S(y))], fill=rgba("#6a665e"), width=1)
+    soft_blob(img, S(30), S(20), S(3), S(1.2), "#ffffff", 120, 0.5 * SS)
+    return finish(grain(img, 2, seed), w, h)
+
+
 ASSETS = {
+    "interiors/microphone": microphone,
     "interiors/bed": bed,
     "interiors/rug": rug,
     "interiors/flat_table": flat_table,

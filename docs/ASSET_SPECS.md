@@ -32,6 +32,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `characters/patron_man` | `custom/graphics/characters/patron_man.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A man in evening clothes (club guest, late passer-by). |
 | `characters/patron_woman` | `custom/graphics/characters/patron_woman.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A woman in an evening dress with a bob. |
 | `characters/police` | `custom/graphics/characters/police.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | Police officer: 5 frames like the player's, facing right, centred. |
+| `characters/singer` | `custom/graphics/characters/singer.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | M006: the Bird, the Copper Owl's singer, facing right (towards the room). Her frames are gestures, not steps: 0 hands at the microphone, 1 left arm out, 2 arms open, 3 right arm out, 4 a hand to her heart. |
 | `characters/worker` | `custom/graphics/characters/worker.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A working man in a flat cap (passer-by). |
 | `city/alley` | `custom/graphics/city/alley.png` | 256x256 | tile (seamless in both directions) | 160 px per repeat | Brick alley paving. |
 | `city/asphalt` | `custom/graphics/city/asphalt.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Wet street asphalt. |
@@ -88,6 +89,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/floor_parquet` | `custom/graphics/interiors/floor_parquet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Oak parquet (the Copper Owl). |
 | `interiors/floor_tile` | `custom/graphics/interiors/floor_tile.png` | 128x128 | tile (seamless in both directions) | 64 px per repeat | Black-and-cream checkerboard tile (the barbershop). |
 | `interiors/gun_crate` | `custom/graphics/interiors/gun_crate.png` | 112x56 | sprite (image, scaled to its display size) | 50x25 | Open crate of wrapped pistols and boxes of rounds. |
+| `interiors/microphone` | `custom/graphics/interiors/microphone.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | M006: the Bird's ribbon microphone on its stand, from above; the grille faces the singer (right). |
 | `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
 | `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
 | `interiors/produce` | `custom/graphics/interiors/produce.png` | 132x56 | sprite (image, scaled to its display size) | 60x25 | Three crates of apples, potatoes and cabbages. |
@@ -170,6 +172,7 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `ambience/river` | `custom/audio/ambience/river.ogg` (or .wav / .mp3) | `template_river.ogg` | yes | Ambience | By the river: water against the quay, a factory's drone across it. |
 | `ambience/street_night` | `custom/audio/ambience/street_night.ogg` (or .wav / .mp3) | `template_street_night.ogg` | yes | Ambience | The street's bed at night: distant traffic, the city beyond the corner. Quieter after midnight; dull indoors. |
 | `music/copper_owl_jazz` | `custom/audio/music/copper_owl_jazz.ogg` (or .wav / .mp3) | `copper_owl_jazz.ogg` | yes | Music | The Copper Owl's singer, "Leave the Lights Low" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet. |
+| `music/record_scratch` | `custom/audio/music/record_scratch.ogg` (or .wav / .mp3) | `template_record_scratch.ogg` | no | Music | M006: the needle dragged off the record when Danny interrupts the Bird (under 1 s). Heard through the club's walls like the song. |
 | `places/bottles` | `custom/audio/places/bottles.ogg` (or .wav / .mp3) | `template_bottles.ogg` | no | Effects | Bottles of rye changing hands. |
 | `places/door` | `custom/audio/places/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Going in or out by a door: latch, hinges, the door falling to. |
 | `places/register` | `custom/audio/places/register.ogg` (or .wav / .mp3) | `template_register.ogg` | no | Effects | A shop's till when money changes hands. |

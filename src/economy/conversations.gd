@@ -14,7 +14,7 @@ extends RefCounted
 ## greeting for the first time opens on that greeting, then their usual page.
 
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
-	"rourke": "Rourke", "bed": "Home"}
+	"rourke": "Rourke", "bird": "The Bird", "bed": "Home"}
 
 var rackets: Rackets
 
@@ -47,6 +47,8 @@ func open(who: String, context: Dictionary = {}) -> Dictionary:
 
 ## The recorded greeting someone has for a first meeting ("" for none).
 static func greeting_line(who: String) -> String:
+	if who == "bird":
+		return "bird_greeting"
 	return GREETINGS[who][0] if GREETINGS.has(who) else ""
 
 
@@ -71,6 +73,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _eddie(step, context)
 		"rourke":
 			return _rourke(step, context)
+		"bird":
+			return _bird(step, context)
 		"bed":
 			return _bed(step, context)
 	return {}
@@ -338,6 +342,43 @@ func _eddie(step: String, context: Dictionary) -> Dictionary:
 			return _page("eddie", "%d rounds of .45, still in the paper. %s. Don't say where you got 'em." % [k, price], [], {"rounds": k})
 		"heavy":
 			return _page("eddie", "A Thompson costs more than you make in a year, kid. Come back when you're somebody.")
+	return {}
+
+
+# ------------------------------------------------------------------ the Bird, at her microphone in the Copper Owl
+
+## `context.interrupted`: Danny has just stopped her song (her complaint is
+## said in her voice); `context.first_meeting`: she has not introduced herself
+## yet (her greeting follows as a page of its own, after the complaint).
+func _bird(step: String, context: Dictionary) -> Dictionary:
+	var chat := [
+		{"id": "secrets", "text": "Heard any good secrets lately?"},
+		{"id": "song", "text": "That song. Who's it for?"},
+		{"id": "bye", "text": "Go on, finish your number."},
+	]
+	var page := {}
+	match step:
+		"hello":
+			if context.get("interrupted", false):
+				var opts: Array = [{"id": "who", "text": "Sorry, sweetheart. Do I know you?"}] if context.get("first_meeting", false) else chat
+				page = _page("bird", VoiceLines.text("bird_interrupted"), opts)
+				page["voice"] = ["bird_interrupted"]
+				return page
+			if context.get("first_meeting", false):
+				return _bird("who", context)
+			return _page("bird", "Make it quick, Mercer. The band won't wait all night.", chat)
+		"who":
+			page = _page("bird", VoiceLines.text("bird_greeting"), chat)
+			page["voice"] = ["bird_greeting"]
+			return page
+		"secrets":
+			var heard := _talk_line(rackets.gossip("augie"))
+			if heard != "":
+				return _page("bird", "Honey, from up there you hear everything. " + heard, chat.slice(1))
+			return _page("bird", "Secrets cost more than a drink, Mercer. Come back when you're buying the bottle.", chat.slice(1))
+		"song":
+			return _page("bird", "'Leave the Lights Low.' It's for whoever's still sitting there at closing time. Most nights that's Rourke.",
+				[chat[0], chat[2]])
 	return {}
 
 

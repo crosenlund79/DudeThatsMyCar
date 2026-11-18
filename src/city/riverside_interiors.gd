@@ -18,7 +18,9 @@ static func add_to(d: DistrictLayout) -> void:
 ## The Copper Owl supper club: the bar along the back wall with Augie behind
 ## it, tables with white cloths, a baby grand on the bandstand, a back door to
 ## the alley where tonight's delivery stands. Rourke keeps the corner table
-## by the door (M005): this is where Danny settles up.
+## by the door (M005): this is where Danny settles up. The Bird sings at the
+## front of the bandstand, at her microphone in a spotlight (M006); the piano
+## stands behind her.
 static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 	var p := InteriorPlan.new("copper_owl", "The Copper Owl")
 	p.marker = "ui/marker_bar"
@@ -34,7 +36,8 @@ static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 		{"kind": "interiors/back_bar", "pos": Vector2(2249, 186), "box": Vector2(180, 18)},
 		{"kind": "interiors/bar_counter", "pos": Vector2(2249, 222), "box": Vector2(180, 24)},
 		{"kind": "interiors/bandstand", "pos": Vector2(2393, 305)},
-		{"kind": "interiors/piano", "pos": Vector2(2395, 300), "rot": PI, "box": Vector2(50, 34), "z": 1},
+		{"kind": "interiors/piano", "pos": Vector2(2397, 276), "rot": PI, "box": Vector2(50, 34), "z": 1},
+		{"kind": "interiors/microphone", "pos": Vector2(2366, 333), "z": 1},
 		{"kind": "interiors/table_club", "pos": Vector2(2192, 305), "radius": 17.0},
 		{"kind": "interiors/table_club", "pos": Vector2(2192, 392), "rot": 0.6, "radius": 17.0},
 		{"kind": "interiors/table_club", "pos": Vector2(2318, 300), "rot": 1.2, "radius": 17.0},
@@ -49,16 +52,19 @@ static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 		{"pos": Vector2(2200, 350), "color": Color(1.0, 0.74, 0.5), "energy": 1.05, "radius": 150.0},
 		{"pos": Vector2(2325, 350), "color": Color(1.0, 0.74, 0.5), "energy": 1.05, "radius": 150.0},
 		{"pos": Vector2(2392, 300), "color": Color(1.0, 0.62, 0.55), "energy": 1.0, "radius": 110.0},
+		{"pos": Vector2(2380, 333), "color": Color(1.0, 0.86, 0.7), "energy": 1.1, "radius": 70.0},  # her spotlight
 	]
 	p.people = [
 		{"id": "augie", "name": "Augie", "look": "characters/bartender", "pos": Vector2(2240, 202), "facing": PI / 2},
 		{"id": "patron_a", "name": "", "look": "characters/patron_man", "pos": Vector2(2172, 300), "facing": 0.0},
 		{"id": "patron_b", "name": "", "look": "characters/patron_woman", "pos": Vector2(2210, 291), "facing": PI},
 		{"id": "rourke", "name": "Rourke", "look": "characters/boss", "pos": Vector2(2356, 400), "facing": PI + 0.4},
+		{"id": "bird", "name": "The Bird", "look": "characters/singer", "pos": Vector2(2384, 333), "facing": PI},
 	]
 	p.spots = [
 		{"id": "augie", "pos": Vector2(2240, 252), "radius": 34.0, "prompt": "Talk to Augie"},
 		{"id": "rourke", "pos": Vector2(2302, 384), "radius": 26.0, "prompt": "Talk to Rourke"},
+		{"id": "bird", "pos": Vector2(2343, 336), "radius": 22.0, "prompt": "Talk to the Bird"},
 	]
 	return p
 

@@ -39,6 +39,10 @@ const TRAFFIC_REACH := 1100.0
 var layout: DistrictLayout
 var club_plan: InteriorPlan
 var music: AudioStreamPlayer
+## The record scratch when the Bird is interrupted (M006), and whether the song is stopped.
+var scratch: AudioStreamPlayer
+var music_stopped := false
+var scratches := 0
 var crowd: AudioStreamPlayer
 var beds := {}
 ## The smoothed levels and filters now (see SoundscapeMix.targets), and where
@@ -96,6 +100,10 @@ func setup(resolver: AssetResolver, p_layout: DistrictLayout, club: InteriorPlan
 	club_plan = club
 	_rng.seed = seed_value
 	music = _loop(MUSIC, BUS_CLUB_MUSIC)
+	scratch = AudioStreamPlayer.new()
+	scratch.stream = _sound("music/record_scratch")
+	scratch.bus = BUS_CLUB_MUSIC
+	add_child(scratch)
 	crowd = _loop(CROWD, BUS_CLUB_ROOM)
 	for k in BEDS:
 		beds[k] = _loop(BEDS[k], BUS_STREET)
@@ -148,6 +156,32 @@ func track_traffic(cars: Array[Car]) -> void:
 		p.attenuation = 1.6
 		c.add_child(p)
 		_traffic.append({"car": c, "player": p})
+
+
+## The Bird is interrupted (M006): the needle scratches off the record and the
+## song stops. Nothing happens when it has stopped already (one scratch).
+func interrupt_music() -> bool:
+	if music_stopped:
+		return false
+	music_stopped = true
+	scratches += 1
+	if scratch.stream != null:
+		scratch.bus = music.bus
+		scratch.volume_db = _quiet(level.get("music_db", 0.0)) + 2.0
+		scratch.play()
+	music.stop()
+	return true
+
+
+## The band counts her back in: the song starts again from the top (once).
+func resume_music() -> bool:
+	if not music_stopped:
+		return false
+	music_stopped = false
+	if music.stream != null:
+		music.play()
+		music_starts += 1
+	return true
 
 
 ## Narration on (true) or off: the rest of the night steps back, smoothly.

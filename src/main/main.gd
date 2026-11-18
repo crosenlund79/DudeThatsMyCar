@@ -40,6 +40,9 @@ var soundscape: Soundscape
 ## (saved), and the player that says them one at a time (M006).
 var voice_lines := VoiceLines.new()
 var voice: VoicePlayer
+## The Bird's act on the bandstand and how she moves (M006).
+var stage := StageAct.new()
+var bird_show: BirdPerformance
 ## The opening narration while it runs (null otherwise).
 var opening: Opening
 var _follow_rate := 7.0
@@ -151,6 +154,11 @@ func _ready() -> void:
 	voice = VoicePlayer.new()
 	add_child(voice)
 	voice.setup(resolver, voice_lines)
+	var bird := interiors.person("copper_owl", "bird")
+	if bird != null:
+		bird_show = BirdPerformance.new()
+		add_child(bird_show)
+		bird_show.setup(bird, stage)
 	hud = Hud.new()
 	add_child(hud)
 	hud.setup(resolver, layout.name)
@@ -283,16 +291,31 @@ func _interact(_at: Vector2) -> bool:
 	if spot.id == "door":
 		soundscape.play_door(spot.plan)
 		interiors.step_through(walker, spot)
+	elif spot.id == "bird":
+		talk_to_bird()
 	elif spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
 	return true
 
 
-func start_talk(who: String) -> void:
+func start_talk(who: String, extra: Dictionary = {}) -> void:
 	talking = who
 	if interiors.current != null:
 		interiors.view_of(interiors.current.id).face(who, walker.global_position)
-	_show(talk.open(who, _talk_context()))
+	_show(talk.open(who, _talk_context().merged(extra, true)))
+
+
+## E at the Bird's microphone: if she is singing, the needle scratches off the
+## record, the song stops and she gives Danny a piece of her mind; between
+## songs she just waits for him. Either way they talk, and when he walks away
+## the band counts her back in.
+func talk_to_bird() -> void:
+	var interrupted := stage.interrupt()
+	if interrupted:
+		soundscape.interrupt_music()
+	else:
+		stage.hold()
+	start_talk("bird", {"interrupted": interrupted})
 
 
 func _talk_context() -> Dictionary:
@@ -363,6 +386,8 @@ func _update_report(delta: float) -> void:
 
 
 func end_talk() -> void:
+	if talking == "bird":
+		stage.release()
 	talking = ""
 	_page = {}
 	if voice != null:
@@ -377,6 +402,7 @@ func end_talk() -> void:
 ## are back as they are at the start of every night, and tonight's deals reset.
 func sleep() -> void:
 	end_talk()
+	stage.reset()  # the Bird is singing when the club opens
 	rackets.end_night()
 	clock.reset()
 	_warned = 0
@@ -489,6 +515,10 @@ func _notification(what: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if not paused and stage.update(delta):
+		soundscape.resume_music()  # the band counts her back in
+		if bird_show != null:
+			bird_show.restart()
 	_update_clock(delta)
 	_update_view(delta)
 	_update_report(delta)
@@ -504,7 +534,7 @@ func _update_view(delta: float) -> void:
 		var spot := _spot()
 		var c := player.enterable_car()
 		if not spot.is_empty():
-			prompt = "E   %s" % spot.prompt
+			prompt = "E   %s" % ("Interrupt the Bird" if spot.id == "bird" and stage.singing() else spot.prompt)
 		elif c != null:
 			prompt = "E   Get in the %s" % c.vehicle.params.display_name
 	elif player.car.speed() < 30.0:

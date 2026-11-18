@@ -5,7 +5,8 @@ Writes OGG Vorbis (ffmpeg with libvorbis): ambience/template_street_night.ogg, a
 ambience/template_river.ogg, ambience/template_club_crowd.ogg (stereo loops); ambience/template_horn.ogg,
 ambience/template_foghorn.ogg, ambience/template_clatter.ogg, places/template_door.ogg,
 places/template_shop_bell.ogg, places/template_register.ogg, places/template_bottles.ogg,
-vehicles/template_door.ogg (mono one-shots).
+vehicles/template_door.ogg (mono one-shots); M006: music/template_record_scratch.ogg (its own seed;
+`make_ambience.py assets/audio music/record_scratch` writes it alone).
 Replace any of them by dropping an OGG / WAV / MP3 into custom/audio/<same logical name>."""
 import os
 import subprocess
@@ -411,8 +412,32 @@ def car_door():
     return fade_ends(x, fade_out=0.08)
 
 
+def record_scratch():
+    """M006: the needle dragged across the record - the band's music grinding to a halt:
+    a fast downward rip of the stopped music, a scrape of surface noise, a last thump."""
+    srng = np.random.default_rng(1932006)
+    n = int(0.75 * RATE)
+    t = np.arange(n) / RATE
+    # the music's pitch dragged down and back: a buzzy tone whose frequency swoops
+    f = 900 * np.exp(-t / 0.09) + 140 + 420 * np.exp(-((t - 0.16) / 0.05) ** 2)
+    phase = 2 * np.pi * np.cumsum(f) / RATE
+    tone = (np.sign(np.sin(phase)) * 0.5 + np.sin(phase * 2) * 0.3) * np.exp(-t / 0.22)
+    scrape = srng.standard_normal(n)
+    scrape = spectrum_filter(scrape, lambda fr: butter(fr, 700, 5000), circular=False) * np.exp(-t / 0.18) * 0.8
+    crackle = (srng.random(n) > 0.997).astype(float) * srng.uniform(-1, 1, n) * 0.6
+    x = tone * 0.8 + scrape + crackle
+    x[int(0.42 * RATE):int(0.42 * RATE) + len(thump(0.2, 70, 0.03))] += thump(0.2, 70, 0.03, 0.7)
+    return fade_ends(band(x, 60, 7000, circular=False), fade_out=0.08)
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "assets/audio"
+    only = sys.argv[2] if len(sys.argv) > 2 else ""
+    if only:
+        # one sound only (the rest stay as they are): python3 make_ambience.py assets/audio music/record_scratch
+        write_ogg(os.path.join(root, os.path.dirname(only), "template_" + os.path.basename(only) + ".ogg"),
+                  [{"music/record_scratch": record_scratch}[only]()], 0.7)
+        return
     write_ogg(os.path.join(root, "ambience/template_street_night.ogg"), street_night(), 0.5)
     write_ogg(os.path.join(root, "ambience/template_alley.ogg"), alley(), 0.5)
     write_ogg(os.path.join(root, "ambience/template_river.ogg"), river(), 0.5)
@@ -425,6 +450,7 @@ def main():
     write_ogg(os.path.join(root, "places/template_register.ogg"), [register()], 0.55)
     write_ogg(os.path.join(root, "places/template_bottles.ogg"), [bottles()], 0.5)
     write_ogg(os.path.join(root, "vehicles/template_door.ogg"), [car_door()], 0.7)
+    write_ogg(os.path.join(root, "music/template_record_scratch.ogg"), [record_scratch()], 0.7)
 
 
 if __name__ == "__main__":

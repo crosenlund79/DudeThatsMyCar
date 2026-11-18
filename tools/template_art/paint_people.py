@@ -204,7 +204,72 @@ def sheet(look=GANGSTER, armed=False):
     return strip
 
 
+# M006: the Bird, the Copper Owl's singer. Same 64x64 frames facing right (+X, towards the room
+# and the microphone), but her frames are gestures, not steps: 0 both hands at the microphone,
+# 1 her left arm out, 2 both arms open, 3 her right arm out, 4 a hand to her heart, head back.
+GOWN = "#2f7d5c"
+GOWN_LIGHT = "#5fb08a"
+BOA = "#f6f0e8"
+BIRD_HAIR = "#9a4320"
+GLOVE = "#f3eee6"
+
+
+def singer_frame(gesture):
+    img = new(F, F)
+    cx, cy = 32, 32
+    # the gown: a satin column with a train sweeping out behind her
+    train = [(cx + 6, cy - 8), (cx - 6, cy - 12), (cx - 20, cy - 9), (cx - 26, cy), (cx - 20, cy + 9), (cx - 6, cy + 12), (cx + 6, cy + 8)]
+    paint_shape(img, SP(train), shade(GOWN, 0.7), 201, outline=OUT, ow=1.3, wob=0.5, tex=0.25, strokes_n=10,
+                stroke_cols=[shade(GOWN, 0.9), shade(GOWN, 0.55)], light=(0.4, -1, 0.4))
+    body = ellipse_pts(cx, cy, 9.5, 11.5)
+    paint_shape(img, SP(body), GOWN, 202, outline=OUT, ow=1.4, wob=0.3, tex=0.25, strokes_n=14,
+                stroke_cols=[GOWN_LIGHT, shade(GOWN, 0.8)], light=(0.4, -1, 0.5), inner_shadow=0.25)
+    for sx, sy in ((cx - 4, cy - 7), (cx + 3, cy + 6), (cx - 7, cy + 4), (cx + 4, cy - 5), (cx - 14, cy + 2), (cx - 18, cy - 4),
+                   (cx - 10, cy - 7), (cx - 1, cy + 9)):
+        soft_blob(img, S(sx), S(sy), S(0.9), S(0.9), "#ffe9a8", 200, 0.3 * SS)  # sequins in the spotlight
+    # the feather boa over her shoulders and down her back
+    for k in range(13):
+        t = k / 12.0
+        bx = cx + 2 - math.sin(t * math.pi) * 9
+        by = cy - 11 + t * 22
+        soft_blob(img, S(bx), S(by), S(3.4), S(3.0), BOA, 245, 1.0 * SS)
+    for k in range(13):
+        t = k / 12.0
+        soft_blob(img, S(cx + 2 - math.sin(t * math.pi) * 9), S(cy - 11 + t * 22), S(1.6), S(1.4), "#ffffff", 200, 0.5 * SS)
+    # arms by gesture: (side -1 top / +1 bottom, hand forward of her, hand out sideways)
+    arms = {0: [(-1, 11, 4), (1, 11, 4)], 1: [(-1, 6, 16), (1, 11, 4)], 2: [(-1, 8, 15), (1, 8, 15)],
+            3: [(-1, 11, 4), (1, 6, 16)], 4: [(-1, 11, 4), (1, 3, 5)]}[gesture]
+    for side, fwd, out in arms:
+        sx, sy = cx + 1, cy + side * 9
+        hx, hy = cx + fwd, cy + side * out
+        mx, my = (sx + hx) / 2, (sy + hy) / 2
+        line(img, [(S(sx), S(sy)), (S(hx), S(hy))], OUT, 5.4 * SS, 255)
+        line(img, [(S(sx), S(sy)), (S(mx), S(my))], SKIN, 3.6 * SS, 255)
+        line(img, [(S(mx), S(my)), (S(hx), S(hy))], GLOVE, 3.6 * SS, 255)  # opera gloves to the elbow
+        paint_shape(img, SP(ellipse_pts(hx, hy, 2.4, 2.2)), GLOVE, int(hy * 5 + hx), outline=OUT, ow=0.8, wob=0.1)
+    # head: finger-waved auburn hair, a white plume pinned at the side
+    head_x = cx + (-1.5 if gesture == 4 else 1.0)
+    paint_shape(img, SP(ellipse_pts(head_x + 1.8, cy, 5.8, 5.4)), SKIN, 203, outline=OUT, ow=1.0, wob=0.15, tex=0.1,
+                light=(0.5, -1, 0.4))
+    paint_shape(img, SP(ellipse_pts(head_x - 0.8, cy, 5.8, 6.4)), BIRD_HAIR, 204, outline=OUT, ow=1.1, wob=0.25, tex=0.2,
+                strokes_n=10, stroke_cols=[shade(BIRD_HAIR, 1.5), shade(BIRD_HAIR, 0.75)], light=(0.4, -1, 0.6))
+    for k in range(3):  # the finger waves
+        line(img, [(S(head_x - 4.5 + k * 2.6), S(cy - 5)), (S(head_x - 3 + k * 2.6), S(cy + 5))], shade(BIRD_HAIR, 1.8), 0.8 * SS, 170)
+    line(img, [(S(head_x - 1), S(cy - 5.5)), (S(head_x - 10), S(cy - 10))], "#fbf6ee", 2.4 * SS, 255)
+    line(img, [(S(head_x - 4), S(cy - 7)), (S(head_x - 9), S(cy - 6))], "#fbf6ee", 1.4 * SS, 220)
+    soft_blob(img, S(head_x + 0.5), S(cy - 2.5), S(2.0), S(1.2), "#ffffff", 60, 0.7 * SS)
+    return finish(img, F, F)
+
+
+def singer_sheet():
+    strip = Image.new("RGBA", (F * FRAMES, F), (0, 0, 0, 0))
+    for i in range(FRAMES):
+        strip.alpha_composite(singer_frame(i), (i * F, 0))
+    return strip
+
+
 ASSETS = {
+    "characters/singer": singer_sheet,
     "characters/gangster": sheet,
     "characters/gangster_armed": lambda: sheet(GANGSTER, True),
     "characters/police": lambda: sheet(POLICE),
