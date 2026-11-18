@@ -16,6 +16,10 @@ const LINKS := {
 	"eddie": ["lindqvist", "augie"],
 	# M007: Lefty Moran talks to Eddie (who sells to everybody), and Eddie talks to Augie
 	"lefty": ["eddie"],
+	# M009: Dutch at the yards' night lunch sells Novak his tinned goods; Mr. Feeney
+	# of the Bijou gets his shave at Sal's
+	"dutch": ["novak"],
+	"feeney": ["sal"],
 }
 
 ## {id, kind, about, business, cents, night, seq, text, known: [people]}

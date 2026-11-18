@@ -235,6 +235,27 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is you gave the Swede his money back. Nobody gives anything back. People are talking."
 		"job_still":
 			return "Word is the Swede's still paying the North Side. Thought you'd want to know."
+		# M009: the city's own incidents, as the ward tells them
+		"street_argument_blows":
+			return "Word is two fellas came to blows %s. Over a dented fender, if you can believe it." % t.text
+		"street_argument_broken_up":
+			return "Word is you broke up a scrap %s. Decent of you." % t.text
+		"street_argument_scattered":
+			return "Word is you put the fear of God into two fellas %s." % t.text
+		"street_exchange_robbed":
+			return "Word is somebody stuck up a little handoff %s and walked off with the lot. Somebody in a good hat." % t.text
+		"street_exchange_spoiled":
+			return "Word is you spoiled somebody's little transaction %s. They won't thank you for it." % t.text
+		"street_exchange_hushed":
+			return "Word is you took a cut of some business %s. Nice work if you can get it." % t.text
+		"street_exchange_shooting", "street_argument_shooting", "street_stop_shooting":
+			return "Word is there was shooting %s. Nobody saw nothing, naturally." % t.text
+		"street_stop_taken_in":
+			return "Word is the copper took a fella in %s. Didn't go quietly." % t.text
+		"street_stop_vouched":
+			return "Word is you stood up for a fella the copper stopped %s. The copper didn't care for it." % t.text
+		"street_stop_bribed":
+			return "Word is the copper %s takes a dollar to look the other way. Somebody tried it." % t.text
 		"shot":
 			return "Word is you put a bullet in %s. People are scared of you, Dimes. Scared ain't the same as loyal." % speaker(t.text)
 	return ""

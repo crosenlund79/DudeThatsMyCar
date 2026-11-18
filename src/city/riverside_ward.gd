@@ -58,6 +58,25 @@ func _build() -> void:
 	RiversideInteriors.add_to(d)
 	_cars_and_spawn()
 	_street_life()
+	_incident_spots()
+
+
+## M009: where the ward's own small troubles happen (kerbs, the alleys, the beat cop's corner).
+func _incident_spots() -> void:
+	d.incident_spots = [
+		{"id": "owl_kerb", "kinds": ["argument"], "pos": Vector2(2120, 462), "along": Vector2.RIGHT, "local": "augie",
+			"place": "outside the Copper Owl"},
+		{"id": "novak_kerb", "kinds": ["argument"], "pos": Vector2(1930, 738), "along": Vector2.RIGHT, "local": "novak",
+			"place": "outside Novak's Grocery"},
+		{"id": "sal_kerb", "kinds": ["argument"], "pos": Vector2(1010, 462), "along": Vector2.RIGHT, "local": "sal",
+			"place": "outside Sal's"},
+		{"id": "owl_alley", "kinds": ["exchange"], "pos": Vector2(2440, 135), "along": Vector2.RIGHT, "local": "augie",
+			"place": "the alley behind the Copper Owl"},
+		{"id": "hotel_alley", "kinds": ["exchange"], "pos": Vector2(2700, 1065), "along": Vector2.RIGHT, "local": "",
+			"place": "the alley behind the Hotel Marlowe"},
+		{"id": "marlowe_stop", "kinds": ["stop"], "pos": Vector2(2070, 462), "along": Vector2.RIGHT, "local": "novak",
+			"place": "on Marlowe Avenue by the newsstand"},
+	]
 
 
 # ------------------------------------------------------------------ streets

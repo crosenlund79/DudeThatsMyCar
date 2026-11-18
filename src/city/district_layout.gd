@@ -22,6 +22,11 @@ var landmarks: Array = []
 ## and smokestacks that smoke all night: {pos, height}.
 var lamp_energy := 1.0
 var smoke: Array = []
+## M009: places the city's own small troubles happen: {id, kinds (["argument",
+## "exchange", "stop"]), pos, along (the line two people stand on, a unit
+## vector), local (the named person who notices how it ends and talks, or ""),
+## place (how people name it: "outside Novak's Grocery")}.
+var incident_spots: Array = []
 ## Whole visible world (camera limits). Everything inside is drawn.
 var bounds := Rect2()
 ## Where people and cars can be (exits are refused outside it).
@@ -183,7 +188,7 @@ func shift(offset: Vector2) -> DistrictLayout:
 			p.pos += offset
 		for sg in b.signs:
 			sg.pos += offset
-	for list2 in [props, decals, spill, landmarks, smoke, cars]:
+	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots]:
 		for item in list2:
 			item.pos += offset
 	for e in exits:

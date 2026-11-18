@@ -375,7 +375,28 @@ func shot_person(who: String) -> void:
 
 
 ## Someone hears a piece of talk.
+## M009: one of the city's own incidents is over. The named person who saw
+## it (if any) starts the talk, and remembers Danny's part in it.
+func street_incident_over(inc: Dictionary) -> void:
+	var local := String(inc.spot.get("local", ""))
+	if local == "":
+		return
+	var read := StreetIncidents.reading(inc)
+	if read.talk != "":
+		rumours.start(read.talk, local, night, {"text": String(inc.spot.place)})
+	if String(inc.mercer) != "" and read.memory != "":
+		memory.remember(local, read.memory, night, String(inc.spot.place))
+
+
 func _hear(person: String, r: Dictionary) -> void:
+	if person == "rourke" and String(r.kind).begins_with("street_"):
+		# M009: he hears what the ward says - only what comes to Augie's ears, nights later
+		var says := {"street_exchange_robbed": "Dimes stuck up a handoff %s", "street_exchange_hushed": "Dimes took a cut of somebody's business %s",
+			"street_argument_scattered": "Dimes threw his weight about %s", "street_stop_vouched": "Dimes stood up to a copper %s",
+			"street_stop_bribed": "Dimes squared a copper %s"}
+		if says.has(r.kind):
+			boss.hear(says[r.kind] % r.text, night)
+		return
 	if person == "rourke":
 		if String(r.kind).begins_with("job_"):
 			job.rourke_hears(r.kind, self)
@@ -409,8 +430,8 @@ func _hear(person: String, r: Dictionary) -> void:
 ## The newest piece of talk a person can pass on to Danny (or {}).
 func gossip(person: String) -> Dictionary:
 	for r in rumours.known_to(person):
-		if r.origin != person and r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
-				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still"]:
+		if r.origin != person and (r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
+				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still"] or String(r.kind).begins_with("street_")):
 			return r
 	return {}
 

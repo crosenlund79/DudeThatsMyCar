@@ -55,6 +55,7 @@ func _build() -> void:
 	_lamps()
 	_ground_details()
 	_people_and_cars()
+	_incident_spots()
 	# the ways east into the Riverside Ward (Calloway Street ends at the ward's own barricade)
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, CALLOWAY - HALF - SW, 6, (HALF + SW) * 2.0)})
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, MARLOWE - AVENUE_HALF - SW, 6, (AVENUE_HALF + SW) * 2.0)})
@@ -224,6 +225,22 @@ func _ground_details() -> void:
 		d.decals.append({"kind": "decals/litter", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": 1.0})
 	for p in [Vector2(950, PRUITT + 40), Vector2(2400, CALLOWAY - 40)]:
 		d.decals.append({"kind": "decals/oil", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": 1.0})
+
+
+## M009: where the square's own small troubles happen; Mr. Feeney at the Bijou notices.
+func _incident_spots() -> void:
+	d.incident_spots = [
+		{"id": "bijou_kerb", "kinds": ["argument"], "pos": Vector2(2560, MARLOWE - AVENUE_HALF - 23.0), "along": Vector2.RIGHT,
+			"local": "feeney", "place": "outside the Bijou"},
+		{"id": "bakery_kerb", "kinds": ["argument"], "pos": Vector2(2500, MARLOWE + AVENUE_HALF + 23.0), "along": Vector2.RIGHT,
+			"local": "feeney", "place": "outside Kowalski's bakery"},
+		{"id": "square_alley", "kinds": ["exchange"], "pos": Vector2(2620, 2365), "along": Vector2.RIGHT, "local": "",
+			"place": "the alley off the square"},
+		{"id": "churchyard", "kinds": ["exchange"], "pos": Vector2(1100, 2560), "along": Vector2.RIGHT, "local": "feeney",
+			"place": "behind St. Brendan's"},
+		{"id": "square_stop", "kinds": ["stop"], "pos": Vector2(1960, MARLOWE + AVENUE_HALF + 23.0), "along": Vector2.RIGHT,
+			"local": "feeney", "place": "by the square"},
+	]
 
 
 func _people_and_cars() -> void:

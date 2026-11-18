@@ -54,6 +54,7 @@ func _build() -> void:
 	_lamps()
 	_ground_details()
 	_people_and_cars()
+	_incident_spots()
 	# the ways north into the Riverside Ward (Dorsey Street is closed by the ward's own barricade)
 	for x in [DORSEY, KESSLER, WHARF]:
 		d.exits.append({"to": "riverside", "rect": Rect2(x - HALF - 46.0, 0, HALF * 2.0 + 92.0, 6)})
@@ -221,6 +222,22 @@ func _ground_details() -> void:
 		d.decals.append({"kind": "decals/oil", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": rnd.randf_range(0.9, 1.4)})
 	for p in [Vector2(3080, 1180), Vector2(2200, 760), Vector2(5480, 700)]:
 		d.decals.append({"kind": "decals/litter", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": 1.0})
+
+
+## M009: where the yards' own small troubles happen; Dutch at the lunch counter notices.
+func _incident_spots() -> void:
+	d.incident_spots = [
+		{"id": "depot_kerb", "kinds": ["argument"], "pos": Vector2(4300, 193), "along": Vector2.RIGHT, "local": "dutch",
+			"place": "outside the freight depot"},
+		{"id": "lunch_kerb", "kinds": ["argument"], "pos": Vector2(2860, 1192), "along": Vector2.RIGHT, "local": "dutch",
+			"place": "outside Dutch's"},
+		{"id": "works_lane", "kinds": ["exchange"], "pos": Vector2(2200, 760), "along": Vector2.RIGHT, "local": "",
+			"place": "the lane behind the works"},
+		{"id": "coal_dock", "kinds": ["exchange"], "pos": Vector2(5530, 860), "along": Vector2.DOWN, "local": "dutch",
+			"place": "on the coal dock"},
+		{"id": "front_stop", "kinds": ["stop"], "pos": Vector2(3900, 193), "along": Vector2.RIGHT, "local": "dutch",
+			"place": "on Front Street"},
+	]
 
 
 func _people_and_cars() -> void:

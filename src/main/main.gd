@@ -11,6 +11,9 @@ const VEHICLES := {
 	"police": preload("res://src/driving/vehicles/police.tres"),
 }
 
+## M009: an incident began, moved on or ended ("started", "phase", "over").
+signal incident_event(event: String, incident: Dictionary)
+
 ## Optional command source for tests: func(controller) -> PlayerCommand.
 var command_source: Callable
 ## Override folder for replaceable art (tests); "" = the normal custom/ folder.
@@ -52,6 +55,8 @@ var navigator: CityNavigator
 ## M008: the districts of the city in one world: the Riverside Ward (built at
 ## start-up, pinned) and its neighbours, streamed in as Danny comes near.
 var world: DistrictStreamer
+## M009: the city's own small troubles (they run on the clock wherever Danny is).
+var incidents: StreetIncidents
 ## M008: what belongs to each neighbouring district while it is loaded:
 ## id -> {street: StreetLife, officer: PoliceOfficer (or null), cars_made: bool}.
 var _districts := {}
@@ -152,6 +157,10 @@ func _ready() -> void:
 	world.district_unloading.connect(_on_district_unloading)
 	world.district_entered.connect(_on_district_entered)
 	_load_districts()
+	var all_layouts := world.order.map(func(id: String) -> DistrictLayout: return world.layouts[id])
+	incidents = StreetIncidents.new(StreetIncidents.spots_of(all_layouts))
+	incidents.begin_night(rackets.night, float(night_rules.start_minute), float(night_rules.dawn_minute),
+		StreetIncidents.saved_history(_saved.get("incidents", {}), rackets.night))
 	_park_cars()
 	thefts = CarThefts.new(layout.cars)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
@@ -787,6 +796,7 @@ func sleep() -> void:
 	walker.condition.rest()  # grazes heal overnight; wounds wait for the Doc
 	rackets.end_night()
 	clock.reset()
+	incidents.begin_night(rackets.night, float(night_rules.start_minute), float(night_rules.dawn_minute))
 	_warned = 0
 	_report_from = null
 	for i in cars.size():
@@ -819,6 +829,7 @@ func _update_clock(delta: float) -> void:
 		var before := clock.minute
 		clock.advance(delta)
 		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
+		_advance_incidents()
 	if clock.is_dawn() and _warned < 2:
 		_warned = 2
 		hud.show_notice("Dawn's breaking. Get home to bed before the city wakes up.")
@@ -838,7 +849,28 @@ func save_game() -> void:
 		data["gun"] = {"ammo": walker.gun.ammo, "spare": walker.gun.spare}
 	if world != null:
 		data["districts"] = _districts_to_save()
+	if incidents != null:
+		data["incidents"] = incidents.to_dict()
 	SaveGame.write(save_path, data)
+
+
+## M009: the city's incidents move on with the clock; one that ends is
+## talked about by whoever saw it.
+func _advance_incidents() -> void:
+	var danny := player.body().global_position if player != null else Vector2.INF
+	for e in incidents.advance(clock.minute, danny, _can_stop):
+		if e.event == "over":
+			rackets.street_incident_over(e.incident)
+		incident_event.emit(e.event, e.incident)
+
+
+## Whether a district's beat cop is free to stop somebody (an unloaded
+## district's man is, in the abstract; a loaded one not while he is after Danny).
+func _can_stop(district: String) -> bool:
+	if not world.is_ready(district):
+		return true
+	var o: PoliceOfficer = officer if district == layout.id else _districts.get(district, {}).get("officer")
+	return o != null and is_instance_valid(o) and not o.is_down() and not o.brain.is_hunting()
 
 
 ## M008: what each neighbouring district keeps for tonight - whether its beat
