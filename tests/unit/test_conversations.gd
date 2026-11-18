@@ -179,3 +179,45 @@ func test_doc_pettibone_patches_danny_up_for_cash() -> void:
 	assert_true(done.effects.heal)
 	assert_eq(r.money, 400)
 	assert_eq(r.doctor_fees, 600, "the fee leaves his pocket")
+
+
+# ------------------------------------------------------------------ M009
+
+func test_stepping_into_the_city_s_incidents() -> void:
+	var argument := talk.open("incident", {"incident_kind": "argument"})
+	_check_page(argument)
+	assert_eq(argument.speaker, "Two men at the kerb")
+	assert_true(_ids(argument).has("calm") and _ids(argument).has("lean"))
+	assert_eq(talk.choose("incident", "calm", {"incident_kind": "argument"}).effects, {"incident": "calm"})
+	var exchange := talk.open("incident", {"incident_kind": "exchange", "gun_drawn": false})
+	assert_false(_ids(exchange).has("rob"), "no stick-up with empty hands")
+	assert_true(_ids(talk.open("incident", {"incident_kind": "exchange", "gun_drawn": true})).has("rob"))
+	var stop := talk.open("incident", {"incident_kind": "stop", "money": Conversations.STOP_BRIBE - 1})
+	assert_eq(stop.speaker, "The beat cop")
+	assert_true(_ids(stop).has("vouch"))
+	assert_false(_ids(stop).has("bribe"), "no dollar, no bribe")
+	assert_true(_ids(talk.open("incident", {"incident_kind": "stop", "money": 500})).has("bribe"))
+
+
+func _incident(spot_id: String, local: String, kind: String, outcome: String, mercer: String) -> Dictionary:
+	return {"id": "x", "kind": kind, "outcome": outcome, "mercer": mercer,
+		"spot": {"id": spot_id, "local": local, "place": "in the alley behind the Copper Owl"}}
+
+
+func test_rourke_hears_of_danny_s_own_business_only_through_talk() -> void:
+	# nobody he knows saw this one: he never hears of it
+	r.street_incident_over(_incident("hotel_alley", "", "exchange", "robbed", "rob"))
+	for i in 4:
+		r.end_night()
+	assert_true(r.boss.heard.is_empty(), "nobody saw it, nobody told him")
+	# Augie saw this one, and Augie talks to Rourke
+	r.street_incident_over(_incident("owl_alley", "augie", "exchange", "hushed", "cut"))
+	assert_true(r.boss.heard.is_empty(), "not the same night")
+	r.end_night()
+	assert_eq(r.boss.heard.size(), 1, "the next night it has reached him")
+	assert_string_contains(r.boss.heard[0].text, "took a cut")
+	assert_eq(r.memory.recent("augie", "deal", r.night, 3), 1, "Augie remembers Danny's part")
+	var trust: int = r.boss.trust
+	var news := talk.choose("rourke", "news")
+	assert_string_contains(news.text, "Your own time's your own business")
+	assert_eq(r.boss.trust, trust, "a remark, not a reckoning")

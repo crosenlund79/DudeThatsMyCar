@@ -71,6 +71,12 @@ func shot_at(from: Vector2, by_player: bool = false) -> void:
 	_notice(from, state != State.CHASE)
 
 
+## M009: Danny butted in where he was not wanted (at `at`): the copper takes
+## a hard look at him - comes over, unarmed, and follows him while he sees him.
+func suspect(at: Vector2) -> void:
+	_notice(at, state != State.CHASE)
+
+
 ## M008: he saw you shoot somebody (you were at `at`): he draws and comes after you.
 func witness_violence(at: Vector2) -> void:
 	_arm()

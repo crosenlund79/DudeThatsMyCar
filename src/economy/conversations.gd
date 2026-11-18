@@ -79,6 +79,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _lefty(step, context)
 		"pettibone":
 			return _vet(step, context)
+		"incident":
+			return _incident(step, context)
 		"bed":
 			return _bed(step, context)
 	return {}
@@ -504,6 +506,65 @@ func _lefty(step: String, context: Dictionary) -> Dictionary:
 	return {}
 
 
+# ------------------------------------------------------------------ M009: the city's own incidents
+
+## Danny steps into one of the city's incidents. context.incident_kind:
+## "argument", "exchange" or "stop"; gun_drawn; money (cents).
+func _incident(step: String, context: Dictionary) -> Dictionary:
+	var kind: String = context.get("incident_kind", "")
+	var gun: bool = context.get("gun_drawn", false)
+	match kind:
+		"argument":
+			match step:
+				"hello":
+					return _incident_page("Two men at the kerb", "\"Stay out of it, mister. This bum backed into my car.\"", [
+						{"id": "calm", "text": "Easy, boys. Nobody needs the Doc tonight."},
+						{"id": "lean", "text": "(Hand on the .45.) Beat it. The pair of you." if gun else "(Step between them.) Beat it. The pair of you."},
+						{"id": "bye", "text": "(Leave them to it.)"}])
+				"calm":
+					return _incident_page("Two men at the kerb", "\"...Aw, he ain't worth it.\" They go their ways, still muttering.", [], {"incident": "calm"})
+				"lean":
+					return _incident_page("Two men at the kerb", "They take one look at you and go - fast, and in opposite directions.", [], {"incident": "lean"})
+		"exchange":
+			match step:
+				"hello":
+					var opts := [{"id": "see", "text": "What's in the package, fellas?"}, {"id": "cut", "text": "Nice night for business. Where's my cut?"}]
+					if gun:
+						opts.append({"id": "rob", "text": "(Show them the .45.) I'll take that."})
+					opts.append({"id": "bye", "text": "Never mind me."})
+					return _incident_page("Two men in the shadows", "\"Who's asking?\" The one with the package keeps it behind his back.", opts)
+				"see":
+					return _incident_page("Two men in the shadows", "\"Nothing for you, pal.\" They break it off and go, quick.", [], {"incident": "see"})
+				"cut":
+					return _incident_page("Two men in the shadows", "\"...Fine. Two bucks, and you never saw us.\" A folded pair of dollars.", [], {"incident": "cut"})
+				"rob":
+					if not gun:
+						return _incident_page("Two men in the shadows", "\"Nothing for you, pal.\" They break it off and go, quick.", [], {"incident": "see"})
+					return _incident_page("Two men in the shadows", "\"Easy with that thing!\" The package lands at your feet and they run.", [], {"incident": "rob"})
+		"stop":
+			match step:
+				"hello":
+					var stop_opts := [{"id": "vouch", "text": "He's with me, officer. He's done nothing."}]
+					if int(context.get("money", 0)) >= STOP_BRIBE:
+						stop_opts.append({"id": "bribe", "text": "(Fold a dollar into his hand.) Let the man go home."})
+					stop_opts.append({"id": "bye", "text": "Sorry, officer. (Move along.)"})
+					return _incident_page("The beat cop", "\"Move along, mister. This is police business.\"", stop_opts)
+				"vouch":
+					return _incident_page("The beat cop", "\"Is that so.\" He lets the man go - and takes a long, hard look at you.", [], {"incident": "vouch"})
+				"bribe":
+					return _incident_page("The beat cop", "The dollar disappears. \"...Go on home, the both of yous.\"", [], {"incident": "bribe"})
+	return {}
+
+
+const STOP_BRIBE := 100
+
+
+func _incident_page(who: String, text: String, options: Array = [], effects: Dictionary = {}) -> Dictionary:
+	var page := _page("incident", text, options, effects)
+	page["speaker"] = who
+	return page
+
+
 ## Danny's ways of settling it with Lefty (the talk, a threat, his fists, or leaving).
 func _lefty_choices(job: RourkeJob, night: int, with_talk: bool = true) -> Array:
 	var opts := []
@@ -720,6 +781,12 @@ func _rourke(step: String, context: Dictionary) -> Dictionary:
 			for h in b.heard:
 				if String(h.text).begins_with("caught"):
 					bits.append("And I hear things about you, Dimes. Don't make me hear more.")
+					break
+			# M009: what Danny gets up to on his own time, as far as talk has carried it
+			for h in b.heard:
+				if String(h.text).begins_with("Dimes "):
+					bits.append("I hear %s. Your own time's your own business, Dimes - so long as it don't bring coppers to my door." \
+						% String(h.text).trim_prefix("Dimes ").replace("Dimes", "you"))
 					break
 			if bits.is_empty():
 				bits.append("Quiet. Quiet is good. Quiet means everybody pays.")

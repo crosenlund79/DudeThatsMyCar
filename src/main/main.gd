@@ -55,8 +55,15 @@ var navigator: CityNavigator
 ## M008: the districts of the city in one world: the Riverside Ward (built at
 ## start-up, pinned) and its neighbours, streamed in as Danny comes near.
 var world: DistrictStreamer
-## M009: the city's own small troubles (they run on the clock wherever Danny is).
+## M009: the city's own small troubles (they run on the clock wherever Danny is),
+## and their people where he can see them.
 var incidents: StreetIncidents
+var incident_views: IncidentViews
+## The incident Danny is stepping into ("" for none).
+var _incident_talking := ""
+## M009: what stepping in brings or costs (cents).
+const HUSH_MONEY := 200
+const HANDOFF_TAKE := 600
 ## M008: what belongs to each neighbouring district while it is loaded:
 ## id -> {street: StreetLife, officer: PoliceOfficer (or null), cars_made: bool}.
 var _districts := {}
@@ -256,6 +263,13 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(resolver, layout.name)
 	hud.add_minimap(layout)
+	incident_views = IncidentViews.new()
+	add_child(incident_views)
+	incident_views.setup(resolver, incidents, load(Hud.FONT_PATH))
+	incident_views.is_shown = world.is_ready
+	incident_views.officer_for = _officer_of
+	incident_views.person_struck.connect(func(id: String) -> void: _end_incident(incidents.break_off(id, "shooting")))
+	incident_views.process_mode = Node.PROCESS_MODE_PAUSABLE
 	var morgue := layout.building_named("The Morgue")
 	if morgue >= 0:
 		hud.city_map.add_landmark(layout.buildings[morgue].rect.get_center(), "The Morgue", resolver.get_texture("ui/marker_morgue"))
@@ -302,6 +316,9 @@ func _on_player_fired(muzzle: Vector2, dir: Vector2) -> void:
 			o.hear_gunshot(muzzle, gun_rules.noise_radius)
 	for s in streets():
 		s.hear_gunshot(muzzle)
+	if incident_views != null:
+		for e in incident_views.hear_gunshot(muzzle):  # M009: they break off and run
+			_end_incident(e)
 
 
 func _wire_officer_hud(o: PoliceOfficer) -> void:
@@ -427,6 +444,8 @@ func _on_district_unloading(id: String) -> void:
 	for c in cars:
 		if c != player.car and b.has_point(c.global_position):
 			_put_away(c, true)
+	if incident_views != null:
+		incident_views.drop_district(b)  # its incidents go on as state
 	bullets.drop_in(b)
 	camera.set_bounds.call_deferred(world.bounds())
 
@@ -591,6 +610,11 @@ func _spot() -> Dictionary:
 	if rival != null and not rival.is_down() and not rival.is_hostile() \
 			and walker.global_position.distance_to(rival.body.global_position) < 40.0:
 		return {"id": "lefty", "prompt": "Talk to Lefty Moran"}
+	# M009: one of the city's incidents going on right here
+	var inc := incident_views.incident_near(walker.global_position, 48.0) if incident_views != null else {}
+	if not inc.is_empty() and inc.mercer == "" and inc.phase < (StreetIncidents.PHASES[inc.kind] as Array).size() - 1:
+		return {"id": "incident", "incident": inc.id,
+			"prompt": {"argument": "Step in", "exchange": "Walk over", "stop": "Have a word with the officer"}[inc.kind]}
 	var door := interiors.door_at(walker.global_position)
 	if not door.is_empty():
 		door["id"] = "door"
@@ -611,6 +635,10 @@ func _interact(_at: Vector2) -> bool:
 		talking = "lefty"
 		rival.body.aim_point = walker.global_position
 		_show(talk.open("lefty", _talk_context()))
+	elif spot.id == "incident":
+		talking = "incident"
+		_incident_talking = spot.incident
+		_show(talk.open("incident", _talk_context()))
 	elif spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
 	return true
@@ -694,7 +722,8 @@ func _talk_context() -> Dictionary:
 		"time": clock.text(), "late": clock.is_late(), "first_meeting": voice_lines.due(Conversations.greeting_line(talking)),
 		"treatment": walker.condition.treatment_price(), "lefty_dead": rival != null and rival.is_down(),
 		"lefty_hurt": rival != null and rival.body.condition.worst() >= BodyCondition.Level.WOUNDED,
-		"danny_worst": walker.condition.worst(), "night": rackets.night}
+		"danny_worst": walker.condition.worst(), "night": rackets.night, "money": rackets.money,
+		"incident_kind": incidents.get_incident(_incident_talking).get("kind", "") if _incident_talking != "" else ""}
 
 
 func _show(page: Dictionary) -> void:
@@ -737,6 +766,8 @@ func _answer(i: int) -> void:
 
 ## Effects of a conversation outside the money (police, rounds).
 func _apply(effects: Dictionary) -> void:
+	if effects.has("incident"):
+		_step_in(String(effects.incident))
 	if effects.has("fight"):
 		_fight_pending = String(effects.fight)  # starts when Danny raises his fists
 	if effects.has("job"):
@@ -769,6 +800,7 @@ func _update_report(delta: float) -> void:
 
 
 func end_talk() -> void:
+	_incident_talking = ""
 	if _fight_pending == "lefty":
 		call_deferred("_fight_lefty")
 	if talking == "bird":
@@ -855,13 +887,61 @@ func save_game() -> void:
 
 
 ## M009: the city's incidents move on with the clock; one that ends is
-## talked about by whoever saw it.
+## talked about by whoever saw it. A stop breaks off if its copper is called
+## away (gunfire) or down.
 func _advance_incidents() -> void:
 	var danny := player.body().global_position if player != null else Vector2.INF
+	for inc in incidents.active.duplicate():
+		if inc.kind == "stop" and inc.mercer == "" and incidents.phase_name(inc) != "leaving" \
+				and world.is_ready(inc.spot.district):
+			var cop := _officer_of(inc.spot.district)
+			if cop == null or cop.brain.is_hunting():
+				if cop != null:
+					cop.duty = {}
+				_end_incident(incidents.break_off(inc.id, "broken_off"))
 	for e in incidents.advance(clock.minute, danny, _can_stop):
 		if e.event == "over":
 			rackets.street_incident_over(e.incident)
 		incident_event.emit(e.event, e.incident)
+
+
+## An incident ended early (broken off): talked about like any other.
+func _end_incident(e: Dictionary) -> void:
+	if e.is_empty():
+		return
+	rackets.street_incident_over(e.incident)
+	incident_event.emit("over", e.incident)
+
+
+## A district's beat cop, if it is built and he is on his feet (else null).
+func _officer_of(district: String) -> PoliceOfficer:
+	var o: PoliceOfficer = officer if district == layout.id else _districts.get(district, {}).get("officer")
+	return o if o != null and is_instance_valid(o) and not o.is_down() else null
+
+
+## Danny steps into the incident he is talking his way into (see Conversations).
+func _step_in(choice: String) -> void:
+	var inc := incidents.get_incident(_incident_talking)
+	if inc.is_empty():
+		return
+	var out := incidents.intervene(inc.id, choice, _talk_context())
+	if not out.ok:
+		return
+	match out.outcome:
+		"hushed":
+			rackets.money += HUSH_MONEY
+		"robbed":
+			rackets.money += HANDOFF_TAKE
+			for o in officers():  # a hold-up at gunpoint, if a copper saw it
+				o.witness_violence(walker.global_position, walker.global_position)
+		"bribed":
+			rackets.money -= mini(Conversations.STOP_BRIBE, rackets.money)
+		"vouched":
+			var cop := _officer_of(inc.spot.district)
+			if cop != null:
+				cop.duty = {}
+				cop.brain.suspect(walker.global_position)
+	incident_event.emit("phase", inc)
 
 
 ## Whether a district's beat cop is free to stop somebody (an unloaded
@@ -1171,6 +1251,8 @@ func _update_view(delta: float) -> void:
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
 	for s in streets():
 		s.view = camera.view_rect()
+	if not get_tree().paused:
+		incident_views.refresh(camera.eye(), player.body().global_position, delta)  # M009
 	var prompt := ""
 	if player.on_foot():
 		var spot := _spot()

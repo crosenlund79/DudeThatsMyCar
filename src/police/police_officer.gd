@@ -44,6 +44,10 @@ var _drawn := false
 ## M008: his district's ground. Across its border he does not follow (his
 ## beat ends there): he watches from the edge and then gives up as usual.
 var home_area := Rect2()
+## M009: a stop he is making ({pos: where he stands, face: whom he questions};
+## {} for none). Only while he is on his rounds: anything that alerts him
+## comes first.
+var duty := {}
 
 
 const REVOLVER := preload("res://src/police/police_revolver.tres")
@@ -92,6 +96,7 @@ func setup(resolver: AssetResolver, p_rules: PoliceRules, beat: PackedVector2Arr
 ## Back on his beat at the start of a night: patrolling, nothing on his mind.
 ## M006: if he was shot dead last night, this is the new man on the beat.
 func reset() -> void:
+	duty = {}
 	brain = OfficerBrain.new(rules, brain.beat)
 	body.revive()
 	body.gun.holster()
@@ -212,6 +217,10 @@ func _physics_process(_delta: float) -> void:
 		sees = false  # M008: off his district's ground: he lets it go at the edge
 	var clear := sees and brain.armed and clear_shot(t)
 	var out := brain.update(dt, me, sees, player, velocity_of(t) if t != null else Vector2.ZERO, clear)
+	if not duty.is_empty() and brain.state == OfficerBrain.State.PATROL:
+		var there := me.distance_to(duty.pos) <= 8.0
+		out = {"target": duty.pos, "speed": 0.0 if there else rules.patrol_speed, "look": duty.face if there else duty.pos,
+			"icon": "", "fire": false, "draw": false}
 	if brain.noticed_now:
 		_icon_pop = 0.3
 		if whistle.stream != null:
