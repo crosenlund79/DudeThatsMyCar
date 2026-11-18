@@ -15,7 +15,7 @@ extends SceneTree
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
 ## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007),
-## weather_clear / weather_rain / weather_fog / weather_rain_fog / fog_alley / fog_headlights (M010),
+## weather_clear / weather_rain / weather_fog / weather_rain_fog / fog_alley / fog_headlights, drowsy (M010),
 ## wheels / wheels_lock (M009: the front tyres, straight and at full lock), dump_truck, school_bus,
 ## incident / incident_broken_up / incident_stop, dutch / crate, feeney / film_can (M009).
 
@@ -504,6 +504,13 @@ func _run(shots: Array) -> void:
 				await _frames(40)
 				await _shot(s, false)
 				cmd = PlayerCommand.new()
+			"drowsy":
+				# M010: half past five in the morning, on Marlowe Avenue: heavy eyes
+				main.weather.force("clear")
+				_teleport_walker(Vector2(2250, 560), -PI / 2)
+				main.clock.set_time(float(main.night_rules.dawn_minute) - 5.0)
+				await _frames(200)
+				await _shot("drowsy", false)
 			"truck_found":
 				# M010: Brennan's coal truck at the kerb of Wharf Street, as a driver coming down from the ward sees it
 				var tl: DistrictLayout = main.world.layouts.yards

@@ -21,6 +21,8 @@ const MAP := "map"
 const STATUS := "status"
 ## M008: on the city map, back to Danny.
 const RECENTRE := "map_recentre"
+## M010: Left Shift, held with WASD on foot: run.
+const SPRINT := "sprint"
 const CHOICES := ["choice_1", "choice_2", "choice_3", "choice_4"]
 
 const KEYS := {
@@ -39,6 +41,12 @@ static func ensure_actions() -> void:
 			var e := InputEventKey.new()
 			e.physical_keycode = key
 			InputMap.action_add_event(action, e)
+	if not InputMap.has_action(SPRINT):
+		InputMap.add_action(SPRINT)
+		var shift := InputEventKey.new()
+		shift.physical_keycode = KEY_SHIFT
+		shift.location = KEY_LOCATION_LEFT
+		InputMap.action_add_event(SPRINT, shift)
 	if not InputMap.has_action(FIRE):
 		InputMap.add_action(FIRE)
 		var m := InputEventMouseButton.new()
@@ -54,6 +62,7 @@ static func read(aim: Vector2) -> PlayerCommand:
 	c.aim = aim
 	c.interact = Input.is_action_just_pressed(INTERACT)
 	c.handbrake = Input.is_action_pressed(HANDBRAKE)
+	c.sprint = Input.is_action_pressed(SPRINT)
 	c.fire = Input.is_action_pressed(FIRE)
 	c.fire_pressed = Input.is_action_just_pressed(FIRE)
 	for i in CHOICES.size():

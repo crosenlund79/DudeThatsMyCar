@@ -9,6 +9,8 @@ extends Resource
 @export var start_minute := 19 * 60 + 30
 ## From here on you are told to get home to bed (04:00 = 4 am).
 @export var home_minute := 24 * 60 + 4 * 60
+## M010: from here Danny grows drowsy, heavier towards dawn (03:30).
+@export var drowsy_minute := 24 * 60 + 3 * 60 + 30
 ## The sky starts to pale: the clock stops here until you sleep (05:30).
 @export var dawn_minute := 24 * 60 + 5 * 60 + 30
 ## Game minutes per real second (1.0: a night of ten hours takes ten minutes).

@@ -20,6 +20,7 @@ var meet_people := false
 
 func _source(_c: PlayerController) -> PlayerCommand:
 	var out := PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim)
+	out.sprint = cmd.sprint  # M010
 	if _choice_pending > 0:
 		out.choice = _choice_pending
 		_choice_pending = 0

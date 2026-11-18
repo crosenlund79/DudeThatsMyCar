@@ -221,7 +221,9 @@ func _physics_process(delta: float) -> void:
 	var moved := global_position.distance_to(before)
 	if model.speed() > 8.0:
 		_walked += moved
-		sprite.frame = 1 + int(_walked / STRIDE) % (sprite.hframes - 1)
+		# M010: running, the stride is longer (the steps still keep pace with the ground covered)
+		var stride := STRIDE * (1.45 if model.running else 1.0)
+		sprite.frame = 1 + int(_walked / stride) % (sprite.hframes - 1)
 	else:
 		_walked = 0.0
 		sprite.frame = 0

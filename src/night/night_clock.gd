@@ -32,6 +32,15 @@ func is_late() -> bool:
 	return minute >= rules.home_minute
 
 
+## M010: how drowsy Danny is (0 until the drowsy hour, growing to 1 at dawn).
+func drowsiness() -> float:
+	var span := float(rules.dawn_minute - rules.drowsy_minute)
+	if span <= 0.0 or minute <= rules.drowsy_minute:
+		return 0.0
+	var t := clampf((minute - rules.drowsy_minute) / span, 0.0, 1.0)
+	return t * t * (3.0 - 2.0 * t)
+
+
 ## The clock has stopped at dawn.
 func is_dawn() -> bool:
 	return minute >= rules.dawn_minute

@@ -121,6 +121,8 @@ const COLLAPSE_FEE := 500
 @export var weather_override := ""
 var weather: Weather
 var weather_view: WeatherView
+## M010: Danny's eyes growing heavy towards dawn.
+var drowsy: DrowsyView
 var fighting := false
 var fight_opponent: Walker
 var _fight_done: Callable
@@ -285,6 +287,9 @@ func _ready() -> void:
 	incident_views.officer_for = _officer_of
 	incident_views.person_struck.connect(func(id: String) -> void: _end_incident(incidents.break_off(id, "shooting")))
 	incident_views.process_mode = Node.PROCESS_MODE_PAUSABLE
+	drowsy = DrowsyView.new()  # M010
+	add_child(drowsy)
+	drowsy.setup()
 	weather_view = WeatherView.new()  # M010
 	add_child(weather_view)
 	weather_view.setup(weather, resolver.get_texture("fx/fog"))
@@ -1249,6 +1254,11 @@ func _scenery_truck_near(p: Vector2) -> bool:
 	return false
 
 
+## M010: while the drowsiness must keep out of the way (talk, a scene, the maps, a fight).
+func _drowsy_held() -> bool:
+	return talking != "" or opening != null or map_open or status_open or fighting
+
+
 func my_car() -> Car:
 	for i in cars.size():
 		if thefts.is_dannys(i):
@@ -1419,6 +1429,8 @@ func _process(delta: float) -> void:
 
 func _update_view(delta: float) -> void:
 	camera.update_camera(delta)
+	# M010: drowsy before dawn - kept out of the way of talk, cards and scenes
+	camera.offset = drowsy.update(clock.drowsiness(), _drowsy_held(), not player.on_foot(), delta)
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	world.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)

@@ -13,6 +13,8 @@ var handbrake := false
 ## Left mouse button held, and clicked this tick (one shot per click).
 var fire := false
 var fire_pressed := false
+## M010: Left Shift held: run (on foot only).
+var sprint := false
 ## Answer key pressed this tick (1-4; 0 = none), while talking to someone.
 var choice := 0
 

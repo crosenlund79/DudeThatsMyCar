@@ -5,6 +5,9 @@ extends RefCounted
 ## where the person faces (aim). Units: world px and seconds.
 
 var walk_speed := 108.0
+## M010: Left Shift on foot: a run (no stamina).
+var run_speed := 190.0
+var running := false
 var acceleration := 900.0
 var deceleration := 1300.0
 var velocity := Vector2.ZERO
@@ -14,7 +17,7 @@ var facing := 0.0
 
 ## move: desired direction (any length; clamped to 1). Returns the new velocity.
 func update(delta: float, move: Vector2) -> Vector2:
-	var target := move.limit_length(1.0) * walk_speed
+	var target := move.limit_length(1.0) * (run_speed if running else walk_speed)
 	var rate := acceleration if target.length_squared() > 0.0 else deceleration
 	velocity = velocity.move_toward(target, rate * delta)
 	return velocity

@@ -78,6 +78,7 @@ func _physics_process(_delta: float) -> void:
 
 func _walk(cmd: PlayerCommand) -> void:
 	walker.move = cmd.move
+	walker.model.running = cmd.sprint and cmd.move.length() > 0.1  # M010
 	walker.aim_point = cmd.aim
 	if cmd.interact:
 		if interaction.is_valid() and interaction.call(walker.global_position):
