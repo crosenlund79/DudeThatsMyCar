@@ -20,6 +20,10 @@ var _cooldown := 0.0
 ## Seconds a trigger pull keeps waiting to be fired (-1: none waiting).
 var _pull := -1.0
 var _idle := 0.0
+## M010: the trigger is held down (an automatic keeps firing).
+var held := false
+## M010: how far the recoil has thrown the aim off (degrees, added to the spread).
+var kick := 0.0
 
 
 func _init(p_rules: GunRules) -> void:
@@ -82,11 +86,15 @@ func holster() -> void:
 	state = State.HOLSTERED
 	_pull = -1.0
 	_idle = 0.0
+	held = false
 
 
 func step(dt: float) -> PackedStringArray:
 	var events := PackedStringArray()
 	_cooldown = maxf(0.0, _cooldown - dt)
+	kick = maxf(0.0, kick - rules.recoil_recovery * dt)
+	if rules.automatic and held and state == State.READY and ammo > 0 and _pull < 0.0:
+		_pull = dt  # held down: the next round goes as soon as the last has cleared
 	if _pull >= 0.0:
 		_pull -= dt
 	match state:
@@ -116,6 +124,7 @@ func step(dt: float) -> PackedStringArray:
 			_pull = -1.0
 			_idle = 0.0
 			events.append("fired")
+			kick = minf(rules.recoil_max, kick + rules.recoil_degrees)
 			if ammo == 0 and spare != 0:
 				_start_reload()
 				events.append("reload")

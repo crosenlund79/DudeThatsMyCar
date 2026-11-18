@@ -348,6 +348,45 @@ var doctor_fees := 0
 var job := RourkeJob.new()
 ## M009: work Danny can take or leave from people who are not Rourke.
 var opportunities := Opportunities.new()
+## M010: Eddie's Thompson while it is out on loan (never Danny's).
+var loan := GunLoan.new()
+## M010: the parcel (Eddie's, for the café job): how many Danny carries
+## (0 or 1), and whether Eddie will sell him one (the job asks for it).
+var parcels := 0
+var parcel_wanted := false
+const PARCEL_PRICE := 600
+
+
+## M010: Eddie lends Danny the Thompson for its deposit. False: no money, or it is out.
+func borrow_thompson() -> bool:
+	if loan.out or money < GunLoan.DEPOSIT:
+		return false
+	money -= GunLoan.DEPOSIT
+	eddie().cash += GunLoan.DEPOSIT
+	loan.lend(night)
+	memory.remember("eddie", "lent_thompson", night)
+	return true
+
+
+## M010: the Thompson goes back to Eddie: the deposit less his fee comes back.
+func return_thompson() -> int:
+	if not loan.out:
+		return 0
+	var back := loan.give_back()
+	money += back
+	eddie().cash -= back
+	memory.remember("eddie", "returned_thompson", night)
+	return back
+
+
+## M010: Eddie's parcel for the café job. False: not wanted, already carried, or no money.
+func buy_parcel() -> bool:
+	if not parcel_wanted or parcels > 0 or money < PARCEL_PRICE:
+		return false
+	money -= PARCEL_PRICE
+	eddie().cash += PARCEL_PRICE
+	parcels = 1
+	return true
 
 
 ## Pays the vet `cents` (as far as Danny's pocket goes). Returns what was paid.
@@ -510,7 +549,8 @@ func to_dict() -> Dictionary:
 		"skimmed": skimmed, "commission_earned": commission_earned, "seq": seq, "last_seq": last_seq.duplicate(),
 		"memory": memory.to_dict(), "rumours": rumours.to_dict(), "loans": loans.duplicate(true),
 		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees, "job": job.to_dict(),
-		"opportunities": opportunities.to_dict()}
+		"opportunities": opportunities.to_dict(), "loan": loan.to_dict(), "parcels": parcels,
+		"parcel_wanted": parcel_wanted}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -522,6 +562,10 @@ func from_dict(d: Dictionary) -> void:
 	job.from_dict(d.get("job", {}))
 	opportunities = Opportunities.new()
 	opportunities.from_dict(d.get("opportunities", {"night": int(d.get("night", night))}))
+	loan = GunLoan.new()
+	loan.from_dict(d.get("loan", {}))
+	parcels = clampi(int(d.get("parcels", 0)), 0, 1)
+	parcel_wanted = bool(d.get("parcel_wanted", false))
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
 	sold_by_barber = int(d.get("sold_by_barber", 0))

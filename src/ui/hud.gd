@@ -72,8 +72,18 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	place_label = _label("", 21, CREAM)
 	box.add_child(district_label)
 	box.add_child(place_label)
+	var purse_row := HBoxContainer.new()
+	purse_row.add_theme_constant_override("separation", 6)
+	box.add_child(purse_row)
 	purse_label = _label("", 16, DIM)
-	box.add_child(purse_label)
+	purse_row.add_child(purse_label)
+	item_icon = TextureRect.new()  # M010: the parcel, while he carries it
+	item_icon.texture = resolver.get_texture("ui/item_parcel")
+	item_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	item_icon.custom_minimum_size = Vector2(26, 26)
+	item_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	item_icon.visible = false
+	purse_row.add_child(item_icon)
 	_build_dialogue()
 	clock_panel = _panel(Vector2.ZERO)
 	var cb := VBoxContainer.new()
@@ -268,9 +278,18 @@ func wake_up(night: int, time_text: String, news: String = "") -> void:
 
 ## Money and bottles under the place name, and how much of the money is
 ## Rourke's (protection collected and not yet handed over).
+## M010: what else Danny carries ("a parcel"), shown with the purse.
+var carrying := ""
+var item_icon: TextureRect
+
+
 func set_purse(cents: int, bottles: int, rourkes: int = 0) -> void:
 	var b := "no bottles" if bottles == 0 else ("1 bottle of rye" if bottles == 1 else "%d bottles of rye" % bottles)
 	purse_label.text = "%s   \u00b7   %s" % [Rackets.dollars(cents), b]
+	if carrying != "":
+		purse_label.text += "   \u00b7   %s" % carrying
+	if item_icon != null:
+		item_icon.visible = carrying != ""
 	if rourkes > 0:
 		purse_label.text += "\n%s of it is Rourke's" % Rackets.dollars(rourkes)
 

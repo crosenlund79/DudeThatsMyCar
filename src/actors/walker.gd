@@ -182,6 +182,17 @@ func revive() -> void:
 	last_shooter = null
 
 
+## M010: takes another gun in hand (the one he had goes back under the coat):
+## its sprite, its muzzle, its rounds.
+func equip(p_gun: Gun, look: Texture2D) -> void:
+	if gun != null and gun != p_gun:
+		gun.holster()
+	gun = p_gun
+	if pistol != null:
+		pistol.texture = look
+		pistol.scale = AssetCatalog.scale_for(look, AssetCatalog.display_size(p_gun.rules.look))
+
+
 ## Shows the drawn pistol (or puts it away) to match the gun.
 func _pose() -> void:
 	var drawn := gun != null and gun.is_drawn()
@@ -189,7 +200,7 @@ func _pose() -> void:
 		sprite.texture = _armed_sheet if drawn else _sheet
 	if pistol != null:
 		pistol.visible = drawn
-		var size := AssetCatalog.display_size("weapons/pistol")
+		var size := AssetCatalog.display_size(gun.rules.look)
 		pistol.position = (gun.rules.hand_offset + Vector2(size.x * 0.4, 0)).rotated(model.facing)
 		pistol.rotation = model.facing
 

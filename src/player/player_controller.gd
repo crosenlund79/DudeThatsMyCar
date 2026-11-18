@@ -45,6 +45,9 @@ var conversation: Callable
 ## True while the car brakes to a stop because the player asked to get out.
 var leaving := false
 var last_command := PlayerCommand.new()
+## M010: the guns he carries, in the order Tab goes through them:
+## {gun: Gun, look: Texture2D}. The first is the pistol.
+var arsenal: Array = []
 
 
 func setup(p_walker: Walker, p_cars: Array[Car], p_city: Object) -> void:
@@ -126,6 +129,9 @@ func _walk(cmd: PlayerCommand) -> void:
 			return
 	if walker.gun == null:
 		return
+	if cmd.switch_gun:
+		switch_gun()
+	walker.gun.held = cmd.fire  # M010: an automatic keeps firing while the button is down
 	if cmd.fire_pressed:
 		walker.gun.trigger()
 	for e in walker.gun.step(Car.FIXED_STEP):
@@ -135,6 +141,30 @@ func _walk(cmd: PlayerCommand) -> void:
 			gun_event.emit(e, walker.global_position)
 
 
+## M010: the next gun he carries in hand (the last one back under the coat).
+func switch_gun() -> void:
+	if arsenal.size() < 2:
+		return
+	var at := 0
+	for i in arsenal.size():
+		if arsenal[i].gun == walker.gun:
+			at = i
+	var next: Dictionary = arsenal[(at + 1) % arsenal.size()]
+	walker.equip(next.gun, next.look)
+	gun_event.emit("switched", walker.global_position)
+
+
+## M010: carries this gun too (or no longer, with `on` false); never empty-handed.
+func carry(gun: Gun, look: Texture2D, on: bool = true) -> void:
+	for i in range(arsenal.size() - 1, -1, -1):
+		if arsenal[i].gun == gun:
+			arsenal.remove_at(i)
+	if on:
+		arsenal.append({"gun": gun, "look": look})
+	elif walker.gun == gun and not arsenal.is_empty():
+		walker.equip(arsenal[0].gun, arsenal[0].look)
+
+
 ## Fires towards the aim point (straight ahead when the aim is on top of the gangster).
 func _shoot(aim: Vector2) -> void:
 	var muzzle := walker.muzzle_position()
@@ -142,7 +172,8 @@ func _shoot(aim: Vector2) -> void:
 	if aim.distance_to(walker.global_position) < walker.gun.rules.muzzle_offset.length() + 4.0 or dir.length() < 1.0:
 		dir = Vector2.from_angle(walker.model.facing)
 	if bullets != null:
-		bullets.fire(walker.global_position, muzzle, dir, walker.gun.rules, [walker.get_rid()], walker.condition.aim_spread(), walker)
+		bullets.fire(walker.global_position, muzzle, dir, walker.gun.rules, [walker.get_rid()],
+			walker.condition.aim_spread() + walker.gun.kick, walker)
 	fired.emit(muzzle, dir.normalized())
 
 

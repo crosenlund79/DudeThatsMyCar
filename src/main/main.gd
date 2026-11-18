@@ -99,6 +99,12 @@ var street: StreetLife
 @export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
 ## The player's handgun.
 @export var gun_rules: GunRules = preload("res://src/weapons/default_pistol.tres")
+## M010: Eddie's Thompson, on loan (thompson: the gun while Danny has it).
+@export var thompson_rules: GunRules = preload("res://src/weapons/thompson.tres")
+var thompson: Gun = null
+## Danny's own .45 (whichever gun is in his hand).
+var pistol: Gun = null
+var _kick := Vector2.ZERO
 ## Prices and nightly limits of the bootleg trade and the protection racket.
 @export var economy_rules: EconomyRules = preload("res://src/economy/default_economy.tres")
 ## The hours of the night (start, time to go home, dawn) and how fast it runs.
@@ -145,7 +151,7 @@ var talking := ""
 var _page := {}
 ## A shopkeeper going for the police (see _update_report).
 const REPORT_DELAY := 6.0
-const REPORT_RADIUS := 900.0
+const REPORT_RADIUS := 760.0  # M010: as far as it reached under the old 760 px hearing cap
 var _report_from: InteriorPlan = null
 var _report_left := 0.0
 var _report_who := ""
@@ -217,6 +223,10 @@ func _ready() -> void:
 	player.command_source = command_source
 	add_child(player)
 	player.setup(walker, cars, world)
+	pistol = walker.gun
+	player.carry(pistol, resolver.get_texture(gun_rules.look))
+	if rackets.loan.out:
+		_arm_thompson(true)  # M010: still on loan from Eddie
 	for v in interiors.views:
 		v.visitors = [walker]
 	bullets = BulletWorld.new()
@@ -226,11 +236,18 @@ func _ready() -> void:
 	gunfire = GunfireView.new()
 	add_child(gunfire)
 	gunfire.setup(resolver, bullets)
-	player.fired.connect(gunfire.on_fired)
+	player.fired.connect(func(muzzle: Vector2, dir: Vector2) -> void:
+		gunfire.on_fired(muzzle, dir, walker.gun.rules.sound)
+		if walker.gun.rules.automatic:
+			_kick -= dir * 2.2)  # M010: the Thompson climbs and shakes the view a little
 	player.gun_event.connect(gunfire.on_gun_event)
 	player.gun_event.connect(func(e: String, _at: Vector2) -> void:
-		if e == "empty":
-			hud.show_notice("Click. Out of rounds. Eddie sells them, in the back of Lindqvist Hardware."))
+		if e == "empty" and walker.gun == thompson:
+			hud.show_notice("Click. The Thompson's dry. Eddie loads her again when she's back home.")
+		elif e == "empty":
+			hud.show_notice("Click. Out of rounds. Eddie sells them, in the back of Lindqvist Hardware.")
+		elif e == "switched":
+			hud.show_notice("The Thompson in your hands." if walker.gun == thompson else "Your .45 in your hand."))
 	bullets.impact.connect(gunfire.on_impact)
 	navigator = CityNavigator.new(layout, Walker.RADIUS + 3.0)
 	world.adopt(layout.id, city, navigator)
@@ -325,7 +342,7 @@ func _ready() -> void:
 	hud.poker_view.bought_in.connect(_on_bought_in)
 	hud.poker_view.leave_requested.connect(leave_poker)
 	hud.poker_view.sound.connect(func(kind: String) -> void: soundscape.play("poker/" + kind, -4.0))
-	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
+	_show_purse()
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
 	player.notice.connect(hud.show_notice)
@@ -357,7 +374,7 @@ func _wire_officer(o: PoliceOfficer) -> void:
 func _on_player_fired(muzzle: Vector2, dir: Vector2) -> void:
 	for o in officers():
 		if not o.near_miss(muzzle, dir):
-			o.hear_gunshot(muzzle, gun_rules.noise_radius)
+			o.hear_gunshot(muzzle, walker.gun.rules.noise_radius)
 	for s in streets():
 		s.hear_gunshot(muzzle)
 	if incident_views != null:
@@ -825,6 +842,26 @@ func _present(w: Walker, on: bool) -> void:
 	w.collision_layer = Layers.PEOPLE if on else 0
 
 
+## M010: Eddie's Thompson goes under Danny's coat (on loan, with its own
+## rounds) or back to Eddie (the .45 in hand again).
+func _arm_thompson(on: bool) -> void:
+	var look := resolver.get_texture(thompson_rules.look)
+	if on and thompson == null:
+		thompson = Gun.new(thompson_rules)
+		thompson.ammo = clampi(rackets.loan.ammo, 0, thompson_rules.magazine)
+		thompson.spare = maxi(0, rackets.loan.spare)
+		player.carry(thompson, look)
+	elif not on and thompson != null:
+		player.carry(thompson, look, false)
+		thompson = null
+
+
+## The purse in the corner, with what Danny carries besides (M010: the parcel).
+func _show_purse() -> void:
+	hud.carrying = "a parcel" if rackets.parcels > 0 else ""
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
+
+
 ## M006: Danny is hit. Where, and how bad, on screen.
 func _on_danny_hurt(region: String, level: int) -> void:
 	player.stand()  # M010: nobody stays sitting when he is hit
@@ -948,8 +985,16 @@ func _apply(effects: Dictionary) -> void:
 	if effects.get("heal", false):
 		walker.condition.heal_all()
 		hud.show_notice("Patched up. Good as new, near enough.")
-	if effects.has("rounds") and walker.gun != null:
-		walker.gun.add_spare(int(effects.rounds))
+	if effects.has("rounds") and pistol != null:
+		pistol.add_spare(int(effects.rounds))
+	match String(effects.get("thompson", "")):  # M010
+		"lent":
+			_arm_thompson(true)
+			hud.show_notice("Eddie's Thompson is under your coat. Tab takes it in hand.")
+		"returned":
+			_arm_thompson(false)
+	if effects.has("parcel"):
+		_show_purse()
 	if effects.get("police", false) and interiors.current != null:
 		# the shopkeeper waits until you have gone, then runs out for the copper
 		_report_from = interiors.current
@@ -1061,8 +1106,11 @@ func save_game() -> void:
 		data["danny"] = walker.condition.to_dict()
 	if rival != null:
 		data["ward"] = {"out": ward_out.duplicate(), "rival": rival.to_dict()}
-	if walker != null and walker.gun != null:
-		data["gun"] = {"ammo": walker.gun.ammo, "spare": walker.gun.spare}
+	if pistol != null:
+		data["gun"] = {"ammo": pistol.ammo, "spare": pistol.spare}
+	if thompson != null:  # M010: the Thompson's rounds go with the loan
+		data.rackets.loan.ammo = thompson.ammo
+		data.rackets.loan.spare = thompson.spare
 	if world != null:
 		data["districts"] = _districts_to_save()
 	if incidents != null:
@@ -1616,7 +1664,8 @@ func _process(delta: float) -> void:
 func _update_view(delta: float) -> void:
 	camera.update_camera(delta)
 	# M010: drowsy before dawn - kept out of the way of talk, cards and scenes
-	camera.offset = drowsy.update(clock.drowsiness(), _drowsy_held(), not player.on_foot(), delta)
+	camera.offset = drowsy.update(clock.drowsiness(), _drowsy_held(), not player.on_foot(), delta) + _kick
+	_kick = _kick.move_toward(Vector2.ZERO, delta * 40.0).limit_length(8.0)
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	world.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)

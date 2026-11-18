@@ -153,6 +153,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/marquee_bijou_lit` | `custom/graphics/props/marquee_bijou_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | M008: the Bijou canopy's bulbs and lettering. |
 | `props/marquee_lit` | `custom/graphics/props/marquee_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | Canopy bulbs and lettering. |
 | `props/newsstand` | `custom/graphics/props/newsstand.png` | 96x64 | sprite (image, scaled to its display size) | 46x30 | Newsstand. |
+| `props/parcel` | `custom/graphics/props/parcel.png` | 48x40 | sprite (image, scaled to its display size) | 16x13 | M010 the parcel from above: a shoebox in brown paper and string (an abstract item). |
 | `props/trash_can` | `custom/graphics/props/trash_can.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | Ash can. |
 | `props/tree` | `custom/graphics/props/tree.png` | 192x192 | sprite (image, scaled to its display size) | 96x96 | M008: a plane tree's crown from above (raised: its trunk is hidden beneath). |
 | `props/truck` | `custom/graphics/props/truck.png` | 224x96 | sprite (image, scaled to its display size) | 104x44 | M008: a parked 1930s stake truck from above, nose right (+X); static and solid (not drivable). |
@@ -196,6 +197,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/dealer_button` | `custom/graphics/ui/dealer_button.png` | 48x48 | sprite (image, scaled to its display size) | 24x24 | M010 the dealer's button. |
 | `ui/fight_dial` | `custom/graphics/ui/fight_dial.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 fistfight dial (screen px): worn brass ring, copper bevel, cream ticks; the zone is lit by the game on the dark track at 92-104 px from the middle; top = where the needle starts. |
 | `ui/fight_needle` | `custom/graphics/ui/fight_needle.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 the dial's needle, pointing up from the middle of the same 256 x 256 frame (it turns about the centre). |
+| `ui/item_parcel` | `custom/graphics/ui/item_parcel.png` | 64x64 | sprite (image, scaled to its display size) | 26x26 | M010 the parcel as a HUD badge beside the purse, while Danny carries it. |
 | `ui/map_player` | `custom/graphics/ui/map_player.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Minimap: you, an arrowhead pointing right (screen px). |
 | `ui/map_police` | `custom/graphics/ui/map_police.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Minimap: the beat cop (screen px). |
 | `ui/marker_bar` | `custom/graphics/ui/marker_bar.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker (world and minimap): the Copper Owl. Badge on top, the pin's point at the bottom middle. |
@@ -220,6 +222,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/suit_hearts` | `custom/graphics/ui/suit_hearts.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | M010 a heart pip. |
 | `ui/suit_spades` | `custom/graphics/ui/suit_spades.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | M010 a spade pip (screen px, scaled by the game). |
 | `weapons/pistol` | `custom/graphics/weapons/pistol.png` | 48x20 | sprite (image, scaled to its display size) | 15x6 | .45 automatic from above, muzzle to the right; the left end sits in the hand. |
+| `weapons/thompson` | `custom/graphics/weapons/thompson.png` | 96x24 | sprite (image, scaled to its display size) | 31x8 | M010 Eddie's Thompson in the hand, from above, muzzle to the right (the stock at the left end sits at the shoulder). |
 
 ## Audio (OGG, WAV or MP3)
 
@@ -264,3 +267,4 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `weapons/bullet_impact` | `custom/audio/weapons/bullet_impact.ogg` (or .wav / .mp3) | `template_bullet_impact.wav` | no | Effects | A bullet striking brick. |
 | `weapons/pistol_reload` | `custom/audio/weapons/pistol_reload.ogg` (or .wav / .mp3) | `template_pistol_reload.wav` | no | Effects | Magazine out and in, slide racked. |
 | `weapons/pistol_shot` | `custom/audio/weapons/pistol_shot.ogg` (or .wav / .mp3) | `template_pistol_shot.wav` | no | Effects | A .45 shot in a brick street, about 1 s with its echo. |
+| `weapons/thompson_shot` | `custom/audio/weapons/thompson_shot.ogg` (or .wav / .mp3) | `template_thompson_shot.wav` | no | Effects | M010: one round from the Thompson, played for every round of a burst (short tail, under 0.5 s). |

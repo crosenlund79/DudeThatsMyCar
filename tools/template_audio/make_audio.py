@@ -114,12 +114,39 @@ def whistle():
     return lowpass(x, 6000)
 
 
+def thompson_shot():
+    """M010: one round from the Thompson, played for every round of a burst: a
+    harder, shorter crack than the pistol's, a tight boom, a quick slapback, a
+    short tail (so a burst reads as a rattle, not a smear)."""
+    trng = np.random.default_rng(1932010)
+    n = int(0.42 * RATE)
+    t = np.arange(n) / RATE
+    noise = trng.standard_normal(n)
+    crack = highpass(noise, 2200) * env(n, 0.0002, 0.004) * 1.8
+    body = lowpass(noise, 1100) * env(n, 0.0008, 0.025) * 2.0
+    thump = np.sin(2 * np.pi * (120 - 50 * t) * t) * env(n, 0.001, 0.04) * 0.8
+    tail = lowpass(noise, 1600) * env(n, 0.01, 0.12) * 0.3
+    dry = crack + body + thump + tail
+    out = dry.copy()
+    for delay, gain in ((0.06, 0.3), (0.11, 0.15)):
+        d = int(delay * RATE)
+        out[d:] += lowpass(dry[:-d], 2500) * gain
+    return out * np.minimum(1.0, (n - np.arange(n)) / (0.04 * RATE))
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "assets/audio"
+    if len(sys.argv) > 2:  # one sound only: python3 make_audio.py assets/audio weapons/thompson_shot
+        makers = {"weapons/thompson_shot": (thompson_shot, 0.85)}
+        fn, peak = makers[sys.argv[2]]
+        d, f = os.path.split(sys.argv[2])
+        write(os.path.join(root, d, "template_" + f + ".wav"), fn(), peak)
+        return
     write(os.path.join(root, "weapons/template_pistol_shot.wav"), pistol_shot())
     write(os.path.join(root, "weapons/template_pistol_reload.wav"), pistol_reload(), 0.6)
     write(os.path.join(root, "weapons/template_bullet_impact.wav"), bullet_impact(), 0.7)
     write(os.path.join(root, "police/template_whistle.wav"), whistle(), 0.55)
+    write(os.path.join(root, "weapons/template_thompson_shot.wav"), thompson_shot(), 0.85)
 
 
 if __name__ == "__main__":

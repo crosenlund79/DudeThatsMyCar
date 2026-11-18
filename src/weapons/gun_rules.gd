@@ -27,3 +27,13 @@ extends Resource
 ## (facing +X, world px).
 @export var hand_offset := Vector2(11, 3)
 @export var muzzle_offset := Vector2(23, 3)
+## M010: an automatic keeps firing while the trigger is held (one round every
+## fire_interval); every round kicks the aim off a little more (degrees, up to
+## recoil_max), and it settles again at recoil_recovery degrees a second.
+@export var automatic := false
+@export var recoil_degrees := 0.0
+@export var recoil_max := 0.0
+@export var recoil_recovery := 10.0
+## M010: how it looks in the hand (sprite) and sounds (one round).
+@export var look := "weapons/pistol"
+@export var sound := "weapons/pistol_shot"

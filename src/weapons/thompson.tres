@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="GunRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/weapons/gun_rules.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Thompson"
+magazine = 20
+spare_rounds = 40
+fire_interval = 0.1
+reload_time = 2.4
+draw_time = 0.35
+holster_after = 6.0
+trigger_buffer = 0.2
+bullet_speed = 1700.0
+bullet_range = 600.0
+spread_degrees = 2.5
+noise_radius = 950.0
+hand_offset = Vector2(4, 3)
+muzzle_offset = Vector2(35, 3)
+automatic = true
+recoil_degrees = 1.2
+recoil_max = 7.0
+recoil_recovery = 5.0
+look = "weapons/thompson"
+sound = "weapons/thompson_shot"

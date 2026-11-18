@@ -10,8 +10,9 @@ extends Resource
 @export var search_speed := 78.0
 ## How far he sees at night, and how far a shot carries for him
 ## (the gun's own noise radius applies too: the smaller of the two).
+## M010: 960 px, so the Thompson (950) carries further than a .45 (720).
 @export var sight_range := 430.0
-@export var hearing_range := 760.0
+@export var hearing_range := 960.0
 ## Seconds he freezes, turns and blows his whistle when he notices gunfire.
 @export var alert_time := 0.7
 ## After losing sight of you: seconds he keeps looking round the last place

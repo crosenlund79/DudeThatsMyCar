@@ -405,17 +405,29 @@ func _eddie(step: String, context: Dictionary) -> Dictionary:
 	match step:
 		"hello":
 			var eopts := [{"id": "wares", "text": "Let's see what you've got."}]
+			if r.loan.out:
+				eopts.append({"id": "give_back", "text": "Here's your Thompson back. Not a scratch on her."})
 			if rackets.job.knows_culprit() and not rackets.job.learned.has("tip") and rackets.job.outcome == "":
 				eopts.append({"id": "job_lefty", "text": JobLines.answer("eddie_lefty")})
+			if r.loan.overdue(r.night):
+				return _page("eddie", "Dimes. %d nights you've had my chopper. I got customers asking, and I got a deposit that ain't worth the trouble. Bring her home." % (r.night - r.loan.since), eopts)
 			return _page("eddie", "Well, if it ain't the Copper Owl's errand boy. Pull up a chair. Don't touch the crate.", eopts)
+		"give_back":
+			if not r.loan.out:
+				return _page("eddie", "Give back what? You been drinking Sal's rye again?")
+			var back := r.return_thompson()
+			return _page("eddie", "Let's see... she's been working. Fine - what you do on your own time is your business. %s back, I keep the buck for my trouble." % Rackets.dollars(back), [], {"thompson": "returned"})
 		"job_lefty":
 			rackets.job.learn("tip")
 			return _job_page("eddie_tip", [], {"job": "tip"})
 		"wares":
-			var page := _page("eddie", VoiceLines.text("eddie_sales"), [
+			var wares := [
 				{"id": "ammo", "text": "A box of .45 rounds. (%s for %d)" % [price, r.rules.ammo_box]},
 				{"id": "heavy", "text": "Got anything heavier?"},
-			])
+			]
+			if r.parcel_wanted and r.parcels == 0:
+				wares.append({"id": "parcel", "text": "Rourke says you've got a parcel for me. (%s)" % Rackets.dollars(Rackets.PARCEL_PRICE)})
+			var page := _page("eddie", VoiceLines.text("eddie_sales"), wares)
 			page["voice"] = ["eddie_sales"]
 			return page
 		"ammo":
@@ -430,7 +442,26 @@ func _eddie(step: String, context: Dictionary) -> Dictionary:
 				return _page("eddie", "You're carrying enough lead to sink a rowboat already.")
 			return _page("eddie", "%d rounds of .45, still in the paper. %s. Don't say where you got 'em." % [k, price], [], {"rounds": k})
 		"heavy":
-			return _page("eddie", "A Thompson costs more than you make in a year, kid. Come back when you're somebody.")
+			if r.loan.out:
+				return _page("eddie", "You got the heaviest thing I own under your coat already.")
+			return _page("eddie", "A Thompson costs more than you make in a year, kid. I don't sell her. But I rent her out, to fellas I know. Five bucks down. Bring her back and you get four of it. Two spare sticks of twenty go with her, and she don't come back empty-handed into my shop with my name on her - understood?", [
+				{"id": "borrow", "text": "I'll take her. (%s deposit)" % Rackets.dollars(GunLoan.DEPOSIT)},
+				{"id": "bye", "text": "Not tonight."},
+			])
+		"borrow":
+			if r.loan.out:
+				return _page("eddie", "You got her already.")
+			if not r.borrow_thompson():
+				return _page("eddie", "Five bucks down, I said. Come back when your pockets jingle.")
+			return _page("eddie", "There she is. Twenty in the stick, forty more in your coat. She climbs when you hold the trigger, so short bursts. And Dimes - she's a loan. She comes back to me. (Tab switches between the Thompson and your .45.)", [], {"thompson": "lent"})
+		"parcel":
+			if not r.parcel_wanted:
+				return _page("eddie", "Parcel? I don't know nothing about any parcel.")
+			if r.parcels > 0:
+				return _page("eddie", "You got it already. Don't make me nervous.")
+			if not r.buy_parcel():
+				return _page("eddie", "%s, cash. I don't give credit on these." % Rackets.dollars(Rackets.PARCEL_PRICE))
+			return _page("eddie", "Here. Brown paper and string, nice and plain. Don't shake it, don't drop it, don't open it and don't ask me what's in it. You never got it here. %s." % Rackets.dollars(Rackets.PARCEL_PRICE), [], {"parcel": 1})
 	return {}
 
 

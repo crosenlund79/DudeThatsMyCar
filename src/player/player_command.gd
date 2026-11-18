@@ -15,6 +15,8 @@ var fire := false
 var fire_pressed := false
 ## M010: Left Shift held: run (on foot only).
 var sprint := false
+## M010: Tab pressed this tick: the other gun.
+var switch_gun := false
 ## Answer key pressed this tick (1-4; 0 = none), while talking to someone.
 var choice := 0
 

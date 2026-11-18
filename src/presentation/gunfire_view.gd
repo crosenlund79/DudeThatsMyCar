@@ -68,7 +68,7 @@ func play(logical: String, at: Vector2, volume_db: float = 0.0, pitch: float = 1
 	p.play()
 
 
-func on_fired(muzzle: Vector2, direction: Vector2) -> void:
+func on_fired(muzzle: Vector2, direction: Vector2, sound: String = "weapons/pistol_shot") -> void:
 	_flash.global_position = muzzle
 	_flash.rotation = direction.angle()
 	_flash.visible = true
@@ -78,7 +78,7 @@ func on_fired(muzzle: Vector2, direction: Vector2) -> void:
 	_flash_light.energy = 2.4
 	_flash_left = FLASH_TIME
 	_flash_frames = 2
-	play("weapons/pistol_shot", muzzle, 0.0, randf_range(0.96, 1.04))
+	play(sound, muzzle, 0.0, randf_range(0.96, 1.04))
 
 
 func on_gun_event(event: String, at: Vector2) -> void:

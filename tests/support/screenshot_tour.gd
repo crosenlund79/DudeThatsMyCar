@@ -38,6 +38,8 @@ func _initialize() -> void:
 	main.opening_enabled = false
 	main.command_source = func(_c: PlayerController) -> PlayerCommand:
 		var out := PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim, _click)
+		out.fire = out.fire or cmd.fire  # M010: held down (the Thompson)
+		out.sprint = cmd.sprint
 		_click = false
 		return out
 	root.add_child(main)
@@ -586,6 +588,26 @@ func _run(shots: Array) -> void:
 				await _shot(s, false)
 				if s == "poker_game":
 					main.leave_poker()
+			"thompson":
+				# M010: Eddie's Thompson, borrowed, in a burst down the alley behind the Copper Owl
+				main.weather.force("clear")
+				main.street.clear()
+				main.rackets.money = 2000
+				main.rackets.borrow_thompson()
+				main._arm_thompson(true)
+				_teleport_walker(Vector2(2330, 135), PI)
+				main.player.switch_gun()
+				await _frames(4)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2000, 150))
+				cmd.fire = true
+				_click = true
+				await _frames(50)
+				for f in 8:  # the moment a round goes: the muzzle flash
+					if main.gunfire._flash.visible:
+						break
+					await _frames(1)
+				await _shot("thompson", false)
+				cmd = PlayerCommand.new()
 			"park", "sitting":
 				# M010: Halloran Park in the middle of the square - lawns, paths, railings, benches;
 				# sitting: Danny on a bench by the north path, the night going by

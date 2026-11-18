@@ -21,6 +21,9 @@ var meet_people := false
 func _source(_c: PlayerController) -> PlayerCommand:
 	var out := PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim)
 	out.sprint = cmd.sprint  # M010
+	out.fire = cmd.fire
+	out.switch_gun = cmd.switch_gun
+	cmd.switch_gun = false  # one press
 	if _choice_pending > 0:
 		out.choice = _choice_pending
 		_choice_pending = 0
