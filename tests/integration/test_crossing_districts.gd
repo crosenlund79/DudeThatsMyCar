@@ -82,7 +82,7 @@ func test_until_the_yards_are_built_the_way_is_closed() -> void:
 
 func test_its_own_beat_cop_people_and_cars() -> void:
 	main.world.load_now("yards")
-	assert_eq(main.cars.size(), 11, "the yards' two parked cars join the list")
+	assert_eq(main.cars.size(), 12, "the yards' three parked cars join the list (M009: Brennan's truck too)")
 	var cops: Array[PoliceOfficer] = main.officers()
 	assert_eq(cops.size(), 2, "the ward's man and the yards' man")
 	var yards_cop: PoliceOfficer = cops[1]
@@ -121,7 +121,7 @@ func test_freed_far_away_and_built_again_without_duplicates() -> void:
 		await wait_physics_frames(1)
 	assert_true(yards_ready())
 	assert_eq(main.world.stats.yards.builds, 2)
-	assert_eq(main.cars.size(), 11, "no car made twice")
+	assert_eq(main.cars.size(), 12, "no car made twice")
 	assert_true(c.visible, "his sedan is back")
 	assert_eq(c.global_position, parked_at)
 	assert_eq(main.officers().size(), 2, "one beat cop, not two")

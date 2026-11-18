@@ -9,6 +9,8 @@ const VEHICLES := {
 	"sedan": preload("res://src/driving/vehicles/sedan.tres"),
 	"coupe": preload("res://src/driving/vehicles/coupe.tres"),
 	"police": preload("res://src/driving/vehicles/police.tres"),
+	"dump_truck": preload("res://src/driving/vehicles/dump_truck.tres"),  # M009
+	"school_bus": preload("res://src/driving/vehicles/school_bus.tres"),
 }
 
 ## M009: an incident began, moved on or ended ("started", "phase", "over").

@@ -15,7 +15,7 @@ extends SceneTree
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
 ## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007),
-## wheels / wheels_lock (M009: the front tyres, straight and at full lock).
+## wheels / wheels_lock (M009: the front tyres, straight and at full lock), dump_truck, school_bus (M009).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -480,6 +480,29 @@ func _run(shots: Array) -> void:
 				main.camera.zoom_override = 0.0
 				main.camera.snap_to(main.walker)
 				mid.queue_free()
+			"dump_truck", "school_bus":
+				# M009: Brennan's coal truck pulling out of its dock onto Front Street; the
+				# parish school bus pulling away from the kerb beside St. Brendan's
+				var did: String = "yards" if s == "dump_truck" else "halloran"
+				var vl: DistrictLayout = main.world.layouts[did]
+				var vspec: Dictionary = vl.cars.filter(func(x: Dictionary) -> bool: return x.type == s)[0]
+				_teleport_walker(vspec.pos + Vector2(-40, 0), 0.0)
+				main.world.load_now(did)
+				await _frames(20)
+				var hv: Car = main.cars.filter(func(x: Car) -> bool: return x.vehicle.id == s)[0]
+				main.walker.place(hv.global_position + Vector2(-34, 20), 0.0)
+				await _frames(2)
+				main.player.enter(hv)
+				cmd = PlayerCommand.make(Vector2(0.0, -1.0))
+				await _frames(100 if s == "dump_truck" else 120)
+				cmd = PlayerCommand.make(Vector2(-0.6 if s == "dump_truck" else -0.35, -1.0))
+				await _frames(50)
+				cmd = PlayerCommand.make(Vector2(0, 0))
+				await _frames(10)
+				await _shot(s, false)
+				cmd = PlayerCommand.make(Vector2(0, 1))
+				await _frames(60)
+				cmd = PlayerCommand.new()
 			"grocery_door":
 				_teleport_walker(Vector2(1900, 520), PI / 2)
 				await _frames(40)

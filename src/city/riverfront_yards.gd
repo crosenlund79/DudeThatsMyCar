@@ -165,8 +165,7 @@ func _street_furniture() -> void:
 		_prop("props/awning_" + b.opts.awning, edge_mid + front * 18.0, (-front).angle() + PI / 2, 0.0, 34.0)
 	# parked trucks at the loading bays and the coal dock (static, solid)
 	for t in [[Vector2(4560, 330), PI / 2, "props/truck"], [Vector2(4700, 330), PI / 2, "props/truck_b"],
-			[Vector2(4800, 560), PI / 2, "props/truck"], [Vector2(5520, 500), PI / 2, "props/truck_b"],
-			[Vector2(2700, 640), 0.0, "props/truck"]]:
+			[Vector2(4800, 560), PI / 2, "props/truck"], [Vector2(2700, 640), 0.0, "props/truck"]]:
 		_prop(t[2], t[0], t[1], Vector2(104, 42))
 	# crates, barrels and ash cans by the bays, the dock and the lunch counter
 	for spec in [["props/crates", Vector2(4500, 610), 0.2, Vector2(40, 38)], ["props/crates", Vector2(5490, 720), -0.1, Vector2(40, 38)],
@@ -271,6 +270,8 @@ func _people_and_cars() -> void:
 	d.cars = [
 		{"type": "coupe", "paint": 1, "pos": Vector2(3000, 150), "rot": PI, "owner": "a clerk at North Branch Freight"},
 		{"type": "sedan", "paint": 0, "pos": Vector2(2200, 150), "rot": 0.0, "owner": "the night foreman at the tannery"},
+		# M009: Brennan's coal truck on its dock, nose out towards Front Street (drivable; once a static prop)
+		{"type": "dump_truck", "paint": 0, "pos": Vector2(5530, 450), "rot": -PI / 2, "owner": "Brennan Coal & Ice"},
 	]
 	# the beat cop walks Front Street by the Kessler Street corner, past the freight depot's gate
 	d.police_beat = PackedVector2Array([Vector2(3460, 193), Vector2(3700, 193)])

@@ -21,3 +21,8 @@ extends Resource
 @export var wheel_half_track := 17.0
 ## Engine sound character (pitch multiplier on the shared engine sound).
 @export var engine_pitch := 1.0
+## M009: a long body's collision as a box (`collision`) with its corners cut
+## this much (px) instead of a capsule - a bus is not a cigar. < 0: the capsule.
+@export var collision_chamfer := -1.0
+## M009: the front tyres' size on screen (Vector2.ZERO: the cars/wheel default).
+@export var wheel_size := Vector2.ZERO

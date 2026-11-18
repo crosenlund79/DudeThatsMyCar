@@ -42,10 +42,20 @@ func setup(p_vehicle: VehicleType, texture: Texture2D, paint_name: String = "") 
 	var shadow_tex := SoftShadow.texture()
 	shadow.texture = shadow_tex
 	shadow.scale = (vehicle.size + Vector2(14, 12)) / Vector2(shadow_tex.get_size())
-	var capsule := CapsuleShape2D.new()
-	capsule.radius = vehicle.collision.y * 0.5
-	capsule.height = vehicle.collision.x
-	$Shape.shape = capsule
+	if vehicle.collision_chamfer >= 0.0:
+		# M009: a long boxy body (lorry, bus) - a box with its corners cut, along +X
+		var h := vehicle.collision * 0.5
+		var c := minf(vehicle.collision_chamfer, minf(h.x, h.y) * 0.9)
+		var box := ConvexPolygonShape2D.new()
+		box.points = PackedVector2Array([Vector2(h.x, -h.y + c), Vector2(h.x, h.y - c), Vector2(h.x - c, h.y), Vector2(-h.x + c, h.y),
+			Vector2(-h.x, h.y - c), Vector2(-h.x, -h.y + c), Vector2(-h.x + c, -h.y), Vector2(h.x - c, -h.y)])
+		$Shape.rotation = 0.0
+		$Shape.shape = box
+	else:
+		var capsule := CapsuleShape2D.new()
+		capsule.radius = vehicle.collision.y * 0.5
+		capsule.height = vehicle.collision.x
+		$Shape.shape = capsule
 
 
 ## Places the car at rest at the given transform.

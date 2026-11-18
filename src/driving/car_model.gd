@@ -254,12 +254,17 @@ static func resolve_car_collision(a: CarModel, b: CarModel, normal: Vector2, con
 	if closing >= 0.0:
 		return
 	var restitution := (a.params.car_restitution + b.params.car_restitution) * 0.5
-	var impulse := -(1.0 + restitution) * closing * 0.5
-	a.velocity += normal * impulse
-	b.velocity -= normal * impulse
+	# M009: momentum shared by mass (equal masses: half each, as before)
+	var ma := maxf(0.1, a.params.mass)
+	var mb := maxf(0.1, b.params.mass)
+	var impulse := -(1.0 + restitution) * closing * ma * mb / (ma + mb)
+	var dva := impulse / ma
+	var dvb := impulse / mb
+	a.velocity += normal * dva
+	b.velocity -= normal * dvb
 	if contact != Vector2.INF:
-		a.apply_contact_yaw(contact - a_centre, normal * impulse)
-		b.apply_contact_yaw(contact - b_centre, -normal * impulse)
+		a.apply_contact_yaw(contact - a_centre, normal * dva)
+		b.apply_contact_yaw(contact - b_centre, -normal * dvb)
 
 
 ## Yaw from an impulse j (px/s) received at offset r (px) from the car's centre.

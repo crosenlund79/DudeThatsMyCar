@@ -5,7 +5,8 @@ extends GutTest
 ## nose, none at the tail. Checks the template_ images against the vehicle data.
 
 const VEHICLES := ["res://src/driving/vehicles/sedan.tres", "res://src/driving/vehicles/coupe.tres",
-	"res://src/driving/vehicles/police.tres"]
+	"res://src/driving/vehicles/police.tres", "res://src/driving/vehicles/dump_truck.tres",
+	"res://src/driving/vehicles/school_bus.tres"]
 
 
 func _template(logical: String) -> Image:
@@ -76,9 +77,9 @@ func _outer_edge(img: Image, v: VehicleType, x: float, side: float) -> float:
 ## sliver of tyre beyond the wing's edge with the wheels straight - and still
 ## swing out where you can see them when the wheels are turned to full lock.
 func test_front_tyres_tucked_under_the_wings() -> void:
-	var wheel_half := AssetCatalog.display_size("cars/wheel") * 0.5
 	for path in VEHICLES:
 		var v: VehicleType = load(path)
+		var wheel_half := (v.wheel_size if v.wheel_size != Vector2.ZERO else AssetCatalog.display_size("cars/wheel")) * 0.5
 		var img := _template(v.paints[0])
 		var p := v.params as DrivingParams
 		for side in [-1.0, 1.0]:

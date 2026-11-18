@@ -18,7 +18,7 @@ func setup(p_car: Car, texture: Texture2D) -> void:
 	for side in [-1.0, 1.0]:
 		var s := Sprite2D.new()
 		s.texture = texture
-		s.scale = AssetCatalog.scale_for(texture, AssetCatalog.display_size(LOGICAL))
+		s.scale = AssetCatalog.scale_for(texture, v.wheel_size if v.wheel_size != Vector2.ZERO else AssetCatalog.display_size(LOGICAL))
 		s.position = Vector2(v.front_axle_x, side * v.wheel_half_track)
 		add_child(s)
 		wheels.append(s)

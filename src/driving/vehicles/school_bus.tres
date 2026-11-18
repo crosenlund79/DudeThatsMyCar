@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="VehicleType" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/driving/vehicle_type.gd" id="1"]
+[ext_resource type="Script" path="res://src/driving/driving_params.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_handling"]
+script = ExtResource("2")
+display_name = "School Bus"
+max_speed = 230.0
+acceleration = 70.0
+coast_deceleration = 62.0
+brake_deceleration = 225.0
+reverse_max_speed = 75.0
+reverse_acceleration = 66.0
+turn_rate_degrees = 140.0
+full_steer_speed = 80.0
+grip = 4.4
+handbrake_deceleration = 180.0
+handbrake_grip_scale = 0.55
+handbrake_turn_scale = 1.3
+throttle_rise_time = 1.0
+throttle_fall_time = 0.5
+accel_falloff = 0.6
+steer_rise_time = 0.7
+steer_return_time = 0.45
+min_turn_radius = 130.0
+high_speed_turn_scale = 0.5
+wall_friction = 0.5
+wall_align = 0.45
+wall_glance_angle = 40.0
+wall_restitution = 0.08
+wall_align_rate = 1.5
+wheelbase = 80.0
+rear_axle = 32.0
+max_wheel_angle = 29.0
+crawl_wheel_angle = 32.0
+cornering_grip = 300.0
+tyre_grip = 820.0
+brake_rise_time = 0.35
+car_half_length = 69.0
+mass = 2.6
+contact_yaw_factor = 0.35
+
+[resource]
+script = ExtResource("1")
+id = "school_bus"
+params = SubResource("Resource_handling")
+paints = PackedStringArray("cars/school_bus")
+size = Vector2(140, 42)
+collision = Vector2(136, 36)
+headlights = PackedVector2Array(64.8, -13.2, 64.8, 13.2)
+taillights = PackedVector2Array(-67.2, -15.2, -67.2, 15.2)
+front_axle_x = 60.0
+wheel_half_track = 16.0
+engine_pitch = 0.78
+collision_chamfer = 6.0
+wheel_size = Vector2(16, 7)

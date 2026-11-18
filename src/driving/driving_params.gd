@@ -119,3 +119,6 @@ extends Resource
 @export var contact_yaw_damping := 4.0
 ## Half the car's length (px), the lever arm for contact yaw.
 @export var car_half_length := 38.0
+## M009: how heavy it is against other cars (1 = a car; a loaded truck or a bus
+## shoves a sedan aside and is hardly moved). Wall contacts do not use it.
+@export var mass := 1.0

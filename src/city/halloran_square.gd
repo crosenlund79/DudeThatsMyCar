@@ -291,6 +291,8 @@ func _people_and_cars() -> void:
 		{"type": "sedan", "paint": 1, "pos": Vector2(800, CALLOWAY + 62), "rot": 0.0, "owner": "somebody on Calloway Street"},
 		{"type": "coupe", "paint": 0, "pos": Vector2(2700, PRUITT - 62), "rot": PI, "owner": "a family on Pruitt Street"},
 		{"type": "sedan", "paint": 0, "pos": Vector2(2600, MARLOWE + 92), "rot": 0.0, "owner": "a picture-goer at the Bijou"},
+		# M009: the parish school bus at the kerb beside St. Brendan's, facing down Halloran Avenue
+		{"type": "school_bus", "paint": 0, "pos": Vector2(HALLORAN_AVE - 62.0, 2330), "rot": PI / 2, "owner": "St. Brendan's parish school"},
 	]
 	# the beat cop walks the avenue along the square's north side, by his call box
 	d.police_beat = PackedVector2Array([Vector2(1560, MARLOWE + AVENUE_HALF + 23.0), Vector2(1800, MARLOWE + AVENUE_HALF + 23.0)])

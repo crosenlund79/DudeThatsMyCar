@@ -197,15 +197,19 @@ func _physics_process(dt: float) -> void:
 		c.brake = cmd.brake
 
 
-## Cars as three circles along their length, people as one.
+## Cars as circles along their length (three for a car; M009: more, and a
+## little wider, for a lorry or a bus), people as one.
 func _obstacles() -> Array:
 	var out := []
 	for c in parked + traffic:
 		if not c.visible:
 			continue
-		var f := Vector2.from_angle(c.global_rotation) * 26.0
-		for k in [-1.0, 0.0, 1.0]:
-			out.append({"pos": c.global_position + f * k, "radius": 17.0, "owner": c})
+		var reach := maxf(26.0, c.vehicle.size.x * 0.5 - 14.0)
+		var n := ceili(reach / 26.0 - 0.001)
+		var f := Vector2.from_angle(c.global_rotation) * (reach / n)
+		var radius := maxf(17.0, c.vehicle.size.y * 0.5 - 1.0)
+		for k in range(-n, n + 1):
+			out.append({"pos": c.global_position + f * k, "radius": radius, "owner": c})
 	for w in others:
 		if w.visible:
 			out.append({"pos": w.global_position, "radius": 12.0, "owner": w})

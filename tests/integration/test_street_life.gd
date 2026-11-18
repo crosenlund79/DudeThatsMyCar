@@ -97,3 +97,20 @@ func test_the_squad_car_is_parked_in_the_alley() -> void:
 	assert_eq(police[0].paint, "cars/police")
 	assert_false(police[0].driven, "nobody at the wheel")
 	assert_true(main.layout.alleys.any(func(a: Dictionary) -> bool: return (a.rect as Rect2).has_point(police[0].global_position)))
+
+
+## M009: a long vehicle stopped across the lane - the traffic sees all of it,
+## not just its middle: with only the bus's nose poking into the lane, the
+## car still stops short of it instead of running into it.
+func test_a_car_waits_short_of_a_bus_nosing_into_its_lane() -> void:
+	var c: Car = street().traffic[0]  # eastbound on Marlowe at the start
+	var lane_y := c.global_position.y
+	var x0 := c.global_position.x + 330.0
+	var bus: Car = main._make_car({"type": "school_bus", "paint": 0, "pos": Vector2(x0, lane_y + 68.0), "rot": -PI / 2,
+		"owner": "St. Brendan's parish school"})
+	assert_true(street().parked.has(bus))
+	await wait_physics_frames(60 * 5)
+	assert_lt(c.model.forward_speed(), 5.0, "it stopped")
+	assert_true(street().drivers[0].waiting, "it is waiting, not stuck against it")
+	var nose := c.global_position.x + c.vehicle.size.x * 0.5
+	assert_lt(nose, x0 - bus.vehicle.size.y * 0.5 - 6.0, "short of the bus's side, not touching it")

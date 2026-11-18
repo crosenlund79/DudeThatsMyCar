@@ -5,6 +5,7 @@ import random
 from PIL import Image, ImageDraw, ImageFilter
 
 from paintkit import *
+from paint_props import DECO
 
 CW, CH = 176, 80
 CHROME = "#cfd2d4"
@@ -249,7 +250,151 @@ def police_car(seed=7):
     return finish(big, CW, CH)
 
 
+# ---------------------------------------------------------------- M009: the heavy ones
+
+def _wings_at(img, color, seed, pts, h):
+    """A pair of front wings (top outline given, mirrored about the middle of an image h high)."""
+    for k, ps in enumerate((pts, [(x, h - y) for x, y in reversed(pts)])):
+        paint_shape(img, SP(ps), color, seed + k, outline=OUT, ow=1.6, wob=0.25, tex=0.18, light=(0.3, -1, 0.5))
+
+
+def dump_truck(cab="#2f3d2c", bed="#6b2a20", seed=61):
+    """M009: Brennan Coal & Ice's 1930s dump truck from above, nose right: a long
+    bonnet between teardrop wings and a flat upright grille, a short cab with a
+    bright windscreen, and behind it the steel dump bed heaped with coal, its
+    headboard over the cab; big dual rear tyres under the bed. 280 x 110."""
+    W, H = 280, 110
+    img = new(W, H)
+    soft_blob(img, S(140), S(57), S(132), S(50), "#000000", 60, 6 * SS)
+    # dual rear tyres (one wide tread each side) and the chassis rails
+    tyre_top(img, 44, 2.5, 88, 14, seed)
+    tyre_top(img, 44, 96, 88, 107.5, seed + 1)
+    for y0, y1 in ((38, 45), (65, 72)):
+        paint_shape(img, SP(rrect_pts(8, y0, 252, y1, 1.5)), "#1c1c1d", seed + 2, outline=OUT, ow=0.8, wob=0.1, tex=0.2)
+    # running boards under the cab
+    for y0, y1 in ((11, 19), (91, 99)):
+        paint_shape(img, SP(rrect_pts(168, y0, 214, y1, 2)), "#1b1b1c", seed + 3, outline=OUT, ow=1, wob=0.2, tex=0.3)
+    # the bed: a steel box, ribbed sides, the tailgate at the back, coal heaped in it
+    paint_shape(img, SP(rrect_pts(5, 9, 168, 101, 4)), bed, seed + 4, outline=OUT, ow=1.8, wob=0.2, tex=0.22,
+                strokes_n=10, stroke_cols=[shade(bed, 1.1), shade(bed, 0.9)], light=(0.2, -1, 0.45))
+    paint_shape(img, SP(rrect_pts(12, 16, 161, 94, 3)), "#24211f", seed + 5, outline=(40, 30, 26), ow=1.0, wob=0.2, tex=0.35)
+    rnd = __import__("random").Random(seed)
+    soft_blob(img, S(86), S(55), S(70), S(26), "#3a3836", 150, 6 * SS)  # the heap's crown, a little lighter
+    for k in range(380):  # the coal: lumps catching a little light, heaped along the middle
+        x = rnd.uniform(16, 157)
+        y = 55 + rnd.gauss(0, 15)
+        if 19 < y < 91:
+            r = rnd.uniform(1.8, 4.2)
+            c = rnd.choice(["#141414", "#1d1d1f", "#262628", "#303034"])
+            paint_shape(img, SP(ellipse_pts(x, y, r, r * rnd.uniform(0.7, 1.0), n=12, rot=rnd.uniform(0, 3))), c, seed + 10 + k,
+                        outline=None, wob=0.4, tex=0.3, light=(0.4, -1, 0.6))
+            if rnd.random() < 0.35:
+                soft_blob(img, S(x - r * 0.3), S(y - r * 0.4), S(r * 0.4), S(r * 0.25), "#8a8f99", 120, 0.3 * SS)
+    d = ImageDraw.Draw(img)
+    for x in range(22, 160, 23):  # stiffening ribs on the bed's sides
+        for y0, y1 in ((9.5, 15.5), (94.5, 100.5)):
+            d.line([(S(x), S(y0)), (S(x), S(y1))], fill=rgba(shade(bed, 0.6)), width=int(1.6 * SS))
+    paint_shape(img, SP(rrect_pts(3, 12, 9, 98, 2)), shade(bed, 0.8), seed + 6, outline=OUT, ow=1.2, wob=0.1, tex=0.2)
+    for y in (24, 86):  # tailgate hinges
+        paint_shape(img, SP(rrect_pts(2, y - 3, 6, y + 3, 1)), CHROME_DARK, seed + 7 + y, outline=OUT, ow=0.6, wob=0.05)
+    # the headboard over the cab
+    paint_shape(img, SP(rrect_pts(160, 8, 174, 102, 3)), shade(bed, 0.85), seed + 8, outline=OUT, ow=1.4, wob=0.15, tex=0.2,
+                light=(0.2, -1, 0.5))
+    # red tail lamps on the back corners
+    for y in (12, 98):
+        paint_shape(img, SP(ellipse_pts(8, y, 3.6, 3.2)), "#b3221c", seed + 9, outline=OUT, ow=0.8, wob=0.1)
+        soft_blob(img, S(7.6), S(y - 0.6), S(1.4), S(1.1), "#ffb0a0", 160, 0.4 * SS)
+    # the bonnet, narrowing to the grille, louvres down both sides, the hinge strip along the middle
+    hood = [(210, 26), (238, 28), (262, 32), (262, 78), (238, 82), (210, 84)]
+    paint_shape(img, SP(hood), cab, seed + 20, outline=OUT, ow=1.6, wob=0.25, tex=0.14, strokes_n=8,
+                stroke_cols=[shade(cab, 1.1), shade(cab, 0.92)], light=(0.2, -1, 0.45), inner_shadow=0.3)
+    for x in range(218, 256, 4):
+        for y0 in (32, 70):
+            line(img, [(S(x), S(y0)), (S(x + 2), S(y0 + 6))], "#0c100e", 1.3 * SS, 220, blur=0.2)
+    line(img, [(S(212), S(55)), (S(260), S(55))], CHROME, 1.3 * SS, 230, blur=0.2)
+    # the front wings over the front wheels (the tyres are cars/wheel, turned by the steering)
+    _wings_at(img, shade(cab, 0.88), seed + 22, [(212, 24), (220, 13), (234, 6), (250, 4.5), (263, 7.5), (271, 14), (274, 22),
+                                                 (266, 25.5), (250, 24.5), (230, 24)], H)
+    # the cab: roof, a bright windscreen at its front, the small rear window behind
+    paint_shape(img, SP(rrect_pts(172, 16, 208, 94, 6)), shade(cab, 1.12), seed + 24, outline=OUT, ow=1.6, wob=0.2, tex=0.1,
+                light=(0.1, -1, 0.5), inner_shadow=0.25)
+    paint_shape(img, SP([(206, 19), (214, 23), (214, 87), (206, 91)]), "#6f97b2", seed + 25, outline=OUT, ow=1.2, wob=0.1,
+                light=(1, -1, 0.6))
+    line(img, [(S(208), S(24)), (S(212), S(34))], "#e6f2fa", 1.3 * SS, 190, blur=0.4)
+    text(img, (190, 55), "BRENNAN", 6.2, "#e8dcb0", font=DECO)
+    # the grille: flat and upright, bright chrome round dark slats; the bumper ahead of it; headlamps on the wings
+    paint_shape(img, SP(rrect_pts(261, 33, 271, 77, 2)), CHROME, seed + 26, outline=OUT, ow=1.1, wob=0.08, light=(1, -1, 0.45))
+    for y in range(37, 75, 3):
+        d.line([(S(263), S(y)), (S(269), S(y))], fill=rgba("#2e3234"), width=SS)
+    paint_shape(img, SP(rrect_pts(272, 22, 278, 88, 2.5)), CHROME, seed + 27, outline=OUT, ow=1.0, wob=0.05, light=(1, -1, 0.4))
+    lamp(img, 260, 21, 5.6, seed + 28)
+    lamp(img, 260, 89, 5.6, seed + 29)
+    sheen(img, [(216, 38), (256, 39), (256, 41.5), (216, 41)], 50, 1.6)
+    return finish(grain(img, 3, seed), W, H)
+
+
+def school_bus(body="#e3a12c", seed=71):
+    """M009: St. Brendan's parish school bus, early 1930s, from above, nose right:
+    a long boxy body in school-bus chrome yellow with black rub rails, the
+    window row along both sides, SCHOOL BUS in black on the roof, the
+    emergency door at the back; a short bonnet between teardrop wings, a
+    chrome radiator and headlamps at the front. 340 x 102."""
+    W, H = 340, 102
+    img = new(W, H)
+    soft_blob(img, S(170), S(53), S(166), S(47), "#000000", 60, 6 * SS)
+    tyre_top(img, 58, 3.5, 100, 12, seed)
+    tyre_top(img, 58, 90, 100, 98.5, seed + 1)
+    # the body: one long box, rounded at the corners
+    paint_shape(img, SP(rrect_pts(4, 6, 294, 96, 10)), body, seed + 2, outline=OUT, ow=1.8, wob=0.25, tex=0.12, strokes_n=12,
+                stroke_cols=[shade(body, 1.06), shade(body, 0.93)], light=(0.2, -1, 0.4), inner_shadow=0.3)
+    # the window row down each side, cream frames between dark glass
+    for y0, y1 in ((8.5, 15.5), (86.5, 93.5)):
+        paint_shape(img, SP(rrect_pts(30, y0, 286, y1, 1.5)), "#e9dfc2", seed + 3, outline=OUT, ow=0.8, wob=0.05, tex=0.05)
+        for x in range(33, 280, 21):
+            paint_shape(img, SP(rrect_pts(x, y0 + 1.2, x + 17, y1 - 1.2, 1)), "#34495c", seed + 4 + x, outline=None, wob=0.05,
+                        tex=0.1, light=(1, -1, 0.5))
+    # the roof: lighter, ribbed, with SCHOOL BUS across it
+    roof = shade(body, 1.1)
+    paint_shape(img, SP(rrect_pts(12, 17, 284, 85, 8)), roof, seed + 5, outline=(70, 50, 20), ow=1.0, wob=0.15, tex=0.1,
+                light=(0.1, -1, 0.5))
+    d = ImageDraw.Draw(img)
+    for x in range(30, 282, 22):
+        d.line([(S(x), S(18.5)), (S(x), S(83.5))], fill=rgba(shade(body, 0.85), 150), width=SS)
+    text(img, (150, 47), "SCHOOL BUS", 17, "#151515", font="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+    text(img, (150, 66), "ST. BRENDAN'S PARISH", 7.5, "#2a2014", font=DECO)
+    for x in (48, 252):  # roof vents
+        paint_shape(img, SP(rrect_pts(x - 5, 46, x + 5, 56, 2)), shade(body, 0.8), seed + 6 + x, outline=OUT, ow=0.8, wob=0.05)
+    # black rub rails along both sides
+    for y in (6.8, 95.2):
+        line(img, [(S(10), S(y)), (S(290), S(y))], "#141414", 1.8 * SS, 235)
+    # the back: the emergency door, tail lamps on the corners
+    paint_shape(img, SP(rrect_pts(3, 30, 11, 72, 2)), shade(body, 0.82), seed + 7, outline=OUT, ow=1.2, wob=0.08)
+    line(img, [(S(7), S(32)), (S(7), S(70))], "#2a2014", 1.0 * SS, 200)
+    for y in (13, 89):
+        paint_shape(img, SP(ellipse_pts(7.5, y, 3.6, 3.2)), "#b3221c", seed + 8, outline=OUT, ow=0.8, wob=0.1)
+        soft_blob(img, S(7.1), S(y - 0.6), S(1.4), S(1.1), "#ffb0a0", 160, 0.4 * SS)
+    # the front: windscreen across the front of the body, a short bonnet, wings, radiator, bumper, lamps
+    paint_shape(img, SP([(286, 14), (295, 18), (295, 84), (286, 88)]), "#6f97b2", seed + 9, outline=OUT, ow=1.2, wob=0.1,
+                light=(1, -1, 0.6))
+    line(img, [(S(288), S(20)), (S(293), S(32))], "#e6f2fa", 1.3 * SS, 190, blur=0.4)
+    hood = [(293, 26), (312, 28), (328, 32), (328, 70), (312, 74), (293, 76)]
+    paint_shape(img, SP(hood), body, seed + 10, outline=OUT, ow=1.6, wob=0.2, tex=0.12, light=(0.2, -1, 0.45), inner_shadow=0.3)
+    for x in range(298, 324, 4):
+        for y0 in (30, 64):
+            line(img, [(S(x), S(y0)), (S(x + 2), S(y0 + 5))], "#4a3410", 1.2 * SS, 220, blur=0.2)
+    _wings_at(img, "#1c1c1e", seed + 12, [(292, 22), (299, 12), (311, 5.5), (324, 4), (333, 7), (339, 13), (340, 20),
+                                          (333, 23.5), (318, 23), (300, 23)], H)
+    radiator(img, seed + 14, x0=326, half=13)
+    paint_shape(img, SP(rrect_pts(336.5, 20, 339.5, 82, 1.5)), CHROME, seed + 15, outline=OUT, ow=1.0, wob=0.05, light=(1, -1, 0.4))
+    lamp(img, 327, 18.5, 5.2, seed + 16)
+    lamp(img, 327, 83.5, 5.2, seed + 17)
+    sheen(img, [(40, 24), (270, 24), (270, 29), (40, 29)], 40, 2.2)
+    return finish(grain(img, 3, seed), W, H)
+
+
 ASSETS = {
+    "cars/dump_truck": dump_truck,
+    "cars/school_bus": school_bus,
     "cars/police": lambda: police_car(7),
     "cars/wheel": lambda: wheel(9),
     "cars/sedan": lambda: sedan("#1d2b25", seed=1),

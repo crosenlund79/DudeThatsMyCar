@@ -77,7 +77,7 @@ var walkers: Array = []
 var drive_loops: Array = []
 var traffic: Array = []
 var junctions: Array = []
-## Parked cars: {type: "sedan" | "coupe" | "police", paint: int, pos, rot, owner}
+## Parked cars: {type: "sedan" | "coupe" | "police" | "dump_truck" | "school_bus" (M009), paint: int, pos, rot, owner}
 ## (M006: "danny" for Danny's own car, else who it belongs to).
 var cars: Array = []
 ## The beat cop's round (he walks between these points and pauses at each).
