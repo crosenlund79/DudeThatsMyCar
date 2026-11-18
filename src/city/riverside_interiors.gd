@@ -17,7 +17,8 @@ static func add_to(d: DistrictLayout) -> void:
 
 ## The Copper Owl supper club: the bar along the back wall with Augie behind
 ## it, tables with white cloths, a baby grand on the bandstand, a back door to
-## the alley where tonight's delivery stands.
+## the alley where tonight's delivery stands. Rourke keeps the corner table
+## by the door (M005): this is where Danny settles up.
 static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 	var p := InteriorPlan.new("copper_owl", "The Copper Owl")
 	p.marker = "ui/marker_bar"
@@ -53,10 +54,11 @@ static func copper_owl(d: DistrictLayout) -> InteriorPlan:
 		{"id": "augie", "name": "Augie", "look": "characters/bartender", "pos": Vector2(2240, 202), "facing": PI / 2},
 		{"id": "patron_a", "name": "", "look": "characters/patron_man", "pos": Vector2(2172, 300), "facing": 0.0},
 		{"id": "patron_b", "name": "", "look": "characters/patron_woman", "pos": Vector2(2210, 291), "facing": PI},
-		{"id": "patron_c", "name": "", "look": "characters/patron_man", "pos": Vector2(2356, 400), "facing": PI + 0.4},
+		{"id": "rourke", "name": "Rourke", "look": "characters/boss", "pos": Vector2(2356, 400), "facing": PI + 0.4},
 	]
 	p.spots = [
 		{"id": "augie", "pos": Vector2(2240, 252), "radius": 34.0, "prompt": "Talk to Augie"},
+		{"id": "rourke", "pos": Vector2(2302, 384), "radius": 26.0, "prompt": "Talk to Rourke"},
 	]
 	return p
 

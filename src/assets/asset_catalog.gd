@@ -46,6 +46,8 @@ const SPECS := {
 		"notes": "A working man in a flat cap (passer-by)."},
 	"characters/lady": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "A woman in a coat and cloche hat (passer-by)."},
+	"characters/boss": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
+		"notes": "Rourke, the boss: charcoal overcoat, grey homburg, a lit cigar."},
 	"characters/barber": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),
 		"notes": "Sal the barber in his white coat."},
 	"characters/grocer": {"kind": "sheet", "frames": 5, "template_size": Vector2i(320, 64), "display_size": Vector2(44, 44),

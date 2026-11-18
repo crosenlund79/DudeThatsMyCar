@@ -136,7 +136,7 @@ func _ready() -> void:
 	player.interaction = _interact
 	player.conversation = _converse
 	hud.dialogue_choice.connect(_answer)
-	hud.set_purse(rackets.money, rackets.bottles)
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
 	player.notice.connect(hud.show_notice)
@@ -249,7 +249,7 @@ func _answer(i: int) -> void:
 		sleep()
 		return
 	_apply(next.get("effects", {}))
-	hud.set_purse(rackets.money, rackets.bottles)
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
 	save_game()
 	_show(next)
 
@@ -307,7 +307,7 @@ func sleep() -> void:
 	interiors.update_player(walker.global_position)
 	interiors.snap()
 	camera.snap_to(walker)
-	hud.set_purse(rackets.money, rackets.bottles)
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
 	hud.wake_up(rackets.night, clock.text())
 	save_game()
 

@@ -10,7 +10,7 @@ extends RefCounted
 ## carried, "time": "4:10 AM", "late": bool (time to go home)}.
 
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
-	"bed": "Home"}
+	"rourke": "Rourke", "bed": "Home"}
 
 var rackets: Rackets
 
@@ -47,6 +47,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _lindqvist(step, context)
 		"eddie":
 			return _eddie(step, context)
+		"rourke":
+			return _rourke(step, context)
 		"bed":
 			return _bed(step, context)
 	return {}
@@ -73,6 +75,8 @@ func _augie(step: String, context: Dictionary) -> Dictionary:
 				opts.append({"id": "protection", "text": "Time to pay your insurance, Augie."})
 			opts.append({"id": "news", "text": "How's business?"})
 			var hello := "Evening. Keep it down, the swells are dancing."
+			if r.boss.ban:
+				hello = "Rourke's orders, Dimes: not one more bottle from you till you're square with him."
 			if c.is_short():
 				hello = "Thank God. The cellar's near dry and the swells are thirsty."
 			if r.has_paid("copper_owl"):
@@ -262,3 +266,115 @@ func _bed(step: String, context: Dictionary) -> Dictionary:
 		"sleep":
 			return _page("bed", "You hang up your hat, pull the blind and sleep like the dead.", [], {"sleep": true})
 	return {}
+
+
+# ------------------------------------------------------------------ Rourke, at his corner table in the Copper Owl
+
+func _rourke(step: String, _context: Dictionary) -> Dictionary:
+	var r := rackets
+	var b := r.boss
+	var want := b.expected + b.rye_end()
+	var D := Rackets.dollars
+	match step:
+		"hello":
+			if b.settled and b.arrears == 0:
+				return _page("rourke", "We're square for tonight, Dimes. Go earn.", [{"id": "news", "text": "How's business, Mr. Rourke?"}])
+			var line := ""
+			match b.mood():
+				"warm":
+					line = "Danny boy. Sit down. You got something for me?"
+				"cool":
+					line = "Dimes. You got my envelope?"
+				"cold":
+					line = "You're behind, Danny. I'm a patient man, but patience costs money."
+				_:
+					line = "Not one more bottle of yours goes through Augie's bar till we're square. My money."
+			if b.settled:
+				line = "You still owe me %s, Dimes." % D.call(b.arrears)
+			else:
+				line += " I make it %s tonight" % D.call(want)
+				line += ", with my end of the rye you're running through my club." if b.rye_end() > 0 else "."
+			var opts := []
+			if r.held > 0 or r.money >= want:
+				opts.append({"id": "envelope", "text": "Here's your envelope."})
+			opts.append({"id": "later", "text": "Not tonight, Mr. Rourke. I'll have it tomorrow."})
+			opts.append({"id": "news", "text": "How's business, Mr. Rourke?"})
+			return _page("rourke", line, opts)
+		"envelope":
+			var opts2 := []
+			var keep := (r.held / 2) / 50 * 50
+			if r.held >= want:
+				opts2.append({"id": "hand_all", "text": "All of it: %s." % D.call(r.held)})
+				if r.money >= r.held + 500:
+					opts2.append({"id": "extra", "text": "All of it, and %s extra for your trouble." % D.call(500)})
+			else:
+				if r.held > 0:
+					opts2.append({"id": "thin", "text": "It was a thin night. %s is all of it." % D.call(r.held)})
+				if r.money >= want:
+					opts2.append({"id": "top_up", "text": "Make it the full %s, out of my own pocket." % D.call(want)})
+			if keep > 0:
+				opts2.append({"id": "skim", "text": "Say it was a thin night: hand him %s, keep %s." % [D.call(r.held - keep), D.call(keep)]})
+			return _page("rourke", "Let's see it.", opts2)
+		"hand_all":
+			return _rourke_verdict(r.pay_boss(r.held), "")
+		"extra":
+			return _rourke_verdict(r.pay_boss(r.held + 500), "")
+		"thin":
+			return _rourke_verdict(r.pay_boss(r.held, "bad_business"), "thin")
+		"top_up":
+			return _rourke_verdict(r.pay_boss(want), "")
+		"skim":
+			var keep2 := (r.held / 2) / 50 * 50
+			return _rourke_verdict(r.pay_boss(r.held - keep2, "bad_business"), "thin")
+		"later":
+			var out := r.pay_boss(0)
+			var line2 := "Tomorrow, then. %s, and don't make me come looking for you." % D.call(out.owed)
+			if b.ban:
+				line2 += " Till then Augie don't buy so much as a bottle off you."
+			return _page("rourke", line2, [], {"boss": out, "promise": "rourke"})
+		"news":
+			var bits := []
+			if b.belief.get("copper_owl", "good") != "good":
+				bits.append("Augie's cellar is running dry and the swells notice.")
+			if b.belief.get("grocery", "good") != "good":
+				bits.append("I hear the grocer's struggling.")
+			for h in b.heard:
+				if String(h.text).begins_with("caught"):
+					bits.append("And I hear things about you, Dimes. Don't make me hear more.")
+					break
+			if bits.is_empty():
+				bits.append("Quiet. Quiet is good. Quiet means everybody pays.")
+			var opts3 := []
+			if b.trust >= 75 and b.commission < 30:
+				opts3.append({"id": "my_end", "text": "About my end, Mr. Rourke..."})
+			return _page("rourke", " ".join(bits), opts3)
+		"my_end":
+			if b.trust >= 75 and b.commission < 30:
+				b.commission += 5
+				return _page("rourke", "You've been straight with me. %d percent. Earn it." % b.commission)
+			return _page("rourke", "Your end is what I say it is.")
+	return {}
+
+
+func _rourke_verdict(out: Dictionary, claim: String) -> Dictionary:
+	var r := rackets
+	var b := r.boss
+	var D := Rackets.dollars
+	var line := ""
+	if out.caught:
+		line = "Thin, is it? Augie tells me different. You're into me for %s, Dimes, and from now on I count twice." % D.call(out.owed)
+	elif out.accepted and claim == "thin":
+		line = "Yeah, I heard. Times are hard. All right, this once."
+	elif out.accepted:
+		line = "That's the way."
+	elif claim == "thin":
+		line = "Thin? Don't feed me lines. That's %s on the slate." % D.call(out.owed)
+	else:
+		line = "You're short, Danny. %s goes on the slate." % D.call(out.owed)
+	if out.cut > 0:
+		line += " Here's your end: %s." % D.call(out.cut)
+	if b.ban:
+		line += " And Augie don't buy another bottle off you till we're square."
+	elif b.commission < Boss.COMMISSION:
+		line += " Till you're straight with me, your end's half."
+	return _page("rourke", line, [], {"boss": out})

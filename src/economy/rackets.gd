@@ -9,7 +9,17 @@ extends RefCounted
 
 var rules: EconomyRules
 var town: Neighbourhood
+## Rourke, who the protection money belongs to.
+var boss: Boss
 var money := 0
+## Of Danny's money: Rourke's protection, collected and not yet handed over.
+var held := 0
+## All nights: what Danny kept back of Rourke's money, and the commission
+## Rourke handed back as Danny's end.
+var skimmed := 0
+var commission_earned := 0
+## Counts every protection collection (orders them for Rourke's books).
+var seq := 0
 var bottles := 0
 ## Nights slept through since the first evening (night 1).
 var night := 1
@@ -19,6 +29,8 @@ var sold_by_barber := 0
 var bought_by_bar := 0
 var paid := {}
 var paid_amount := {}
+## The collection number of each business's payment tonight.
+var last_seq := {}
 ## All nights: money each business has paid you (cents).
 var paid_total := {}
 
@@ -27,6 +39,9 @@ func _init(p_rules: EconomyRules = null) -> void:
 	rules = p_rules if p_rules != null else EconomyRules.new()
 	money = rules.start_money
 	town = Neighbourhood.riverside()
+	boss = Boss.new()
+	boss.observe_club(town.club(), night)
+	boss.expect(town)
 
 
 static func dollars(cents: int) -> String:
@@ -64,8 +79,11 @@ func barber_price() -> int:
 	return rules.barber_price
 
 
-## Bottles Augie takes tonight: room in his cellar, as far as his till goes.
+## Bottles Augie takes tonight: room in his cellar, as far as his till goes
+## (none while Rourke has told him not to deal with Danny).
 func bar_demand() -> int:
+	if boss.ban:
+		return 0
 	var c := club()
 	return maxi(0, mini(c.capacity - c.stock, c.cash / maxi(bar_price(), 1)))
 
@@ -114,6 +132,8 @@ func sell_bottles() -> int:
 	club().stock += k
 	bottles -= k
 	bought_by_bar += k
+	if k > 0:
+		boss.see_rye_sale(k * price)  # from his corner table he sees it all
 	return k
 
 
@@ -141,7 +161,33 @@ func collect(business: String, leaned: bool) -> int:
 	paid[business] = "leaned" if leaned else "asked"
 	paid_amount[business] = amount
 	paid_total[business] = int(paid_total.get(business, 0)) + amount
+	held += amount
+	seq += 1
+	last_seq[business] = seq
+	if business == "copper_owl":
+		boss.learn_paid(business, amount, night, seq)  # Augie tells Rourke at once
 	return amount
+
+
+## Hands Rourke `cents` (as far as Danny's pocket goes). `claim`: "" or
+## "bad_business". What Danny still held of Rourke's money beyond it, he
+## keeps (skimming). Rourke hands back his commission on the protection.
+## Returns Rourke's verdict (Boss.settle) plus {handed, kept}.
+func pay_boss(cents: int, claim: String = "") -> Dictionary:
+	cents = clampi(cents, 0, money)
+	var protection_part := mini(cents, held)
+	var kept := maxi(0, held - cents)
+	money -= cents
+	boss.purse += cents
+	skimmed += kept
+	held = 0
+	var out := boss.settle(cents, protection_part, claim, town, night, seq + 1)
+	money += out.cut
+	boss.purse -= out.cut
+	commission_earned += out.cut
+	out["handed"] = cents
+	out["kept"] = kept
+	return out
 
 
 ## Rounds you could buy right now (0: no money, no room, or Eddie's crate is
@@ -170,13 +216,17 @@ func end_night() -> Array:
 	bought_by_bar = 0
 	paid.clear()
 	paid_amount.clear()
-	return town.close_night()
+	last_seq.clear()
+	var reports := town.close_night()
+	boss.end_night(town, night)
+	return reports
 
 
 func to_dict() -> Dictionary:
 	return {"money": money, "bottles": bottles, "night": night, "sold_by_barber": sold_by_barber,
 		"bought_by_bar": bought_by_bar, "paid": paid.duplicate(), "paid_amount": paid_amount.duplicate(),
-		"paid_total": paid_total.duplicate(), "town": town.to_dict()}
+		"paid_total": paid_total.duplicate(), "town": town.to_dict(), "boss": boss.to_dict(), "held": held,
+		"skimmed": skimmed, "commission_earned": commission_earned, "seq": seq, "last_seq": last_seq.duplicate()}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -196,3 +246,15 @@ func from_dict(d: Dictionary) -> void:
 		paid_total[k] = int(d.paid_total[k])
 	if d.has("town"):
 		town.from_dict(d.town)
+	if d.has("boss"):
+		boss.from_dict(d.boss)
+	else:
+		boss.observe_club(town.club(), night)
+		boss.expect(town)
+	held = int(d.get("held", 0))
+	skimmed = int(d.get("skimmed", 0))
+	commission_earned = int(d.get("commission_earned", 0))
+	seq = int(d.get("seq", 0))
+	last_seq = {}
+	for k in (d.get("last_seq", {}) as Dictionary):
+		last_seq[k] = int(d.last_seq[k])

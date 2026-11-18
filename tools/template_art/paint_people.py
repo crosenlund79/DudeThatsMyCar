@@ -40,6 +40,8 @@ WORKER = {"coat": "#5a4a3a", "coat_light": "#6e5c48", "trouser": "#33302c", "hat
           "stripes": False, "front": "plain"}
 LADY = {"coat": "#4a5a6a", "coat_light": "#5e7082", "trouser": "#b89070", "hat": "cloche", "hat_color": "#7a2a3a",
         "stripes": False, "front": "plain"}
+BOSS = {"coat": "#2a292f", "coat_light": "#3e3d46", "trouser": "#1c1b20", "hat": "fedora", "hat_color": "#6a6862",
+        "stripes": False, "front": "tie", "cigar": True}
 PATRON_MAN = {"coat": "#1b1b20", "coat_light": "#34343c", "trouser": "#16161a", "hat": "hair", "hat_color": "#6a4c32",
               "stripes": False, "front": "bowtie"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
@@ -185,6 +187,10 @@ def _hat(img, cx, cy, look):
                 light=(0.4, -1, 0.6))
     line(img, [(S(cx - 3.5), S(cy)), (S(cx + 3.5), S(cy))], shade(HAT, 0.6), 1.3 * SS, 210)
     soft_blob(img, S(cx + 2.5), S(cy - 2.5), S(2.5), S(1.6), "#ffffff", 45, 0.8 * SS)
+    if look.get("cigar"):
+        # a fat cigar from the corner of his mouth, its tip glowing
+        line(img, [(S(cx + 9.5), S(cy + 1.5)), (S(cx + 15), S(cy + 3.2))], "#6a4426", 2.2 * SS, 255)
+        soft_blob(img, S(cx + 15.2), S(cy + 3.3), S(1.3), S(1.3), "#ff8a3a", 230, 0.4 * SS)
     return finish(img, F, F)
 
 
@@ -205,6 +211,7 @@ ASSETS = {
     "characters/bartender": lambda: sheet(BARTENDER),
     "characters/patron_man": lambda: sheet(PATRON_MAN),
     "characters/barber": lambda: sheet(BARBER),
+    "characters/boss": lambda: sheet(BOSS),
     "characters/worker": lambda: sheet(WORKER),
     "characters/lady": lambda: sheet(LADY),
     "characters/grocer": lambda: sheet(GROCER),

@@ -198,10 +198,13 @@ func wake_up(night: int, time_text: String) -> void:
 	wake_screen.modulate.a = 1.0
 
 
-## Money and bottles under the place name.
-func set_purse(cents: int, bottles: int) -> void:
+## Money and bottles under the place name, and how much of the money is
+## Rourke's (protection collected and not yet handed over).
+func set_purse(cents: int, bottles: int, rourkes: int = 0) -> void:
 	var b := "no bottles" if bottles == 0 else ("1 bottle of rye" if bottles == 1 else "%d bottles of rye" % bottles)
 	purse_label.text = "%s   \u00b7   %s" % [Rackets.dollars(cents), b]
+	if rourkes > 0:
+		purse_label.text += "\n%s of it is Rourke's" % Rackets.dollars(rourkes)
 
 
 func _label(text: String, size: int, color: Color) -> Label:
