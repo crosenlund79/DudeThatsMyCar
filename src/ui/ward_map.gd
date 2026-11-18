@@ -121,7 +121,9 @@ func _draw() -> void:
 		draw_circle(lp, 4.0, Color("1b1611"), false, 1.0)
 		_label(lp + Vector2(0, 16), "Lefty Moran", 11, LANDMARK)
 	if job_at != Vector2.INF:
-		var jp := to_screen(job_at) - Vector2(0, ICON * 0.4)
+		var jp := to_screen(job_at)
+		if job_at != lefty_at:
+			jp -= Vector2(0, ICON * 0.4)  # round the badge, which stands above its door
 		draw_arc(jp, 21.0, 0.0, TAU, 40, Color(COPPER, 0.9), 2.0)
 		draw_arc(jp, 25.0, 0.0, TAU, 40, Color(COPPER, 0.35), 1.0)
 	if car != Vector2.INF:

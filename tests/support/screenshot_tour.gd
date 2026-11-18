@@ -254,6 +254,60 @@ func _run(shots: Array) -> void:
 				await _shot("fight", false)
 				while main.fighting:
 					await process_frame
+			"job_offer":
+				# M007: Rourke offers the job at his corner table (the line's performance tag beside his name)
+				await _at_spot("copper_owl", "rourke")
+				main.voice_lines.mark("rourke_greeting")  # met him already: straight to business
+				main.start_talk("rourke")
+				main._answer(_option("job_offer"))
+				await _frames(10)
+				await _shot("job_offer")
+				main.end_talk()
+			"lindqvist_tells":
+				# M007: the Swede names the man
+				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
+				await _at_spot("hardware", "lindqvist")
+				main.start_talk("lindqvist")
+				main._answer(_option("job_ask"))
+				await _frames(10)
+				await _shot("lindqvist_tells")
+				main.end_talk()
+			"job_map":
+				# M007: the job on the ward map - a few words under the key, a ring round Lefty's corner
+				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
+				main.rackets.job.learn("culprit")
+				_teleport_walker(Vector2(2280, 1050), PI * 0.5)
+				await _frames(10)
+				main.show_map(true)
+				await _frames(5)
+				await _shot("job_map", false)
+				main.show_map(false)
+			"confront":
+				# M007: outside Doyle's Garage - talk, threaten or fight
+				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
+				main.rackets.job.learn("culprit")
+				var lefty_at: Vector2 = main.rival.body.global_position
+				_teleport_walker(lefty_at + Vector2(-34, 6), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, lefty_at)
+				await _frames(25)
+				main.talking = "lefty"
+				main._show(main.talk.open("lefty", main._talk_context()))
+				await _frames(10)
+				await _shot("confront")
+				main.end_talk()
+			"report":
+				# M007: telling Rourke how it went
+				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
+				main.rackets.job.learn("culprit")
+				main.rackets.job.resolve("beaten", main.rackets)
+				main.rackets.boss.purse = 3000
+				await _at_spot("copper_owl", "rourke")
+				main.start_talk("rourke")
+				main._answer(_option("job_report"))
+				main._answer(_option("job_truth_hand"))
+				await _frames(10)
+				await _shot("report")
+				main.end_talk()
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)
@@ -451,6 +505,23 @@ func _run(shots: Array) -> void:
 				await _shot("wide")
 				main.camera.foot_zoom = 1.4
 	quit()
+
+
+## M007: stands Danny at someone's talk spot in a room.
+func _at_spot(plan_id: String, person: String) -> void:
+	for sp in main.interiors.view_of(plan_id).plan.spots:
+		if sp.id == person:
+			_teleport_walker(sp.pos, -PI / 2)
+	await _frames(40)
+
+
+## The index of the answer `id` on the page on screen (-1: none).
+func _option(id: String) -> int:
+	var opts: Array = main._page.get("options", [])
+	for i in opts.size():
+		if opts[i].id == id:
+			return i
+	return -1
 
 
 func _drive(c: Car, points: Array, cruise: float, max_ticks: int) -> void:
