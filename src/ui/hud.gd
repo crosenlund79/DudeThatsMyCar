@@ -313,6 +313,11 @@ func show_gun(gun: Gun) -> void:
 
 
 ## The pursuit line at the top of the screen, from the officer's state.
+## M008: the district Danny is in now (top-left).
+func set_district(district_name: String) -> void:
+	district_label.text = district_name.to_upper()
+
+
 func set_police_status(state: int, armed: bool = false) -> void:
 	match state:
 		OfficerBrain.State.ALERTED, OfficerBrain.State.CHASE:

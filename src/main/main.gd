@@ -52,6 +52,15 @@ var navigator: CityNavigator
 ## M008: the districts of the city in one world: the Riverside Ward (built at
 ## start-up, pinned) and its neighbours, streamed in as Danny comes near.
 var world: DistrictStreamer
+## M008: what belongs to each neighbouring district while it is loaded:
+## id -> {street: StreetLife, officer: PoliceOfficer (or null), cars_made: bool}.
+var _districts := {}
+## M008: the layout entry of every car in `cars` (the ward's first, then each
+## district's as it is first built: `cars` only ever grows, a car in a freed
+## district is put away, not freed, so nothing is ever duplicated).
+var car_specs: Array = []
+## Tests: no passers-by or traffic in the neighbouring districts either.
+var quiet_streets := false
 var officer: PoliceOfficer
 ## M006: Lefty Moran, the North Side gangster outside Doyle's Garage.
 var rival: Rival
@@ -138,8 +147,10 @@ func _ready() -> void:
 	add_child(world)
 	world.setup(resolver, CityPlan.layouts(layout))
 	world.clearance = Walker.RADIUS + 3.0
-	world.district_ready.connect(func(_id: String) -> void: camera.set_bounds(world.bounds()))
-	world.district_unloading.connect(func(_id: String) -> void: camera.set_bounds.call_deferred(world.bounds()))
+	world.extra_steps = _district_steps
+	world.district_ready.connect(_on_district_ready)
+	world.district_unloading.connect(_on_district_unloading)
+	world.district_entered.connect(_on_district_entered)
 	_park_cars()
 	thefts = CarThefts.new(layout.cars)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
@@ -186,19 +197,21 @@ func _ready() -> void:
 	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body, bullets)
 	_wire_officer(officer)
 	bullets.struck.connect(_on_bullet_struck)
+	player.fired.connect(_on_player_fired)
 	street = StreetLife.new()
 	add_child(street)
 	street.setup(layout, resolver, clock, CAR_SCENE, VEHICLES, cars, [walker, officer.body] as Array[Walker])
 	street.view = camera.view_rect()
-	player.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void: street.hear_gunshot(muzzle))
 	rival = Rival.new()
 	add_child(rival)
 	rival.setup(resolver, gun_rules, RIVAL_POST, navigator, bullets, player.body)
 	rival.danny = walker
 	rival.fired.connect(gunfire.on_fired)
 	rival.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
-		officer.hear_gunshot(muzzle, gun_rules.noise_radius)
-		street.hear_gunshot(muzzle))
+		for o in officers():
+			o.hear_gunshot(muzzle, gun_rules.noise_radius)
+		for s in streets():
+			s.hear_gunshot(muzzle))
 	rival.provoked.connect(func() -> void: hud.show_notice("Lefty Moran goes for his gun!"))
 	rival.struck_down.connect(func() -> void: hud.show_notice("Lefty Moran goes down and stays down."))
 	# M007: Danny's gun settles Rourke's job too (the M006 rules handle the shooting)
@@ -247,7 +260,7 @@ func _ready() -> void:
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, voice, bullets, gunfire, officer, street, rival] + cars:
+	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, voice, bullets, gunfire, officer, street, rival, world] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -256,17 +269,24 @@ func _ready() -> void:
 		_start_opening()
 
 
-## M008: a beat cop in the game: he hears Danny's shots (and takes the close
-## ones personally), and his own revolver is seen and heard like anybody's.
+## M008: a beat cop in the game: his own revolver is seen and heard like
+## anybody's (Danny's shots reach him through _on_player_fired).
 func _wire_officer(o: PoliceOfficer) -> void:
 	o.player_walker = walker
-	player.fired.connect(func(muzzle: Vector2, dir: Vector2) -> void:
-		if not o.near_miss(muzzle, dir):
-			o.hear_gunshot(muzzle, gun_rules.noise_radius))
 	o.fired.connect(gunfire.on_fired)
 	o.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
-		if street != null:
-			street.hear_gunshot(muzzle))
+		for s in streets():
+			s.hear_gunshot(muzzle))
+
+
+## Danny fired: every beat cop in earshot hears it (and takes a close one
+## personally), passers-by scatter.
+func _on_player_fired(muzzle: Vector2, dir: Vector2) -> void:
+	for o in officers():
+		if not o.near_miss(muzzle, dir):
+			o.hear_gunshot(muzzle, gun_rules.noise_radius)
+	for s in streets():
+		s.hear_gunshot(muzzle)
 
 
 func _wire_officer_hud(o: PoliceOfficer) -> void:
@@ -280,7 +300,148 @@ func _wire_officer_hud(o: PoliceOfficer) -> void:
 ## The beat cops in the loaded districts (M008).
 func officers() -> Array[PoliceOfficer]:
 	var out: Array[PoliceOfficer] = [officer]
+	for id in _districts:
+		var o: PoliceOfficer = _districts[id].get("officer")
+		if o != null and is_instance_valid(o):
+			out.append(o)
 	return out
+
+
+## The street life of the loaded districts (M008).
+func streets() -> Array[StreetLife]:
+	var out: Array[StreetLife] = []
+	if street != null:
+		out.append(street)
+	for id in _districts:
+		var s: StreetLife = _districts[id].get("street")
+		if s != null and is_instance_valid(s):
+			out.append(s)
+	return out
+
+
+# ------------------------------------------------------------------ M008: the neighbouring districts
+
+## What the streamer builds for a district besides its city, a slice at a
+## time: its passers-by and traffic, and (the first time) its parked cars.
+func _district_steps(l: DistrictLayout, node: Node2D) -> Array[Callable]:
+	return [_district_street.bind(l, node), _district_cars.bind(l)]
+
+
+func _district(id: String) -> Dictionary:
+	if not _districts.has(id):
+		_districts[id] = {"street": null, "officer": null, "cars_made": false}
+	return _districts[id]
+
+
+func _district_street(l: DistrictLayout, node: Node2D) -> void:
+	var s := StreetLife.new()
+	node.add_child(s)
+	var others: Array[Walker] = [walker]
+	for o in officers():
+		others.append(o.body)
+	s.setup(l, resolver, clock, CAR_SCENE, VEHICLES, cars, others)
+	s.name = "StreetLife"
+	if quiet_streets:
+		s.clear()
+	s.view = camera.view_rect()
+	soundscape.track_traffic(s.traffic)
+	_district(l.id).street = s
+
+
+## A district's parked cars join `cars` the first time it is built (later
+## they are only put away and brought back).
+func _district_cars(l: DistrictLayout) -> void:
+	var e := _district(l.id)
+	if e.cars_made:
+		return
+	e.cars_made = true
+	for spec in l.cars:
+		_make_car(spec)
+
+
+## A district is complete: the camera may show it, the cars parked in it come
+## back out, and its beat cop takes up his round (or lies where he fell
+## tonight, if Danny shot him).
+func _on_district_ready(id: String) -> void:
+	camera.set_bounds(world.bounds())
+	if id == layout.id:
+		return
+	var l: DistrictLayout = world.layouts[id]
+	for c in cars:
+		if c.has_meta("away") and l.bounds.has_point(c.global_position):
+			_put_away(c, false)
+	if l.police_beat.is_empty():
+		return
+	var o := PoliceOfficer.new()
+	world.loaded[id].node.add_child(o)
+	o.setup(resolver, police_rules, l.police_beat, world.navigator_of(id), player.body, bullets)
+	o.home_area = l.play_area
+	_wire_officer(o)
+	_wire_officer_hud(o)
+	var st: Dictionary = world.state.get(id, {})
+	var past: Dictionary = st.get("officer", {})
+	if past.get("down", false) and int(past.get("night", -1)) == rackets.night:
+		o.body.place(past.pos, 0.0)
+		o.body.condition.damage["torso"] = BodyCondition.MAX
+		o.body.down = true
+		o.body.lie_down()
+		o.torch.visible = false
+	_district(id).officer = o
+	for s in streets():
+		if not s.others.has(o.body):
+			s.others.append(o.body)
+
+
+## A district is about to be freed: remember whether its beat cop is down
+## tonight, put away the cars parked in it (not the one Danny drives) and
+## let go of bullets still flying there.
+func _on_district_unloading(id: String) -> void:
+	if not _districts.has(id):
+		return
+	var e: Dictionary = _districts[id]
+	var o: PoliceOfficer = e.get("officer")
+	if o != null and is_instance_valid(o):
+		if not world.state.has(id):
+			world.state[id] = {}
+		world.state[id]["officer"] = {"down": o.is_down(), "pos": o.body.global_position, "night": rackets.night}
+		for s in streets():
+			s.others.erase(o.body)
+	e.officer = null
+	e.street = null
+	var b: Rect2 = world.layouts[id].bounds
+	for c in cars:
+		if c != player.car and b.has_point(c.global_position):
+			_put_away(c, true)
+	bullets.drop_in(b)
+	camera.set_bounds.call_deferred(world.bounds())
+
+
+func _on_district_entered(id: String) -> void:
+	var l: DistrictLayout = world.layouts[id]
+	if hud != null:
+		hud.set_district(l.name)
+	if soundscape != null:
+		soundscape.layout = l
+
+
+## A car in a district that is not loaded is put away (hidden, out of the
+## physics, not moving) - and brought back as it was.
+func _put_away(c: Car, away: bool) -> void:
+	if away == c.has_meta("away"):
+		return
+	if away:
+		c.set_meta("away", [c.collision_layer, c.collision_mask])
+		c.collision_layer = 0
+		c.collision_mask = 0
+		c.visible = false
+		c.process_mode = Node.PROCESS_MODE_DISABLED
+	else:
+		var layers: Array = c.get_meta("away")
+		c.collision_layer = layers[0]
+		c.collision_mask = layers[1]
+		c.visible = true
+		c.process_mode = Node.PROCESS_MODE_PAUSABLE
+		c.remove_meta("away")
 
 
 func _any_officer_armed() -> bool:
@@ -338,21 +499,31 @@ func _end_opening() -> void:
 
 
 func _park_cars() -> void:
-	var glow := resolver.get_texture("fx/glow")
-	var wheel := resolver.get_texture(CarWheels.LOGICAL)
 	for spec in layout.cars:
-		var vehicle: VehicleType = VEHICLES[spec.type]
-		var c: Car = CAR_SCENE.instantiate()
-		c.position = spec.pos
-		c.rotation = spec.rot
-		c.z_index = Layers.Z_ACTOR
-		add_child(c)
-		var paint: String = vehicle.paints[int(spec.paint) % vehicle.paints.size()]
-		c.setup(vehicle, resolver.get_texture(paint), paint)
-		var lights := VehicleLights.new()
-		lights.setup(c, glow)
-		CarWheels.new().setup(c, wheel)
-		cars.append(c)
+		_make_car(spec)
+
+
+## A parked car from a layout entry (M008: any district's), added to `cars`,
+## its owner to `thefts` (once that exists).
+func _make_car(spec: Dictionary) -> Car:
+	var vehicle: VehicleType = VEHICLES[spec.type]
+	var c: Car = CAR_SCENE.instantiate()
+	c.position = spec.pos
+	c.rotation = spec.rot
+	c.z_index = Layers.Z_ACTOR
+	add_child(c)
+	var paint: String = vehicle.paints[int(spec.paint) % vehicle.paints.size()]
+	c.setup(vehicle, resolver.get_texture(paint), paint)
+	var lights := VehicleLights.new()
+	lights.setup(c, resolver.get_texture("fx/glow"))
+	CarWheels.new().setup(c, resolver.get_texture(CarWheels.LOGICAL))
+	if process_mode == Node.PROCESS_MODE_ALWAYS:
+		c.process_mode = Node.PROCESS_MODE_PAUSABLE
+	cars.append(c)
+	car_specs.append(spec)
+	if thefts != null:
+		thefts.add(String(spec.get("owner", "")))
+	return c
 
 
 ## The room containing p (not its doorway), or null.
@@ -375,7 +546,7 @@ func _on_entered_car(c: Car) -> void:
 	var i := cars.find(c)
 	if thefts.get_in(i):
 		theft_incidents += 1
-		if officer.witness_theft(c.global_position):
+		if officers().any(func(o: PoliceOfficer) -> bool: return o.witness_theft(c.global_position)):
 			thefts_witnessed += 1
 			hud.show_notice("The beat cop saw you take it!")
 		else:
@@ -613,11 +784,16 @@ func sleep() -> void:
 	_warned = 0
 	_report_from = null
 	for i in cars.size():
-		var spec: Dictionary = layout.cars[i]
+		var spec: Dictionary = car_specs[i]
 		cars[i].place(Transform2D(spec.rot, spec.pos))
 		cars[i].driven = false
-	officer.reset()
-	street.reset()
+		_put_away(cars[i], not world.is_ready(world.district_at(spec.pos)))
+	for o in officers():
+		o.reset()
+	for s in streets():
+		s.reset()
+	for id in world.state:
+		world.state[id].erase("officer")  # a new man on every beat
 	if walker.gun != null:
 		walker.gun.holster()
 	walker.place(layout.spawn, layout.spawn_facing)
@@ -918,7 +1094,8 @@ func _update_view(delta: float) -> void:
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	world.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
-	street.view = camera.view_rect()
+	for s in streets():
+		s.view = camera.view_rect()
 	var prompt := ""
 	if player.on_foot():
 		var spot := _spot()
@@ -942,7 +1119,8 @@ func _update_view(delta: float) -> void:
 		in_room = interiors.current
 	markers.update_markers(delta, camera.eye(), camera.eye_height(), focus, in_room,
 		door.plan if not door.is_empty() and door.outside else null)
-	var place := interiors.current.name if interiors.current != null else layout.place_name(focus)
+	var here := world.layout_at(focus) if world != null else null
+	var place := interiors.current.name if interiors.current != null else (here if here != null else layout).place_name(focus)
 	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)
 	hud.show_gun(walker.gun if player.on_foot() else null)

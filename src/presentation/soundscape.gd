@@ -261,11 +261,11 @@ static func cutoff_of(bus: String) -> float:
 
 func _update_traffic() -> void:
 	var back := SoundscapeMix.DUCK_DB * duck
+	# M008: a district's traffic goes with the district
+	_traffic = _traffic.filter(func(t: Dictionary) -> bool: return is_instance_valid(t.car))
 	for t in _traffic:
 		var c: Car = t.car
 		var p: AudioStreamPlayer2D = t.player
-		if not is_instance_valid(c):
-			continue
 		var on: bool = c.visible and c.active
 		if on != p.playing:
 			if on and _engine != null:

@@ -138,7 +138,7 @@ func enterable_car() -> Car:
 	var best: Car = null
 	var best_d := INF
 	for c in cars:
-		if c.driven or c.speed() > ENTER_MAX_SPEED:
+		if c.driven or c.speed() > ENTER_MAX_SPEED or not c.visible:
 			continue
 		var dist := distance_to_body(c, walker.global_position)
 		if dist <= ENTER_RANGE and dist < best_d:

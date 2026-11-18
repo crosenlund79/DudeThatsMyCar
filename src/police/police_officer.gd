@@ -41,6 +41,9 @@ var _last_state := -1
 var bullets: BulletWorld
 var player_walker: Node
 var _drawn := false
+## M008: his district's ground. Across its border he does not follow (his
+## beat ends there): he watches from the edge and then gives up as usual.
+var home_area := Rect2()
 
 
 const REVOLVER := preload("res://src/police/police_revolver.tres")
@@ -205,6 +208,8 @@ func _physics_process(_delta: float) -> void:
 	var t := _target()
 	var player := t.global_position if t != null else me
 	var sees := t != null and brain.is_hunting() and can_see(player)
+	if sees and home_area.has_area() and not home_area.grow(200.0).has_point(player):
+		sees = false  # M008: off his district's ground: he lets it go at the edge
 	var clear := sees and brain.armed and clear_shot(t)
 	var out := brain.update(dt, me, sees, player, velocity_of(t) if t != null else Vector2.ZERO, clear)
 	if brain.noticed_now:

@@ -308,6 +308,14 @@ func _run(shots: Array) -> void:
 				await _frames(10)
 				await _shot("report")
 				main.end_talk()
+			"yards", "yards_dock", "yards_sidings", "border_south":
+				# M008: the Riverfront Yards (streamed in as Danny comes near, here at once)
+				main.world.load_now("yards")
+				var at := {"yards": Vector2(1650, 3060), "yards_dock": Vector2(3640, 3150), "yards_sidings": Vector2(3300, 4720),
+					"border_south": Vector2(1650, 2640)}[s] as Vector2
+				_teleport_walker(at, PI * 0.5)
+				await _frames(40)
+				await _shot(s)
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)

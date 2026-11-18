@@ -292,6 +292,14 @@ func _abandon_job() -> void:
 	(job.node as Node).free()
 
 
+## Freed in the middle of building a district (a game closed, a test over):
+## the walking grid's worker-thread task is waited for, never left running.
+func _exit_tree() -> void:
+	if not _job.is_empty():
+		WorkerThreadPool.wait_for_task_completion(_job.nav_task)
+		_job = {}
+
+
 func _stat(id: String) -> Dictionary:
 	if not stats.has(id):
 		stats[id] = {"builds": 0, "last_build_usec": 0, "work_usec": 0, "frames": 0, "worst_frame_usec": 0,

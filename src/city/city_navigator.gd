@@ -47,6 +47,13 @@ func _block(r: Rect2) -> void:
 				grid.set_point_solid(c, true)
 
 
+## M008: p brought inside this grid's ground (a goal across the district's
+## border is walked to the edge of it instead).
+func clamp_to_area(p: Vector2) -> Vector2:
+	var r := layout.play_area.grow(-CELL)
+	return Vector2(clampf(p.x, r.position.x, r.end.x), clampf(p.y, r.position.y, r.end.y))
+
+
 func cell_of(p: Vector2) -> Vector2i:
 	return Vector2i(floori(p.x / CELL), floori(p.y / CELL))
 

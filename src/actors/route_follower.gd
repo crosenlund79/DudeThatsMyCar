@@ -32,6 +32,7 @@ func reset(at: Vector2) -> void:
 
 ## One tick: sets body.move towards `goal` at `speed` (stops when there or speed is 0).
 func step(body: Walker, goal: Vector2, speed: float, dt: float) -> void:
+	goal = navigator.clamp_to_area(goal)  # M008: nobody walks off his own district's grid
 	var me := body.global_position
 	if speed <= 0.0 or me.distance_to(goal) < 6.0:
 		body.move = Vector2.ZERO

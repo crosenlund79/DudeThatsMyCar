@@ -40,7 +40,9 @@ func _build() -> void:
 	d.name = "Riverside Ward"
 	d.id = "riverside"  # M008: at the world's origin (its coordinates are the world's)
 	d.bounds = Rect2(-1700, -1300, 6600, 4000)
-	d.play_area = Rect2(WEST_EDGE, EMBANKMENT_Y, RIVER_X - WEST_EDGE, SOUTH_EDGE - EMBANKMENT_Y)
+	# M008: Kessler and Wharf Street run on south into the Riverfront Yards, so the
+	# ward's ground reaches its southern border (Dorsey Street stays barricaded)
+	d.play_area = Rect2(WEST_EDGE, EMBANKMENT_Y, RIVER_X - WEST_EDGE, d.bounds.end.y - EMBANKMENT_Y)
 	_streets()
 	_blocks_and_alleys()
 	_river()
@@ -250,8 +252,11 @@ func _street_furniture() -> void:
 	_barricade_line(Vector2(WEST_EDGE, MARLOWE), Vector2.DOWN, 4)
 	_barricade_line(Vector2(WEST_EDGE, PRUITT), Vector2.DOWN, 3)
 	_barricade_line(Vector2(DORSEY, SOUTH_EDGE), Vector2.RIGHT, 3)
-	_barricade_line(Vector2(KESSLER, SOUTH_EDGE), Vector2.RIGHT, 3)
-	_barricade_line(Vector2(WHARF, SOUTH_EDGE), Vector2.RIGHT, 3)
+	# M008: Kessler and Wharf Street are open to the south (the Riverfront Yards);
+	# Dorsey Street's stub below its barricade is reached only from the yards
+	d.exits.append({"to": "yards", "rect": Rect2(-131, d.bounds.end.y - 6.0, 262, 6)})
+	d.exits.append({"to": "yards", "rect": Rect2(1519, d.bounds.end.y - 6.0, 262, 6)})
+	d.exits.append({"to": "yards", "rect": Rect2(3169, d.bounds.end.y - 6.0, 262, 6)})
 	_barricade_line(Vector2(3830, MARLOWE), Vector2.DOWN, 3)
 
 

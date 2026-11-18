@@ -59,6 +59,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `facades/brick_red_lit` | `custom/graphics/facades/brick_red_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for brick_red. |
 | `facades/club` | `custom/graphics/facades/club.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | The Copper Owl jazz club. |
 | `facades/club_lit` | `custom/graphics/facades/club_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window and bulb light for club. |
+| `facades/factory` | `custom/graphics/facades/factory.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M008: works building: sooty brick between pilasters, tall steel-framed windows, a sliding freight door. |
+| `facades/factory_lit` | `custom/graphics/facades/factory_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for factory. |
 | `facades/garage` | `custom/graphics/facades/garage.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Doyle's Garage: painted brick, garage doors. |
 | `facades/garage_lit` | `custom/graphics/facades/garage_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for garage. |
 | `facades/greystone` | `custom/graphics/facades/greystone.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Limestone greystone flats. |
@@ -66,8 +68,11 @@ image is its window light at night and is replaced separately. Cars and people f
 | `facades/party` | `custom/graphics/facades/party.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Blank side wall between buildings. |
 | `facades/rear` | `custom/graphics/facades/rear.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Alley side with fire escapes. |
 | `facades/rear_lit` | `custom/graphics/facades/rear_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window and bulb light for rear. |
+| `facades/stack` | `custom/graphics/facades/stack.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M008: a works smokestack's walls: small dark brick, iron bands, soot (no windows). |
 | `facades/steel` | `custom/graphics/facades/steel.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Steel truss (the raised bascule bridge). |
 | `facades/stone` | `custom/graphics/facades/stone.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Granite embankment wall. |
+| `facades/tenement` | `custom/graphics/facades/tenement.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M008: buff common-brick flats, paired sash windows, a stoop door. |
+| `facades/tenement_lit` | `custom/graphics/facades/tenement_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for tenement (more windows lit than elsewhere). |
 | `facades/warehouse` | `custom/graphics/facades/warehouse.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Warehouse: steel windows, loading doors. |
 | `facades/warehouse_lit` | `custom/graphics/facades/warehouse_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for warehouse. |
 | `fx/glow` | `custom/graphics/fx/glow.png` | 128x128 | light (additive night light; transparent where dark) | 128x128 | Round warm glow (lamp halos, light spill). |
@@ -114,6 +119,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/barber_pole` | `custom/graphics/props/barber_pole.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Barber's pole beside the shop door. |
 | `props/barrel` | `custom/graphics/props/barrel.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | Barrel. |
 | `props/barricade` | `custom/graphics/props/barricade.png` | 192x64 | sprite (image, scaled to its display size) | 96x32 | Street-closed sawhorse. |
+| `props/boxcar` | `custom/graphics/props/boxcar.png` | 320x96 | sprite (image, scaled to its display size) | 150x46 | M008: a freight boxcar on the sidings from above, long axis along X. |
 | `props/call_box` | `custom/graphics/props/call_box.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Police call box on its post. |
 | `props/crate` | `custom/graphics/props/crate.png` | 64x64 | sprite (image, scaled to its display size) | 26x26 | Wooden crate. |
 | `props/crates` | `custom/graphics/props/crates.png` | 96x96 | sprite (image, scaled to its display size) | 44x44 | Stack of crates. |
@@ -128,6 +134,9 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/marquee_lit` | `custom/graphics/props/marquee_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | Canopy bulbs and lettering. |
 | `props/newsstand` | `custom/graphics/props/newsstand.png` | 96x64 | sprite (image, scaled to its display size) | 46x30 | Newsstand. |
 | `props/trash_can` | `custom/graphics/props/trash_can.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | Ash can. |
+| `props/tree` | `custom/graphics/props/tree.png` | 192x192 | sprite (image, scaled to its display size) | 96x96 | M008: a plane tree's crown from above (raised: its trunk is hidden beneath). |
+| `props/truck` | `custom/graphics/props/truck.png` | 224x96 | sprite (image, scaled to its display size) | 104x44 | M008: a parked 1930s stake truck from above, nose right (+X); static and solid (not drivable). |
+| `props/truck_b` | `custom/graphics/props/truck_b.png` | 224x96 | sprite (image, scaled to its display size) | 104x44 | M008: the same truck in another colour. |
 | `roof/chimney` | `custom/graphics/roof/chimney.png` | 48x48 | sprite (image, scaled to its display size) | 27x27 | Brick chimney stack. |
 | `roof/laundry` | `custom/graphics/roof/laundry.png` | 128x64 | sprite (image, scaled to its display size) | 70x35 | Washing lines. |
 | `roof/skylight` | `custom/graphics/roof/skylight.png` | 96x64 | sprite (image, scaled to its display size) | 54x36 | Skylight. |
@@ -141,16 +150,24 @@ image is its window light at night and is replaced separately. Cars and people f
 | `roofs/steel` | `custom/graphics/roofs/steel.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Riveted steel deck (raised bridge). |
 | `roofs/tar` | `custom/graphics/roofs/tar.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Tar-paper flat roof. |
 | `roofs/tin` | `custom/graphics/roofs/tin.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Corrugated sheet roof. |
+| `signs/bakery` | `custom/graphics/signs/bakery.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Kowalski Bakery, painted roof lettering, transparent. |
 | `signs/barber` | `custom/graphics/signs/barber.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
+| `signs/bijou` | `custom/graphics/signs/bijou.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: The Bijou picture house, painted roof lettering, transparent. |
+| `signs/church` | `custom/graphics/signs/church.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: St. Brendan's, painted roof lettering, transparent. |
+| `signs/coal` | `custom/graphics/signs/coal.png` | 384x64 | sprite (image, scaled to its display size) | 210x35 | M008: Brennan Coal & Ice, painted roof lettering, transparent. |
 | `signs/cold_storage` | `custom/graphics/signs/cold_storage.png` | 384x64 | sprite (image, scaled to its display size) | 220x37 | Painted roof lettering, transparent. |
 | `signs/copper_owl` | `custom/graphics/signs/copper_owl.png` | 256x128 | sprite (image, scaled to its display size) | 150x75 | Copper Owl rooftop sign. |
 | `signs/copper_owl_lit` | `custom/graphics/signs/copper_owl_lit.png` | 256x128 | light (additive night light; transparent where dark) | 150x75 | Copper Owl neon. |
+| `signs/drugstore` | `custom/graphics/signs/drugstore.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Halloran Drugs, painted roof lettering, transparent. |
+| `signs/freight` | `custom/graphics/signs/freight.png` | 384x64 | sprite (image, scaled to its display size) | 230x38 | M008: North Branch Freight, painted roof lettering, transparent. |
 | `signs/garage` | `custom/graphics/signs/garage.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Painted roof lettering, transparent. |
 | `signs/grocery` | `custom/graphics/signs/grocery.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
 | `signs/hardware` | `custom/graphics/signs/hardware.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
 | `signs/hotel` | `custom/graphics/signs/hotel.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Hotel Marlowe rooftop letters. |
 | `signs/hotel_lit` | `custom/graphics/signs/hotel_lit.png` | 256x64 | light (additive night light; transparent where dark) | 150x38 | Hotel Marlowe bulbs. |
+| `signs/lunch` | `custom/graphics/signs/lunch.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Dutch's Night Lunch, painted roof lettering, transparent. |
 | `signs/morgue` | `custom/graphics/signs/morgue.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M006: The Morgue, painted roof lettering, transparent. |
+| `signs/tannery` | `custom/graphics/signs/tannery.png` | 384x64 | sprite (image, scaled to its display size) | 230x38 | M008: Great Lakes Tanning Co., painted roof lettering, transparent. |
 | `signs/vet` | `custom/graphics/signs/vet.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M006: Pettibone Animal Hospital, painted roof lettering, transparent. |
 | `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |
 | `ui/crosshair` | `custom/graphics/ui/crosshair.png` | 64x64 | sprite (image, scaled to its display size) | 30x30 | Mouse aim reticle (screen px). |

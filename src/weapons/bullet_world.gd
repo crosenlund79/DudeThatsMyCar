@@ -38,6 +38,11 @@ func fire(body_pos: Vector2, muzzle: Vector2, direction: Vector2, rules: GunRule
 		"shooter": shooter})
 
 
+## M008: bullets in flight inside `area` (a district being freed) are let go.
+func drop_in(area: Rect2) -> void:
+	bullets = bullets.filter(func(b: Dictionary) -> bool: return not area.has_point(b.pos))
+
+
 func ray(from: Vector2, to: Vector2, exclude: Array[RID], mask: int = MASK) -> Dictionary:
 	var q := PhysicsRayQueryParameters2D.create(from, to, mask, exclude)
 	q.hit_from_inside = true

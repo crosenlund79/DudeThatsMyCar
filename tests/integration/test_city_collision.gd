@@ -79,9 +79,11 @@ func test_the_railroad_embankment_closes_the_north_end() -> void:
 	assert_gt(c.global_position.y, RiversideWard.EMBANKMENT_Y)
 
 
-func test_the_south_end_is_barricaded() -> void:
+## M008: Kessler and Wharf Street now run on south into the Riverfront Yards;
+## Dorsey Street is still closed.
+func test_the_south_end_of_dorsey_street_is_barricaded() -> void:
 	var c := roadster()
-	await park(c, Vector2(1650, 1800), PI / 2)  # Kessler Street, heading south
+	await park(c, Vector2(0, 1800), PI / 2)  # Dorsey Street, heading south
 	await seat_in(c)
 	await _drive_until_stopped(c, 240)
 	assert_lt(c.global_position.y, RiversideWard.SOUTH_EDGE)

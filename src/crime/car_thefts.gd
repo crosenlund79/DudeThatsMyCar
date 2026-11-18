@@ -22,6 +22,14 @@ func _init(layout_cars: Array = []) -> void:
 		owners[i] = String(layout_cars[i].get("owner", ""))
 
 
+## M008: a parked car of a neighbouring district joins the list when the
+## district is first built. Returns its index.
+func add(owner_name: String) -> int:
+	var i := owners.size()
+	owners[i] = owner_name
+	return i
+
+
 func is_dannys(index: int) -> bool:
 	return owners.get(index, "") == DANNY
 

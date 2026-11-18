@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import paint_ground  # noqa: E402
 
 GROUPS = [paint_ground.TILES]
-for mod in ("paint_buildings", "paint_props", "paint_vehicles", "paint_people", "paint_interiors"):
+for mod in ("paint_buildings", "paint_props", "paint_vehicles", "paint_people", "paint_interiors", "paint_districts"):
     try:
         m = __import__(mod)
         GROUPS.append(m.ASSETS)
