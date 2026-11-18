@@ -59,6 +59,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `decals/manhole` | `custom/graphics/decals/manhole.png` | 48x48 | sprite (image, scaled to its display size) | 24x24 | Manhole cover. |
 | `decals/oil` | `custom/graphics/decals/oil.png` | 96x96 | sprite (image, scaled to its display size) | 52x52 | Oil stain. |
 | `decals/puddle` | `custom/graphics/decals/puddle.png` | 128x80 | sprite (image, scaled to its display size) | 96x60 | Puddle (semi-transparent). |
+| `decals/scorch` | `custom/graphics/decals/scorch.png` | 128x128 | sprite (image, scaled to its display size) | 150x120 | M010 the black scorch on the road where the Packard burned (flat, soft-edged). |
 | `facades/brick_brown` | `custom/graphics/facades/brick_brown.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Brown-brick shops (shopfronts below). |
 | `facades/brick_brown_lit` | `custom/graphics/facades/brick_brown_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for brick_brown. |
 | `facades/brick_red` | `custom/graphics/facades/brick_red.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Red-brick apartments. |
@@ -84,11 +85,14 @@ image is its window light at night and is replaced separately. Cars and people f
 | `fences/boards` | `custom/graphics/fences/boards.png` | 128x48 | fence (seamless left-right fence face, drawn upright along a fence line (ground at the bottom edge)) | 64 px per repeat, 24 px high | M010: a weathered board fence standing up, seen face on: seamless left-right, ground at the bottom edge, a lit top edge. |
 | `fences/chain` | `custom/graphics/fences/chain.png` | 128x48 | fence (seamless left-right fence face, drawn upright along a fence line (ground at the bottom edge)) | 64 px per repeat, 24 px high | M010: chain-link between pipe posts (the mesh semi-transparent), a top pipe and barbed wire; seamless left-right. |
 | `fences/iron` | `custom/graphics/fences/iron.png` | 128x48 | fence (seamless left-right fence face, drawn upright along a fence line (ground at the bottom edge)) | 64 px per repeat, 24 px high | M010: a wrought-iron railing with spear tops between stone-capped posts; transparent between the bars; seamless left-right. |
+| `fx/fireball` | `custom/graphics/fx/fireball.png` | 128x128 | light (additive night light; transparent where dark) | 260x260 | M010 the blast's ball of fire (additive; grown and faded by the game). |
+| `fx/flame` | `custom/graphics/fx/flame.png` | 48x64 | light (additive night light; transparent where dark) | 20x30 | M010 one tongue of flame, base at the bottom (additive; flickered and stretched by the game). |
 | `fx/fog` | `custom/graphics/fx/fog.png` | 256x256 | tile (seamless in both directions) | 900 px per repeat | M010: the street fog's banks - soft grey clouds (lighter = thicker), seamless both ways; drifted twice over the streets at different scales. |
 | `fx/glow` | `custom/graphics/fx/glow.png` | 128x128 | light (additive night light; transparent where dark) | 128x128 | Round warm glow (lamp halos, light spill). |
 | `fx/impact_dust` | `custom/graphics/fx/impact_dust.png` | 48x48 | sprite (image, scaled to its display size) | 22x22 | Brick dust where a bullet strikes a wall. |
 | `fx/muzzle_flash` | `custom/graphics/fx/muzzle_flash.png` | 64x40 | light (additive night light; transparent where dark) | 34x21 | Muzzle flash; the muzzle is at the left edge, middle. |
 | `fx/reflection` | `custom/graphics/fx/reflection.png` | 64x192 | light (additive night light; transparent where dark) | 22x70 | Light reflected on wet ground; the light is at the top. |
+| `fx/smoke_plume` | `custom/graphics/fx/smoke_plume.png` | 96x96 | sprite (image, scaled to its display size) | 60x60 | M010 a thick dark puff of smoke (the game drifts and grows them into a column). |
 | `fx/spark` | `custom/graphics/fx/spark.png` | 32x32 | light (additive night light; transparent where dark) | 12x12 | Spark where a bullet strikes. |
 | `fx/steam` | `custom/graphics/fx/steam.png` | 64x64 | sprite (image, scaled to its display size) | 48x48 | Steam / smoke puff. |
 | `fx/tracer` | `custom/graphics/fx/tracer.png` | 64x8 | light (additive night light; transparent where dark) | 48x5 | Bullet streak; the bullet is at the right end. |
@@ -136,6 +140,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/barricade` | `custom/graphics/props/barricade.png` | 192x64 | sprite (image, scaled to its display size) | 96x32 | Street-closed sawhorse. |
 | `props/boxcar` | `custom/graphics/props/boxcar.png` | 320x96 | sprite (image, scaled to its display size) | 150x46 | M008: a freight boxcar on the sidings from above, long axis along X. |
 | `props/call_box` | `custom/graphics/props/call_box.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Police call box on its post. |
+| `props/car_wreck` | `custom/graphics/props/car_wreck.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | M010 the Packard burnt out: blackened shell, the glass gone, embers (nose right). |
 | `props/crate` | `custom/graphics/props/crate.png` | 64x64 | sprite (image, scaled to its display size) | 26x26 | Wooden crate. |
 | `props/crates` | `custom/graphics/props/crates.png` | 96x96 | sprite (image, scaled to its display size) | 44x44 | Stack of crates. |
 | `props/film_can` | `custom/graphics/props/film_can.png` | 48x48 | sprite (image, scaled to its display size) | 15x15 | M009: the Bijou's lost reel - a flat round tin film can from above. |
@@ -153,6 +158,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/marquee_bijou_lit` | `custom/graphics/props/marquee_bijou_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | M008: the Bijou canopy's bulbs and lettering. |
 | `props/marquee_lit` | `custom/graphics/props/marquee_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | Canopy bulbs and lettering. |
 | `props/newsstand` | `custom/graphics/props/newsstand.png` | 96x64 | sprite (image, scaled to its display size) | 46x30 | Newsstand. |
+| `props/packard` | `custom/graphics/props/packard.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | M010 Vince Duggan's green Packard at the kerb outside Rosie's Café (scenery, never driven), nose right like the cars. |
 | `props/parcel` | `custom/graphics/props/parcel.png` | 48x40 | sprite (image, scaled to its display size) | 16x13 | M010 the parcel from above: a shoebox in brown paper and string (an abstract item). |
 | `props/trash_can` | `custom/graphics/props/trash_can.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | Ash can. |
 | `props/tree` | `custom/graphics/props/tree.png` | 192x192 | sprite (image, scaled to its display size) | 96x96 | M008: a plane tree's crown from above (raised: its trunk is hidden beneath). |
@@ -174,6 +180,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/bakery` | `custom/graphics/signs/bakery.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Kowalski Bakery, painted roof lettering, transparent. |
 | `signs/barber` | `custom/graphics/signs/barber.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
 | `signs/bijou` | `custom/graphics/signs/bijou.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: The Bijou picture house, painted roof lettering, transparent. |
+| `signs/cafe` | `custom/graphics/signs/cafe.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M010: Rosie's Café, painted roof lettering, transparent. |
 | `signs/church` | `custom/graphics/signs/church.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: St. Brendan's, painted roof lettering, transparent. |
 | `signs/coal` | `custom/graphics/signs/coal.png` | 384x64 | sprite (image, scaled to its display size) | 210x35 | M008: Brennan Coal & Ice, painted roof lettering, transparent. |
 | `signs/cold_storage` | `custom/graphics/signs/cold_storage.png` | 384x64 | sprite (image, scaled to its display size) | 220x37 | Painted roof lettering, transparent. |
@@ -240,8 +247,12 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `ambience/rain` | `custom/audio/ambience/rain.ogg` (or .wav / .mp3) | `template_rain.ogg` | yes | Ambience | M010: steady rain on the street: a hiss, the gutters' rush, drops ticking on tin and puddles. Louder with the rain, dull indoors. |
 | `ambience/river` | `custom/audio/ambience/river.ogg` (or .wav / .mp3) | `template_river.ogg` | yes | Ambience | By the river: water against the quay, a factory's drone across it. |
 | `ambience/street_night` | `custom/audio/ambience/street_night.ogg` (or .wav / .mp3) | `template_street_night.ogg` | yes | Ambience | The street's bed at night: distant traffic, the city beyond the corner. Quieter after midnight; dull indoors. |
+| `emergency/bell` | `custom/audio/emergency/bell.ogg` (or .wav / .mp3) | `template_bell.ogg` | no | Effects | M010: a fire engine's brass bell clanged by hand (one-shot, about 2.6 s). |
+| `emergency/siren` | `custom/audio/emergency/siren.ogg` (or .wav / .mp3) | `template_siren.ogg` | no | Effects | M010: a police car's hand-cranked siren rising and falling (one-shot, about 3.6 s). |
 | `fight/punch_landed` | `custom/audio/fight/punch_landed.ogg` (or .wav / .mp3) | `template_punch_landed.ogg` | no | Effects | M007: Danny's punch lands in a fistfight (under 0.5 s). |
 | `fight/punch_taken` | `custom/audio/fight/punch_taken.ogg` (or .wav / .mp3) | `template_punch_taken.ogg` | no | Effects | M007: Danny takes a punch (under 0.5 s; no voice). |
+| `fx/blast` | `custom/audio/fx/blast.ogg` (or .wav / .mp3) | `template_blast.ogg` | no | Effects | M010: the parcel going off under a parked car: crack, a rolling boom, glass and debris falling (about 4.5 s). |
+| `fx/fire` | `custom/audio/fx/fire.ogg` (or .wav / .mp3) | `template_fire.ogg` | yes | Effects | M010: a car burning at the kerb: flame roar and crackle (seamless loop). |
 | `music/copper_owl_jazz` | `custom/audio/music/copper_owl_jazz.ogg` (or .wav / .mp3) | `copper_owl_jazz.ogg` | yes | Music | The Copper Owl's singer, "Leave the Lights Low" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet. |
 | `music/record_scratch` | `custom/audio/music/record_scratch.ogg` (or .wav / .mp3) | `template_record_scratch.ogg` | no | Music | M006: the needle dragged off the record when Danny interrupts the Bird (under 1 s). Heard through the club's walls like the song. |
 | `places/bottles` | `custom/audio/places/bottles.ogg` (or .wav / .mp3) | `template_bottles.ogg` | no | Effects | Bottles of rye changing hands. |

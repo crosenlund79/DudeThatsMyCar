@@ -58,6 +58,7 @@ func _build() -> void:
 	_people_and_cars()
 	_incident_spots()
 	_contacts()
+	_cafe()
 	# the ways east into the Riverside Ward (Calloway Street ends at the ward's own barricade)
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, CALLOWAY - HALF - SW, 6, (HALF + SW) * 2.0)})
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, MARLOWE - AVENUE_HALF - SW, 6, (AVENUE_HALF + SW) * 2.0)})
@@ -144,7 +145,7 @@ func _rows() -> void:
 	_row(0, CALLOWAY + HALF + SW, 1402, [[440, 3, "tenement", "tar"], [26], [380, 3, "greystone", "tar"], [423, 4, "tenement", "tar"]])
 	_row(1531, CALLOWAY + HALF + SW, 1402, [[290, 3, "tenement", "gravel"], [298, 3, "brick_red", "tar"]])
 	_row(2381, CALLOWAY + HALF + SW, 1402, [[300, 3, "tenement", "tar"], [24], [279, 3, "greystone", "gravel"]])
-	_row(0, MARLOWE - AVENUE_HALF - SW, 1468, [[460, 3, "tenement", "tar"], [400, 2, "brick_brown", "tar", {"awning": "red"}],
+	_row(0, MARLOWE - AVENUE_HALF - SW, 1468, [[460, 3, "tenement", "tar"], [400, 2, "brick_brown", "tar", {"awning": "red", "name": "Rosie's Café"}],
 		[409, 3, "brick_brown", "tar", {"awning": "green", "name": "Halloran Drugs"}]])
 	_row(1531, MARLOWE - AVENUE_HALF - SW, 1468, [[300, 2, "brick_brown", "gravel", {"awning": "red"}], [288, 3, "tenement", "tar"]])
 	_row(2381, MARLOWE - AVENUE_HALF - SW, 1468, [[260, 3, "tenement", "tar"],
@@ -182,6 +183,7 @@ func _signs() -> void:
 	_sign("The Bijou", "signs/bijou", 24.0, 40.0)
 	_sign("Kowalski Bakery", "signs/bakery", 0.0, 34.0)
 	_sign("Halloran Drugs", "signs/drugstore", 0.0, 34.0)
+	_sign("Rosie's Café", "signs/cafe", 0.0, 34.0)  # M010
 	_sign("St. Brendan's Church", "signs/church", 0.0, 60.0)
 	for b in d.buildings:
 		if b.name != "" and not b.name in ["Railroad embankment", "St. Brendan's tower"]:
@@ -262,6 +264,19 @@ func _ground_details() -> void:
 
 ## M009: Mr. Feeney out on the pavement beside the Bijou's canopy, and the lost
 ## reel where the film exchange's boy set it down, in St. Brendan's churchyard.
+## M010: Rosie's Café, where Vince Duggan takes his coffee every night with his
+## Packard at the kerb outside, and a bench a few doors along, in front of
+## Halloran Drugs, to watch it from.
+func _cafe() -> void:
+	var bench := Vector2(980, MARLOWE - AVENUE_HALF - 34.0)
+	_prop("interiors/bench", bench, 0.0, Vector2(66, 14))
+	d.cafe = [
+		{"id": "car", "pos": Vector2(600, MARLOWE - 92.0), "rot": 0.0},
+		{"id": "door", "pos": Vector2(660, MARLOWE - AVENUE_HALF - SW + 8.0)},
+		{"id": "bench", "pos": bench},
+	]
+
+
 func _contacts() -> void:
 	d.contacts = [{"id": "feeney", "look": "characters/feeney", "pos": Vector2(2915, MARLOWE - AVENUE_HALF - 30.0), "face": PI / 2}]
 	d.errands = [{"id": "film_can", "pos": Vector2(1215, 2470)}]

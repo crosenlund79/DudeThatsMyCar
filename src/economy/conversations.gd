@@ -252,6 +252,11 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is you saved the late show at the Bijou over in Halloran Square. Feeney's telling the whole square."
 		"reel_cancelled":
 			return "Word is the Bijou in Halloran Square had to cancel its late show. The reel never came. Twenty-two refunds."
+		# M010: Rosie's Café
+		"cafe_blast":
+			return "Word is somebody blew Vince Duggan's Packard sky-high outside Rosie's in Halloran Square. Duggan was inside with his coffee. Never spilled a drop, they say."
+		"cafe_seen":
+			return "Word is a copper got a look at somebody by Duggan's car before it went up. Somebody in a good hat, Dimes."
 		# M009: the city's own incidents, as the ward tells them
 		"street_argument_blows":
 			return "Word is two fellas came to blows %s. Over a dented fender, if you can believe it." % t.text
@@ -855,12 +860,17 @@ func _rourke(step: String, context: Dictionary) -> Dictionary:
 		if not jo.is_empty():
 			opts_n.append(jo)
 		return _job_page(news, opts_n)
+	if step.begins_with("cafe"):
+		return _rourke_cafe(step)
 	match step:
 		"hello":
 			var job_opt := _rourke_job_option()
+			var cafe_opt := _rourke_cafe_option()
 			if b.settled and b.arrears == 0:
-				return _page("rourke", "We're square for tonight, Dimes. Go earn.",
-					[job_opt if not job_opt.is_empty() else {"id": "news", "text": "How's business, Mr. Rourke?"}])
+				var sq := [job_opt if not job_opt.is_empty() else {"id": "news", "text": "How's business, Mr. Rourke?"}]
+				if not cafe_opt.is_empty():
+					sq.append(cafe_opt)
+				return _page("rourke", "We're square for tonight, Dimes. Go earn.", sq)
 			var line := ""
 			match b.mood():
 				"warm":
@@ -885,6 +895,8 @@ func _rourke(step: String, context: Dictionary) -> Dictionary:
 				opts.append({"id": "envelope", "text": "Here's your envelope."})
 			opts.append({"id": "later", "text": "Not tonight, Mr. Rourke. I'll have it tomorrow."})
 			opts.append(job_opt if not job_opt.is_empty() else {"id": "news", "text": "How's business, Mr. Rourke?"})
+			if not cafe_opt.is_empty():
+				opts.append(cafe_opt)
 			return _page("rourke", line, opts)
 		"envelope":
 			var opts2 := []
@@ -946,6 +958,61 @@ func _rourke(step: String, context: Dictionary) -> Dictionary:
 				b.commission += 5
 				return _page("rourke", "You've been straight with me. %d percent. Earn it." % b.commission)
 			return _page("rourke", "Your end is what I say it is.")
+	return {}
+
+
+## M010: Rourke's job at Rosie's Café, as an answer on his hello page ({} when there is nothing to say).
+func _rourke_cafe_option() -> Dictionary:
+	var c := rackets.cafe
+	match c.stage:
+		CafeJob.Stage.NOT_OFFERED, CafeJob.Stage.OFFERED:
+			return {"id": "cafe", "text": "Anything else you need taken care of, Mr. Rourke?"}
+		CafeJob.Stage.ACCEPTED, CafeJob.Stage.PLANTED:
+			return {"id": "cafe_waiting", "text": "About Duggan's car..."}
+		CafeJob.Stage.DONE:
+			return {"id": "cafe_report", "text": "Duggan's Packard. It's done."}
+	return {}
+
+
+func _rourke_cafe(step: String) -> Dictionary:
+	var r := rackets
+	var c := r.cafe
+	match step:
+		"cafe":
+			if not c.offerable():
+				return _page("rourke", "You heard me the first time.")
+			c.offer()
+			return _page("rourke", "Sit. Vince Duggan's been selling beer in Halloran Square that comes off my trucks. Every night "
+				+ "from ten he takes his coffee at Rosie's on Marlowe Avenue and leaves that green Packard of his at the kerb "
+				+ "outside, like the street's his. I don't want him hurt. I want him to walk out of Rosie's and find a hole in "
+				+ "the road where his car was. Eddie's got a parcel for you. You put it under the Packard, you walk away, you "
+				+ "watch from somewhere it can't reach you. Nobody in that café gets a scratch, and nobody sees you do it. "
+				+ "%s when it's done." % Rackets.dollars(CafeJob.REWARD), [
+				{"id": "cafe_accept", "text": "Consider it done."},
+				{"id": "cafe_later", "text": "Not tonight, Mr. Rourke."},
+			])
+		"cafe_accept":
+			if not r.take_cafe_job():
+				return _page("rourke", "We already shook on it.")
+			return _page("rourke", "Good. Eddie's expecting you. And Dimes - quarter of an hour, Eddie says, once it's under. "
+				+ "Don't be standing next to it.", [], {"cafe": "accepted"})
+		"cafe_later":
+			return _page("rourke", "Duggan's not going anywhere. Neither's the job. When you're ready.")
+		"cafe_waiting":
+			if c.stage == CafeJob.Stage.PLANTED:
+				return _page("rourke", "Then what are you doing here? Go and watch.")
+			return _page("rourke", "Well? Last I looked it was still a Packard. Eddie's got the parcel; Duggan's at Rosie's from ten.")
+		"cafe_report":
+			var pay := r.report_cafe()
+			if pay <= 0:
+				return _page("rourke", "You've been paid, Dimes.")
+			var line := "I heard it from three directions before you got here. Nice and loud. Duggan'll think twice. Here's your %s." \
+				% Rackets.dollars(pay)
+			if c.seen:
+				line += " And I hear a copper got a look at you. Keep your head down for a while."
+			if c.caught_in_it:
+				line += " Next time stand further off. You look like something the cat dragged in."
+			return _page("rourke", line, [], {"cafe": "reported", "reward": pay})
 	return {}
 
 

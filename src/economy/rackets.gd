@@ -355,6 +355,46 @@ var loan := GunLoan.new()
 var parcels := 0
 var parcel_wanted := false
 const PARCEL_PRICE := 600
+## M010: Rourke's job at Rosie's Café.
+var cafe := CafeJob.new()
+
+
+## M010: Danny takes Rourke's café job on: Eddie will sell him the parcel.
+func take_cafe_job() -> bool:
+	if not cafe.accept():
+		return false
+	parcel_wanted = true
+	return true
+
+
+## M010: the parcel goes under Duggan's car.
+func plant_parcel(minute: float, witnessed: bool) -> bool:
+	if parcels <= 0 or not cafe.plant(night, minute, witnessed):
+		return false
+	parcels = 0
+	parcel_wanted = false
+	return true
+
+
+## M010: it went off. The square talks (Mr. Feeney at the Bijou saw the
+## flash); if a copper saw Danny at the car, so does that.
+func cafe_blasted(minute: float) -> bool:
+	if not cafe.blast(night, minute):
+		return false
+	rumours.start("cafe_blast", "feeney", night, {"text": "outside Rosie's Café"})
+	if cafe.seen:
+		rumours.start("cafe_seen", "feeney", night)
+	return true
+
+
+## M010: Danny tells Rourke it is done: paid once, from Rourke's own pocket.
+func report_cafe() -> int:
+	var pay := cafe.report()
+	if pay > 0:
+		money += pay
+		boss.trust = mini(100, boss.trust + 5)
+		memory.remember("rourke", "cafe_done", night)
+	return pay
 
 
 ## M010: Eddie lends Danny the Thompson for its deposit. False: no money, or it is out.
@@ -476,6 +516,9 @@ func opportunity_over(e: Dictionary) -> void:
 
 
 func _hear(person: String, r: Dictionary) -> void:
+	if person == "rourke" and r.kind == "cafe_seen":
+		boss.hear("Dimes was seen by Duggan's car before it went up", night)  # M010: a copper's word gets about
+		return
 	if person == "rourke" and r.kind in ["crate_run", "reel_returned"]:
 		# M009: Danny's own work, as far as talk carries it - a remark, not a betrayal
 		boss.hear("Dimes is hauling crates up from the yards for some lunch-counter Dutchman" if r.kind == "crate_run"
@@ -533,13 +576,13 @@ func gossip(person: String) -> Dictionary:
 				news = r
 		elif r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
 				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still", "crate_run", "crate_dropped",
-				"reel_returned"] or String(r.kind).begins_with("street_"):
+				"reel_returned", "cafe_seen"] or String(r.kind).begins_with("street_"):
 			return r
 	return news
 
 
 ## M009: talk about the city, not about Danny.
-const BACKGROUND_TALK := ["reel_cancelled", "street_argument_blows", "street_stop_taken_in"]
+const BACKGROUND_TALK := ["reel_cancelled", "street_argument_blows", "street_stop_taken_in", "cafe_blast"]
 
 
 func to_dict() -> Dictionary:
@@ -550,7 +593,7 @@ func to_dict() -> Dictionary:
 		"memory": memory.to_dict(), "rumours": rumours.to_dict(), "loans": loans.duplicate(true),
 		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees, "job": job.to_dict(),
 		"opportunities": opportunities.to_dict(), "loan": loan.to_dict(), "parcels": parcels,
-		"parcel_wanted": parcel_wanted}
+		"parcel_wanted": parcel_wanted, "cafe": cafe.to_dict()}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -566,6 +609,8 @@ func from_dict(d: Dictionary) -> void:
 	loan.from_dict(d.get("loan", {}))
 	parcels = clampi(int(d.get("parcels", 0)), 0, 1)
 	parcel_wanted = bool(d.get("parcel_wanted", false))
+	cafe = CafeJob.new()
+	cafe.from_dict(d.get("cafe", {}))
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
 	sold_by_barber = int(d.get("sold_by_barber", 0))

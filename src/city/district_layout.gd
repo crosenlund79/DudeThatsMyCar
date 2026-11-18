@@ -37,6 +37,18 @@ var incident_spots: Array = []
 ## their errands lie: {id ("crate", "film_can"), pos}.
 var contacts: Array = []
 var errands: Array = []
+## M010: Rourke's job at Rosie's Café (Halloran Square): {id ("car", "door",
+## "bench"), pos, rot} - where Duggan parks, the café's door, the bench across
+## the avenue to watch from.
+var cafe: Array = []
+
+
+## M010: one of the café job's places ({} when the district has none).
+func cafe_point(id: String) -> Dictionary:
+	for c in cafe:
+		if c.id == id:
+			return c
+	return {}
 ## Whole visible world (camera limits). Everything inside is drawn.
 var bounds := Rect2()
 ## Where people and cars can be (exits are refused outside it).
@@ -244,7 +256,7 @@ func shift(offset: Vector2) -> DistrictLayout:
 			p.pos += offset
 		for sg in b.signs:
 			sg.pos += offset
-	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots, contacts, errands]:
+	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots, contacts, errands, cafe]:
 		for item in list2:
 			item.pos += offset
 	for e in exits:

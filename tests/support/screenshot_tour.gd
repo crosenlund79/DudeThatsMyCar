@@ -608,6 +608,47 @@ func _run(shots: Array) -> void:
 					await _frames(1)
 				await _shot("thompson", false)
 				cmd = PlayerCommand.new()
+			"cafe_packard", "cafe_blast", "cafe_aftermath":
+				# M010: Rosie's Café on Marlowe Avenue, Halloran Square - Duggan's Packard at the kerb at
+				# half past ten; the blast in the short film (the flash and the fireball under the bars);
+				# a little later: the wreck burning, the smoke, the scorch, the café's people on the pavement
+				main.weather.force("clear")
+				main.street.clear()
+				var hl2: DistrictLayout = main.world.layouts.halloran
+				var car_at: Vector2 = hl2.cafe_point("car").pos
+				var bench_at: Vector2 = hl2.cafe_point("bench").pos
+				_teleport_walker(car_at + Vector2(140, 120), -PI / 2 - 0.3)
+				main.world.load_now("halloran")
+				main.clock.set_time(22 * 60.0 + 30.0)
+				await _frames(20)
+				if s != "cafe_packard":
+					main.rackets.money = 2000
+					main.rackets.take_cafe_job()
+					main.rackets.buy_parcel()
+					main.rackets.plant_parcel(main.clock.minute, false)
+					_teleport_walker(bench_at + Vector2(0, 28), PI)
+					await _frames(10)
+					main.clock.set_time(main.rackets.cafe.due(main.rackets.night) - 0.02)
+					for f in 60:
+						await _frames(1)
+						if main.cafe_film != null:
+							break
+					if s == "cafe_blast":
+						for f in 400:
+							await _frames(1)
+							if main.cafe_film != null and main.cafe_film.time >= 4.3:
+								break
+					else:
+						for f in 60 * 9:
+							await _frames(1)
+							if main.cafe_film == null:
+								break
+						if main.cafe_film != null:
+							main.cafe_film.skip()
+						await _frames(120)
+						_teleport_walker(car_at + Vector2(150, 150), -PI / 2 - 0.6)
+						await _frames(60)
+				await _shot(s, false)
 			"park", "sitting":
 				# M010: Halloran Park in the middle of the square - lawns, paths, railings, benches;
 				# sitting: Danny on a bench by the north path, the night going by

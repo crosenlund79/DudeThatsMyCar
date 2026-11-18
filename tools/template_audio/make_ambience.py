@@ -494,6 +494,67 @@ def cards():
     return fade_ends(flick + slide, fade_out=0.04)
 
 
+def blast():
+    """M010: the parcel going off under a parked car down the street: a hard
+    crack, a deep boom that rolls off the buildings, glass and debris raining
+    down, the car's metal settling. Heard from across a square, not up close."""
+    srng = np.random.default_rng(1932012)
+    n = int(4.5 * RATE)
+    t = np.arange(n) / RATE
+    noise = srng.standard_normal(n)
+    crack = band(noise, 1200, 8000, circular=False) * np.exp(-t / 0.015) * 1.4
+    boom = band(noise, 25, 260, circular=False) * np.exp(-t / 0.55) * 3.2
+    thump_ = thump(1.2, 42, 0.35, 2.0)
+    x = crack + boom
+    x[:len(thump_)] += thump_
+    x = echo(x, [(0.11, 0.45), (0.23, 0.3), (0.41, 0.2), (0.7, 0.12)], hi=900, circular=False)
+    for i in range(40):  # glass and debris falling
+        at = 0.35 + srng.uniform(0, 2.2) ** 1.3
+        if at > 4.0:
+            continue
+        base = srng.uniform(2500, 5200)
+        tink = partials(0.12, [base, base * 1.7, base * 2.6], [0.02, 0.014, 0.01], [1.0, 0.5, 0.3], 0.02)
+        place(x, tink * srng.uniform(0.05, 0.25), at * RATE, wrap=False)
+    for i in range(10):
+        place(x, thump(0.2, srng.uniform(70, 140), 0.04, srng.uniform(0.1, 0.35)), srng.uniform(0.4, 2.0) * RATE, wrap=False)
+    return fade_ends(x, fade_out=0.6)
+
+
+def fire():
+    """M010: a car burning at the kerb: a steady roar of flame, crackles and the odd pop (seamless loop)."""
+    srng = np.random.default_rng(1932013)
+    n = int(8.0 * RATE)
+    roar = band(srng.standard_normal(n), 60, 900) * 0.5
+    roar *= 0.8 + 0.2 * np.abs(periodic(n, [(3, 0.6), (7, 0.4)], 0.3))
+    crackle = np.zeros(n)
+    for i in range(160):
+        place(crackle, click(0.01, srng.uniform(1500, 4500), srng.uniform(0.1, 0.5)), srng.uniform(0, n - 1))
+    for i in range(6):
+        place(crackle, thump(0.15, srng.uniform(90, 160), 0.03, 0.5), srng.uniform(0, n - 1))
+    return [roar + crackle]
+
+
+def siren():
+    """M010: a police car's hand-cranked siren, a few streets off: a wail rising
+    and falling twice (one-shot)."""
+    n = int(3.6 * RATE)
+    t = np.arange(n) / RATE
+    f = 380 + 520 * (0.5 - 0.5 * np.cos(2 * np.pi * t / 1.8))
+    phase = 2 * np.pi * np.cumsum(f) / RATE
+    tone = np.sin(phase) * 0.6 + np.sign(np.sin(phase)) * 0.15 + np.sin(phase * 2) * 0.2
+    x = tone * np.minimum(1.0, t / 0.3) * np.minimum(1.0, (3.6 - t) / 0.5)
+    return fade_ends(echo(band(x, 200, 3500, circular=False), [(0.09, 0.3), (0.2, 0.15)], hi=2000, circular=False), fade_out=0.2)
+
+
+def bell():
+    """M010: a fire engine's brass bell, clanged by hand as it comes (one-shot, ~2.5 s)."""
+    x = np.zeros(int(2.6 * RATE))
+    for k in range(6):
+        ring = partials(1.2, [880, 880 * 2.76, 880 * 5.4, 1320], [0.6, 0.35, 0.2, 0.45], [1.0, 0.5, 0.3, 0.4], 0.002)
+        place(x, ring * (0.9 if k % 2 == 0 else 0.7), (k * 0.36) * RATE, wrap=False)
+    return fade_ends(x, fade_out=0.4)
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else "assets/audio"
     only = sys.argv[2] if len(sys.argv) > 2 else ""
@@ -501,7 +562,8 @@ def main():
         # one sound only (the rest stay as they are): python3 make_ambience.py assets/audio music/record_scratch
         makers = {"music/record_scratch": record_scratch, "fight/punch_landed": lambda: punch(True),
                   "fight/punch_taken": lambda: punch(False), "ambience/rain": rain,
-                  "poker/chips": chips, "poker/cards": cards}
+                  "poker/chips": chips, "poker/cards": cards, "fx/blast": blast, "fx/fire": fire,
+                  "emergency/siren": siren, "emergency/bell": bell}
         made = makers[only]()
         write_ogg(os.path.join(root, os.path.dirname(only), "template_" + os.path.basename(only) + ".ogg"),
                   made if isinstance(made, list) else [made], 0.5 if isinstance(made, list) else 0.7)
@@ -524,6 +586,10 @@ def main():
     write_ogg(os.path.join(root, "fight/template_punch_taken.ogg"), [punch(False)], 0.7)
     write_ogg(os.path.join(root, "poker/template_chips.ogg"), [chips()], 0.6)
     write_ogg(os.path.join(root, "poker/template_cards.ogg"), [cards()], 0.5)
+    write_ogg(os.path.join(root, "fx/template_blast.ogg"), [blast()], 0.85)
+    write_ogg(os.path.join(root, "fx/template_fire.ogg"), fire(), 0.45)
+    write_ogg(os.path.join(root, "emergency/template_siren.ogg"), [siren()], 0.6)
+    write_ogg(os.path.join(root, "emergency/template_bell.ogg"), [bell()], 0.55)
 
 
 if __name__ == "__main__":

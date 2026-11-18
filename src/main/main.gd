@@ -105,6 +105,7 @@ var thompson: Gun = null
 ## Danny's own .45 (whichever gun is in his hand).
 var pistol: Gun = null
 var _kick := Vector2.ZERO
+var _shake := 0.0
 ## Prices and nightly limits of the bootleg trade and the protection racket.
 @export var economy_rules: EconomyRules = preload("res://src/economy/default_economy.tres")
 ## The hours of the night (start, time to go home, dawn) and how fast it runs.
@@ -118,6 +119,9 @@ var map_open := false
 var status_open := false
 ## M010: the Copper Owl's back-room card game, night by night.
 var poker := PokerNight.new()
+## M010: Rosie's Café (Rourke's job): the scene, and the blast's short film while it plays.
+var cafe_scene: CafeScene
+var cafe_film: Cinematic
 ## Doc Pettibone's fee for patching Danny up after he went down (cents, at most).
 const COLLAPSE_FEE := 500
 ## M007: a fistfight under way (the dial is up; nothing else moves Danny), its
@@ -319,6 +323,9 @@ func _ready() -> void:
 	weather_view = WeatherView.new()  # M010
 	add_child(weather_view)
 	weather_view.setup(weather, resolver.get_texture("fx/fog"))
+	cafe_scene = CafeScene.new()  # M010
+	add_child(cafe_scene)
+	cafe_scene.setup(world.layouts.halloran, resolver, rackets.cafe)
 	opportunity_views = OpportunityViews.new()
 	opportunity_views.setup(resolver, rackets)
 	opportunity_views.is_out = func(id: String) -> bool: return ward_out.has(id)
@@ -680,6 +687,10 @@ func _spot() -> Dictionary:
 	var seat := Seats.near(_seats_near(), walker.global_position)
 	if not seat.is_empty():
 		return {"id": "seat", "seat": seat, "prompt": "Sit down"}
+	# M010: Duggan's Packard, with the parcel in Danny's coat
+	if cafe_scene != null and rackets.parcels > 0 and rackets.cafe.stage == CafeJob.Stage.ACCEPTED \
+			and cafe_scene.near_car(walker.global_position):
+		return {"id": "plant", "prompt": "Slip the parcel under the Packard"}
 	# M009: Dutch, Mr. Feeney and their errands
 	var op := opportunity_views.near(walker.global_position) if opportunity_views != null else {}
 	if not op.is_empty():
@@ -719,6 +730,8 @@ func _interact(_at: Vector2) -> bool:
 		player.sit(spot.seat)
 	elif spot.id == "poker":
 		open_poker()
+	elif spot.id == "plant":
+		_plant_parcel()
 	elif spot.id == "stand":
 		player.stand()
 	elif spot.get("kind", "") == "contact":
@@ -862,6 +875,129 @@ func _show_purse() -> void:
 	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
 
 
+## M010: the parcel goes under Duggan's Packard. A copper who could see the
+## car from where he stands saw Danny at it (a credible reason to suspect him
+## later); otherwise nobody knows who did it. The quarter hour starts.
+func _plant_parcel() -> void:
+	var at := cafe_scene.car_pos
+	var witnessed := false
+	for o in officers():
+		if not o.is_down() and o.body.global_position.distance_to(at) <= police_rules.sight_range \
+				and o.can_see(walker.global_position):
+			witnessed = true
+	if not rackets.plant_parcel(clock.minute, witnessed):
+		return
+	moments.append(rackets.cafe.due(rackets.night))  # sitting and letting the time pass slows for it
+	_show_purse()
+	hud.show_notice("You stoop by the running board as if to tie a shoelace, and stand up without the parcel. "
+		+ "A quarter of an hour, Eddie said. Somewhere to watch from - not too close.")
+	save_game()
+
+
+## M010: the quarter hour is up. Danny near enough to see it (and free to):
+## the short film; otherwise it simply goes off, and he hears it if he is close.
+func _cafe_due() -> void:
+	var at := cafe_scene.car_pos
+	var me := player.body().global_position
+	if not rackets.cafe_blasted(clock.minute):
+		return
+	moments.erase(rackets.cafe.blast_minute)
+	var watching := me.distance_to(at) <= CafeJob.WATCH and opening == null and not fighting \
+		and not hud.poker_view.is_open() and (interiors.current == null or not player.on_foot())
+	if watching:
+		_start_cafe_film(at)
+	else:
+		_cafe_goes_off()
+		if me.distance_to(at) <= 2600.0:
+			hud.show_notice("A heavy boom rolls over the rooftops from somewhere toward Halloran Square.")
+
+
+## The short film (in the game itself, like the opening): bars in, the camera
+## leaves Danny for the café across the avenue, a hush, the flash, the street
+## shaking, the people spilling out, and back to Danny as a siren starts up.
+func _start_cafe_film(at: Vector2) -> void:
+	end_talk()
+	player.passing_time = false  # the night goes at its own pace while it plays
+	var me := player.body().global_position
+	var z := camera.zoom.x
+	var keys := [
+		{"t": 0.0, "pos": me, "zoom": z},
+		{"t": 2.6, "pos": at.lerp(me, 0.25), "zoom": z * 1.25},
+		{"t": 4.2, "pos": at, "zoom": z * 1.4},
+		{"t": 6.0, "pos": at + Vector2(0, -20), "zoom": z * 1.2},
+		{"t": 9.5, "pos": at.lerp(me, 0.2), "zoom": z * 1.1},
+		{"t": 12.0, "pos": me, "zoom": z},
+	]
+	var captions := [
+		{"t": 0.3, "text": "Through Rosie's window Vince Duggan is on his second cup, his back to the street."},
+		{"t": 2.8, "text": "Marlowe Avenue goes quiet. Somewhere a streetcar bell. A dog."},
+		{"t": 4.0, "text": ""},
+		{"t": 5.2, "text": "Every window on the block comes in at once."},
+		{"t": 7.6, "text": "Duggan comes out with his napkin still tucked in his collar. He doesn't say a word."},
+		{"t": 10.2, "text": "Over toward Halloran Avenue, a siren starts up."},
+	]
+	var cues := [{"t": 3.4, "id": "hush"}, {"t": 4.0, "id": "blast"}, {"t": 10.0, "id": "siren"}]
+	cafe_film = Cinematic.new()
+	add_child(cafe_film)
+	cafe_film.start(keys, captions, cues, load(Hud.FONT_PATH))
+	cafe_film.cue.connect(_on_film_cue)
+	cafe_film.finished.connect(_end_cafe_film)
+	hud.visible = false
+	markers.visible = false
+	player.set_physics_process(false)
+	walker.move = Vector2.ZERO
+	_follow_rate = camera.follow_rate
+	camera.follow_rate = 3.0
+	camera.target = cafe_film.rig
+
+
+func _on_film_cue(id: String) -> void:
+	match id:
+		"hush":
+			soundscape.set_duck(true)
+		"blast":
+			soundscape.set_duck(false)
+			cafe_film.white_flash(0.85)
+			_shake = 1.0
+			_cafe_goes_off()
+
+
+func _end_cafe_film() -> void:
+	hud.visible = true
+	markers.visible = true
+	player.set_physics_process(true)
+	camera.target = player.body()
+	camera.follow_rate = _follow_rate
+	camera.zoom_override = 0.0
+	soundscape.set_duck(false)
+	cafe_film.queue_free()
+	cafe_film = null
+	save_game()
+
+
+## It goes: the flash and the fire, the street scatters, the coppers in
+## earshot come running (the one who saw Danny at the car goes after him),
+## and anyone standing too close is hurt.
+func _cafe_goes_off() -> void:
+	var at := cafe_scene.car_pos
+	cafe_scene.play_blast()
+	for s in streets():
+		s.hear_gunshot(at)
+	for o in officers():
+		if o.is_down() or o.body.global_position.distance_to(at) > 1600.0:
+			continue
+		if rackets.cafe.seen:
+			o.brain.suspect(walker.global_position)  # he saw Danny at the car: a credible reason
+		else:
+			o.duty = {"pos": at + Vector2(-70, 70), "face": at}  # he comes to look at it, nobody to blame
+	if player.on_foot() and walker.global_position.distance_to(at) <= CafeJob.DANGER:
+		rackets.cafe.caught_in_it = true
+		walker.condition.hurt("torso", 30)
+		walker.condition.hurt("left_arm", 20)
+		walker.hurt.emit("torso", walker.condition.level("torso"))
+	save_game()
+
+
 ## M006: Danny is hit. Where, and how bad, on screen.
 func _on_danny_hurt(region: String, level: int) -> void:
 	player.stand()  # M010: nobody stays sitting when he is hit
@@ -995,6 +1131,8 @@ func _apply(effects: Dictionary) -> void:
 			_arm_thompson(false)
 	if effects.has("parcel"):
 		_show_purse()
+	if effects.get("cafe", "") == "reported":
+		_show_purse()
 	if effects.get("police", false) and interiors.current != null:
 		# the shopkeeper waits until you have gone, then runs out for the copper
 		_report_from = interiors.current
@@ -1051,6 +1189,7 @@ func sleep() -> void:
 	weather.force(weather_override)
 	poker.begin_night(rackets.night)  # M010: the card players are back with fresh money
 	_sync_card_players()
+	moments.clear()
 	_warned = 0
 	_report_from = null
 	for i in cars.size():
@@ -1087,6 +1226,11 @@ func _update_clock(delta: float) -> void:
 		weather.advance(clock.minute)  # M010
 		for e in rackets.opportunities.advance(clock.minute):  # M009: too late is too late
 			_opportunity_over(e)
+		if cafe_scene != null:  # M010: Rosie's Café
+			cafe_scene.job = rackets.cafe
+			if clock.minute >= rackets.cafe.due(rackets.night) and cafe_film == null:
+				_cafe_due()
+			cafe_scene.refresh(rackets.night, clock.minute)
 	if clock.minute >= float(night_rules.home_minute):
 		poker.closing = true  # M010: the card game breaks up at the hour to go home
 	if clock.is_dawn() and _warned < 2:
@@ -1282,6 +1426,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if hud.poker_view.is_open():
 		hud.poker_view.handle_key(event)  # M010: at the card table only the table's keys
 		return
+	if cafe_film != null:
+		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
+				or event.is_action_pressed(CityInput.HANDBRAKE) or (event is InputEventMouseButton and event.pressed):
+			cafe_film.skip()
+		return
 	if opening != null:
 		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
 				or event.is_action_pressed(CityInput.HANDBRAKE) or event.is_action_pressed("ui_accept") \
@@ -1466,7 +1615,7 @@ func _seats_near() -> Array:
 ## but never past the next moment that must not be missed (it slows to normal
 ## a couple of minutes before).
 func _time_scale() -> float:
-	if player.seat.is_empty() or not player.passing_time:
+	if player.seat.is_empty() or not player.passing_time or cafe_film != null:
 		return 1.0
 	if next_moment() - clock.minute < 2.0:
 		return 1.0
@@ -1488,7 +1637,8 @@ func next_moment() -> float:
 
 ## M010: while the drowsiness must keep out of the way (talk, a scene, the maps, a fight).
 func _drowsy_held() -> bool:
-	return talking != "" or opening != null or map_open or status_open or fighting or hud.poker_view.is_open()
+	return talking != "" or opening != null or map_open or status_open or fighting or hud.poker_view.is_open() \
+		or cafe_film != null
 
 
 func my_car() -> Car:
@@ -1666,6 +1816,11 @@ func _update_view(delta: float) -> void:
 	# M010: drowsy before dawn - kept out of the way of talk, cards and scenes
 	camera.offset = drowsy.update(clock.drowsiness(), _drowsy_held(), not player.on_foot(), delta) + _kick
 	_kick = _kick.move_toward(Vector2.ZERO, delta * 40.0).limit_length(8.0)
+	if _shake > 0.0:  # M010: the blast shakes the view
+		_shake = maxf(0.0, _shake - delta * 0.9)
+		camera.offset += Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 14.0 * _shake * _shake
+	if cafe_film != null:
+		camera.zoom_override = cafe_film.zoom
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	world.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
