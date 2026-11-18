@@ -19,18 +19,22 @@ var _time := 0.0
 var _eye := Vector2.ZERO
 
 
-func setup(p_city: City) -> void:
+## `primary` (M008): this district owns the screen-wide night (tint, moon,
+## haze, vignette); a neighbour streamed in beside it adds only its own steam
+## and chimney smoke.
+func setup(p_city: City, primary: bool = true) -> void:
 	city = p_city
-	tint = CanvasModulate.new()
-	tint.color = NIGHT_TINT
-	add_child(tint)
-	# cool moonlight on the roofs (the street lamps only reach the street)
-	var moon := DirectionalLight2D.new()
-	moon.color = Color(0.62, 0.72, 1.0)
-	moon.energy = 0.3
-	moon.range_item_cull_mask = Layers.LIGHT_ROOF
-	add_child(moon)
 	var steam_tex := city.tex("fx/steam")
+	if primary:
+		tint = CanvasModulate.new()
+		tint.color = NIGHT_TINT
+		add_child(tint)
+		# cool moonlight on the roofs (the street lamps only reach the street)
+		var moon := DirectionalLight2D.new()
+		moon.color = Color(0.62, 0.72, 1.0)
+		moon.energy = 0.3
+		moon.range_item_cull_mask = Layers.LIGHT_ROOF
+		add_child(moon)
 	for p in city.layout.steam_vents:
 		add_child(_steam(p, steam_tex))
 	var count := 0
@@ -41,6 +45,15 @@ func setup(p_city: City) -> void:
 				add_child(e)
 				_smoke.append({"node": e, "pos": item.pos, "height": city.layout.building_height(b) + 22.0})
 				count += 1
+	# M008: the works' smokestacks always smoke
+	for st in city.layout.smoke:
+		var e2 := _smoke_emitter(steam_tex)
+		e2.amount = 12
+		e2.scale_amount_max = 0.8
+		add_child(e2)
+		_smoke.append({"node": e2, "pos": st.pos, "height": float(st.height)})
+	if not primary:
+		return
 	var haze_tex := city.tex("fx/glow")
 	for k in MIST_PATCHES:
 		var m := Sprite2D.new()

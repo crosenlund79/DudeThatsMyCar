@@ -8,6 +8,20 @@ extends RefCounted
 const STOREY := 44.0
 
 var name := ""
+## M008: which district this is ("riverside", ...), and where its own
+## coordinates start in the one world they all share (the layout's data is
+## kept in world coordinates once placed: see shift()).
+var id := ""
+var origin := Vector2.ZERO
+## M008: the ways out into neighbouring districts: {to: district id, rect:
+## Rect2 (world) - the opening on the border a street passes through}.
+var exits: Array = []
+## M008: named landmarks without a door of their own, for the maps: {pos, label}.
+var landmarks: Array = []
+## M008: how bright this district's street lamps burn (1 = the Riverside Ward),
+## and smokestacks that smoke all night: {pos, height}.
+var lamp_energy := 1.0
+var smoke: Array = []
 ## Whole visible world (camera limits). Everything inside is drawn.
 var bounds := Rect2()
 ## Where people and cars can be (exits are refused outside it).
@@ -135,6 +149,78 @@ func place_name(p: Vector2) -> String:
 		if (a.rect as Rect2).has_point(p):
 			return a.name
 	return ""
+
+
+## M008: moves every position in the layout by `offset` - a district is drawn
+## up in its own coordinates (its top-left corner at 0, 0) and then placed in
+## the world at its origin. Returns self.
+func shift(offset: Vector2) -> DistrictLayout:
+	origin += offset
+	bounds.position += offset
+	play_area.position += offset
+	spawn += offset
+	for s in streets:
+		s.rect = _moved(s.rect, offset)
+	for i in blocks.size():
+		blocks[i] = _moved(blocks[i], offset)
+	for a in alleys:
+		a.rect = _moved(a.rect, offset)
+	for l in lots:
+		l.rect = _moved(l.rect, offset)
+	for i in cobbles.size():
+		cobbles[i] = _moved(cobbles[i], offset)
+	for i in water.size():
+		water[i] = _moved(water[i], offset)
+	for i in junctions.size():
+		junctions[i] = _moved(junctions[i], offset)
+	for list in [rails, quays, fences]:
+		for seg in list:
+			seg[0] += offset
+			seg[1] += offset
+	for b in buildings:
+		b.rect = _moved(b.rect, offset)
+		for p in b.props:
+			p.pos += offset
+		for sg in b.signs:
+			sg.pos += offset
+	for list2 in [props, decals, spill, landmarks, smoke, cars]:
+		for item in list2:
+			item.pos += offset
+	for e in exits:
+		e.rect = _moved(e.rect, offset)
+	for i in lamps.size():
+		lamps[i] += offset
+	for i in alley_lamps.size():
+		alley_lamps[i] += offset
+	for i in steam_vents.size():
+		steam_vents[i] += offset
+	for i in walk_routes.size():
+		walk_routes[i] = _moved_points(walk_routes[i], offset)
+	for i in drive_loops.size():
+		drive_loops[i] = _moved_points(drive_loops[i], offset)
+	police_beat = _moved_points(police_beat, offset)
+	assert(interiors.is_empty(), "rooms are laid out in world coordinates (the Riverside Ward only)")
+	return self
+
+
+static func _moved(r: Rect2, offset: Vector2) -> Rect2:
+	return Rect2(r.position + offset, r.size)
+
+
+static func _moved_points(points: PackedVector2Array, offset: Vector2) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in points:
+		out.append(p + offset)
+	return out
+
+
+## A world point in this district's own coordinates, and back (M008).
+func to_local(world: Vector2) -> Vector2:
+	return world - origin
+
+
+func to_world(local: Vector2) -> Vector2:
+	return local + origin
 
 
 static func short_name(street: String) -> String:

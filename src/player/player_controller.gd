@@ -26,7 +26,9 @@ const EXIT_SPEED := 40.0
 
 var walker: Walker
 var cars: Array[Car] = []
-var city: City
+## Where a person may stand (M008: the loaded districts - anything with
+## is_open_ground(p, radius); a City or the DistrictStreamer).
+var city: Object
 ## Where the player's bullets fly (set by the game; null: the gun cannot fire).
 var bullets: BulletWorld
 ## Car being driven (null on foot).
@@ -45,7 +47,7 @@ var leaving := false
 var last_command := PlayerCommand.new()
 
 
-func setup(p_walker: Walker, p_cars: Array[Car], p_city: City) -> void:
+func setup(p_walker: Walker, p_cars: Array[Car], p_city: Object) -> void:
 	walker = p_walker
 	cars = p_cars
 	city = p_city

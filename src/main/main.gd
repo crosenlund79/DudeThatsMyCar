@@ -49,6 +49,9 @@ var _follow_rate := 7.0
 var bullets: BulletWorld
 var gunfire: GunfireView
 var navigator: CityNavigator
+## M008: the districts of the city in one world: the Riverside Ward (built at
+## start-up, pinned) and its neighbours, streamed in as Danny comes near.
+var world: DistrictStreamer
 var officer: PoliceOfficer
 ## M006: Lefty Moran, the North Side gangster outside Doyle's Garage.
 var rival: Rival
@@ -131,6 +134,12 @@ func _ready() -> void:
 	markers = PlaceMarkers.new()
 	add_child(markers)
 	markers.setup(layout, resolver)
+	world = DistrictStreamer.new()
+	add_child(world)
+	world.setup(resolver, CityPlan.layouts(layout))
+	world.clearance = Walker.RADIUS + 3.0
+	world.district_ready.connect(func(_id: String) -> void: camera.set_bounds(world.bounds()))
+	world.district_unloading.connect(func(_id: String) -> void: camera.set_bounds.call_deferred(world.bounds()))
 	_park_cars()
 	thefts = CarThefts.new(layout.cars)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
@@ -147,14 +156,14 @@ func _ready() -> void:
 	camera = CityCamera.new()
 	camera.name = "Camera"
 	add_child(camera)
-	camera.set_bounds(layout.bounds)
+	camera.set_bounds(layout.bounds)  # widened as neighbouring districts load (M008)
 	camera.snap_to(walker)
 	camera.make_current()
 	player = PlayerController.new()
 	player.name = "Player"
 	player.command_source = command_source
 	add_child(player)
-	player.setup(walker, cars, city)
+	player.setup(walker, cars, world)
 	for v in interiors.views:
 		v.visitors = [walker]
 	bullets = BulletWorld.new()
@@ -171,6 +180,7 @@ func _ready() -> void:
 			hud.show_notice("Click. Out of rounds. Eddie sells them, in the back of Lindqvist Hardware."))
 	bullets.impact.connect(gunfire.on_impact)
 	navigator = CityNavigator.new(layout, Walker.RADIUS + 3.0)
+	world.adopt(layout.id, city, navigator)
 	officer = PoliceOfficer.new()
 	add_child(officer)
 	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body, bullets)
@@ -897,6 +907,8 @@ func _process(delta: float) -> void:
 		if bird_show != null:
 			bird_show.restart()
 	_update_clock(delta)
+	if not get_tree().paused:
+		world.update(player.body().global_position)  # M008: neighbours streamed in and out
 	_update_view(delta)
 	_update_report(delta)
 
@@ -904,6 +916,7 @@ func _process(delta: float) -> void:
 func _update_view(delta: float) -> void:
 	camera.update_camera(delta)
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
+	world.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
 	street.view = camera.view_rect()
 	var prompt := ""

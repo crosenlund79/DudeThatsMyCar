@@ -37,13 +37,52 @@ var _lights: Node2D
 var _building_order: Array[int] = []
 
 
-func build(p_layout: DistrictLayout, p_resolver: AssetResolver) -> void:
+## Builds the whole district at once (the Riverside Ward at start-up).
+## `primary`: this city owns the night's screen-wide effects (the tint, the
+## moonlight, the haze, the vignette); a neighbouring district streamed in
+## beside it brings only its own steam and smoke (M008).
+func build(p_layout: DistrictLayout, p_resolver: AssetResolver, primary: bool = true) -> void:
+	for step in build_steps(p_layout, p_resolver, primary):
+		step.call()
+
+
+## M008: the same work cut into small steps, to be called in order - a
+## district streamed in while Danny drives builds a few of them a frame.
+func build_steps(p_layout: DistrictLayout, p_resolver: AssetResolver, primary: bool = true) -> Array[Callable]:
+	var steps: Array[Callable] = [_begin.bind(p_layout, p_resolver)]
+	for i in p_layout.streets.size():
+		steps.append(_ground_street.bind(i))
+	steps.append(_ground_cobbles)
+	for i in p_layout.blocks.size():
+		steps.append(_ground_block.bind(i))
+	steps.append(_ground_lots_and_water)
+	steps.append(_ground_edges)
+	steps.append(_ground_details)
+	steps.append(_begin_buildings)
+	var order := range(p_layout.buildings.size())
+	order.sort_custom(func(a: int, b: int) -> bool: return p_layout.buildings[a].storeys < p_layout.buildings[b].storeys)
+	for i in order:
+		steps.append(_build_building.bind(i))
+	for k in range(0, p_layout.props.size(), 16):
+		steps.append(_build_props_range.bind(k, mini(k + 16, p_layout.props.size())))
+	steps.append(_build_quays_fences_and_spill)
+	for k in range(0, p_layout.lamps.size(), 8):
+		steps.append(_build_lamps_range.bind(k, mini(k + 8, p_layout.lamps.size())))
+	steps.append(_build_alley_lamps)
+	steps.append(_build_atmosphere.bind(primary))
+	return steps
+
+
+func _begin(p_layout: DistrictLayout, p_resolver: AssetResolver) -> void:
 	layout = p_layout
 	resolver = p_resolver
 	for child in get_children():
 		child.free()
 	buildings.clear()
 	_building_order.clear()
+	lamp_lights.clear()
+	_raised.clear()
+	_reflections.clear()
 	_ground = _child("Ground")
 	_props = _child("Props")
 	_lights = _child("Lights")
@@ -52,14 +91,13 @@ func build(p_layout: DistrictLayout, p_resolver: AssetResolver) -> void:
 	solids.collision_layer = Layers.WORLD
 	solids.collision_mask = 0
 	add_child(solids)
-	_build_ground()
-	_build_buildings()
-	_build_props()
-	_build_lamps()
+
+
+func _build_atmosphere(primary: bool) -> void:
 	atmosphere = NightAtmosphere.new()
 	atmosphere.name = "Atmosphere"
 	add_child(atmosphere)
-	atmosphere.setup(self)
+	atmosphere.setup(self, primary)
 
 
 func _child(n: String) -> Node2D:
@@ -75,24 +113,34 @@ func tex(logical: String) -> Texture2D:
 
 # ------------------------------------------------------------------ ground
 
-func _build_ground() -> void:
-	# Each patch of ground is drawn once where it shows: asphalt on the streets,
-	# a ring of sidewalk round each block, yard ground only where no building
-	# stands (overdraw is what costs most on slow graphics).
-	for s in layout.streets:
-		_fill_rect((s.rect as Rect2).intersection(layout.bounds), "city/asphalt", Layers.Z_GROUND)
+# Each patch of ground is drawn once where it shows: asphalt on the streets,
+# a ring of sidewalk round each block, yard ground only where no building
+# stands (overdraw is what costs most on slow graphics).
+func _ground_street(i: int) -> void:
+	_fill_rect((layout.streets[i].rect as Rect2).intersection(layout.bounds), "city/asphalt", Layers.Z_GROUND)
+
+
+func _ground_cobbles() -> void:
 	for c in layout.cobbles:
 		_fill_rect(c, "city/cobbles", Layers.Z_GROUND + 1, Color(0.72, 0.72, 0.76))
-	for b in layout.blocks:
-		var r: Rect2 = b
-		for part in sidewalk_ring(r, CURB_RADIUS, SIDEWALK):
-			_fill_poly(part, "city/sidewalk", Layers.Z_GROUND + 2)
-		for yard in _open_ground(r.grow(-SIDEWALK)):
-			_fill_poly(yard, "city/lot", Layers.Z_GROUND + 3)
+
+
+func _ground_block(i: int) -> void:
+	var r: Rect2 = layout.blocks[i]
+	for part in sidewalk_ring(r, CURB_RADIUS, SIDEWALK):
+		_fill_poly(part, "city/sidewalk", Layers.Z_GROUND + 2)
+	for yard in _open_ground(r.grow(-SIDEWALK)):
+		_fill_poly(yard, "city/lot", Layers.Z_GROUND + 3)
+
+
+func _ground_lots_and_water() -> void:
 	for l in layout.lots:
 		_fill_rect(l.rect, "city/sidewalk" if l.kind == "concrete" else "city/lot", Layers.Z_GROUND + 4)
 	for w in layout.water:
 		_fill_rect(w, "city/water", Layers.Z_GROUND + 5, Color.WHITE, Layers.LIGHT_STREET | Layers.LIGHT_ROOF)
+
+
+func _ground_edges() -> void:
 	for b in layout.blocks:
 		var r2: Rect2 = b
 		if layout.water.any(func(w: Rect2) -> bool: return w.intersects(r2.grow(1))):
@@ -107,6 +155,9 @@ func _build_ground() -> void:
 	for w in layout.water:
 		var far: Rect2 = w
 		_strip(PackedVector2Array([Vector2(far.end.x, far.end.y), Vector2(far.end.x, far.position.y)]), "city/quay", Layers.Z_CURB, false)
+
+
+func _ground_details() -> void:
 	for dcl in layout.decals:
 		var s := _sprite(dcl.kind, dcl.pos, dcl.rot, Layers.Z_DECAL, _ground)
 		s.scale *= float(dcl.get("scale", 1.0))
@@ -278,11 +329,14 @@ func _draw_building_shadows(ci: CanvasItem) -> void:
 
 # ------------------------------------------------------------------ buildings
 
-func _build_buildings() -> void:
-	var holder := _child("Buildings")
-	var order := range(layout.buildings.size())
-	order.sort_custom(func(a: int, b: int) -> bool: return layout.buildings[a].storeys < layout.buildings[b].storeys)
-	for i in order:
+func _begin_buildings() -> void:
+	_child("Buildings")
+
+
+## Building i (they are built lowest first: see build_steps).
+func _build_building(i: int) -> void:
+	var holder := get_node("Buildings")
+	if true:
 		var b: Dictionary = layout.buildings[i]
 		var r: Rect2 = b.rect
 		if layout.interior_of(i) == null:  # rooms you can enter get their walls from Interiors
@@ -411,8 +465,9 @@ func _solid_box(pos: Vector2, size: Vector2, rot: float) -> void:
 	solids.add_child(shape)
 
 
-func _build_props() -> void:
-	for p in layout.props:
+func _build_props_range(from: int, to: int) -> void:
+	for idx in range(from, to):
+		var p: Dictionary = layout.props[idx]
 		var raised: bool = p.height > 0.0
 		var s := _sprite(p.kind, p.pos, p.rot, Layers.Z_RAISED if raised else Layers.Z_PROP, _props)
 		if raised:
@@ -430,10 +485,19 @@ func _build_props() -> void:
 			halo.scale = AssetCatalog.scale_for(halo.texture, Vector2(46, 46))
 			halo.modulate = p.light
 			_point_light(p.pos, p.light, 0.9, 110.0)
+
+
+func _build_quays_fences_and_spill() -> void:
 	for q in layout.quays:
 		var a: Vector2 = q[0]
 		var b: Vector2 = q[1]
 		_solid_box((a + b) * 0.5, Vector2(a.distance_to(b), 6.0), (b - a).angle())
+	# M008: board fences round the yards (solid)
+	for f in layout.fences:
+		var fa: Vector2 = f[0]
+		var fb: Vector2 = f[1]
+		_strip(PackedVector2Array([fa, fb]), "city/fence", Layers.Z_PROP, false)
+		_solid_box((fa + fb) * 0.5, Vector2(fa.distance_to(fb), 8.0), (fb - fa).angle())
 	# warm light from shop windows on the pavement
 	for b in layout.buildings:
 		if not b.facade in SHOPFRONTS or b.front == Vector2.ZERO:
@@ -463,8 +527,9 @@ func _point_light(pos: Vector2, color: Color, energy: float, radius: float) -> P
 	return l
 
 
-func _build_lamps() -> void:
-	for p in layout.lamps:
+func _build_lamps_range(from: int, to: int) -> void:
+	for idx in range(from, to):
+		var p: Vector2 = layout.lamps[idx]
 		_sprite("props/lamp_base", p, 0.0, Layers.Z_PROP, _props)
 		_solid_circle(p, 5.0)
 		var head := _sprite("props/lamp_head", p, 0.0, Layers.Z_RAISED, _props)
@@ -482,7 +547,10 @@ func _build_lamps() -> void:
 		refl.offset = Vector2(-refl.texture.get_width() * 0.5, 0.0)
 		refl.modulate = Color(1.0, 0.8, 0.55, 0.5)
 		_reflections.append({"node": refl, "pos": p, "height": LAMP_HEIGHT})
-		lamp_lights.append(_point_light(p, LAMP_COLOR, 1.0, LAMP_RADIUS))
+		lamp_lights.append(_point_light(p, LAMP_COLOR, layout.lamp_energy, LAMP_RADIUS))
+
+
+func _build_alley_lamps() -> void:
 	for p in layout.alley_lamps:
 		var bulb := _sprite("fx/glow", p, 0.0, Layers.Z_RAISED_GLOW, _props, true)
 		bulb.scale = AssetCatalog.scale_for(bulb.texture, Vector2(34, 34))
