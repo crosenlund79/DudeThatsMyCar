@@ -309,10 +309,10 @@ func _novak(step: String, context: Dictionary) -> Dictionary:
 			if r.opportunities.crate != "loaded" or not context.get("crate_outside", false):
 				return _page("novak", "A crate? I don't see no crate, Mr. Mercer. Bring it round the side, not in here.")
 			var pay := mini(Opportunities.CRATE_PAY, g.cash)
-			var line := "From Dutch? Peaches! God bless the Dutchman. We heave it in the back between us, and Novak counts %s into your hand." % Rackets.dollars(pay)
+			var line := "\"From Dutch? Peaches! God bless the Dutchman.\" You heave it into his back room between you, and Novak counts %s into your hand." % Rackets.dollars(pay)
 			if pay < Opportunities.CRATE_PAY:
-				line = "From Dutch? Peaches... We heave it in the back. \"%s is all the till has, Mr. Mercer. Dutch will understand.\"" % Rackets.dollars(pay)
-			return _page("novak", line, [], {"opportunity": "deliver_crate"})
+				line = "\"From Dutch? Peaches...\" You heave it into his back room. \"%s is all the till has, Mr. Mercer. Dutch will understand.\"" % Rackets.dollars(pay)
+			return _told("novak", line, [], {"opportunity": "deliver_crate"})
 		"lend":
 			var amount := _loan_amount()
 			if r.lend("grocery", amount) == 0:
@@ -605,28 +605,28 @@ func _dutch(step: String, context: Dictionary) -> Dictionary:
 						ask = "\"Mercer! Novak says you're reliable. Got another one for him - same deal, %s at his door, before two.\"" % Rackets.dollars(Opportunities.CRATE_PAY)
 					elif sore:
 						ask = "\"You. Last time my crate went for a ride round Riverside all night.\" He looks you over. \"...I got another. You want it, you deliver it this time. Before two.\""
-					return _page("dutch", ask, [{"id": "take", "text": "I'll take it up."}, {"id": "what", "text": "What's really in it?"},
+					return _told("dutch", ask, [{"id": "take", "text": "I'll take it up."}, {"id": "what", "text": "What's really in it?"},
 						{"id": "bye", "text": "Not tonight, Dutch."}])
 				"taken":
-					return _page("dutch", "\"It's there by the door. Bring a car up to the kerb and we'll heave it in the boot.\"")
+					return _told("dutch", "\"It's there by the door. Bring a car up to the kerb and we'll heave it in the boot.\"")
 				"loaded":
-					return _page("dutch", "\"Go on, Novak's waiting. Back way, quiet like. Before two.\"")
+					return _told("dutch", "\"Go on, Novak's waiting. Back way, quiet like. Before two.\"")
 				"delivered":
-					return _page("dutch", "\"Novak telephoned the drugstore to say it came. Peaches all round. Coffee's on the house tonight.\"")
+					return _told("dutch", "\"Novak telephoned the drugstore to say it came. Peaches all round. Coffee's on the house tonight.\"")
 				"gone":
-					return _page("dutch", "\"Too late, pal. My nephew took it up in the ice truck. Coffee's a nickel, pie's a dime.\"")
+					return _told("dutch", "\"Too late, pal. My nephew took it up in the ice truck. Coffee's a nickel, pie's a dime.\"")
 				"dropped":
-					return _page("dutch", "\"My nephew had to go find my crate in Riverside at three in the morning. Don't come round here making promises.\"")
+					return _told("dutch", "\"My nephew had to go find my crate in Riverside at three in the morning. Don't come round here making promises.\"")
 			if sore:
-				return _page("dutch", "\"Coffee's a nickel. Crates I give to people who deliver them.\"")
-			return _page("dutch", "\"Coffee's a nickel, pie's a dime. Nothing else tonight, mister.\"")
+				return _told("dutch", "\"Coffee's a nickel. Crates I give to people who deliver them.\"")
+			return _told("dutch", "\"Coffee's a nickel, pie's a dime. Nothing else tonight, mister.\"")
 		"what":
-			return _page("dutch", "\"Peaches. Mostly peaches. Some of 'em even say peaches on the tin.\"",
+			return _told("dutch", "\"Peaches. Mostly peaches. Some of 'em even say peaches on the tin.\"",
 				[{"id": "take", "text": "Peaches it is. I'll take it."}, {"id": "bye", "text": "Not tonight."}])
 		"take":
 			if o.crate != "waiting":
-				return _page("dutch", "\"Too late for that, pal.\"")
-			return _page("dutch", "\"Good man. It's by the door. Bring a car up to the kerb here and we'll heave it in the boot.\"",
+				return _told("dutch", "\"Too late for that, pal.\"")
+			return _told("dutch", "\"Good man. It's by the door. Bring a car up to the kerb here and we'll heave it in the boot.\"",
 				[], {"opportunity": "take_crate"})
 	return {}
 
@@ -643,33 +643,40 @@ func _feeney(step: String, context: Dictionary) -> Dictionary:
 					var ask := "A small man in a dinner jacket is wringing his hands under the marquee. \"The reel for the late show never came! The exchange's boy says he set the can down behind St. Brendan's, the dolt. I can't leave a full lobby. %s if it's in my hands before eleven.\"" % Rackets.dollars(Opportunities.REEL_PAY)
 					if sore:
 						ask = "\"You again. The exchange's boy has lost a reel again - behind St. Brendan's, again. I suppose you'll say you'll fetch it. Before eleven, %s.\"" % Rackets.dollars(Opportunities.REEL_PAY)
-					return _page("feeney", ask, [{"id": "take", "text": "I'll find your reel."}, {"id": "bye", "text": "Not my line of work."}])
+					return _told("feeney", ask, [{"id": "take", "text": "I'll find your reel."}, {"id": "bye", "text": "Not my line of work."}])
 				"looking":
-					return _page("feeney", "\"Behind St. Brendan's, he said. Eleven o'clock, mister. Eleven!\"")
+					return _told("feeney", "\"Behind St. Brendan's, he said. Eleven o'clock, mister. Eleven!\"")
 				"found":
-					return _page("feeney", "\"Is that...?\"", [{"id": "give", "text": "One reel, slightly dusty."}])
+					return _told("feeney", "\"Is that...?\"", [{"id": "give", "text": "One reel, slightly dusty."}])
 				"returned":
-					return _page("feeney", "\"The late show's running. Listen to them laugh. Any night you like, mister, there's a seat for you.\"")
+					return _told("feeney", "\"The late show's running. Listen to them laugh. Any night you like, mister, there's a seat for you.\"")
 				"cancelled":
 					var line := "\"No reel, no late show. Twenty-two refunds.\" He looks at you. \"Some help you were.\"" if o.reel_promised \
 						else "\"No reel, no late show. Twenty-two refunds. I could weep.\""
-					return _page("feeney", line)
-			return _page("feeney", "\"Tonight at nine and eleven, 'Gentlemen of the Night'. Fifteen cents, mister, and worth every one.\"")
+					return _told("feeney", line)
+			return _told("feeney", "\"Tonight at nine and eleven, 'Gentlemen of the Night'. Fifteen cents, mister, and worth every one.\"")
 		"take":
 			if o.reel != "lost":
-				return _page("feeney", "\"Too late for that now.\"")
-			return _page("feeney", "\"Bless you! Behind the church, he said. Before eleven!\"", [], {"opportunity": "take_reel"})
+				return _told("feeney", "\"Too late for that now.\"")
+			return _told("feeney", "\"Bless you! Behind the church, he said. Before eleven!\"", [], {"opportunity": "take_reel"})
 		"give":
 			if o.reel != "found":
 				return {}
-			return _page("feeney", "Feeney clutches the can like a newborn. \"Saved! %s, and a seat any night you like.\" He hurries it up to the booth." % Rackets.dollars(Opportunities.REEL_PAY),
+			return _told("feeney", "Feeney clutches the can like a newborn. \"Saved! %s, and a seat any night you like.\" He hurries it up to the booth." % Rackets.dollars(Opportunities.REEL_PAY),
 				[], {"opportunity": "return_reel"})
 	return {}
 
 
 func _incident_page(who: String, text: String, options: Array = [], effects: Dictionary = {}) -> Dictionary:
-	var page := _page("incident", text, options, effects)
+	var page := _told("incident", text, options, effects)
 	page["speaker"] = who
+	return page
+
+
+## M009: a narrated page - what happens, the speech in quotes (shown as written).
+func _told(who: String, text: String, options: Array = [], effects: Dictionary = {}) -> Dictionary:
+	var page := _page(who, text, options, effects)
+	page["narrated"] = true
 	return page
 
 

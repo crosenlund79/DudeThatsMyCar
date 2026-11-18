@@ -224,10 +224,11 @@ func _ground_details() -> void:
 		d.decals.append({"kind": "decals/litter", "pos": p, "rot": rnd.randf_range(-PI, PI), "scale": 1.0})
 
 
-## M009: Dutch out on the pavement in front of his night lunch, his crate by the door.
+## M009: Dutch out on the pavement in front of his night lunch (past the end of its
+## awning, where he can be seen), his crate by the door.
 func _contacts() -> void:
-	d.contacts = [{"id": "dutch", "look": "characters/dutch", "pos": Vector2(2985, FOUNDRY - HALF - 26.0), "face": PI / 2}]
-	d.errands = [{"id": "crate", "pos": Vector2(3045, FOUNDRY - HALF - 28.0)}]
+	d.contacts = [{"id": "dutch", "look": "characters/dutch", "pos": Vector2(3015, FOUNDRY - HALF - 26.0), "face": PI / 2}]
+	d.errands = [{"id": "crate", "pos": Vector2(3090, FOUNDRY - HALF - 28.0)}]
 
 
 ## M009: where the yards' own small troubles happen; Dutch at the lunch counter notices.

@@ -170,12 +170,26 @@ func _build_dialogue() -> void:
 	dialogue_panel.visible = false
 
 
-## Shows a conversation page ({speaker, text, options: [{id, text}]}).
+## Straight double quotes turned into opening and closing curly ones, in turn.
+static func _curly(t: String) -> String:
+	var out := ""
+	var open := true
+	for ch in t:
+		if ch == "\"":
+			out += "\u201c" if open else "\u201d"
+			open = not open
+		else:
+			out += ch
+	return out
+
+
+## Shows a conversation page ({speaker, text, options: [{id, text}], narrated}).
 func show_dialogue(page: Dictionary) -> void:
 	speaker_label.text = String(page.speaker).to_upper()
 	if String(page.get("tone", "")) != "":
 		speaker_label.text += "   (%s)" % page.tone  # M007: how the line is said
-	line_label.text = "\u201c%s\u201d" % page.text
+	# M009: a narrated page (what happens, with the speech in quotes) is shown as written
+	line_label.text = _curly(String(page.text)) if page.get("narrated", false) else "\u201c%s\u201d" % page.text
 	var options: Array = page.options
 	for i in option_labels.size():
 		var o := option_labels[i]

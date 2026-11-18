@@ -15,7 +15,8 @@ extends SceneTree
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
 ## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007),
-## wheels / wheels_lock (M009: the front tyres, straight and at full lock), dump_truck, school_bus (M009).
+## wheels / wheels_lock (M009: the front tyres, straight and at full lock), dump_truck, school_bus,
+## incident / incident_broken_up / incident_stop, dutch / crate, feeney / film_can (M009).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -503,6 +504,88 @@ func _run(shots: Array) -> void:
 				cmd = PlayerCommand.make(Vector2(0, 1))
 				await _frames(60)
 				cmd = PlayerCommand.new()
+			"incident", "incident_broken_up":
+				# M009: an argument outside the Copper Owl, getting heated, with nobody's help;
+				# incident_broken_up: Danny steps in and they part, still muttering
+				main.street.clear()
+				_teleport_walker(Vector2(1000, 1500), 0.0)
+				main.incidents.plan = [{"id": "shot_a", "kind": "argument", "spot": "owl_kerb", "at": main.clock.minute + 0.5, "tries": 0}]
+				main.clock.set_time(main.clock.minute + 1.0)
+				main._advance_incidents()
+				main.clock.set_time(main.clock.minute + 13.0)  # into the heated part
+				main._advance_incidents()
+				_teleport_walker(Vector2(2190, 560), PI + 0.6)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2120, 462))
+				await _frames(150)
+				if s == "incident_broken_up":
+					main._incident_talking = "shot_a"
+					main._step_in("calm")
+					await _frames(70)
+				await _shot(s, false)
+				cmd = PlayerCommand.new()
+			"incident_stop":
+				# M009: the ward's beat cop has stopped a man on Marlowe Avenue and questions him
+				main.street.clear()
+				_teleport_walker(Vector2(1000, 1500), 0.0)
+				main.incidents.plan = [{"id": "shot_s", "kind": "stop", "spot": "marlowe_stop", "at": main.clock.minute + 0.5, "tries": 0}]
+				main.clock.set_time(main.clock.minute + 1.0)
+				main._advance_incidents()
+				_teleport_walker(Vector2(2010, 590), -0.4)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2070, 462))
+				await _frames(60 * 9)
+				await _shot("incident_stop", false)
+				cmd = PlayerCommand.new()
+			"dutch", "crate":
+				# M009: Dutch outside his night lunch, his crate by the door, the sedan at the kerb;
+				# crate: loaded, strapped on behind the sedan as Danny drives off
+				var yl: DistrictLayout = main.world.layouts.yards
+				var cp: Vector2 = yl.errands[0].pos
+				_teleport_walker(yl.contacts[0].pos + Vector2(0, 30), -PI / 2)
+				main.world.load_now("yards")
+				var ys: Car = main.my_car()
+				ys.place(Transform2D(PI, cp + Vector2(10, 74)))
+				await _frames(20)
+				if s == "dutch":
+					main.walker.place(yl.contacts[0].pos + Vector2(4, 30), -PI / 2)
+					await _frames(10)
+					await _frames(10)
+					main._interact(main.walker.global_position)
+					await _frames(30)
+					await _shot("dutch", false)
+					main.end_talk()
+				else:
+					main.rackets.opportunities.take_crate()
+					main.walker.place(cp + Vector2(0, 20), -PI / 2)
+					await _frames(5)
+					main._take_errand("crate", cp)
+					main.walker.place(ys.global_position + Vector2(0, -34), 0.0)
+					await _frames(2)
+					main.player.enter(ys)
+					cmd = PlayerCommand.make(Vector2(0.0, -1.0))
+					await _frames(70)
+					cmd = PlayerCommand.new()
+					await _shot("crate", false)
+			"feeney", "film_can":
+				# M009: Mr. Feeney under the Bijou's marquee asks for help; film_can: the lost
+				# reel in St. Brendan's churchyard
+				var hl: DistrictLayout = main.world.layouts.halloran
+				if s == "feeney":
+					_teleport_walker(hl.contacts[0].pos + Vector2(-4, 30), -PI / 2)
+					main.world.load_now("halloran")
+					await _frames(20)
+					await _frames(10)
+					main._interact(main.walker.global_position)
+					await _frames(30)
+					await _shot("feeney", false)
+					main.end_talk()
+				else:
+					var fc: Vector2 = hl.errands[0].pos
+					_teleport_walker(fc + Vector2(-40, 50), -0.9)
+					main.world.load_now("halloran")
+					cmd = PlayerCommand.make(Vector2.ZERO, false, false, fc)
+					await _frames(40)
+					await _shot("film_can", false)
+					cmd = PlayerCommand.new()
 			"grocery_door":
 				_teleport_walker(Vector2(1900, 520), PI / 2)
 				await _frames(40)

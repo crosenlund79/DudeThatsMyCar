@@ -174,6 +174,14 @@ func _make(inc: Dictionary) -> void:
 	label.add_theme_color_override("font_color", Color("f3e3c0"))
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 	label.add_theme_constant_override("outline_size", 5)
+	var back := StyleBoxFlat.new()  # a soft dark backing: readable over a lit facade
+	back.bg_color = Color(0.05, 0.04, 0.04, 0.6)
+	back.set_corner_radius_all(4)
+	back.content_margin_left = 5.0
+	back.content_margin_right = 5.0
+	back.content_margin_top = 1.0
+	back.content_margin_bottom = 1.0
+	label.add_theme_stylebox_override("normal", back)
 	label.visible = false
 	add_child(label)
 	v.label = label
@@ -203,7 +211,9 @@ func _pose(inc: Dictionary, v: Dictionary, danny: Vector2, delta: float) -> void
 	var phase := model.phase_name(inc)
 	var last: bool = inc.phase >= (StreetIncidents.PHASES[inc.kind] as Array).size() - 1
 	if last:
-		return  # the last phase plays out as they leave (_ended)
+		# how it ends is settled: they say so (they walk off once it is over, _ended)
+		_speak(inc, v, String(inc.outcome), danny, delta)
+		return
 	var targets := _places(inc)
 	var other_of := func(i: int) -> Vector2:
 		if inc.kind == "stop":

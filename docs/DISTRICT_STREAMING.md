@@ -180,3 +180,29 @@ spot: the ward's Marlowe Avenue 13-16 fps, Halloran Square's 14.7-16.3 fps, the 
 (fewer lamps); clearing a district's street life gains about 1 fps, its lamps about 3.5 fps. The
 software renderer's frame times vary a lot between runs; a real GPU has still never been measured
 (see `docs/BACKLOG.md`).
+
+### M009: the city's incidents, Danny's own work and the heavy vehicles (same machine)
+
+Nothing of M009 is simulated in a district that is not built: an incident there is a few numbers
+on the night clock (`StreetIncidents`), and Dutch's and Mr. Feeney's errands are a state each
+(`Opportunities`). People are made only for an incident near the camera in a built district, and
+Dutch, Mr. Feeney, the crate and the film can are children of their district's node, built and
+freed with it. Brennan's truck and the school bus are parked cars of their districts like any
+other (made with the district, put away with it, never doubled).
+
+From `tests/support/incident_probe.gd` and a re-run of `district_probe.gd`:
+
+| | |
+| --- | --- |
+| A night of incidents as state, frame by frame (18 000 frames) | 34-47 ms all told (0.002-0.003 ms a frame); about 9 planned a night over the three districts |
+| M009 work a frame, nothing going on (incident clock, views, contacts, the E check) | 0.09 ms mean, 0.13-0.34 ms worst |
+| The same with two incidents in view (four people, two lines) | 0.21-0.23 ms mean, 0.5-4.5 ms worst (the frame their people are made) |
+| Frame rate at the Copper Owl, nothing going on / two incidents in view (same spot) | 16.4 / 16.8 fps, 18.0 / 17.6 fps (no difference within noise) |
+| The yards at Dutch's (truck on the dock) | 21.6-24.4 fps |
+| Driving the school bus in Halloran Square | 18.7-19.7 fps |
+| Build the yards (with Dutch, his crate and the truck) | 24.2 ms over 5 frames, worst 6.5 ms (M008: 29.3 ms over 7, worst 5.4) |
+| Build Halloran Square (with Mr. Feeney, the can and the bus) | 26.2 ms over 6 frames, worst 5.2 ms (slowest step: its parked cars, 2.2 ms) |
+| Memory with the ward + the yards | +8.8 MB static, +1573 nodes (M008: +8.7 MB, +1557) |
+
+The traffic's obstacle list grows by four circles for each of the two long vehicles while their
+district is built; no new per-frame scan of the whole city was added.
