@@ -74,6 +74,8 @@ var clock: NightClock
 ## Reminders given tonight: 0 none, 1 "get home", 2 "dawn".
 var _warned := 0
 var paused := false
+## M006: the ward map is open (the world is paused under it).
+var map_open := false
 ## The sound level chosen on the pause screen (index into AudioSettings.BUSES).
 var sound_row := 0
 var rackets: Rackets
@@ -594,6 +596,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				or (event is InputEventMouseButton and event.pressed):
 			opening.skip()
 		return
+	if map_open and (event.is_action_pressed(CityInput.MAP) or event.is_action_pressed(CityInput.MENU)):
+		show_map(false)
+		return
+	if event.is_action_pressed(CityInput.MAP) and not paused and talking == "":
+		show_map(true)
+		return
+	if map_open:
+		return  # nothing else while the map is open
 	if event.is_action_pressed(CityInput.MENU) and talking != "":
 		end_talk()
 	elif event.is_action_pressed(CityInput.MENU):
@@ -608,6 +618,32 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().quit()
 	elif event.is_action_pressed(CityInput.HELP):
 		hud.toggle_help()
+
+
+## M006: the map of the whole ward, on (M) or off (M or Esc). The world waits
+## under it: no walking, driving or shooting while it is open.
+func show_map(on: bool) -> void:
+	map_open = on
+	get_tree().paused = on
+	hud.show_map(on)
+	if on:
+		_update_map()
+
+
+## Danny's own car (null if there is none).
+func my_car() -> Car:
+	for i in cars.size():
+		if thefts.is_dannys(i):
+			return cars[i]
+	return null
+
+
+func _update_map() -> void:
+	var mine := my_car()
+	var body := player.body()
+	hud.ward_map.set_state(body.global_position, walker.model.facing if player.on_foot() else player.car.model.heading,
+		mine.global_position if mine != null and mine != player.car else Vector2.INF, mine.rotation if mine != null else 0.0,
+		officer.body.global_position if not officer.is_down() else Vector2.INF)
 
 
 ## On the pause screen: Up / Down choose a sound level, Left / Right change it
@@ -677,6 +713,8 @@ func _update_view(delta: float) -> void:
 	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)
 	hud.show_gun(walker.gun if player.on_foot() else null)
+	if map_open:
+		_update_map()
 	soundscape.set_speech(opening != null or voice.speaking())
 	if opening != null:
 		camera.zoom_override = opening.zoom

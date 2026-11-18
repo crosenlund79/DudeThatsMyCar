@@ -91,6 +91,12 @@ extends Resource
 @export var rear_axle := 0.0
 ## Front wheel angle at full lock (degrees).
 @export var max_wheel_angle := 32.0
+## M006: a little more lock at a crawl, for parking and U-turns (degrees; 0 =
+## max_wheel_angle at every speed). It applies fully up to crawl_lock_speed
+## and eases back to max_wheel_angle by twice that speed, so driving at any
+## pace is exactly as before.
+@export var crawl_wheel_angle := 0.0
+@export var crawl_lock_speed := 30.0
 ## Most sideways acceleration the tyres give when cornering (px/s^2); beyond
 ## it the car runs wide. 0 = no limit.
 @export var cornering_grip := 0.0

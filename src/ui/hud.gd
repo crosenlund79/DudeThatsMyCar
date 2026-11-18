@@ -16,12 +16,14 @@ const COPPER := Color("d8a060")
 const DIM := Color("f1e4c6", 0.65)
 ## px per second -> miles per hour (one world px is about 7.5 cm of street).
 const MPH_PER_PX := 0.168
-const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   talk / go in, out / get in a car\n1 - 4   answer\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nF1   this card      Esc   pause"
+const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   talk / go in, out / get in a car\n1 - 4   answer\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nM   map      C   how you are\nF1   this card      Esc   pause"
 
 var resolver: AssetResolver
 var place_label: Label
 var purse_label: Label
 var minimap: Minimap
+## M006: the whole ward (M).
+var ward_map: WardMap
 var clock_panel: PanelContainer
 var clock_label: Label
 var home_label: Label
@@ -196,6 +198,16 @@ func add_minimap(layout: DistrictLayout) -> void:
 	add_child(minimap)
 	minimap.setup(layout, resolver, _panel_style(), _font)
 	move_child(minimap, 0)  # under the dialogue panel and notices
+	ward_map = WardMap.new()
+	add_child(ward_map)
+	ward_map.setup(minimap, _font)
+
+
+## The ward map open (true) or closed.
+func show_map(on: bool) -> void:
+	ward_map.visible = on
+	if on:
+		ward_map.layout_for(get_viewport().get_visible_rect().size)
 
 
 ## The clock at the top of the screen: "NIGHT 2   ·   11:40 PM", and a
@@ -348,6 +360,8 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 	pause_panel.position = (screen - pause_panel.size) * 0.5
 	if minimap != null:
 		minimap.position = Vector2(18, screen.y - Minimap.SIZE.y - 18)
+	if ward_map != null and ward_map.visible:
+		ward_map.layout_for(screen)
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		wake_screen.size = screen

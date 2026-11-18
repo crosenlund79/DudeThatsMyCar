@@ -31,9 +31,9 @@ func _circle(p: DrivingParams, speed: float, steer: float, ticks: int) -> CarMod
 func test_turning_follows_the_front_wheels_circle_at_low_speed() -> void:
 	for p in [sedan, roadster]:
 		var m := CarModel.new(p)
-		var r: float = p.wheelbase / tan(deg_to_rad(p.max_wheel_angle))
 		for v in [20.0, 60.0, 120.0]:
-			assert_almost_eq(v / m.road_yaw(v, 1.0), r, 0.5, "%s: same circle at %d px/s" % [p.display_name, v])
+			var r: float = p.wheelbase / tan(deg_to_rad(m.lock_degrees(v)))  # M006: a little more lock at a crawl
+			assert_almost_eq(v / m.road_yaw(v, 1.0), r, 0.5, "%s: the front wheels' circle at %d px/s" % [p.display_name, v])
 		assert_almost_eq(m.road_yaw(60.0, 0.5) * 2.0, m.road_yaw(60.0, 1.0), m.road_yaw(60.0, 1.0) * 0.6,
 			"half a turn of the wheel turns about half as hard")
 
@@ -46,7 +46,7 @@ func test_no_turning_on_the_spot_and_reversing_turns_the_other_way() -> void:
 	for i in 30:
 		m.update(DT, 1.0, false, false)
 	assert_eq(m.heading, 0.0, "a car standing still only turns its wheels")
-	assert_almost_eq(m.wheel_angle(), deg_to_rad(sedan.max_wheel_angle), 0.0001, "and you can see them turned")
+	assert_almost_eq(m.wheel_angle(), deg_to_rad(sedan.crawl_wheel_angle), 0.0001, "and you can see them turned (M006: the crawl lock)")
 
 
 func test_a_full_lock_circle_has_a_road_cars_diameter() -> void:
@@ -61,7 +61,7 @@ func test_a_full_lock_circle_has_a_road_cars_diameter() -> void:
 		m.velocity = m.velocity.normalized() * 60.0
 		m.integrate(DT)
 		far = maxf(far, m.position.distance_to(start))
-	assert_almost_eq(far, m.min_circle() * 2.0, 6.0, "the centre traces the tightest circle")
+	assert_almost_eq(far, m.min_circle(60.0) * 2.0, 6.0, "the centre traces the tightest circle")
 	assert_between(far / 80.0, 1.6, 2.3, "about twice the car's length across, like a real sedan")
 
 

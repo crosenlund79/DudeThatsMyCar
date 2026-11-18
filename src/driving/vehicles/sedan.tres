@@ -33,6 +33,7 @@ wall_align_rate = 2.4
 wheelbase = 44.5
 rear_axle = 22.5
 max_wheel_angle = 31.0
+crawl_wheel_angle = 35.0
 cornering_grip = 400.0
 tyre_grip = 900.0
 brake_rise_time = 0.22

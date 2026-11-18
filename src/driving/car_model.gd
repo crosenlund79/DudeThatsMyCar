@@ -89,7 +89,7 @@ func _turn_wheel(delta: float, command: float) -> void:
 ## where the tyres run out of cornering grip; the handbrake lets the tail come
 ## round (handbrake_turn_scale times the grip limit).
 func road_yaw(fwd_speed: float, level: float, handbrake := false) -> float:
-	var curvature := tan(deg_to_rad(params.max_wheel_angle) * clampf(level, -1.0, 1.0)) / params.wheelbase
+	var curvature := tan(deg_to_rad(lock_degrees(fwd_speed)) * clampf(level, -1.0, 1.0)) / params.wheelbase
 	var v2 := fwd_speed * fwd_speed
 	if params.cornering_grip > 0.0 and v2 > 1.0:
 		var limit := params.cornering_grip / v2
@@ -100,14 +100,23 @@ func road_yaw(fwd_speed: float, level: float, handbrake := false) -> float:
 
 
 ## Tightest turning circle of a road car (centre of the car, px).
-func min_circle() -> float:
-	var r := params.wheelbase / tan(deg_to_rad(params.max_wheel_angle))
+func min_circle(fwd_speed: float = 0.0) -> float:
+	var r := params.wheelbase / tan(deg_to_rad(lock_degrees(fwd_speed)))
 	return sqrt(r * r + params.rear_axle * params.rear_axle)
+
+
+## Full lock at a forward speed (degrees): max_wheel_angle, or a little more at
+## a crawl (M006, crawl_wheel_angle).
+func lock_degrees(fwd_speed: float) -> float:
+	if params.crawl_wheel_angle <= 0.0 or params.crawl_lock_speed <= 0.0:
+		return params.max_wheel_angle
+	var t := clampf((absf(fwd_speed) - params.crawl_lock_speed) / params.crawl_lock_speed, 0.0, 1.0)
+	return lerpf(params.crawl_wheel_angle, params.max_wheel_angle, t)
 
 
 ## Front wheel angle (radians, + = right) for drawing the wheels.
 func wheel_angle() -> float:
-	return deg_to_rad(params.max_wheel_angle) * steer_level
+	return deg_to_rad(lock_degrees(forward_speed())) * steer_level
 
 
 ## Brakes bite over brake_rise_time and let go at once.

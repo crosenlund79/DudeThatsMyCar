@@ -14,7 +14,7 @@ extends SceneTree
 ## opening (M005: the monologue over the ward, six moments and the hand-over),
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
-## Moran outside Doyle's Garage; shooting, then shot down: lefty_down).
+## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map (M006).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -197,6 +197,14 @@ func _run(shots: Array) -> void:
 					main.rival.body.hit_by_bullet(main.rival.body.global_position, Vector2.RIGHT, main.walker)
 				await _frames(20)
 				await _shot("lefty_down")
+			"ward_map":
+				# M006: the map of the whole ward (M)
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
+				await _frames(10)
+				main.show_map(true)
+				await _frames(5)
+				await _shot("ward_map", false)
+				main.show_map(false)
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)
