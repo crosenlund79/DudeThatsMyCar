@@ -14,7 +14,8 @@ extends SceneTree
 ## opening (M005: the monologue over the ward, six moments and the hand-over),
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
-## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007).
+## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006), fight / fight_landed (M007),
+## wheels / wheels_lock (M009: the front tyres, straight and at full lock).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -450,6 +451,35 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(2520, 1430), PI / 2)
 				await _frames(40)
 				await _shot("cars")
+			"wheels", "wheels_lock":
+				# M009: the front tyres tucked under the wings, close up, in four headings;
+				# wheels_lock: the same cars with the wheels at full lock
+				var wspots := [[Vector2(2260, 1480), 0.0], [Vector2(2380, 1480), PI / 2], [Vector2(2500, 1480), PI],
+					[Vector2(2620, 1480), -PI / 4]]
+				var wpicks := ["sedan", "coupe", "police", "sedan"]
+				var wused := []
+				for k in wspots.size():
+					for c in main.cars:
+						if c.vehicle.id == wpicks[k] and not wused.has(c) and not c.has_meta("away"):
+							wused.append(c)
+							c.place(Transform2D(wspots[k][1], wspots[k][0]))
+							c.model.position = wspots[k][0]
+							break
+				main.street.clear()
+				main.walker.place(Vector2(2440, 1700), PI / 2)  # out of the picture
+				var mid := Node2D.new()
+				main.add_child(mid)
+				mid.global_position = Vector2(2440, 1480)
+				main.camera.zoom_override = 2.4
+				main.camera.snap_to(mid)
+				for f in 40:
+					for c in wused:
+						(c as Car).model.steer_level = 1.0 if s == "wheels_lock" else 0.0
+					await _frames(1)
+				await _shot(s, false)
+				main.camera.zoom_override = 0.0
+				main.camera.snap_to(main.walker)
+				mid.queue_free()
 			"grocery_door":
 				_teleport_walker(Vector2(1900, 520), PI / 2)
 				await _frames(40)

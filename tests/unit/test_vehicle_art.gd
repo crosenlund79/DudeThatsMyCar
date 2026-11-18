@@ -59,3 +59,37 @@ func test_the_bright_chrome_is_at_the_nose() -> void:
 							rear += 1
 			assert_gt(front, 60, "%s: radiator, mascot and bumper shine at the front" % paint)
 			assert_lt(rear, 10, "%s: the tail stays dark (only red lamps)" % paint)
+
+
+## M009: the outermost painted body edge across the car's width at x (display
+## px from the centre line, on the side `side` = -1 or +1).
+func _outer_edge(img: Image, v: VehicleType, x: float, side: float) -> float:
+	var y := v.size.y * 0.5
+	while y > 0.0:
+		if _at(img, v, Vector2(x, side * y)).a > 0.5:
+			return y
+		y -= 0.25
+	return 0.0
+
+
+## M009: the front tyres sit tucked in under the front wings - no more than a
+## sliver of tyre beyond the wing's edge with the wheels straight - and still
+## swing out where you can see them when the wheels are turned to full lock.
+func test_front_tyres_tucked_under_the_wings() -> void:
+	var wheel_half := AssetCatalog.display_size("cars/wheel") * 0.5
+	for path in VEHICLES:
+		var v: VehicleType = load(path)
+		var img := _template(v.paints[0])
+		var p := v.params as DrivingParams
+		for side in [-1.0, 1.0]:
+			# straight ahead: the tyre's outer edge against the wing above it
+			var tyre_out := v.wheel_half_track + wheel_half.y
+			var wing := 0.0
+			for dx in [-wheel_half.x, 0.0, wheel_half.x]:
+				wing = maxf(wing, _outer_edge(img, v, v.front_axle_x + dx, side))
+			assert_lt(tyre_out - wing, 1.6, "%s: the tyre barely shows past the wing (%.1f px)" % [v.id, tyre_out - wing])
+			assert_gt(tyre_out - wing, -2.0, "%s: but is not lost under the body" % v.id)
+			# at full lock its front corner swings out past the wing
+			var lock := deg_to_rad(p.max_wheel_angle if p.max_wheel_angle > 0.0 else 30.0)
+			var corner := Vector2(wheel_half.x, side * wheel_half.y).rotated(side * lock) + Vector2(v.front_axle_x, side * v.wheel_half_track)
+			assert_gt(absf(corner.y), wing + 2.0, "%s: steering, the tyre shows (%.1f past the wing)" % [v.id, absf(corner.y) - wing])
