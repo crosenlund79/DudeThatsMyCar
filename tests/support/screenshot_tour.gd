@@ -14,7 +14,7 @@ extends SceneTree
 ## opening (M005: the monologue over the ward, six moments and the hand-over),
 ## rourke (M005: settling up at his table), sound_levels (M005: the pause screen),
 ## bird / bird_talk (M006: the Bird singing; interrupted), lefty / gunfight (M006: Lefty
-## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map (M006).
+## Moran outside Doyle's Garage; shooting, then shot down: lefty_down), ward_map, vet, status, morgue (M006).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -205,6 +205,33 @@ func _run(shots: Array) -> void:
 				await _frames(5)
 				await _shot("ward_map", false)
 				main.show_map(false)
+			"vet":
+				# M006: Doc Pettibone's surgery, Danny wounded and asking to be patched up
+				main.walker.condition.shoot("left_arm", 0.5)
+				main.rackets.money = 2000
+				_teleport_walker(Vector2(2150, 1300), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2200, 1262))
+				await _frames(40)
+				main.start_talk("pettibone")
+				await _frames(10)
+				await _shot("vet")
+				main.end_talk()
+				main.walker.condition.heal_all()
+			"status":
+				# M006: how Danny is (C), after a bad night
+				main.walker.condition.shoot("left_arm", 0.5)
+				main.walker.condition.hurt("right_leg", 80)
+				main.walker.condition.hurt("torso", 20)
+				main.show_status(true)
+				await _frames(5)
+				await _shot("status", false)
+				main.show_status(false)
+				main.walker.condition.heal_all()
+			"morgue":
+				# M006: the Morgue on Pruitt Street
+				_teleport_walker(Vector2(2820, 1470), -PI / 2)
+				await _frames(40)
+				await _shot("morgue")
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)

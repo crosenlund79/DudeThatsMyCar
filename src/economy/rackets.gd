@@ -336,6 +336,18 @@ func end_night() -> Array:
 	return reports
 
 
+## M006: what Danny has paid Doc Pettibone, all nights (cents; it leaves his pocket for good).
+var doctor_fees := 0
+
+
+## Pays the vet `cents` (as far as Danny's pocket goes). Returns what was paid.
+func pay_doctor(cents: int) -> int:
+	var paid_now := clampi(cents, 0, maxi(money, 0))
+	money -= paid_now
+	doctor_fees += paid_now
+	return paid_now
+
+
 ## M006: Danny shot `who`, one of the ward's own people. They are carried
 ## off to the Doc's for the night (the game does that) and will not forget
 ## it; the talk goes round; Rourke takes it badly - worst of all if it was
@@ -398,13 +410,14 @@ func to_dict() -> Dictionary:
 		"paid_total": paid_total.duplicate(), "town": town.to_dict(), "boss": boss.to_dict(), "held": held,
 		"skimmed": skimmed, "commission_earned": commission_earned, "seq": seq, "last_seq": last_seq.duplicate(),
 		"memory": memory.to_dict(), "rumours": rumours.to_dict(), "loans": loans.duplicate(true),
-		"incidents": incidents.duplicate(true)}
+		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
 ## the ward afresh around the saved money and bottles.
 func from_dict(d: Dictionary) -> void:
 	money = int(d.get("money", money))
+	doctor_fees = int(d.get("doctor_fees", 0))
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
 	sold_by_barber = int(d.get("sold_by_barber", 0))

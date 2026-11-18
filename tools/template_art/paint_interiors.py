@@ -627,7 +627,63 @@ def microphone(seed=61):
     return finish(grain(img, 2, seed), w, h)
 
 
+def exam_table(seed=63):
+    """M006, the vet's: a steel examining table with a white sheet and a leather strap
+    (for Great Danes and gangsters alike), from above."""
+    w, h = 128, 64
+    img = new(w, h)
+    soft_blob(img, S(66), S(34), S(58), S(26), "#000000", 90, 4 * SS)
+    paint_shape(img, SP(rrect_pts(6, 8, 122, 56, 4)), "#9aa0a6", seed, outline=OUT, ow=1.6, wob=0.15, tex=0.1, light=(0.3, -1, 0.6))
+    paint_shape(img, SP(rrect_pts(14, 12, 112, 52, 3)), "#efeae0", seed + 1, outline=None, wob=0.35, tex=0.15, strokes_n=8,
+                stroke_cols=["#ffffff", "#d8d2c4"], light=(0.3, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(60, 6, 68, 58, 1)), "#5a3a24", seed + 2, outline=OUT, ow=0.8, wob=0.05)
+    paint_shape(img, SP(rrect_pts(61, 26, 67, 32, 1)), "#c9b07a", seed + 3, outline=None, wob=0.02)
+    soft_blob(img, S(40), S(20), S(18), S(4), "#ffffff", 70, 2 * SS)
+    return finish(grain(img, 2, seed), w, h)
+
+
+def medicine_cabinet(seed=65):
+    """M006, the vet's: a white enamel cabinet against the wall, its glass top full of brown
+    bottles, tins of worm powder and a jar of dog biscuits (wall side at the top)."""
+    w, h = 112, 40
+    img = new(w, h)
+    soft_blob(img, S(57), S(22), S(52), S(16), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(rrect_pts(3, 3, 109, 37, 3)), "#e2ddd0", seed, outline=OUT, ow=1.5, wob=0.15, tex=0.15, light=(0.3, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(8, 7, 104, 30, 2)), "#7f9aa0", seed + 1, outline=OUT, ow=0.9, wob=0.1, tex=0.1)
+    rnd = random.Random(seed)
+    x = 11
+    while x < 100:
+        c = rnd.choice(["#6a3a1a", "#8a5a2a", "#3a5a3a", "#c9b07a", "#e8e2d4"])
+        r = rnd.uniform(2.4, 3.6)
+        paint_shape(img, SP(ellipse_pts(x + r, rnd.uniform(14, 22), r, r)), c, seed + x, outline=OUT, ow=0.6, wob=0.05,
+                    light=(0.3, -1, 0.7))
+        x += r * 2 + rnd.uniform(1, 3)
+    return finish(grain(img, 2, seed), w, h)
+
+
+def kennel(seed=67):
+    """M006, the vet's: a wire kennel with a basset hound asleep in it, from above."""
+    w, h = 80, 72
+    img = new(w, h)
+    soft_blob(img, S(42), S(38), S(36), S(32), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, 76, 68, 3)), "#3a3634", seed, outline=OUT, ow=1.4, wob=0.1, tex=0.1)
+    paint_shape(img, SP(rrect_pts(8, 8, 72, 64, 2)), "#8a6a4a", seed + 1, outline=None, wob=0.2, tex=0.35)  # straw
+    # the dog curled up: body, head on its paws, a long ear
+    paint_shape(img, SP(ellipse_pts(42, 40, 20, 13, rot=0.3)), "#b07a44", seed + 2, outline=OUT, ow=1.2, wob=0.3, tex=0.2,
+                light=(0.3, -1, 0.5))
+    paint_shape(img, SP(ellipse_pts(24, 30, 9, 7, rot=-0.4)), "#c08a52", seed + 3, outline=OUT, ow=1.0, wob=0.2, light=(0.3, -1, 0.5))
+    paint_shape(img, SP(ellipse_pts(26, 38, 4, 8, rot=0.5)), "#6a4426", seed + 4, outline=None, wob=0.2)
+    paint_shape(img, SP(ellipse_pts(48, 34, 7, 5)), "#f2ece2", seed + 5, outline=None, wob=0.2)  # white patch
+    d = ImageDraw.Draw(img)
+    for x in range(10, 72, 6):
+        d.line([(S(x), S(6)), (S(x), S(66))], fill=rgba("#aaa49a", 140), width=1)
+    return finish(grain(img, 2, seed), w, h)
+
+
 ASSETS = {
+    "interiors/exam_table": exam_table,
+    "interiors/medicine_cabinet": medicine_cabinet,
+    "interiors/kennel": kennel,
     "interiors/microphone": microphone,
     "interiors/bed": bed,
     "interiors/rug": rug,

@@ -161,3 +161,21 @@ func test_eddie_sells_rounds_not_a_catalogue() -> void:
 func test_lindqvist_points_to_the_back() -> void:
 	_check_page(talk.open("lindqvist"))
 	assert_string_contains(talk.choose("lindqvist", "back").text, "Through the door")
+
+
+func test_doc_pettibone_patches_danny_up_for_cash() -> void:
+	var fine := talk.open("pettibone", {"treatment": 0})
+	_check_page(fine)
+	assert_false(_ids(fine).has("patch"), "nothing to patch")
+	var hurt := talk.open("pettibone", {"treatment": 600})
+	assert_has(_ids(hurt), "patch")
+	assert_string_contains(hurt.options[0].text, "$6")
+	r.money = 500
+	var poor := talk.choose("pettibone", "patch", {"treatment": 600})
+	assert_false(poor.effects.has("heal"), "cash first")
+	assert_eq(r.money, 500)
+	r.money = 1000
+	var done := talk.choose("pettibone", "patch", {"treatment": 600})
+	assert_true(done.effects.heal)
+	assert_eq(r.money, 400)
+	assert_eq(r.doctor_fees, 600, "the fee leaves his pocket")

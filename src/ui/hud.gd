@@ -22,8 +22,9 @@ var resolver: AssetResolver
 var place_label: Label
 var purse_label: Label
 var minimap: Minimap
-## M006: the whole ward (M).
+## M006: the whole ward (M), and how Danny is (C).
 var ward_map: WardMap
+var status_screen: StatusScreen
 var clock_panel: PanelContainer
 var clock_label: Label
 var home_label: Label
@@ -201,6 +202,17 @@ func add_minimap(layout: DistrictLayout) -> void:
 	ward_map = WardMap.new()
 	add_child(ward_map)
 	ward_map.setup(minimap, _font)
+	status_screen = StatusScreen.new()
+	add_child(status_screen)
+	status_screen.setup(resolver, _font)
+
+
+## The status screen open (true, showing `condition`) or closed.
+func show_status(on: bool, condition: BodyCondition = null) -> void:
+	status_screen.visible = on
+	if on:
+		status_screen.layout_for(get_viewport().get_visible_rect().size)
+		status_screen.show_condition(condition)
 
 
 ## The ward map open (true) or closed.

@@ -121,6 +121,8 @@ func _walls(ci: CanvasItem, light: bool) -> void:
 			var h1 := h0 + st
 			var v_bottom := 1.0 if k == 0 else 0.5
 			var pts := PackedVector2Array([project(f.a, h0), project(f.b, h0), project(f.b, h1), project(f.a, h1)])
+			if absf(_area(pts)) < 1.0:
+				continue  # a wall seen edge-on: nothing to draw (and it cannot be triangulated)
 			var uvs := PackedVector2Array([Vector2(u0, v_bottom), Vector2(u1, v_bottom), Vector2(u1, v_bottom - 0.5), Vector2(u0, v_bottom - 0.5)])
 			var cols: PackedColorArray
 			if light:

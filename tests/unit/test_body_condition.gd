@@ -79,3 +79,15 @@ func test_saved_and_loaded() -> void:
 	assert_eq(c.damage.right_leg, b.damage.right_leg)
 	c.from_dict({"torso": 999})
 	assert_eq(c.damage.torso, BodyCondition.MAX, "clamped")
+
+
+func test_what_the_doc_charges() -> void:
+	var b := BodyCondition.new()
+	assert_eq(b.treatment_price(), 0, "nothing to patch")
+	b.hurt("left_arm", 10)
+	var graze := b.treatment_price()
+	assert_eq(graze, BodyCondition.VISIT + BodyCondition.PRICE[1])
+	b.shoot("torso", 0.5)
+	assert_gt(b.treatment_price(), graze, "a wound costs more")
+	b.hurt("torso", 60)
+	assert_eq(b.treatment_price(), BodyCondition.VISIT + BodyCondition.PRICE[1] + BodyCondition.PRICE[3])

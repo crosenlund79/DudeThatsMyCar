@@ -74,8 +74,11 @@ var clock: NightClock
 ## Reminders given tonight: 0 none, 1 "get home", 2 "dawn".
 var _warned := 0
 var paused := false
-## M006: the ward map is open (the world is paused under it).
+## M006: the ward map, or the status screen, is open (the world is paused under it).
 var map_open := false
+var status_open := false
+## Doc Pettibone's fee for patching Danny up after he went down (cents, at most).
+const COLLAPSE_FEE := 500
 ## The sound level chosen on the pause screen (index into AudioSettings.BUSES).
 var sound_row := 0
 var rackets: Rackets
@@ -197,6 +200,9 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(resolver, layout.name)
 	hud.add_minimap(layout)
+	var morgue := layout.building_named("The Morgue")
+	if morgue >= 0:
+		hud.ward_map.add_landmark(layout.buildings[morgue].rect.get_center(), "The Morgue", resolver.get_texture("ui/marker_morgue"))
 	player.interaction = _interact
 	player.conversation = _converse
 	hud.dialogue_choice.connect(_answer)
@@ -373,9 +379,10 @@ func _on_danny_hurt(region: String, level: int) -> void:
 	hud.show_notice("Hit in the %s - %s." % [BodyCondition.NAMES[region], BodyCondition.label(level)])
 
 
-## M006: Danny goes down. He is not killed: he comes to at home, patched up in
-## a hurry by whoever dragged him there, an hour later. His wounds are
-## grazes now; the night goes on.
+## M006: Danny goes down. He is not killed: somebody drags him to Doc
+## Pettibone's, and he comes to on the examining table an hour later, patched
+## up in a hurry (his wounds are grazes now), the Doc's fee taken from his
+## pocket (as far as it goes). The night goes on.
 func _danny_down() -> void:
 	collapses += 1
 	end_talk()
@@ -385,11 +392,15 @@ func _danny_down() -> void:
 		walker.gun.holster()
 	clock.set_time(minf(clock.minute + 60.0, float(night_rules.dawn_minute)))
 	rival.brain.state = RivalBrain.State.IDLE if not rival.is_down() else rival.brain.state  # he thinks he got you
-	walker.place(layout.spawn, layout.spawn_facing)
+	var fee := rackets.pay_doctor(COLLAPSE_FEE)
+	var vet := _plan("vet")
+	var spot: Vector2 = vet.spots[0].pos if vet != null else layout.spawn
+	walker.place(spot, -PI / 2)
 	interiors.update_player(walker.global_position)
 	interiors.snap()
 	camera.snap_to(walker)
-	hud.wake_up(rackets.night, clock.text(), "You came to in your own bed.\nSomebody dragged you home and stopped the bleeding.")
+	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
+	hud.wake_up(rackets.night, clock.text(), "You came to on Doc Pettibone's table.\nSomebody dragged you in. He took %s for his trouble." % Rackets.dollars(fee))
 	save_game()
 
 
@@ -414,7 +425,8 @@ func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
 
 func _talk_context() -> Dictionary:
 	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0,
-		"time": clock.text(), "late": clock.is_late(), "first_meeting": voice_lines.due(Conversations.greeting_line(talking))}
+		"time": clock.text(), "late": clock.is_late(), "first_meeting": voice_lines.due(Conversations.greeting_line(talking)),
+		"treatment": walker.condition.treatment_price()}
 
 
 func _show(page: Dictionary) -> void:
@@ -457,6 +469,9 @@ func _answer(i: int) -> void:
 
 ## Effects of a conversation outside the money (police, rounds).
 func _apply(effects: Dictionary) -> void:
+	if effects.get("heal", false):
+		walker.condition.heal_all()
+		hud.show_notice("Patched up. Good as new, near enough.")
 	if effects.has("rounds") and walker.gun != null:
 		walker.gun.add_spare(int(effects.rounds))
 	if effects.get("police", false) and interiors.current != null:
@@ -599,11 +614,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if map_open and (event.is_action_pressed(CityInput.MAP) or event.is_action_pressed(CityInput.MENU)):
 		show_map(false)
 		return
+	if status_open and (event.is_action_pressed(CityInput.STATUS) or event.is_action_pressed(CityInput.MENU)):
+		show_status(false)
+		return
+	if map_open or status_open:
+		return  # nothing else while one is open
 	if event.is_action_pressed(CityInput.MAP) and not paused and talking == "":
 		show_map(true)
 		return
-	if map_open:
-		return  # nothing else while the map is open
+	if event.is_action_pressed(CityInput.STATUS) and not paused and talking == "":
+		show_status(true)
+		return
 	if event.is_action_pressed(CityInput.MENU) and talking != "":
 		end_talk()
 	elif event.is_action_pressed(CityInput.MENU):
@@ -636,6 +657,13 @@ func my_car() -> Car:
 		if thefts.is_dannys(i):
 			return cars[i]
 	return null
+
+
+## M006: how Danny is (C or Esc closes). The world waits meanwhile.
+func show_status(on: bool) -> void:
+	status_open = on
+	get_tree().paused = on
+	hud.show_status(on, walker.condition)
 
 
 func _update_map() -> void:

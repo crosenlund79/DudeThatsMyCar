@@ -44,6 +44,9 @@ BOSS = {"coat": "#2a292f", "coat_light": "#3e3d46", "trouser": "#1c1b20", "hat":
         "stripes": False, "front": "tie", "cigar": True}
 PATRON_MAN = {"coat": "#1b1b20", "coat_light": "#34343c", "trouser": "#16161a", "hat": "hair", "hat_color": "#6a4c32",
               "stripes": False, "front": "bowtie"}
+# M006: Doc Pettibone, the veterinarian: a white coat, a bow tie, thinning grey hair.
+VET = {"coat": "#ebe6da", "coat_light": "#f8f5ee", "arm": "#ebe6da", "trouser": "#3a3a40", "hat": "hair",
+       "hat_color": "#b8b2a6", "stripes": False, "front": "bowtie"}
 # M006: Lefty Moran, a North Side gangster: camel overcoat, a white fedora, a cigar.
 RIVAL = {"coat": "#a9804e", "coat_light": "#c89e68", "trouser": "#2a2420", "hat": "fedora", "hat_color": "#ece6da",
          "stripes": False, "front": "tie", "cigar": True}
@@ -274,6 +277,7 @@ def singer_sheet():
 ASSETS = {
     "characters/singer": singer_sheet,
     "characters/rival": lambda: sheet(RIVAL),
+    "characters/vet": lambda: sheet(VET),
     "characters/rival_armed": lambda: sheet(RIVAL, True),
     "characters/gangster": sheet,
     "characters/gangster_armed": lambda: sheet(GANGSTER, True),

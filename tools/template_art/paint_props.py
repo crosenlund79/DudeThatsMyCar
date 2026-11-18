@@ -537,6 +537,15 @@ def _pictogram(img, kind, cx, cy, col=MARK_CREAM):
         line(img, [(S(cx - 7), S(cy + 10)), (S(cx + 4), S(cy - 5))], col, 3.2 * SS, 255)
         paint_shape(img, SP([(cx - 2, cy - 11), (cx + 9, cy - 3), (cx + 6, cy + 1), (cx - 5, cy - 7)]), col, 14, outline=None, wob=0.05)
         line(img, [(S(cx - 5), S(cy - 7)), (S(cx - 9), S(cy - 4))], col, 2.2 * SS, 255)
+    elif kind == "vet":  # M006: a paw print - the animal hospital where gangsters get patched up too
+        paint_shape(img, SP(ellipse_pts(cx, cy + 4, 7.5, 6.2)), col, 21, outline=None, wob=0.1)
+        for k, (tx, ty) in enumerate(((-8, -4), (-3, -9), (3, -9), (8, -4))):
+            paint_shape(img, SP(ellipse_pts(cx + tx, cy + ty, 2.8, 3.3)), col, 22 + k, outline=None, wob=0.05)
+    elif kind == "morgue":  # M006: a plain coffin, lid shut
+        coffin = [(cx - 4, cy - 12), (cx + 4, cy - 12), (cx + 8, cy - 5), (cx + 5, cy + 12), (cx - 5, cy + 12), (cx - 8, cy - 5)]
+        paint_shape(img, SP(coffin), col, 26, outline=None, wob=0.04)
+        line(img, [(S(cx), S(cy - 8)), (S(cx), S(cy + 2))], "#3a3f46", 1.6 * SS, 255)
+        line(img, [(S(cx - 3.5), S(cy - 4.5)), (S(cx + 3.5), S(cy - 4.5))], "#3a3f46", 1.6 * SS, 255)
     elif kind == "home":  # a bed under a crescent moon: where the henchman sleeps by day
         paint_shape(img, SP(rrect_pts(cx - 10, cy + 1, cx + 10, cy + 7, 1.5)), col, 15, outline=None, wob=0.05)
         paint_shape(img, SP(rrect_pts(cx - 10, cy - 4, cx - 7, cy + 10, 1)), col, 16, outline=None, wob=0.03)
@@ -563,11 +572,37 @@ def place_marker(kind):
         tail = [(22, 50), (32, 76), (42, 50)]
         paint_shape(img, SP(tail), MARK_COPPER, 3, outline=OUT, ow=1.6, wob=0.1, light=(0.3, -1, 0.5))
         paint_shape(img, SP(pin), MARK_COPPER, 1, outline=OUT, ow=1.8, wob=0.2, tex=0.12, light=(0.3, -1, 0.5))
-        paint_shape(img, SP(ellipse_pts(32, 30, 21, 21)), MARK_ENAMEL, 2, outline=None, wob=0.15, tex=0.18,
+        enamel = "#3a3f46" if kind == "morgue" else MARK_ENAMEL  # a landmark, not a business: slate grey
+        paint_shape(img, SP(ellipse_pts(32, 30, 21, 21)), enamel, 2, outline=None, wob=0.15, tex=0.18,
                     light=(0.3, -1, 0.4), inner_shadow=0.3)
         _pictogram(img, kind, 32, 30)
     soft_blob(img, S(24), S(18), S(7), S(4), "#ffffff", 50, 1.5 * SS)
     return finish(img, w, h)
+
+
+def status_figure():
+    """M006: Danny seen from the front for the status screen, in six pieces that line up on one
+    160 x 320 canvas (head, torso, left arm, right arm, left leg, right leg; his left is on the
+    viewer's right). Light grey, so the game can tint each piece by how badly it is hurt."""
+    w, h = 160, 320
+    col, edge = "#ece6da", (60, 52, 44)
+    parts = {}
+    def piece(seed, shapes):
+        img = new(w, h)
+        for pts in shapes:
+            paint_shape(img, SP(pts), col, seed, outline=edge, ow=1.6, wob=0.25, tex=0.12, light=(0.4, -1, 0.4))
+        return finish(img, w, h)
+    hat = [(52, 34), (108, 34), (102, 22), (92, 14), (68, 14), (58, 22)]
+    brim = ellipse_pts(80, 36, 34, 6)
+    parts["head"] = piece(1, [brim, hat, ellipse_pts(80, 54, 15, 18)])
+    torso = [(56, 76), (104, 76), (110, 96), (106, 168), (54, 168), (50, 96)]
+    parts["torso"] = piece(2, [torso, [(74, 76), (86, 76), (80, 104)]])
+    # Danny's right arm is on the viewer's left
+    parts["right_arm"] = piece(3, [[(50, 80), (56, 84), (52, 130), (46, 176), (34, 176), (36, 128), (40, 88)]])
+    parts["left_arm"] = piece(4, [[(110, 80), (104, 84), (108, 130), (114, 176), (126, 176), (124, 128), (120, 88)]])
+    parts["right_leg"] = piece(5, [[(56, 170), (79, 170), (76, 238), (74, 300), (52, 304), (56, 238)]])
+    parts["left_leg"] = piece(6, [[(81, 170), (104, 170), (104, 238), (108, 304), (86, 300), (84, 238)]])
+    return {"ui/status_" + k: v for k, v in parts.items()}
 
 
 def player_arrow():
@@ -779,6 +814,11 @@ ASSETS = {
     "ui/marker_grocery": lambda: place_marker("grocery"),
     "ui/marker_hardware": lambda: place_marker("hardware"),
     "ui/marker_home": lambda: place_marker("home"),
+    "ui/marker_vet": lambda: place_marker("vet"),
+    "ui/marker_morgue": lambda: place_marker("morgue"),
+    "signs/vet": lambda: painted_roof_sign("vet", "PETTIBONE ANIMAL HOSPITAL", 16, 384, 64),
+    "signs/morgue": lambda: painted_roof_sign("morgue", "THE MORGUE", 26, 256, 64, col="#d6dde4"),
+    "ui/status_figure": status_figure,
     "ui/map_player": player_arrow,
     "ui/map_police": police_mark,
     "signs/grocery": lambda: painted_roof_sign("grocery", "NOVAK'S GROCERY", 18, 256, 64),

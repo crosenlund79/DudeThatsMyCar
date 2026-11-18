@@ -35,6 +35,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `characters/rival` | `custom/graphics/characters/rival.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | M006: Lefty Moran, a North Side gangster (camel overcoat, white fedora, cigar); same frames as the gangster. |
 | `characters/rival_armed` | `custom/graphics/characters/rival_armed.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | M006: Lefty Moran with his pistol drawn (right arm forward). |
 | `characters/singer` | `custom/graphics/characters/singer.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | M006: the Bird, the Copper Owl's singer, facing right (towards the room). Her frames are gestures, not steps: 0 hands at the microphone, 1 left arm out, 2 arms open, 3 right arm out, 4 a hand to her heart. |
+| `characters/vet` | `custom/graphics/characters/vet.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | M006: Doc Pettibone, the veterinarian who patches up gangsters (white coat, bow tie). |
 | `characters/worker` | `custom/graphics/characters/worker.png` | 320x64 | sheet (horizontal strip of equal frames) | 5 frames, each 44x44 | A working man in a flat cap (passer-by). |
 | `city/alley` | `custom/graphics/city/alley.png` | 256x256 | tile (seamless in both directions) | 160 px per repeat | Brick alley paving. |
 | `city/asphalt` | `custom/graphics/city/asphalt.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Wet street asphalt. |
@@ -86,11 +87,14 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/card_table` | `custom/graphics/interiors/card_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Back-room card table with two chairs, centred. |
 | `interiors/coat_rack` | `custom/graphics/interiors/coat_rack.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Coat stand with two coats. |
 | `interiors/door` | `custom/graphics/interiors/door.png` | 64x12 | sprite (image, scaled to its display size) | 28x5 | Door leaf from above; hinge at the left end (stretched to the doorway). |
+| `interiors/exam_table` | `custom/graphics/interiors/exam_table.png` | 128x64 | sprite (image, scaled to its display size) | 62x31 | M006: the vet's steel examining table with a sheet and a strap. |
 | `interiors/flat_table` | `custom/graphics/interiors/flat_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Kitchen table with two chairs, centred. |
 | `interiors/floor_boards` | `custom/graphics/interiors/floor_boards.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Worn pine floorboards (shops, the flat). |
 | `interiors/floor_parquet` | `custom/graphics/interiors/floor_parquet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Oak parquet (the Copper Owl). |
 | `interiors/floor_tile` | `custom/graphics/interiors/floor_tile.png` | 128x128 | tile (seamless in both directions) | 64 px per repeat | Black-and-cream checkerboard tile (the barbershop). |
 | `interiors/gun_crate` | `custom/graphics/interiors/gun_crate.png` | 112x56 | sprite (image, scaled to its display size) | 50x25 | Open crate of wrapped pistols and boxes of rounds. |
+| `interiors/kennel` | `custom/graphics/interiors/kennel.png` | 80x72 | sprite (image, scaled to its display size) | 38x34 | M006: a wire kennel with a sleeping basset hound. |
+| `interiors/medicine_cabinet` | `custom/graphics/interiors/medicine_cabinet.png` | 112x40 | sprite (image, scaled to its display size) | 56x20 | M006: the vet's cabinet of bottles, wall side at the top. |
 | `interiors/microphone` | `custom/graphics/interiors/microphone.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | M006: the Bird's ribbon microphone on its stand, from above; the grille faces the singer (right). |
 | `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
 | `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
@@ -145,6 +149,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/hardware` | `custom/graphics/signs/hardware.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
 | `signs/hotel` | `custom/graphics/signs/hotel.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Hotel Marlowe rooftop letters. |
 | `signs/hotel_lit` | `custom/graphics/signs/hotel_lit.png` | 256x64 | light (additive night light; transparent where dark) | 150x38 | Hotel Marlowe bulbs. |
+| `signs/morgue` | `custom/graphics/signs/morgue.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M006: The Morgue, painted roof lettering, transparent. |
+| `signs/vet` | `custom/graphics/signs/vet.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M006: Pettibone Animal Hospital, painted roof lettering, transparent. |
 | `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |
 | `ui/crosshair` | `custom/graphics/ui/crosshair.png` | 64x64 | sprite (image, scaled to its display size) | 30x30 | Mouse aim reticle (screen px). |
 | `ui/map_player` | `custom/graphics/ui/map_player.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Minimap: you, an arrowhead pointing right (screen px). |
@@ -154,8 +160,16 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/marker_grocery` | `custom/graphics/ui/marker_grocery.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Novak's Grocery. |
 | `ui/marker_hardware` | `custom/graphics/ui/marker_hardware.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Lindqvist Hardware. |
 | `ui/marker_home` | `custom/graphics/ui/marker_home.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: your flat (house-shaped, unlike the businesses). |
+| `ui/marker_morgue` | `custom/graphics/ui/marker_morgue.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 landmark badge: The Morgue (slate grey: a landmark, not a business; ward map only). |
+| `ui/marker_vet` | `custom/graphics/ui/marker_vet.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 place marker: Pettibone Animal Hospital (a paw print). |
 | `ui/panel` | `custom/graphics/ui/panel.png` | 96x96 | sprite (image, scaled to its display size) | 96x96 | Nine-patch panel, 24 px margins. |
 | `ui/search` | `custom/graphics/ui/search.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he is looking for you. |
+| `ui/status_head` | `custom/graphics/ui/status_head.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: Danny from the front, his head and hat only (all six pieces line up on one canvas; light grey, tinted by the game). |
+| `ui/status_left_arm` | `custom/graphics/ui/status_left_arm.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his left arm (on the viewer's right). |
+| `ui/status_left_leg` | `custom/graphics/ui/status_left_leg.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his left leg. |
+| `ui/status_right_arm` | `custom/graphics/ui/status_right_arm.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his right arm, the gun arm (viewer's left). |
+| `ui/status_right_leg` | `custom/graphics/ui/status_right_leg.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his right leg. |
+| `ui/status_torso` | `custom/graphics/ui/status_torso.png` | 160x320 | sprite (image, scaled to its display size) | 160x320 | M006 status screen: his body. |
 | `weapons/pistol` | `custom/graphics/weapons/pistol.png` | 48x20 | sprite (image, scaled to its display size) | 15x6 | .45 automatic from above, muzzle to the right; the left end sits in the hand. |
 
 ## Audio (OGG, WAV or MP3)

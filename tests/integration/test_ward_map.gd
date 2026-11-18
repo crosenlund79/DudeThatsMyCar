@@ -42,7 +42,7 @@ func test_it_shows_the_whole_ward_where_things_really_are() -> void:
 	assert_eq(m.danny, walker().global_position, "Danny where he is")
 	assert_eq(m.car, main.my_car().global_position, "his car where it is")
 	assert_eq(m.police, main.officer.body.global_position, "the beat cop where he is")
-	assert_eq(m.minimap.places.size(), 5, "the five places he can walk into")
+	assert_eq(m.minimap.places.size(), 6, "the six places he can walk into (M006: the vet)")
 	var screen := m.to_screen(walker().global_position)
 	assert_true(m.map_rect.has_point(screen))
 	var labels: Array = m.landmarks.map(func(l: Dictionary) -> String: return l.label)

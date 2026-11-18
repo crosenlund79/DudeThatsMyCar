@@ -11,6 +11,7 @@ static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(grocery(d))
 	d.interiors.append(hardware_store(d))
 	d.interiors.append(flat(d))
+	d.interiors.append(vet(d))
 	# the barber's pole beside Sal's door
 	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 444), "rot": 0.0, "height": 0.0, "radius": 4.0})
 
@@ -196,5 +197,38 @@ static func flat(d: DistrictLayout) -> InteriorPlan:
 	]
 	p.spots = [
 		{"id": "bed", "pos": Vector2(2516, 352), "radius": 28.0, "prompt": "Go to bed"},
+	]
+	return p
+
+
+## M006: Pettibone Animal Hospital on Pruitt Street. Doc Pettibone treats dogs,
+## cats, the odd dray horse - and, for cash and no questions, the ward's
+## gangsters, who cannot go to County. A tiled surgery: the examining table
+## under a bright lamp, the cabinet of brown bottles, a basset hound asleep in
+## the kennel, a bench for the waiting room.
+static func vet(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("vet", "Pettibone Animal Hospital")
+	p.marker = "ui/marker_vet"
+	p.building = d.building_named("Pettibone Animal Hospital")
+	p.building_rect = d.buildings[p.building].rect  # x 2069..2309, y 1179..1369
+	p.room = Rect2(2069, 1229, 240, 140)
+	p.floor = "interiors/floor_tile"
+	p.doors = [{"side": Vector2.DOWN, "at": 2189.0, "width": 30.0}]
+	p.furniture = [
+		{"kind": "interiors/medicine_cabinet", "pos": Vector2(2112, 1247), "box": Vector2(56, 20)},
+		{"kind": "interiors/exam_table", "pos": Vector2(2200, 1292), "box": Vector2(62, 31)},
+		{"kind": "interiors/kennel", "pos": Vector2(2280, 1256), "box": Vector2(38, 34)},
+		{"kind": "interiors/bench", "pos": Vector2(2090, 1320), "rot": -PI / 2, "box": Vector2(70, 14)},
+		{"kind": "interiors/coat_rack", "pos": Vector2(2290, 1350), "radius": 6.0},
+	]
+	p.lamps = [
+		{"pos": Vector2(2200, 1290), "color": Color(0.92, 0.96, 1.0), "energy": 1.15, "radius": 150.0},
+		{"pos": Vector2(2110, 1330), "color": Color(1.0, 0.82, 0.56), "energy": 0.7, "radius": 110.0},
+	]
+	p.people = [
+		{"id": "pettibone", "name": "Doc Pettibone", "look": "characters/vet", "pos": Vector2(2200, 1262), "facing": PI * 0.75},
+	]
+	p.spots = [
+		{"id": "pettibone", "pos": Vector2(2150, 1300), "radius": 24.0, "prompt": "Talk to Doc Pettibone"},
 	]
 	return p

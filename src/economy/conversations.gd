@@ -14,7 +14,7 @@ extends RefCounted
 ## greeting for the first time opens on that greeting, then their usual page.
 
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
-	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "bed": "Home"}
+	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "pettibone": "Doc Pettibone", "bed": "Home"}
 
 var rackets: Rackets
 
@@ -77,6 +77,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _bird(step, context)
 		"lefty":
 			return _lefty(step, context)
+		"pettibone":
+			return _vet(step, context)
 		"bed":
 			return _bed(step, context)
 	return {}
@@ -398,6 +400,38 @@ func _lefty(step: String, _context: Dictionary) -> Dictionary:
 		"who":
 			return _page("lefty", "Lefty Moran. North Side. I don't take Rourke's money and I don't drink in his club. " +
 				"You want trouble, Mercer, you know where the garage is.")
+	return {}
+
+
+# ------------------------------------------------------------------ Doc Pettibone, the vet on Pruitt Street (M006)
+
+## `context.treatment`: what patching Danny up costs (cents; 0 = he is not
+## hurt). Paying it heals him ({"heal": true}).
+func _vet(step: String, context: Dictionary) -> Dictionary:
+	var r := rackets
+	var price: int = context.get("treatment", 0)
+	match step:
+		"hello":
+			if price <= 0:
+				return _page("pettibone", "Dogs, cats, the odd dray horse - and fellas who can't go to County. " +
+					"You look healthy as a horse, Mercer. Healthier than most of my horses.", [
+					{"id": "horses", "text": "You really patch up gangsters, Doc?"},
+				])
+			return _page("pettibone", "Up on the table. Let's see what they did to you this time.", [
+				{"id": "patch", "text": "Patch me up, Doc. (%s)" % Rackets.dollars(price)},
+				{"id": "horses", "text": "You really patch up gangsters, Doc?"},
+			])
+		"patch":
+			if price <= 0:
+				return _page("pettibone", "Nothing to patch.")
+			if r.money < price:
+				return _page("pettibone", "Cash first, Mr. Mercer. Even the horses pay up front.")
+			r.pay_doctor(price)
+			return _page("pettibone", "Hold still... there. Same thing I tell a bulldog: no running for a week. " +
+				"You won't listen either.", [], {"heal": true, "paid": price})
+		"horses":
+			return _page("pettibone", "A bullet's a bullet, son. Goes into a horse much the same as a hoodlum. " +
+				"The horse holds still better.", [])
 	return {}
 
 

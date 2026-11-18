@@ -138,6 +138,21 @@ func patch_up() -> void:
 		damage[r] = mini(int(damage[r]), WOUNDED - 1)
 
 
+## What Doc Pettibone charges to patch all of it up (cents): a visit, and
+## each region by how bad it is (provisional prices).
+const VISIT := 200
+const PRICE := [0, 150, 400, 800]
+
+
+func treatment_price() -> int:
+	if not is_hurt():
+		return 0
+	var cents := VISIT
+	for r in REGIONS:
+		cents += PRICE[level(r)]
+	return cents
+
+
 func to_dict() -> Dictionary:
 	return damage.duplicate()
 

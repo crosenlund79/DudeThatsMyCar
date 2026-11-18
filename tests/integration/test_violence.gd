@@ -117,7 +117,7 @@ func test_danny_is_wounded_and_goes_down_but_does_not_die() -> void:
 		await hit(walker(), 1, r.body)
 	assert_eq(main.collapses, 1, "Danny went down")
 	assert_false(walker().down, "and came to")
-	assert_lt(walker().global_position.distance_to(main.layout.spawn), 4.0, "at home")
+	assert_true(main.interiors.view_of("vet").plan.contains(walker().global_position), "at the Doc's (M006.7)")
 	assert_lt(walker().condition.worst(), BodyCondition.Level.WOUNDED, "patched up in a hurry")
 	assert_gt(main.clock.minute, minute + 50.0, "an hour later")
 

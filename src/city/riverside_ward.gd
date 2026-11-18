@@ -184,8 +184,8 @@ func _central_rows() -> void:
 		[240, 2, "brick_red", "tar", {"depth": 200}], [26], [230, 3, "greystone", "tar", {"depth": 210}],
 		[200, 2, "brick_red", "tar"], [270, "lot", "concrete"], [422, 2, "garage", "tin", {"name": "Doyle's Garage"}]])
 	_row(1781, 1369, 1098, [
-		[260, 3, "brick_red", "tar", {"depth": 210}], [28], [240, 2, "brick_red", "tar", {"depth": 190}],
-		[300, 4, "warehouse", "tin"], [26], [534, 3, "greystone", "tar"]])
+		[260, 3, "brick_red", "tar", {"depth": 210}], [28], [240, 2, "brick_red", "tar", {"depth": 190, "name": "Pettibone Animal Hospital"}],
+		[300, 4, "warehouse", "tin"], [26], [534, 3, "greystone", "tar", {"name": "The Morgue"}]])
 
 
 func _outer_rows() -> void:
@@ -319,6 +319,11 @@ func _street_furniture() -> void:
 	_sign("Novak's Grocery", "signs/grocery", 0.0, 34.0)
 	_sign("Lindqvist Hardware", "signs/hardware", 0.0, 34.0)
 	_sign("Lakeshore Cold Storage", "signs/cold_storage", 0.0, 120.0)
+	# M006: the vet who patches up the ward's gangsters, and the Morgue (a landmark only)
+	_sign("Pettibone Animal Hospital", "signs/vet", 0.0, 34.0)
+	_sign("The Morgue", "signs/morgue", 0.0, 44.0)
+	var morgue: Rect2 = d.buildings[d.building_named("The Morgue")].rect
+	d.alley_lamps.append(Vector2(morgue.get_center().x, morgue.end.y + 2.0))  # one dim lamp over its doors
 	# Awnings and the club canopy hang over the sidewalk.
 	for b in d.buildings:
 		var front: Vector2 = b.front
