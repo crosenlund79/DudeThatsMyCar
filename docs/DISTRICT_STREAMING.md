@@ -206,3 +206,35 @@ From `tests/support/incident_probe.gd` and a re-run of `district_probe.gd`:
 
 The traffic's obstacle list grows by four circles for each of the two long vehicles while their
 district is built; no new per-frame scan of the whole city was added.
+
+### M010: grit, shadows, weather and the later features (same machine)
+
+What M010 adds to a district is data made once at start-up with its layout (`CityPlan.layouts`):
+its litter (`StreetGrime`, 6-11 ms a district), its ground shadows as one mesh (`Shadows.ground`,
+7.5-16 ms a district), the fog's banks at the buildings' feet and its open-ground cover
+(`FogCover`, 48 px cells). Altogether about +50 ms at start-up; a district's build only adds the
+nodes that draw them (the ground-shadow layer's first draw went from 8.4 ms to 0.5 ms once it
+became one mesh). The weather, the poker table, the Thompson, the café and the emergency are not
+simulated in a district that is not built (the café job and the weather are a few numbers on the
+night clock; the café's scene and the emergency are drawn from those numbers when Danny is there).
+
+From `tests/support/district_probe.gd` (re-run) and `tests/support/m010_probe.gd`:
+
+| | |
+| --- | --- |
+| One district (the ward) | 94.3 MB static, 3575 nodes (M008: 87.1 MB, 3476: M010's art, the back room, the park) |
+| Build the yards | 28.9 ms of work over 7 frames, worst 4.6 ms; rebuilt 24.0 ms over 6 (M009: 24.2 ms over 5) |
+| Build Halloran Square (with the park and the café) | 31.8 ms over 7 frames, worst 6.8 ms (M009: 26.2 ms over 6) |
+| Memory with the ward + the yards | +8.9 MB static, +1582 nodes (M009: +8.8 MB, +1573) |
+| Marlowe Avenue by the Copper Owl: clear / rain / fog / rain and fog | 20.0 / 18.4 / 12.8 / 11.6 fps (worst frames 66 / 63 / 95 / 117 ms) |
+| The weather's own work a frame (rain and fog) | 0.055 ms |
+| The back room with the card table open, a hand being played | 15.2 fps (the table redraws every frame over a dimmed screen) |
+| A card player's decision (four-handed, before the flop, 90 deals) | about 2.8 ms, once per action while he "thinks" |
+| Marlowe Avenue with the Thompson held down | 19.3 fps |
+| Rosie's Café: the film / the burning wreck and the emergency driving in / the emergency at the kerb | 15.8 / 14.8 / 13.6 fps |
+| The café scene's and the emergency's own updates a frame | 0.12 ms |
+| The yards on foot / Halloran Square on foot | 19.2 / 13.6 fps (M008: 19 / 14.7-16.3) |
+
+The fog is the expensive part under software OpenGL (fill rate: it is drawn over every open cell of
+the district in view); everything else costs within the run-to-run noise of this renderer or a
+few fps. A real GPU has still not been measured.
