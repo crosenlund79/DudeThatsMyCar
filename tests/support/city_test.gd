@@ -39,6 +39,7 @@ func before_each() -> void:
 	main.command_source = _source
 	main.save_path = ""  # never touch the player's real save
 	main.settings_path = ""  # nor their sound levels
+	main.opening_enabled = false  # straight into the night (test_opening covers the opening)
 	add_child_autofree(main)
 	if quiet_streets:
 		main.street.clear()

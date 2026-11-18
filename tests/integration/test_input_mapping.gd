@@ -10,6 +10,9 @@ var main: Node2D
 
 func before_each() -> void:
 	main = MAIN.instantiate()
+	main.save_path = ""  # never touch the player's real save
+	main.settings_path = ""
+	main.opening_enabled = false  # M005: straight into the night
 	add_child_autofree(main)
 	await wait_physics_frames(2)
 

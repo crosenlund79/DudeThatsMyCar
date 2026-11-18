@@ -19,6 +19,8 @@ const EYE_HEIGHT := 950.0
 @export var zoom_rate := 1.6
 
 var target: Node2D
+## A zoom to hold instead of the usual one (the opening's slow shots); 0 = none.
+var zoom_override := 0.0
 var _look := Vector2.ZERO
 var _zoom := 1.2
 
@@ -55,6 +57,8 @@ func target_velocity() -> Vector2:
 
 ## Zoom wanted for the current target and speed (pure, for tests).
 func desired_zoom() -> float:
+	if zoom_override > 0.0:
+		return zoom_override
 	if target is Car and (target as Car).model != null:
 		var c := target as Car
 		var ratio := clampf(c.model.velocity.length() / c.model.params.max_speed, 0.0, 1.0)

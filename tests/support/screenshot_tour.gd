@@ -10,7 +10,9 @@ extends SceneTree
 ## club / club_door / barber / grocery / eddie (M003 interiors and talk),
 ## home (where the night begins), wake (the next evening fading in),
 ## cars (M004: the cars in six headings, lights off), grocery_door,
-## grocery_marker (at Novak's door), drive_markers (markers from the car).
+## grocery_marker (at Novak's door), drive_markers (markers from the car),
+## opening (M005: the monologue over the ward, six moments and the hand-over),
+## rourke (M005: settling up at his table), sound_levels (M005: the pause screen).
 
 var main: Node2D
 var out_dir := "user://shots"
@@ -27,6 +29,7 @@ func _initialize() -> void:
 	main = load("res://src/main/main.tscn").instantiate()
 	main.save_path = ""
 	main.settings_path = ""
+	main.opening_enabled = false
 	main.command_source = func(_c: PlayerController) -> PlayerCommand:
 		var out := PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim, _click)
 		_click = false
@@ -143,6 +146,35 @@ func _run(shots: Array) -> void:
 				main.end_talk()
 				main.rackets.bottles = 0
 				main.hud.set_purse(main.rackets.money, main.rackets.bottles)
+			"rourke":
+				# M005: Rourke at his corner table, Danny holding his money from Augie and Novak
+				_teleport_walker(Vector2(2302, 384), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2356, 400))
+				await _frames(40)
+				main.rackets.collect("copper_owl", false)
+				main.rackets.collect("grocery", false)
+				main.hud.set_purse(main.rackets.money, main.rackets.bottles, main.rackets.held)
+				main.start_talk("rourke")
+				await _frames(10)
+				main._answer(0)  # "the envelope"
+				await _frames(10)
+				await _shot("rourke")
+				main.end_talk()
+			"sound_levels":
+				# M005: the pause screen with the six sound levels
+				_teleport_walker(Vector2(2291, 520), -PI / 2)
+				await _frames(20)
+				var esc := InputEventAction.new()
+				esc.action = CityInput.MENU
+				esc.pressed = true
+				main._unhandled_input(esc)
+				var down := InputEventAction.new()
+				down.action = "ui_down"
+				down.pressed = true
+				main._unhandled_input(down)
+				await _frames(5)
+				await _shot("sound_levels")
+				main._unhandled_input(esc)
 			"grocery":
 				_teleport_walker(Vector2(1921, 838), 0.0)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(1976, 838))
@@ -160,6 +192,20 @@ func _run(shots: Array) -> void:
 				await _frames(10)
 				await _shot("eddie")
 				main.end_talk()
+			"opening":
+				# M005: the opening narration over the ward, at moments through the monologue
+				main.walker.place(main.layout.spawn, main.layout.spawn_facing)
+				main._start_opening()
+				var marks := [[1.2, "opening_fade"], [4.0, "opening_river"], [8.6, "opening_club"], [15.0, "opening_junction"],
+					[20.5, "opening_street"], [22.6, "opening_home"]]
+				for m in marks:
+					while main.opening != null and main.opening.time < m[0]:
+						await process_frame
+					await _shot(m[1], false)
+				while main.opening != null:
+					await process_frame
+				await _frames(30)
+				await _shot("opening_handover")
 			"home":
 				# M003: where every night begins
 				_teleport_walker(main.layout.spawn, PI * 0.5)

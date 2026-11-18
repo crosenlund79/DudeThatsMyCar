@@ -17,6 +17,9 @@ var command_source: Callable
 var override_root := ""
 ## Where progress is saved ("" = never; tests and screenshots).
 var save_path := SaveGame.DEFAULT_PATH
+## Whether a new game (no saved game) begins with Danny's monologue over the
+## ward (tests switch it off).
+var opening_enabled := true
 ## Where the sound levels are kept ("" = never saved; tests and screenshots).
 var settings_path := AudioSettings.DEFAULT_PATH
 
@@ -33,6 +36,9 @@ var camera: CityCamera
 var hud: Hud
 var vehicle_audio: VehicleAudio
 var soundscape: Soundscape
+## The opening narration while it runs (null otherwise).
+var opening: Opening
+var _follow_rate := 7.0
 var bullets: BulletWorld
 var gunfire: GunfireView
 var navigator: CityNavigator
@@ -159,6 +165,47 @@ func _ready() -> void:
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_update_view(0.0)
+	if opening_enabled and _saved.is_empty():
+		_start_opening()
+
+
+## A new game: Danny tells you who he is while the camera drifts over the ward
+## at night, already alive; the HUD, the player and the clock wait, the night's
+## sound steps back under his voice. Without the recording the game simply starts.
+func _start_opening() -> void:
+	var stream := resolver.get_audio("voice/danny_opening")
+	opening = Opening.new()
+	add_child(opening)
+	var length := stream.get_length() if stream != null else 0.0
+	var keys := OpeningScript.shots(layout, _plan("copper_owl"), walker.global_position, length)
+	var subtitles := not resolver.has_audio_override("voice/danny_opening")
+	if not opening.start(stream, keys, subtitles, load(Hud.FONT_PATH)):
+		opening.queue_free()
+		opening = null
+		return
+	hud.visible = false
+	markers.visible = false
+	player.set_physics_process(false)
+	_follow_rate = camera.follow_rate
+	camera.follow_rate = 2.4
+	camera.zoom_override = opening.zoom
+	camera.snap_to(opening.rig)
+	soundscape.set_duck(true)
+	opening.finished.connect(_end_opening)
+
+
+## The monologue is over (or skipped): Danny is yours.
+func _end_opening() -> void:
+	hud.visible = true
+	markers.visible = true
+	player.set_physics_process(true)
+	camera.target = walker
+	camera.follow_rate = _follow_rate
+	camera.zoom_override = 0.0
+	soundscape.set_duck(false)
+	opening.queue_free()
+	opening = null
+	save_game()  # the game is under way: a later start loads it, without the opening
 
 
 func _park_cars() -> void:
@@ -177,6 +224,14 @@ func _park_cars() -> void:
 		lights.setup(c, glow)
 		CarWheels.new().setup(c, wheel)
 		cars.append(c)
+
+
+## The room containing p (not its doorway), or null.
+func _room_containing(p: Vector2) -> InteriorPlan:
+	for plan in layout.interiors:
+		if (plan as InteriorPlan).contains(p):
+			return plan
+	return null
 
 
 func _plan(id: String) -> InteriorPlan:
@@ -338,7 +393,7 @@ func sleep() -> void:
 
 
 func _update_clock(delta: float) -> void:
-	if not paused:
+	if not paused and opening == null:
 		var before := clock.minute
 		clock.advance(delta)
 		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
@@ -373,6 +428,12 @@ func _load_gun() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if opening != null:
+		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
+				or event.is_action_pressed(CityInput.HANDBRAKE) or event.is_action_pressed("ui_accept") \
+				or (event is InputEventMouseButton and event.pressed):
+			opening.skip()
+		return
 	if event.is_action_pressed(CityInput.MENU) and talking != "":
 		end_talk()
 	elif event.is_action_pressed(CityInput.MENU):
@@ -449,5 +510,11 @@ func _update_view(delta: float) -> void:
 	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)
 	hud.show_gun(walker.gun if player.on_foot() else null)
-	soundscape.update_listener(focus, interiors.current if player.on_foot() else null, not player.on_foot(),
-		clock.activity(), delta)
+	if opening != null:
+		camera.zoom_override = opening.zoom
+		# the camera is the listener: the night as it drifts past
+		var eye := camera.eye()
+		soundscape.update_listener(eye, _room_containing(eye), false, clock.activity(), delta)
+	else:
+		soundscape.update_listener(focus, interiors.current if player.on_foot() else null, not player.on_foot(),
+			clock.activity(), delta)
