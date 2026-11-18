@@ -316,6 +316,14 @@ func _run(shots: Array) -> void:
 				_teleport_walker(at, PI * 0.5)
 				await _frames(40)
 				await _shot(s)
+			"square", "bijou", "church", "border_west":
+				# M008: Halloran Square (streamed in as Danny comes near, here at once)
+				main.world.load_now("halloran")
+				var at2 := {"square": Vector2(-3075, 1000), "bijou": Vector2(-2120, 620), "church": Vector2(-3500, 900),
+					"border_west": Vector2(-1650, 640)}[s] as Vector2
+				_teleport_walker(at2, PI)
+				await _frames(40)
+				await _shot(s)
 			"sound_levels":
 				# M005: the pause screen with the six sound levels
 				_teleport_walker(Vector2(2291, 520), -PI / 2)

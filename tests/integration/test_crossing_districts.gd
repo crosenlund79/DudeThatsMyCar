@@ -125,3 +125,47 @@ func test_freed_far_away_and_built_again_without_duplicates() -> void:
 	assert_true(c.visible, "his sedan is back")
 	assert_eq(c.global_position, parked_at)
 	assert_eq(main.officers().size(), 2, "one beat cop, not two")
+
+
+func test_driving_west_along_marlowe_avenue_into_halloran_square() -> void:
+	var c := _danny_car()
+	await park(c, Vector2(-100, 640), PI)
+	await seat_in(c)
+	var ready_at := INF
+	var worst := 0.0
+	var last := c.global_position
+	for i in 60 * 25:
+		cmd = PlayerCommand.make(Vector2(0, -1))
+		await wait_physics_frames(1)
+		worst = maxf(worst, c.global_position.distance_to(last))
+		last = c.global_position
+		if ready_at == INF and main.world.is_ready("halloran"):
+			ready_at = c.global_position.x
+		if c.global_position.x < -2600.0:
+			break
+	cmd = PlayerCommand.new()
+	assert_true(main.world.is_ready("halloran"))
+	assert_gt(ready_at, -1700.0 + 400.0, "built before he reached the border")
+	assert_lt(c.global_position.x, -2600.0, "he drove on along the streetcar line into the square's quarter")
+	assert_lt(worst, 12.0, "no stop, no jump")
+	assert_eq(main.hud.district_label.text, "HALLORAN SQUARE")
+	assert_string_contains(main.hud.place_label.text, "Marlowe Ave")
+	var st: Dictionary = main.world.stats.halloran
+	gut.p("Halloran Square: built in %.1f ms of work over %d frames (worst frame %.1f ms, worst step %.1f ms)" % [
+		st.work_usec / 1000.0, st.frames, st.worst_frame_usec / 1000.0, st.worst_step_usec / 1000.0])
+
+
+func test_never_more_than_two_districts() -> void:
+	main.world.load_now("yards")
+	assert_true(yards_ready())
+	# to the far west end of Pruitt Street: Halloran Square is wanted, so the yards make room
+	walker().place(Vector2(-1600, 1500), PI)
+	for i in 900:
+		assert_lte(main.world.loaded.size(), 2, "two districts at most")
+		if main.world.is_ready("halloran"):
+			break
+		await wait_physics_frames(1)
+	assert_true(main.world.is_ready("halloran"))
+	assert_false(yards_ready(), "the yards were let go to make room")
+	assert_eq(main.world.ready_ids(), ["riverside", "halloran"] as Array[String])
+	assert_eq(main.officers().size(), 2, "the ward's beat cop and the square's")

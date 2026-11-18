@@ -47,9 +47,11 @@ func _drive_until_stopped(c: Car, ticks: int) -> void:
 	cmd = PlayerCommand.new()
 
 
-func test_the_west_end_of_marlowe_avenue_is_barricaded() -> void:
+## M008: Marlowe Avenue and Pruitt Street now run on west into Halloran Square;
+## Calloway Street is still closed.
+func test_the_west_end_of_calloway_street_is_barricaded() -> void:
 	var c := roadster()
-	await park(c, Vector2(-300, 640), PI)
+	await park(c, Vector2(-300, -260), PI)
 	await seat_in(c)
 	await _drive_until_stopped(c, 240)
 	assert_gt(c.global_position.x, RiversideWard.WEST_EDGE, "stopped by the street-closed barricades")

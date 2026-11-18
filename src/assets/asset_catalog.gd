@@ -160,6 +160,8 @@ const SPECS := {
 	"props/call_box": {"kind": "sprite", "template_size": Vector2i(40, 40), "display_size": Vector2(18, 18), "notes": "Police call box on its post."},
 	"props/marquee": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Copper Owl canopy; wall side at the top."},
 	"props/marquee_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "Canopy bulbs and lettering."},
+	"props/marquee_bijou": {"kind": "sprite", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "M008: the Bijou picture house's canopy (Halloran Square); wall side at the top."},
+	"props/marquee_bijou_lit": {"kind": "light", "template_size": Vector2i(256, 96), "display_size": Vector2(140, 52), "notes": "M008: the Bijou canopy's bulbs and lettering."},
 	"decals/manhole": {"kind": "sprite", "template_size": Vector2i(48, 48), "display_size": Vector2(24, 24), "notes": "Manhole cover."},
 	"decals/drain": {"kind": "sprite", "template_size": Vector2i(48, 24), "display_size": Vector2(24, 12), "notes": "Storm drain grate."},
 	"decals/puddle": {"kind": "sprite", "template_size": Vector2i(128, 80), "display_size": Vector2(96, 60), "notes": "Puddle (semi-transparent)."},

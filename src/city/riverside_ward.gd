@@ -42,7 +42,9 @@ func _build() -> void:
 	d.bounds = Rect2(-1700, -1300, 6600, 4000)
 	# M008: Kessler and Wharf Street run on south into the Riverfront Yards, so the
 	# ward's ground reaches its southern border (Dorsey Street stays barricaded)
-	d.play_area = Rect2(WEST_EDGE, EMBANKMENT_Y, RIVER_X - WEST_EDGE, d.bounds.end.y - EMBANKMENT_Y)
+	# ... and Marlowe Avenue and Pruitt Street run on west into Halloran Square
+	# (Calloway Street stays barricaded), so it reaches its western border too
+	d.play_area = Rect2(d.bounds.position.x, EMBANKMENT_Y, RIVER_X - d.bounds.position.x, d.bounds.end.y - EMBANKMENT_Y)
 	_streets()
 	_blocks_and_alleys()
 	_river()
@@ -249,8 +251,12 @@ func _street_furniture() -> void:
 	_prop("props/call_box", Vector2(1890, 479), 0.0, 8.0)
 	# Barricades with warning lanterns close the district's streets.
 	_barricade_line(Vector2(WEST_EDGE, CALLOWAY), Vector2.DOWN, 3)
-	_barricade_line(Vector2(WEST_EDGE, MARLOWE), Vector2.DOWN, 4)
-	_barricade_line(Vector2(WEST_EDGE, PRUITT), Vector2.DOWN, 3)
+	# M008: Marlowe Avenue and Pruitt Street are open to the west (Halloran Square);
+	# Calloway Street's stub west of its barricade is reached only from the square
+	var west := d.bounds.position.x
+	d.exits.append({"to": "halloran", "rect": Rect2(west, -431, 6, 262)})
+	d.exits.append({"to": "halloran", "rect": Rect2(west, 439, 6, 322)})
+	d.exits.append({"to": "halloran", "rect": Rect2(west, 1369, 6, 262)})
 	_barricade_line(Vector2(DORSEY, SOUTH_EDGE), Vector2.RIGHT, 3)
 	# M008: Kessler and Wharf Street are open to the south (the Riverfront Yards);
 	# Dorsey Street's stub below its barricade is reached only from the yards

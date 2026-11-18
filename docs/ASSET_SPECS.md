@@ -131,6 +131,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/lantern` | `custom/graphics/props/lantern.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Red warning lantern. |
 | `props/mailbox` | `custom/graphics/props/mailbox.png` | 40x40 | sprite (image, scaled to its display size) | 16x16 | Mailbox. |
 | `props/marquee` | `custom/graphics/props/marquee.png` | 256x96 | sprite (image, scaled to its display size) | 140x52 | Copper Owl canopy; wall side at the top. |
+| `props/marquee_bijou` | `custom/graphics/props/marquee_bijou.png` | 256x96 | sprite (image, scaled to its display size) | 140x52 | M008: the Bijou picture house's canopy (Halloran Square); wall side at the top. |
+| `props/marquee_bijou_lit` | `custom/graphics/props/marquee_bijou_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | M008: the Bijou canopy's bulbs and lettering. |
 | `props/marquee_lit` | `custom/graphics/props/marquee_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | Canopy bulbs and lettering. |
 | `props/newsstand` | `custom/graphics/props/newsstand.png` | 96x64 | sprite (image, scaled to its display size) | 46x30 | Newsstand. |
 | `props/trash_can` | `custom/graphics/props/trash_can.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | Ash can. |

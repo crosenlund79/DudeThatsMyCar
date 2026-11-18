@@ -10,4 +10,4 @@ extends RefCounted
 
 ## Every district's layout, the Riverside Ward's (already made) first.
 static func layouts(riverside: DistrictLayout) -> Array:
-	return [riverside, RiverfrontYards.create()]
+	return [riverside, RiverfrontYards.create(), HalloranSquare.create()]

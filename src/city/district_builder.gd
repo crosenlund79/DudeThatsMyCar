@@ -80,13 +80,13 @@ func _furnish_roofs() -> void:
 			skylights = 1
 		for k in skylights:
 			kinds.append("roof/skylight")
-		if b.facade in ["brick_red", "greystone"] and rnd.randf() < 0.35:
+		if b.facade in ["brick_red", "greystone", "tenement"] and rnd.randf() < 0.35:
 			kinds.append("roof/laundry")
 		for k in clampi(int(r.size.x / 55.0), 2, 6):
 			kinds.append("roof/chimney")
 		for k in rnd.randi_range(2, 5):
 			kinds.append("roof/vent")
-		if b.facade in ["brick_red", "greystone"] and rnd.randf() < 0.5:
+		if b.facade in ["brick_red", "greystone", "tenement"] and rnd.randf() < 0.5:
 			kinds.append("roof/skylight")
 		for kind in kinds:
 			var size := AssetCatalog.display_size(kind) + Vector2(10, 10)

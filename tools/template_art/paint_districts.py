@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from paintkit import *
 import paint_buildings as pb
-from paint_props import painted_roof_sign
+from paint_props import painted_roof_sign, DECO
 
 OUT_C = (22, 18, 18)
 
@@ -175,7 +175,33 @@ def tree(seed=41):
     return finish(img, w, h)
 
 
+def bijou_marquee():
+    """The Bijou's canopy over the sidewalk (wall side at the top): deep red
+    with a cream border, its name and the night's bill, chaser bulbs round it."""
+    w, h = 256, 96
+    img = new(w, h)
+    lit = new(w, h)
+    soft_blob(img, S(128), S(54), S(122), S(38), "#000000", 70, 5 * SS)
+    paint_shape(img, SP(rrect_pts(6, 4, 250, 86, 6)), "#e3d3a8", 1, outline=OUT_C, ow=1.8, wob=0.3, tex=0.18, light=(0, 1, 0.4))
+    paint_shape(img, SP(rrect_pts(14, 12, 242, 78, 4)), "#5e1a1e", 2, outline=OUT_C, ow=1.2, wob=0.2, tex=0.15)
+    text(img, (128, 38), "THE BIJOU", 25, "#f4e2a8", font=DECO, spacing=2.5)
+    text(img, (128, 63), "TALKING PICTURES \u00b7 TONIGHT", 8.5, "#e3d3a8", font=DECO)
+    text(lit, (128, 38), "THE BIJOU", 25, "#ffe7a0", font=DECO, spacing=2.5)
+    L = ImageDraw.Draw(lit)
+    D = ImageDraw.Draw(img)
+    for x in range(14, 246, 9):
+        for y in (8, 82):
+            L.ellipse([S(x - 1.8), S(y - 1.8), S(x + 1.8), S(y + 1.8)], fill=rgba("#fff0b8"))
+            D.ellipse([S(x - 1.8), S(y - 1.8), S(x + 1.8), S(y + 1.8)], fill=rgba("#d9cfa0"))
+    for y in range(14, 80, 9):
+        for x in (10, 246):
+            L.ellipse([S(x - 1.8), S(y - 1.8), S(x + 1.8), S(y + 1.8)], fill=rgba("#fff0b8"))
+            D.ellipse([S(x - 1.8), S(y - 1.8), S(x + 1.8), S(y + 1.8)], fill=rgba("#d9cfa0"))
+    return {"props/marquee_bijou": finish(img, w, h), "props/marquee_bijou_lit": finish(glow_from(lit, 3 * SS, 0.8), w, h)}
+
+
 ASSETS = {
+    "props/marquee_bijou": bijou_marquee,
     "facades/factory": pb._pack("factory", facade_factory),
     "facades/tenement": pb._pack("tenement", facade_tenement),
     "facades/stack": pb._pack("stack", facade_stack),
