@@ -7,7 +7,11 @@ extends RefCounted
 ## effects ask the game for anything outside it ({"police": true}: someone
 ## runs for the copper once you have gone, {"rounds": n}: rounds for the gun).
 ## `context` describes the moment: {"gun_drawn": bool, "spare": int rounds
-## carried, "time": "4:10 AM", "late": bool (time to go home)}.
+## carried, "time": "4:10 AM", "late": bool (time to go home), "first_meeting":
+## bool (M006: Danny has not met them yet)}.
+## M006: a page may carry "voice": [line ids] (VoiceLines) - its recorded
+## words, which are then also its text. Meeting someone with a recorded
+## greeting for the first time opens on that greeting, then their usual page.
 
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
 	"rourke": "Rourke", "bed": "Home"}
@@ -23,9 +27,27 @@ func speaker(who: String) -> String:
 	return NAMES.get(who, who.capitalize())
 
 
+## Who greets Danny with a recording the first time they meet, and his reply.
+const GREETINGS := {
+	"augie": ["augie_greeting", "Pleased to meet you, Augie. I'm Danny Mercer."],
+	"rourke": ["rourke_greeting", "Good to be back, Mr. Rourke."],
+	"eddie": ["eddie_greeting", "No hammer. Something with a little more bang."],
+}
+
+
 ## The first page when you walk up to someone and press E.
 func open(who: String, context: Dictionary = {}) -> Dictionary:
+	if context.get("first_meeting", false) and GREETINGS.has(who):
+		var g: Array = GREETINGS[who]
+		var page := _page(who, VoiceLines.text(g[0]), [{"id": "hello", "text": g[1]}])
+		page["voice"] = [g[0]]
+		return page
 	return _say(who, "hello", context)
+
+
+## The recorded greeting someone has for a first meeting ("" for none).
+static func greeting_line(who: String) -> String:
+	return GREETINGS[who][0] if GREETINGS.has(who) else ""
 
 
 ## The page after choosing an answer (an empty page: the talk is over).
@@ -294,9 +316,15 @@ func _eddie(step: String, context: Dictionary) -> Dictionary:
 	match step:
 		"hello":
 			return _page("eddie", "Well, if it ain't the Copper Owl's errand boy. Pull up a chair. Don't touch the crate.", [
+				{"id": "wares", "text": "Let's see what you've got."},
+			])
+		"wares":
+			var page := _page("eddie", VoiceLines.text("eddie_sales"), [
 				{"id": "ammo", "text": "A box of .45 rounds. (%s for %d)" % [price, r.rules.ammo_box]},
 				{"id": "heavy", "text": "Got anything heavier?"},
 			])
+			page["voice"] = ["eddie_sales"]
+			return page
 		"ammo":
 			if spare < 0:
 				return _page("eddie", "You're carrying enough lead to sink a rowboat already.")

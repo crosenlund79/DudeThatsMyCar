@@ -36,6 +36,10 @@ var camera: CityCamera
 var hud: Hud
 var vehicle_audio: VehicleAudio
 var soundscape: Soundscape
+## The people's recorded lines: which first-meeting lines Danny has heard
+## (saved), and the player that says them one at a time (M006).
+var voice_lines := VoiceLines.new()
+var voice: VoicePlayer
 ## The opening narration while it runs (null otherwise).
 var opening: Opening
 var _follow_rate := 7.0
@@ -144,6 +148,9 @@ func _ready() -> void:
 	add_child(soundscape)
 	soundscape.setup(resolver, layout, _plan("copper_owl"))
 	soundscape.track_traffic(street.traffic)
+	voice = VoicePlayer.new()
+	add_child(voice)
+	voice.setup(resolver, voice_lines)
 	hud = Hud.new()
 	add_child(hud)
 	hud.setup(resolver, layout.name)
@@ -160,7 +167,7 @@ func _ready() -> void:
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, bullets, gunfire, officer, street] + cars:
+	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, voice, bullets, gunfire, officer, street] + cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -190,7 +197,6 @@ func _start_opening() -> void:
 	camera.follow_rate = 2.4
 	camera.zoom_override = opening.zoom
 	camera.snap_to(opening.rig)
-	soundscape.set_duck(true)
 	opening.finished.connect(_end_opening)
 
 
@@ -202,7 +208,6 @@ func _end_opening() -> void:
 	camera.target = walker
 	camera.follow_rate = _follow_rate
 	camera.zoom_override = 0.0
-	soundscape.set_duck(false)
 	opening.queue_free()
 	opening = null
 	save_game()  # the game is under way: a later start loads it, without the opening
@@ -292,7 +297,7 @@ func start_talk(who: String) -> void:
 
 func _talk_context() -> Dictionary:
 	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0,
-		"time": clock.text(), "late": clock.is_late()}
+		"time": clock.text(), "late": clock.is_late(), "first_meeting": voice_lines.due(Conversations.greeting_line(talking))}
 
 
 func _show(page: Dictionary) -> void:
@@ -301,6 +306,8 @@ func _show(page: Dictionary) -> void:
 		return
 	_page = page
 	hud.show_dialogue(page)
+	if page.has("voice") and not voice.say(page.voice).is_empty():
+		save_game()  # a first meeting is remembered even if the game is quit at once
 
 
 ## While talking, the player's keys answer (1-4) or walk away (E).
@@ -358,6 +365,8 @@ func _update_report(delta: float) -> void:
 func end_talk() -> void:
 	talking = ""
 	_page = {}
+	if voice != null:
+		voice.stop()
 	hud.hide_dialogue()
 	for v in interiors.views:
 		v.face_home()
@@ -407,7 +416,7 @@ func _update_clock(delta: float) -> void:
 
 
 func save_game() -> void:
-	var data := {"rackets": rackets.to_dict()}
+	var data := {"rackets": rackets.to_dict(), "voices": voice_lines.to_dict()}
 	if walker != null and walker.gun != null:
 		data["gun"] = {"ammo": walker.gun.ammo, "spare": walker.gun.spare}
 	SaveGame.write(save_path, data)
@@ -417,6 +426,10 @@ func _load_game() -> void:
 	_saved = SaveGame.read(save_path)
 	if _saved.has("rackets"):
 		rackets.from_dict(_saved.rackets)
+	if _saved.has("voices"):
+		voice_lines.from_dict(_saved.voices)
+	elif _saved.has("rackets"):
+		voice_lines.assume_old_acquaintances()  # a game from before the voices
 
 
 ## Puts the saved rounds back in the gun (after the player exists).
@@ -510,6 +523,7 @@ func _update_view(delta: float) -> void:
 	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
 		player.on_foot() and not paused)
 	hud.show_gun(walker.gun if player.on_foot() else null)
+	soundscape.set_speech(opening != null or voice.speaking())
 	if opening != null:
 		camera.zoom_override = opening.zoom
 		# the camera is the listener: the night as it drifts past

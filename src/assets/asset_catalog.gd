@@ -200,6 +200,13 @@ const AUDIO := {
 	# M005: the user's recordings (shipped under their own names), the night's soundscape and the sounds of dealings
 	"music/copper_owl_jazz": {"loop": true, "bus": "Music", "notes": "The Copper Owl's singer, \"Leave the Lights Low\" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet."},
 	"voice/danny_opening": {"loop": false, "bus": "Voice", "notes": "Danny's opening monologue on a new game (the user's recording, unaltered; about 23 s). The subtitles follow the shipped recording."},
+	# M006: the people's own voices (the user's recordings, unaltered; subtitles follow the shipped recordings)
+	"voice/augie_greeting": {"loop": false, "bus": "Voice", "notes": "Augie, the first time Danny talks to him (about 9.5 s)."},
+	"voice/rourke_greeting": {"loop": false, "bus": "Voice", "notes": "Rourke, the first time Danny sits down with him after years away (about 21 s)."},
+	"voice/eddie_greeting": {"loop": false, "bus": "Voice", "notes": "Eddie, the first time Danny talks to him (about 11 s)."},
+	"voice/eddie_sales": {"loop": false, "bus": "Voice", "notes": "Eddie, the first time Danny asks to see what he sells (about 4.5 s)."},
+	"voice/bird_greeting": {"loop": false, "bus": "Voice", "notes": "The Bird introducing herself, the first time Danny talks to her (about 12 s)."},
+	"voice/bird_interrupted": {"loop": false, "bus": "Voice", "notes": "The Bird, every time Danny interrupts her song (about 10 s)."},
 	"ambience/street_night": {"loop": true, "bus": "Ambience", "notes": "The street's bed at night: distant traffic, the city beyond the corner. Quieter after midnight; dull indoors."},
 	"ambience/alley": {"loop": true, "bus": "Ambience", "notes": "Back alleys: dripping water, the city a murmur behind the walls."},
 	"ambience/river": {"loop": true, "bus": "Ambience", "notes": "By the river: water against the quay, a factory's drone across it."},

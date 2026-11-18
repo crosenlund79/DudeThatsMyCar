@@ -50,6 +50,7 @@ var music_starts := 0
 ## 0..1: how far everything has stepped back under narration.
 var duck := 0.0
 var _duck_target := 0.0
+var _speech := false
 var _resolver: AssetResolver
 var _sounds := {}
 var _pool: Array[AudioStreamPlayer] = []
@@ -154,6 +155,12 @@ func set_duck(on: bool) -> void:
 	_duck_target = 1.0 if on else 0.0
 
 
+## Someone speaking (the opening, a recorded line): the same step back, for
+## as long as they talk (combined with set_duck).
+func set_speech(on: bool) -> void:
+	_speech = on
+
+
 ## Every frame: where the listener is (`p`), the room he is in (null outdoors),
 ## whether he drives, and the street activity of the hour.
 func update_listener(p: Vector2, room: InteriorPlan, driving: bool, activity: float, delta: float) -> void:
@@ -168,7 +175,7 @@ func update_listener(p: Vector2, room: InteriorPlan, driving: bool, activity: fl
 			level[k] = SoundscapeMix.glide_cutoff(level[k], target[k], delta, DOOR_TAU)
 		else:
 			level[k] = lerpf(level[k], target[k], 1.0 - exp(-delta / LEVEL_TAU))
-	duck = move_toward(duck, _duck_target, delta / DUCK_TAU)
+	duck = move_toward(duck, maxf(_duck_target, 1.0 if _speech else 0.0), delta / DUCK_TAU)
 	_apply()
 	_update_traffic()
 	_distant_sounds(p, delta)

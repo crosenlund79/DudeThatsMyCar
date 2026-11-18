@@ -140,7 +140,12 @@ func test_a_broke_novak_cannot_pay_and_says_why() -> void:
 func test_eddie_sells_rounds_not_a_catalogue() -> void:
 	var hello := talk.open("eddie", {"spare": 0})
 	_check_page(hello)
-	assert_eq(_ids(hello), ["ammo", "heavy", "bye"], "a box of rounds, nothing more")
+	assert_eq(_ids(hello), ["wares", "bye"])
+	var wares := talk.choose("eddie", "wares", {"spare": 0})
+	_check_page(wares)
+	assert_eq(_ids(wares), ["ammo", "heavy", "bye"], "a box of rounds, nothing more")
+	assert_eq(wares.voice, ["eddie_sales"], "his sales line, said the first time")
+	assert_eq(wares.text, VoiceLines.text("eddie_sales"))
 	var money := r.money
 	var page := talk.choose("eddie", "ammo", {"spare": 0})
 	assert_eq(page.effects.get("rounds"), r.rules.ammo_box)

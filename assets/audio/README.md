@@ -14,6 +14,23 @@ old HyperCars recordings there are not imported or used by this game.
 | `Danny Dimes Mercer - Opening Monologue.mp3` | `18d93b867f707cf5278b8a4fcc8ace44f4ec16b3c0b99a34f98ae261277d7b87` | `voice/danny_opening.mp3` — a byte-for-byte copy (same SHA-256), unaltered | `voice/danny_opening` |
 | `Copper Owl Bird - Leave the lights low.mp3` | `db4654ab4afdb3d7e2f161f0e21bddc2a6257d2e1b6fa339222bafb445873933` | `music/copper_owl_jazz.ogg` — the cleaned version below | `music/copper_owl_jazz` |
 
+### The people's voices (M006)
+
+| Original in `_inbox/` | SHA-256 of the original | Shipped as (byte-for-byte copy) | Length | Loudness (EBU R128) / true peak | Gain at playback |
+| --- | --- | --- | --- | --- | --- |
+| `Augie Bartender - Greeting when first meeting.mp3` | `e62d1661f52a714b60f2ca65b646559f9627896a595df65e35a813e64c77298e` | `voice/augie_greeting.mp3` | 9.48 s | −18.9 LUFS / −3.8 dBFS | −0.1 dB |
+| `Rourke The Boss - Greeting when first meeting.mp3` | `8ef37a018821a8539eb9fe5b97f83053e1351aa2be66dcce34dfbc94945c8cf9` | `voice/rourke_greeting.mp3` | 21.39 s | −17.4 LUFS / −1.6 dBFS | −1.6 dB |
+| `Eddie Gun Dealer - Greeting when first meeting.mp3` | `c03f3f246bb1d23124ce4e4af2980ed90d6a41a5c09e4479031b24d825414877` | `voice/eddie_greeting.mp3` | 11.08 s | −18.0 LUFS / −2.9 dBFS | −1.0 dB |
+| `Eddie Gun Dealer - Greeting when accessing his sales.mp3` | `90b3420fec7f38efeb952b09f0127c072930800b9dc8b5993de9dba88d9fac1d` | `voice/eddie_sales.mp3` | 4.52 s | −17.3 LUFS / −3.2 dBFS | −1.7 dB |
+| `The Bird Singer - Greeting when first meeting.mp3` | `b1cdb6e917aa9eca92fb671cabbf4657acc98e0d6617c6ae0ea6cbbbf8daffea` | `voice/bird_greeting.mp3` | 12.43 s | −19.1 LUFS / −4.3 dBFS | +0.1 dB |
+| `The Bird Singer - Interrupted on stage.mp3` | `8db95904c189030f98c8f9a8fb7b7675ce647dc4dc6aa0ae5f0fd2f510f12c28` | `voice/bird_interrupted.mp3` | 9.80 s | −19.6 LUFS / −3.6 dBFS | +0.6 dB |
+
+All six are MP3, mono, 44.1 kHz, about 140 kbit/s, and start and end on the voice (no silence to trim).
+They were already within 2.3 LU of each other, so they ship unaltered (no second lossy encoding) and
+the game evens them out to about −19 LUFS with the small gain above (`VoiceLines.LINES[...].gain_db`).
+Their transcripts (the dialogue text shown while they play) were made with faster-whisper `small.en` and
+`medium.en`, which agreed word for word.
+
 ### Danny's monologue
 
 MP3, mono, 44.1 kHz, 23.41 s. Shipped exactly as recorded. The opening's subtitles were transcribed from

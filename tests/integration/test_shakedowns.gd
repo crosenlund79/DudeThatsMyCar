@@ -46,6 +46,7 @@ func test_through_the_hardware_store_to_eddie_for_rounds() -> void:
 	var start: int = main.rackets.money
 	await press_e()
 	assert_eq(main.talking, "eddie")
+	await answer_with("wares")
 	await answer_with("ammo")
 	assert_eq(walker().gun.spare, spare + main.economy_rules.ammo_box)
 	assert_eq(main.rackets.money, start - main.economy_rules.ammo_price)

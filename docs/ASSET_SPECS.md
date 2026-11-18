@@ -181,7 +181,13 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `vehicles/impact_car` | `custom/audio/vehicles/impact_car.ogg` (or .wav / .mp3) | `template_impact_car.ogg` | no | Effects | Car hits car, under 1 s. |
 | `vehicles/impact_wall` | `custom/audio/vehicles/impact_wall.ogg` (or .wav / .mp3) | `template_impact_wall.ogg` | no | Effects | Car hits a wall or kerb object, under 1 s. |
 | `vehicles/tire_squeal` | `custom/audio/vehicles/tire_squeal.ogg` (or .wav / .mp3) | `template_tire_squeal.wav` | yes | Effects | Tyre squeal while sliding. |
+| `voice/augie_greeting` | `custom/audio/voice/augie_greeting.ogg` (or .wav / .mp3) | `augie_greeting.mp3` | no | Voice | Augie, the first time Danny talks to him (about 9.5 s). |
+| `voice/bird_greeting` | `custom/audio/voice/bird_greeting.ogg` (or .wav / .mp3) | `bird_greeting.mp3` | no | Voice | The Bird introducing herself, the first time Danny talks to her (about 12 s). |
+| `voice/bird_interrupted` | `custom/audio/voice/bird_interrupted.ogg` (or .wav / .mp3) | `bird_interrupted.mp3` | no | Voice | The Bird, every time Danny interrupts her song (about 10 s). |
 | `voice/danny_opening` | `custom/audio/voice/danny_opening.ogg` (or .wav / .mp3) | `danny_opening.mp3` | no | Voice | Danny's opening monologue on a new game (the user's recording, unaltered; about 23 s). The subtitles follow the shipped recording. |
+| `voice/eddie_greeting` | `custom/audio/voice/eddie_greeting.ogg` (or .wav / .mp3) | `eddie_greeting.mp3` | no | Voice | Eddie, the first time Danny talks to him (about 11 s). |
+| `voice/eddie_sales` | `custom/audio/voice/eddie_sales.ogg` (or .wav / .mp3) | `eddie_sales.mp3` | no | Voice | Eddie, the first time Danny asks to see what he sells (about 4.5 s). |
+| `voice/rourke_greeting` | `custom/audio/voice/rourke_greeting.ogg` (or .wav / .mp3) | `rourke_greeting.mp3` | no | Voice | Rourke, the first time Danny sits down with him after years away (about 21 s). |
 | `weapons/bullet_impact` | `custom/audio/weapons/bullet_impact.ogg` (or .wav / .mp3) | `template_bullet_impact.wav` | no | Effects | A bullet striking brick. |
 | `weapons/pistol_reload` | `custom/audio/weapons/pistol_reload.ogg` (or .wav / .mp3) | `template_pistol_reload.wav` | no | Effects | Magazine out and in, slide racked. |
 | `weapons/pistol_shot` | `custom/audio/weapons/pistol_shot.ogg` (or .wav / .mp3) | `template_pistol_shot.wav` | no | Effects | A .45 shot in a brick street, about 1 s with its echo. |

@@ -13,6 +13,9 @@ var _choice_pending := 0
 ## Street life (passers-by, traffic) is cleared for tests about other things;
 ## a test script about the streets sets this to false.
 var quiet_streets := true
+## M006: Danny already knows everybody (their first-meeting lines count as
+## heard) unless a script about meeting people sets this to true.
+var meet_people := false
 
 
 func _source(_c: PlayerController) -> PlayerCommand:
@@ -43,6 +46,9 @@ func before_each() -> void:
 	add_child_autofree(main)
 	if quiet_streets:
 		main.street.clear()
+	if not meet_people:
+		for id in VoiceLines.LINES:
+			main.voice_lines.mark(id)
 	await wait_physics_frames(2)
 
 
