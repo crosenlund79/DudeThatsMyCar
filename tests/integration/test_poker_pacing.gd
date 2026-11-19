@@ -170,3 +170,35 @@ func test_holding_space_at_the_table_never_speeds_the_night() -> void:
 	await wait_physics_frames(120)
 	assert_almost_eq(main.clock.minute - before, 2.0, 0.3, "a minute a second, as ever")
 	cmd = PlayerCommand.new()
+
+
+## M011.2: getting up (Esc) while a card player's move is on show: he folds
+## if a hand is under way, and every cent is where it should be.
+func test_getting_up_while_a_move_is_on_show() -> void:
+	main.rackets.money = 1000
+	var books: int = main.rackets.money + main.poker.players_money()
+	await _sit_in(1000)
+	await _until_waiting()
+	assert_true(_view().pacing.waiting(), "a move on show")
+	await _send(_key(KEY_ESCAPE))
+	assert_false(_view().is_open(), "up from the table")
+	assert_false(main.poker.seated())
+	assert_true(player().seat.is_empty())
+	assert_eq(main.rackets.money + main.poker.players_money(), books, "every cent accounted for")
+
+
+## M011.2: a save while a move is on show counts Danny's chips as they were
+## when the hand was dealt, and loads without the table.
+func test_saving_while_a_move_is_on_show() -> void:
+	var path := "user://test_poker_pacing_save.json"
+	main.save_path = path
+	await _sit_in(1000)
+	await _until_waiting()
+	assert_true(main.poker.table.running() or _view().pacing.waiting())
+	var expect: int = main.rackets.money + main.poker.stake_for_save()
+	main.save_game()
+	var saved := SaveGame.read(path)
+	assert_eq(int(saved.rackets.money), expect, "the hand under way counts for nothing")
+	main.save_path = ""
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	await _send(_key(KEY_ESCAPE))
