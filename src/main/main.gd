@@ -314,6 +314,7 @@ func _ready() -> void:
 			rival.provoke())
 	for v in interiors.views:
 		v.person_down.connect(_on_person_down.bind(v))
+	interiors.rooms_added.connect(_wire_rooms)  # M012: rooms in the streamed districts
 	vehicle_audio = VehicleAudio.new()
 	add_child(vehicle_audio)
 	vehicle_audio.setup(resolver)
@@ -409,9 +410,56 @@ func _ready() -> void:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	_resume_place()  # M012: a game saved mid-night goes on where and when it was saved
 	_update_view(0.0)
 	if opening_enabled and _saved.is_empty():
 		_start_opening()
+
+
+## M012: a streamed district's rooms were built: whoever may push their doors,
+## who goes down in them, and who is out tonight (from the save or from earlier).
+func _wire_rooms(new_views: Array) -> void:
+	for nv in new_views:
+		var v: InteriorView = nv
+		if walker != null:
+			v.visitors = [walker]
+		v.person_down.connect(_on_person_down.bind(v))
+		var still := _still_out(v.plan)
+		if not still.is_empty():
+			v.reset_people(still)
+	interiors.update_player(player.body().global_position if player != null and player.on_foot() else Vector2.INF)
+	interiors.snap()
+
+
+## M012: who in a room is out tonight: the named people carried off (by id)
+## and anybody else struck down there (by room and id).
+func _still_out(plan: InteriorPlan) -> Array:
+	var out := []
+	for p in plan.people:
+		if ward_out.has(p.id) or ward_out.has(plan.id + "/" + String(p.id)):
+			out.append(p.id)
+	return out
+
+
+## M012: where and when the game was saved, if it was this same night: the
+## clock set back to that minute, the district built and Danny put back - in
+## the street or inside a room, in any district. (A game saved at the start
+## of a night - after sleeping - begins at home as always.)
+func _resume_place() -> void:
+	var place: Dictionary = _saved.get("place", {})
+	if place.is_empty() or int(place.get("night", -1)) != rackets.night:
+		return
+	var at := Vector2(float(place.get("x", 0.0)), float(place.get("y", 0.0)))
+	var id := world.district_at(at)
+	if id == "":
+		return
+	clock.set_time(float(place.get("minute", clock.minute)))
+	if id != layout.id:
+		world.load_now(id)
+	walker.place(at, float(place.get("facing", 0.0)))
+	interiors.update_player(at)
+	interiors.snap()
+	camera.snap_to(walker)
 
 
 ## M008: a beat cop in the game: his own revolver is seen and heard like
@@ -519,6 +567,7 @@ func _on_district_ready(id: String) -> void:
 		if c.has_meta("away") and l.bounds.has_point(c.global_position):
 			_put_away(c, false)
 	opportunity_views.district_ready(id, l, world.loaded[id].node)  # M009
+	interiors.add_district(l, world.city_of(id), world.loaded[id].node)  # M012: its rooms
 	if l.police_beat.is_empty():
 		return
 	var o := PoliceOfficer.new()
@@ -545,6 +594,7 @@ func _on_district_ready(id: String) -> void:
 ## tonight, put away the cars parked in it (not the one Danny drives) and
 ## let go of bullets still flying there.
 func _on_district_unloading(id: String) -> void:
+	interiors.remove_district(id)  # M012: its rooms go with it
 	if not _districts.has(id):
 		return
 	var e: Dictionary = _districts[id]
@@ -724,7 +774,7 @@ func _spot() -> Dictionary:
 		return {}
 	if interiors.current != null:
 		var s := interiors.current.spot_at(walker.global_position)
-		if not s.is_empty() and (s.id == "bed" or s.id == "poker" or s.id == "union_board" or interiors.view_of(interiors.current.id).person_ok(s.id)):
+		if not s.is_empty() and (s.id == "bed" or s.id == "poker" or Conversations.is_readable(s.id) or interiors.view_of(interiors.current.id).person_ok(s.id)):
 			return s
 		if not s.is_empty() and (s.id == "roulette" or String(s.id).begins_with("slot_")):
 			return s  # M011: the wheel (whether Leo is there to spin it is said when you step up), the machines
@@ -760,7 +810,7 @@ func _spot() -> Dictionary:
 	var here := world.layout_at(walker.global_position) if world != null else layout
 	var locked := here.locked_door_at(walker.global_position) if here != null else {}
 	if not locked.is_empty():
-		return {"id": "locked", "prompt": locked.prompt, "text": locked.text}
+		return {"id": "locked", "prompt": locked.prompt, "text": locked.text, "talk": locked.get("talk", "")}
 	return door
 
 
@@ -792,6 +842,8 @@ func _interact(_at: Vector2) -> bool:
 		open_slot(int(String(spot.id).substr(5)))
 	elif spot.id == "plant":
 		_plant_parcel()
+	elif spot.id == "locked" and spot.talk != "":
+		start_talk(spot.talk)  # M012: the bell at the Mayor's gate brings someone down the path
 	elif spot.id == "locked":
 		soundscape.play("places/door", -10.0)  # the handle rattles; nobody comes
 		hud.show_notice(spot.text)
@@ -809,7 +861,7 @@ func _interact(_at: Vector2) -> bool:
 		talking = "incident"
 		_incident_talking = spot.incident
 		_show(talk.open("incident", _talk_context()))
-	elif spot.id == "bed" or spot.id == "union_board" or not interiors.current.person(spot.id).is_empty():
+	elif spot.id == "bed" or Conversations.is_readable(spot.id) or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
 	return true
 
@@ -1391,6 +1443,7 @@ func _danny_down() -> void:
 func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
 	var w: Walker = view.people.get(id)
 	if not named:
+		ward_out[view.plan.id + "/" + id] = rackets.night  # M012: stays down tonight, whatever is unloaded or loaded
 		return
 	if view.plan.id == "back_room":
 		poker.gone[id] = "hurt"  # M010: carried off: no more cards for him tonight
@@ -1617,6 +1670,9 @@ func save_game() -> void:
 		data.rackets.loan.spare = thompson.spare
 	if world != null:
 		data["districts"] = _districts_to_save()
+	if walker != null and clock != null:  # M012: where and when (in the street or in a room, any district)
+		var at: Vector2 = walker.global_position if player == null or player.on_foot() else player.body().global_position
+		data["place"] = {"night": rackets.night, "minute": clock.minute, "x": at.x, "y": at.y, "facing": walker.model.facing}
 	if incidents != null:
 		data["incidents"] = incidents.to_dict()
 	SaveGame.write(save_path, data)
@@ -1761,7 +1817,7 @@ func _load_ward() -> void:
 		if int(ward.out[id]) == rackets.night:
 			ward_out[id] = rackets.night
 	for v in interiors.views:
-		var still := v.plan.people.map(func(p: Dictionary) -> String: return p.id).filter(func(id: String) -> bool: return ward_out.has(id))
+		var still := _still_out(v.plan)
 		if not still.is_empty():
 			v.reset_people(still)
 	if ward_out.has("bird"):

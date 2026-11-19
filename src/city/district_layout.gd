@@ -276,6 +276,8 @@ func shift(offset: Vector2) -> DistrictLayout:
 			item.pos += offset
 	for e in exits:
 		e.rect = _moved(e.rect, offset)
+	for plan in interiors:  # M012: rooms in the neighbouring districts
+		(plan as InteriorPlan).shift(offset)
 	for i in lamps.size():
 		lamps[i] += offset
 	for i in alley_lamps.size():
@@ -287,7 +289,6 @@ func shift(offset: Vector2) -> DistrictLayout:
 	for i in drive_loops.size():
 		drive_loops[i] = _moved_points(drive_loops[i], offset)
 	police_beat = _moved_points(police_beat, offset)
-	assert(interiors.is_empty(), "rooms are laid out in world coordinates (the Riverside Ward only)")
 	return self
 
 

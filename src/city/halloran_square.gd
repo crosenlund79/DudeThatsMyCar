@@ -60,6 +60,7 @@ func _build() -> void:
 	_contacts()
 	_cafe()
 	_civic()
+	HalloranInteriors.add_to(d)  # M012: the rooms behind its doors
 	# the ways east into the Riverside Ward (Calloway Street ends at the ward's own barricade)
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, CALLOWAY - HALF - SW, 6, (HALF + SW) * 2.0)})
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, MARLOWE - AVENUE_HALF - SW, 6, (AVENUE_HALF + SW) * 2.0)})
@@ -295,8 +296,9 @@ func _cafe() -> void:
 ## burning in the mayor's office; the mayor's own house a few doors along, a
 ## clean greystone set back behind a railing and a little garden, its parlour
 ## lit; Alderman Doran's ward office across Marlowe Avenue from the park, and
-## the Regulars' Club where the precinct men meet. All closed to Danny; each
-## door says so when he tries it.
+## the Regulars' Club where the precinct men meet. M012: City Hall's night
+## door, Doran's office and the club open on rooms (HalloranInteriors); the
+## mayor's house stays private - the bell at its gate brings the housekeeper.
 const CITY_HALL := "City Hall"
 const MAYOR := "Mayor Dunleavy's Residence"
 const DORAN := "Ald. Doran's Ward Office"
@@ -309,8 +311,7 @@ func _civic() -> void:
 	d.lots.append({"rect": steps, "kind": "concrete"})
 	d.lamps.append(Vector2(1752, front - 22.0))
 	d.lamps.append(Vector2(1898, front - 22.0))
-	d.locked_doors.append({"pos": Vector2(1825, front - 12.0), "prompt": "Try City Hall's doors",
-		"text": "Locked for the night. High up, one window still burns - the Mayor's office. Somebody's working late, or wants it to look that way."})
+	# M012: the night door at the top of the steps is open (HalloranInteriors.city_hall)
 	# the mayor's house: set back behind a garden and a railing, a gate in the middle, two lamps at it
 	var house := Rect2(2681, front + 70.0, 303, 3300.0 - front - 70.0)
 	_building(house, 3, "townhouse", "tar", Vector2.UP, {"name": MAYOR, "show_address": true})
@@ -322,15 +323,12 @@ func _civic() -> void:
 	d.lots.append({"rect": Rect2(gate_x - 22.0, front, 44, 70), "kind": "concrete"})  # the path to the door
 	d.lamps.append(Vector2(gate_x - 34.0, front - 10.0))
 	d.lamps.append(Vector2(gate_x + 34.0, front - 10.0))
-	d.locked_doors.append({"pos": Vector2(gate_x, front - 8.0), "prompt": "Try the gate",
+	# M012: the mayor's house stays private: the bell at the gate brings his housekeeper down the path (a talk, not a room)
+	d.locked_doors.append({"pos": Vector2(gate_x, front - 8.0), "prompt": "Ring the bell at the gate", "talk": "mayor_gate",
 		"text": "The gate's chained. Warm lamps behind the parlour curtains - Mayor Dunleavy keeps late hours."})
 	# the alderman's office and the precinct men's club
-	var doran: Rect2 = d.buildings[d.building_named(DORAN)].rect
-	d.locked_doors.append({"pos": Vector2(doran.get_center().x, doran.end.y + 14.0), "prompt": "Try the door",
-		"text": "Closed. Gold letters on the glass: MARTIN J. DORAN, ALDERMAN - WARD OFFICE. A card underneath: Back Tuesday."})
-	var club: Rect2 = d.buildings[d.building_named(REGULARS)].rect
-	d.locked_doors.append({"pos": Vector2(club.get_center().x, club.position.y - 14.0), "prompt": "Try the door",
-		"text": "A brass plate: HALLORAN SQUARE REGULARS - MEMBERS. Voices and cigar smoke behind the blinds; nobody answers a stranger."})
+	# M012: Doran's ward office is open late (HalloranInteriors)
+	# M012: the Regulars' Club lets Danny in (HalloranInteriors.regulars_club)
 
 
 func _contacts() -> void:

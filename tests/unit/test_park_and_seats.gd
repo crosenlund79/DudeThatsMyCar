@@ -43,7 +43,11 @@ func test_benches_are_seats() -> void:
 	for s in seats:
 		assert_almost_eq((s.stand as Vector2).distance_to(s.pos), Seats.STAND_OFF - 2.0, 0.1)
 		assert_almost_eq(angle_difference(((s.stand as Vector2) - (s.pos as Vector2)).angle(), float(s.facing)), 0.0, 0.001, "he stands up the way he faces")
-		assert_false(h.is_in_building(s.stand), "and there is room to")
+		var room := h.interior_at(s.pos)
+		if room == null:
+			assert_false(h.is_in_building(s.stand), "and there is room to")
+		else:  # M012: a bench in a room - he stands up inside it, clear of its walls
+			assert_true(room.room.grow(-InteriorPlan.WALL - Walker.RADIUS).has_point(s.stand), "and there is room to, in %s" % room.id)
 	assert_eq(Seats.near(seats, (seats[0].stand as Vector2) + Vector2(5, 0)), seats[0])
 	assert_true(Seats.near(seats, Vector2(-5000, -5000)).is_empty())
 	var ward := RiversideWard.create()

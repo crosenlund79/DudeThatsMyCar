@@ -15,6 +15,7 @@ static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(flat(d))
 	d.interiors.append(vet(d))
 	d.interiors.append(union_hall(d))
+	d.interiors.append(quilty_office(d))
 	# the barber's pole beside Sal's door
 	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 444), "rot": 0.0, "height": 0.0, "radius": 4.0})
 
@@ -408,5 +409,46 @@ static func union_hall(d: DistrictLayout) -> InteriorPlan:
 	]
 	p.spots = [
 		{"id": "union_board", "pos": Vector2(3134, 2486), "radius": 18.0, "prompt": "Read the noticeboard"},
+	]
+	return p
+
+
+## M012: Alderman Patrick J. Quilty's ward office on Marlowe Avenue, between
+## the corner shop and the flats: one modest room behind the gold letters on
+## the glass - his desk under a green lamp with the visitors' chairs before it,
+## the ward map, a filing cabinet, the flag, a stove, a coat rack and the
+## handbills from the last campaign stacked in a corner. Office hours are ten
+## till four; the alderman is often in long after.
+static func quilty_office(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("quilty_office", RiversideWard.QUILTY)
+	p.building = d.building_named(RiversideWard.QUILTY)
+	p.building_rect = d.buildings[p.building].rect  # x 391..581, y 168..439 (the front on Marlowe Avenue)
+	p.room = Rect2(391, 289, 190, 150)
+	p.floor = "interiors/floor_boards"
+	p.doors = [{"side": Vector2.DOWN, "at": 486.0, "width": 28.0}]
+	p.furniture = [
+		{"kind": "interiors/wall_map", "pos": Vector2(440, 297)},
+		{"kind": "interiors/photo_wall", "pos": Vector2(530, 297)},
+		{"kind": "interiors/desk", "pos": Vector2(486, 334), "box": Vector2(70, 32)},
+		{"kind": "interiors/chair", "pos": Vector2(486, 310)},
+		{"kind": "interiors/chair", "pos": Vector2(470, 366), "rot": PI},
+		{"kind": "interiors/chair", "pos": Vector2(502, 366), "rot": PI},
+		{"kind": "interiors/flag_stand", "pos": Vector2(410, 312), "radius": 6.0},
+		{"kind": "interiors/filing_cabinet", "pos": Vector2(570, 340), "rot": PI / 2, "box": Vector2(22, 18)},
+		{"kind": "interiors/potbelly", "pos": Vector2(412, 408), "radius": 11.0},
+		{"kind": "interiors/crate_stack", "pos": Vector2(558, 408), "box": Vector2(28, 28)},  # last campaign's handbills
+		{"kind": "interiors/coat_rack", "pos": Vector2(440, 426), "radius": 6.0},
+	]
+	p.lamps = [
+		{"pos": Vector2(486, 334), "color": Color(0.9, 1.0, 0.76), "energy": 1.0, "radius": 110.0},  # the green desk lamp
+		{"pos": Vector2(486, 395), "color": Color(1.0, 0.78, 0.52), "energy": 0.55, "radius": 110.0},
+		{"pos": Vector2(412, 408), "color": Color(1.0, 0.55, 0.3), "energy": 0.3, "radius": 45.0},
+	]
+	p.people = [
+		{"id": "quilty", "name": "Ald. Quilty", "look": "characters/alderman", "pos": Vector2(486, 310), "facing": PI / 2},
+	]
+	p.spots = [
+		{"id": "quilty", "pos": Vector2(486, 376), "radius": 20.0, "prompt": "Talk to Alderman Quilty"},
+		{"id": "quilty_map", "pos": Vector2(440, 318), "radius": 16.0, "prompt": "Look at the ward map"},
 	]
 	return p

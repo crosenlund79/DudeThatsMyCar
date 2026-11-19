@@ -31,6 +31,9 @@ const CARRIED_OFF_AFTER := 4.0
 var out := {}
 ## Whoever may push the doors open (the player's body, set by the game).
 var visitors: Array[Node2D] = []
+## M012: the other rooms in the same building (the depot's office and shed):
+## the building's roof stays off while any of them is open.
+var siblings: Array = []
 var _doors: Array = []  # {node: Sprite2D, hinge_open: float, at: Vector2}
 var _energy: Array[float] = []
 
@@ -159,8 +162,12 @@ func _apply() -> void:
 		(w as Walker).active = visible  # nobody to see them move while you are outside
 	modulate = Color(1, 1, 1, alpha)
 	if host != null:
-		host.modulate = Color(1, 1, 1, 1.0 - alpha)
-		host.visible = alpha < 1.0
+		var open := alpha
+		for sv in siblings:  # M012: another room in the same building may have it open
+			if is_instance_valid(sv):
+				open = maxf(open, (sv as InteriorView).alpha)
+		host.modulate = Color(1, 1, 1, 1.0 - open)
+		host.visible = open < 1.0
 	for i in lights.size():
 		lights[i].energy = _energy[i] * alpha
 		lights[i].enabled = alpha > 0.0
@@ -244,6 +251,7 @@ func _draw_base(ci: CanvasItem) -> void:
 	if host == null or host.roof_tex == null:
 		ci.draw_rect(r, CUT_COLOR)
 		return
+	r = host.rect  # M012: the whole building (a room may have only part of it: the depot's two)
 	var pts := City.rect_points(r)
 	var uvs := PackedVector2Array()
 	for p in pts:

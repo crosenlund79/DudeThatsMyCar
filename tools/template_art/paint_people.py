@@ -69,6 +69,18 @@ ATTENDANT = {"coat": "#e6e2d8", "coat_light": "#f6f3ec", "arm": "#e6e2d8", "trou
 # a bow tie and a green eyeshade over slicked dark hair.
 CROUPIER = {"coat": "#1d1c20", "coat_light": "#33323a", "arm": "#ece7da", "trouser": "#18181b", "hat": "visor",
             "hat_color": "#20160f", "stripes": False, "front": "bowtie"}
+# M012: Leon Sobczak, North Branch Freight's night dispatcher: a grey waistcoat over
+# shirt sleeves, a dark tie, black hair combed flat.
+DISPATCHER = {"coat": "#4a4e56", "coat_light": "#60656e", "arm": "#dcd6c6", "trouser": "#2a2c30", "hat": "hair",
+              "hat_color": "#20160e", "stripes": False, "front": "tie"}
+# M012: Walt Haney, foreman of the freight shed: an olive canvas work coat buttoned up,
+# a brown flat cap.
+FOREMAN = {"coat": "#5c5636", "coat_light": "#726b46", "trouser": "#33302a", "hat": "flatcap", "hat_color": "#4e3c2a",
+           "stripes": False, "front": "buttons"}
+# M012: Alderman Patrick J. Quilty of the Riverside Ward: a brown three-piece suit,
+# white hair, a watch-chain tie.
+ALDERMAN = {"coat": "#5a3e2a", "coat_light": "#704e36", "trouser": "#3a2a1e", "hat": "hair", "hat_color": "#d8d2c6",
+            "stripes": False, "front": "tie"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
                 "hat_color": "#1d1410", "stripes": False, "front": "pearls"}
 
@@ -345,4 +357,7 @@ ASSETS = {
     "characters/fireman": lambda: sheet(FIREMAN),
     "characters/attendant": lambda: sheet(ATTENDANT),
     "characters/croupier": lambda: sheet(CROUPIER),
+    "characters/dispatcher": lambda: sheet(DISPATCHER),
+    "characters/foreman": lambda: sheet(FOREMAN),
+    "characters/alderman": lambda: sheet(ALDERMAN),
 }

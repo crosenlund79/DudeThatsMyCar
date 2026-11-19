@@ -1,13 +1,14 @@
 extends "res://tests/support/city_test.gd"
 ## M011 the city's powers, by name and in stone, in the game: City Hall facing
 ## Halloran Park across Pruitt Street (limestone, its copper cupola, granite
-## steps between globe lamps; its doors locked at night with the mayor's
-## window lit); the mayor's house a few doors along, set back behind a garden
-## and a railing with a gate; Alderman Doran's ward office and the Regulars'
-## Club in Halloran Square, Alderman Quilty's office in the ward. Each can be
-## tried at the door and says why it is shut; nothing changes hands; every
-## one is named on the city map (the mayor's house with its address). No
-## elections, no influence, no bribes.
+## steps between globe lamps); the mayor's house a few doors along, set back
+## behind a garden and a railing with a gate; Alderman Doran's ward office and
+## the Regulars' Club in Halloran Square, Alderman Quilty's office in the
+## ward. Every one is named on the city map (the mayor's house with its
+## address). No elections, no influence, no bribes. M012: City Hall, the two
+## aldermen's offices and the club open on rooms (test_new_rooms); the
+## mayor's house stays private - the bell at its gate brings his housekeeper
+## to say so, and nothing changes hands.
 
 
 func _halloran() -> DistrictLayout:
@@ -47,31 +48,29 @@ func test_city_hall_and_the_mayors_house_stand_as_built() -> void:
 	assert_gte(main.layout.building_named(RiversideWard.QUILTY), 0, "the ward's alderman")
 
 
-func test_the_doors_say_why_they_are_shut() -> void:
+func test_the_mayors_house_stays_private() -> void:
 	main.rackets.money = 900
 	var h := _halloran()
 	main.world.load_now("halloran")
-	var expect := {HalloranSquare.CITY_HALL: "Mayor's office", HalloranSquare.MAYOR: "Mayor Dunleavy",
-		HalloranSquare.DORAN: "DORAN", HalloranSquare.REGULARS: "REGULARS"}
-	for l in h.locked_doors:
-		walker().place(l.pos, PI / 2)
-		main.camera.snap_to(walker())
-		await wait_physics_frames(3)
-		assert_string_contains(main.hud.prompt_label.text, String(l.prompt))
-		await press_e()
-		assert_string_contains(main.hud.notice_label.text, String(l.text).substr(0, 20))
-	assert_eq(h.locked_doors.size(), 4, "City Hall, the mayor's gate, Doran's office, the Regulars' Club")
-	for n in expect:
-		assert_true(h.locked_doors.any(func(l: Dictionary) -> bool: return String(l.text).contains(expect[n])), "%s's door" % n)
-	# the ward's alderman
-	var q: Dictionary = main.layout.locked_doors[0]
-	walker().place(q.pos, -PI / 2)
+	assert_eq(h.locked_doors.size(), 1, "only the mayor's gate: the rest open on rooms (M012)")
+	var gate: Dictionary = h.locked_doors[0]
+	assert_eq(gate.talk, "mayor_gate")
+	assert_eq(h.interior_of(h.building_named(HalloranSquare.MAYOR)), null, "no way into the mayor's house")
+	walker().place(gate.pos, PI / 2)
 	main.camera.snap_to(walker())
 	await wait_physics_frames(3)
+	assert_string_contains(main.hud.prompt_label.text, "Ring the bell")
 	await press_e()
-	assert_string_contains(main.hud.notice_label.text, "QUILTY")
+	assert_eq(main.talking, "mayor_gate", "his housekeeper comes down the path")
+	assert_string_contains(main.hud.line_label.text, "not receiving")
+	await answer_with("rourke")
+	assert_string_contains(main.hud.line_label.text, "a man called")
+	await answer_with("bye")
+	assert_eq(main.talking, "")
+	assert_true(h.bounds.has_point(walker().global_position))
+	assert_null(main.interiors.current, "still on the pavement")
 	assert_eq(main.rackets.money, 900, "nothing changes hands")
-	assert_eq(main.talking, "", "no one to talk to")
+	assert_true(main.layout.locked_doors.is_empty(), "Quilty's door opens on his office (M012)")
 
 
 func test_named_on_the_city_map() -> void:

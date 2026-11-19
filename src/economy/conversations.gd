@@ -16,7 +16,42 @@ extends RefCounted
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
 	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "pettibone": "Doc Pettibone", "bed": "Home",
 	"dutch": "Dutch", "feeney": "Mr. Feeney", "irv": "Irv Feldman", "red": "Red Gallagher", "pete": "Lucky Pete",
-	"moe": "Moe Brandt", "croupier": "Leo Varga", "union_board": "The noticeboard"}
+	"moe": "Moe Brandt", "croupier": "Leo Varga", "union_board": "The noticeboard",
+	"heeler": "The precinct captain", "doran_photos": "The photographs", "doran_desk": "The alderman's desk",
+	"nightclerk": "The night clerk", "city_board": "The notices", "city_stairs": "The stairs", "city_records": "The records",
+	"steward": "The steward", "regulars_portrait": "The portrait", "quilty": "Ald. Quilty", "quilty_map": "The ward map",
+	"leon": "Leon Sobczak", "dispatch_board": "The dispatch board", "walt": "Walt Haney", "held_crates": "The crates",
+	"mayor_gate": "At the gate"}
+
+## M012: things in a room to look at, each a narrated page (nothing changes hands).
+const READS := {
+	"doran_photos": "Doran shaking hands with a fellow in a silk hat outside the Stockyards. Doran cutting the ribbon on the new "
+		+ "comfort station in Halloran Park. Doran at the ward picnic in his shirtsleeves, a beer in each fist, kids everywhere. "
+		+ "In every one he's looking at the camera, never at the man beside him.",
+	"doran_desk": "A blotter, a fountain pen, a stack of letters. A widow asking after her pension. A contractor thanking the "
+		+ "alderman for his understanding in the matter of the Garrity Street sewer. A list of names in pencil headed STREETS & "
+		+ "SANITATION - SPRING, some ticked, some crossed through. The drawer's locked. You leave it that way.",
+	"city_board": "Notices behind glass: a tax sale of lots on Foundry Street; the Board of Health on milk; a hundred dollars "
+		+ "for information on the Garfield Park fire; the ward committeemen for the spring primary in tidy columns, Doran's "
+		+ "name and Quilty's among them. Somebody has given the Mayor a moustache.",
+	"city_stairs": "A velvet rope on brass posts and a card: OFFICE OF THE MAYOR - BY APPOINTMENT. The night clerk watches you "
+		+ "read it. Somewhere up there a typewriter is going, at this hour.",
+	"city_records": "Births, deaths and building permits in calf-bound volumes, the ward rolls on the bottom shelf. Front "
+		+ "Street, 1931, is back on the shelf the wrong way up - somebody had it out lately and didn't care who knew.",
+	"regulars_portrait": "Old Mike Halloran in oils, the man the square is named for: alderman for thirty years, dead for ten. "
+		+ "The brass plate says FRIEND OF THE WORKING MAN. The painter has given him the eyes of a man counting votes.",
+	"quilty_map": "The Riverside Ward in red pencil, precinct by precinct. Every block has names written on it, and most of "
+		+ "the names have a tick beside them. The Copper Owl's block has a star.",
+	"dispatch_board": "Chalked in a quick hand: car numbers, bays and times. CAR 4471 - BAY 3 - TANNERY HIDES - 10 PM. "
+		+ "CAR 2210 - BAY 1 - EMPTY. A Chicago & North Western schedule pinned beside it, thumbed grey.",
+	"held_crates": "A dozen crates under a tarpaulin, stencilled NBF, a waybill tag on the corner. They look like they've "
+		+ "been waiting a while.",
+}
+
+
+## M012: whether E at this spot reads something rather than talking to someone.
+static func is_readable(id: String) -> bool:
+	return id == "union_board" or READS.has(id)
 
 var rackets: Rackets
 
@@ -91,6 +126,22 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _bed(step, context)
 		"union_board":
 			return _union_board(step)
+		"heeler":
+			return _heeler(step, context)
+		"nightclerk":
+			return _nightclerk(step, context)
+		"steward":
+			return _steward(step)
+		"quilty":
+			return _quilty(step, context)
+		"leon":
+			return _leon(step, context)
+		"walt":
+			return _walt(step, context)
+		"mayor_gate":
+			return _mayor_gate(step)
+	if READS.has(who) and step == "hello":
+		return _told(who, READS[who], [{"id": "bye", "text": "Leave it be."}])
 	return {}
 
 
@@ -789,6 +840,111 @@ func _union_board(step: String) -> Dictionary:
 				+ "the office. A hand-lettered card: NO WORK FOR MEN WITHOUT A BOOK. A clipping from the Evening Courier about the "
 				+ "new mayor's budget, with somebody's pencil all over it. A picnic at the Forest Preserve, if the weather holds.",
 				[{"id": "bye", "text": "Leave it be."}])
+	return {}
+
+
+## M012: Alderman Doran's precinct captain, keeping the ward office's lamp lit
+## (not a named man of the square: the alderman's people come and go).
+func _heeler(step: String, context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			var hello := "Office is shut, friend. The alderman's back Tuesday. 'Course, if it's a job with the city, a box for "\
+				+ "your mother or a cousin in the lockup, I'm the fella you want."
+			if context.get("late", false):
+				hello = "You're up late. So am I - forty men want twelve shovels with the street department, and every one of "\
+					+ "'em swears his whole family votes."
+			return _page("heeler", hello, [{"id": "ward", "text": "Who runs this ward, then?"},
+				{"id": "list", "text": "Busy night?"}])
+		"ward":
+			return _page("heeler", "Martin J. Doran runs it, the way his father did. A turkey at Christmas, coal when it's cold, "
+				+ "and everybody votes. You're Rourke's boy, ain't you? Mr. Rourke and the alderman understand each other. "
+				+ "Let's all keep it that way.", [{"id": "list", "text": "What's keeping you up?"}])
+		"list":
+			return _page("heeler", "The spring list for Streets and Sanitation. Who gets a shovel and who gets a handshake. "
+				+ "Some of these fellas even live in the ward.", [{"id": "ward", "text": "Who runs this ward, then?"}])
+	return {}
+
+
+## M012: City Hall's night clerk behind his brass grille.
+func _nightclerk(step: String, context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			var hello := "City Hall's closed till nine, mister. The night window's for bail money for the night court, dog "\
+				+ "licences and complaints about the streetcars. Which is it?"
+			if context.get("late", false):
+				hello = "This hour, mister? You're the third fella tonight come in asking for nobody in particular."
+			return _page("nightclerk", hello, [{"id": "upstairs", "text": "Who's working upstairs this late?"},
+				{"id": "streetcars", "text": "The streetcars."}])
+		"upstairs":
+			return _page("nightclerk", "The Mayor's office keeps its own hours. I keep the door. You'd want an appointment, "
+				+ "and you'd want to be somebody.", [{"id": "streetcars", "text": "Then I'll complain about the streetcars."}])
+		"streetcars":
+			return _page("nightclerk", "Get in line. Third floor, Monday, on the green form - not the blue one, the blue one's "
+				+ "for compliments. We don't get many.")
+	return {}
+
+
+## M012: the Regulars' Club's steward, who pours nothing these days.
+func _steward(step: String) -> Dictionary:
+	match step:
+		"hello":
+			return _page("steward", "Members and their guests, sir. Mr. Rourke's man, isn't it? You may sit in the lounge, but "
+				+ "the gentlemen are talking. Hat on, voice down.", [{"id": "who", "text": "Who are the gentlemen?"},
+				{"id": "pour", "text": "Pour me one."}])
+		"who":
+			return _page("steward", "Precinct captains, a judge who isn't here and a man from the water department who is. "
+				+ "They come for the quiet.", [{"id": "pour", "text": "Pour me one."}])
+		"pour":
+			return _page("steward", "The club doesn't serve, sir, not since the Volstead Act. What the gentlemen bring in their "
+				+ "own flasks is the gentlemen's own affair.", [{"id": "who", "text": "Who are the gentlemen?"}])
+	return {}
+
+
+## M012: Alderman Quilty of the Riverside Ward, in late at his desk.
+func _quilty(step: String, _context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			return _page("quilty", "Mercer! Danny Mercer, back in the ward. Sit, sit. Office hours are ten till four, but the "
+				+ "ward don't keep office hours. What can your alderman do for you?",
+				[{"id": "respects", "text": "Just paying my respects."}, {"id": "late", "text": "What keeps you up?"}])
+		"respects":
+			return _page("quilty", "That's the spirit. Remember me in the spring, and tell Mr. Rourke his alderman asked "
+				+ "after him.", [{"id": "late", "text": "What keeps you up?"}])
+		"late":
+			return _page("quilty", "Coal for the Widow Kerrigan, a job at the pumping station for the Nolan boy, and a letter "
+				+ "to the Courier explaining why the holes in Kessler Street are a Republican plot.",
+				[{"id": "respects", "text": "I'll let you get on."}])
+	return {}
+
+
+## M012: North Branch Freight's night dispatcher (Freight Doesn't Walk builds on him).
+func _leon(step: String, _context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			return _page("leon", "North Branch Freight, night dispatch. If you're not a driver with a waybill, you're "
+				+ "standing in my light.")
+	return {}
+
+
+## M012: the freight shed's foreman (Freight Doesn't Walk builds on him).
+func _walt(step: String, _context: Dictionary) -> Dictionary:
+	match step:
+		"hello":
+			return _page("walt", "Shed's closed to visitors, pal. Company rules - which this week we're keeping real careful.")
+	return {}
+
+
+## M012: the bell at the Mayor's gate: his house stays private, and his housekeeper says so.
+func _mayor_gate(step: String) -> Dictionary:
+	match step:
+		"hello":
+			return _told("mayor_gate", "You pull the bell. After a while a lamp comes down the garden path: a housekeeper in "
+				+ "black, keys at her belt, who looks at your coat and your hat and makes up her mind. \"The Mayor is not "
+				+ "receiving. If you've business with him, City Hall opens at nine.\"",
+				[{"id": "rourke", "text": "Tell him Rourke's man called."}, {"id": "bye", "text": "Sorry to trouble you."}])
+		"rourke":
+			return _told("mayor_gate", "\"I'll tell him a man called.\" The lamp goes back up the path. A curtain moves in the "
+				+ "parlour, and is still.", [{"id": "bye", "text": "Walk on."}])
 	return {}
 
 

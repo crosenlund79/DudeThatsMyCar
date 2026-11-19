@@ -15,6 +15,8 @@ var id := ""
 var name := ""
 ## Index of the building in DistrictLayout.buildings.
 var building := -1
+## The building's rect - or (M012) the part of it that belongs to this room,
+## when two rooms share a building (their parts together make the whole).
 var building_rect := Rect2()
 ## The walkable room, walls included (inside building_rect).
 var room := Rect2()
@@ -101,6 +103,28 @@ func solid_boxes() -> Array[Rect2]:
 		out.append(Rect2(r.end.x, r.position.y, b.end.x - r.end.x, r.size.y))
 	out.append_array(wall_boxes())
 	return out
+
+
+## M012: moves the whole room by `offset` (a district drawn up in its own
+## coordinates and placed in the world). Doors and doorways keep their walls:
+## `at` is an x on an UP / DOWN wall (or a horizontal partition) and a y on a
+## LEFT / RIGHT one.
+func shift(offset: Vector2) -> InteriorPlan:
+	building_rect.position += offset
+	room.position += offset
+	for d in doors:
+		var side: Vector2 = d.side
+		d.at = float(d.at) + (offset.x if side.x == 0.0 else offset.y)
+	for p in partitions:
+		var horizontal := absf((p.a as Vector2).y - (p.b as Vector2).y) < 0.01
+		p.a += offset
+		p.b += offset
+		if p.has("door_at") and not is_nan(float(p.door_at)):
+			p.door_at = float(p.door_at) + (offset.x if horizontal else offset.y)
+	for list in [furniture, lamps, people, spots]:
+		for item in list:
+			item.pos += offset
+	return self
 
 
 ## Centre of door i in its wall.

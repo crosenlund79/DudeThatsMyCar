@@ -28,7 +28,7 @@ const EMBANKMENT_Y := -950.0
 const WEST_EDGE := -800.0
 const SOUTH_EDGE := 2150.0
 ## M011: the union hall's name (on its roof, the map and the HUD), and the
-## ward's alderman's office on Marlowe Avenue (by name only; shut at night).
+## ward's alderman's office on Marlowe Avenue (M012: a room, the alderman in late).
 const UNION_HALL := "Dock & Freight Workers, Local 9"
 const QUILTY := "Ald. Quilty's Ward Office"
 
@@ -240,9 +240,7 @@ func _street_furniture() -> void:
 	_sign(UNION_HALL, "signs/union", 0.0, 60.0)
 	d.alley_lamps.append(Vector2(3184, 2604))
 	_sign(QUILTY, "signs/quilty", 0.0, 34.0)
-	var quilty: Rect2 = d.buildings[d.building_named(QUILTY)].rect
-	d.locked_doors.append({"pos": Vector2(quilty.get_center().x, quilty.end.y + 14.0), "prompt": "Try the door",
-		"text": "Closed. On the glass: PATRICK J. QUILTY, ALDERMAN - YOUR NEIGHBOR AT CITY HALL. Office hours ten till four."})
+	# M012: Quilty's office opens on a room (RiversideInteriors.quilty_office)
 	var morgue: Rect2 = d.buildings[d.building_named("The Morgue")].rect
 	d.alley_lamps.append(Vector2(morgue.get_center().x, morgue.end.y + 2.0))  # one dim lamp over its doors
 	# Awnings and the club canopy hang over the sidewalk.

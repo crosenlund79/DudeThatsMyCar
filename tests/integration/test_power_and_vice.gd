@@ -8,8 +8,9 @@ extends "res://tests/support/city_test.gd"
 ## the rules say for the number the ball lands on), pulls the Owl's lever
 ## (paid what the window shows), saves mid-spin and loads (the decided spin
 ## counted once); walks down to the union hall by the yards and reads the
-## noticeboard; tries City Hall's doors across from Halloran Park; finds them
-## all on the city map; sleeps; the next night the wheel and the machines
+## noticeboard; goes up City Hall's steps across from Halloran Park and in
+## at the night door (M012: it opens on the hall), where the stairs to the
+## Mayor are roped off; finds them all on the city map; sleeps; the next night the wheel and the machines
 ## are there again and the card players have their purses back.
 
 const SAVE := "user://test_power_and_vice.json"
@@ -160,16 +161,17 @@ func test_two_nights_of_power_and_vice() -> void:
 	await press_e()
 	assert_string_contains(main.hud.line_label.text, "GENERAL MEETING")
 	await press_e()
-	# City Hall across from the park
+	# City Hall across from the park: in at the night door, to the roped-off stairs (M012)
 	var h: DistrictLayout = main.world.layouts.halloran
-	var door: Dictionary = h.locked_doors.filter(func(l: Dictionary) -> bool: return String(l.prompt).contains("City Hall"))[0]
-	walker().place(door.pos + Vector2(0, -60), PI / 2)
+	var hall_data: InteriorPlan = h.interiors.filter(func(p: InteriorPlan) -> bool: return p.id == "city_hall")[0]
+	walker().place(hall_data.outside_door(0, 60.0), PI / 2)
 	main.camera.snap_to(walker())
 	main.world.load_now("halloran")
 	await wait_physics_frames(3)
-	await walk_to(door.pos, 4.0, 200)
+	assert_true(await walk_in_to(main.interiors.plan_named("city_hall"), "city_stairs"), "up the steps and in")
 	await press_e()
-	assert_string_contains(main.hud.notice_label.text, "Mayor's office")
+	assert_string_contains(main.hud.line_label.text, "OFFICE OF THE MAYOR")
+	await press_e()
 	# the city map knows them all
 	var m := InputEventAction.new()
 	m.action = CityInput.MAP

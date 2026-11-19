@@ -1,7 +1,7 @@
 extends "res://tests/support/city_test.gd"
-## M008 the districts over time: a game saved in any district loads as every
-## game does (at home in the ward, the neighbours built when he goes there),
-## with what tonight left behind - a beat cop shot dead stays down until the
+## M008 the districts over time: a game saved in any district loads there
+## (M012: where and when it was saved, that district built at once, the other
+## neighbour only when he goes there), with what tonight left behind - a beat cop shot dead stays down until the
 ## next evening; sleeping puts every district back as a night starts; the
 ## police and Lefty stay on their own district's ground across a border; each
 ## district's beat cop answers a shooting in his district; bullets in a freed
@@ -55,15 +55,16 @@ func test_saved_in_each_district_and_loaded() -> void:
 		main.save_path = _save
 		main.world.load_now(id)
 		var l: DistrictLayout = main.world.layouts[id]
-		walker().place(l.police_beat[0] + Vector2(0, 60), 0.0)
+		var at: Vector2 = l.police_beat[0] + Vector2(0, 60)
+		walker().place(at, 0.0)
 		await wait_physics_frames(3)
 		assert_eq(main.world.current, id)
 		await _reload()
-		assert_eq(walker().global_position, main.layout.spawn, "%s: a loaded game starts at home, as always" % l.name)
-		assert_eq(main.world.ready_ids(), ["riverside"] as Array[String], "only the ward is built")
-		assert_eq(main.hud.district_label.text, "RIVERSIDE WARD")
-		main.world.load_now(id)
-		assert_true(main.world.is_ready(id), "%s builds again when he goes there" % l.name)
+		assert_lt(walker().global_position.distance_to(at), 2.0, "%s: the game goes on where he was (M012)" % l.name)
+		assert_eq(main.world.ready_ids(), ["riverside", id] as Array[String], "the ward and %s built, nothing else" % l.name)
+		await wait_physics_frames(3)
+		assert_eq(main.hud.district_label.text, l.name.to_upper())
+		assert_true(main.world.is_ready(id), "%s built again" % l.name)
 		assert_eq(main.cars.size(), 9 + l.cars.size(), "no car twice")
 	main.save_path = ""
 
