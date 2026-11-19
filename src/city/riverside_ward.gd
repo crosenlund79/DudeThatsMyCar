@@ -27,8 +27,10 @@ const FAR_BANK_X := 4400.0
 const EMBANKMENT_Y := -950.0
 const WEST_EDGE := -800.0
 const SOUTH_EDGE := 2150.0
-## M011: the union hall's name (on its roof, the map and the HUD).
+## M011: the union hall's name (on its roof, the map and the HUD), and the
+## ward's alderman's office on Marlowe Avenue (by name only; shut at night).
 const UNION_HALL := "Dock & Freight Workers, Local 9"
+const QUILTY := "Ald. Quilty's Ward Office"
 
 
 
@@ -140,7 +142,7 @@ func _central_rows() -> void:
 		[402, 3, "brick_red", "tar"]])
 	# Facing Marlowe Avenue from the north: shops, the Copper Owl.
 	_row(131, 439, 168, [
-		[260, 3, "brick_brown", "tar", {"awning": "red"}], [190, 2, "brick_brown", "gravel", {"awning": "green"}], [24],
+		[260, 3, "brick_brown", "tar", {"awning": "red"}], [190, 2, "brick_brown", "gravel", {"awning": "green", "name": QUILTY}], [24],
 		[300, 4, "brick_red", "tar"], [220, 2, "brick_brown", "tar", {"awning": "red", "name": "Sal's Barber Shop"}],
 		[394, 3, "greystone", "gravel"]])
 	_row(1781, 439, 168, [
@@ -237,6 +239,10 @@ func _street_furniture() -> void:
 	# M011: the union hall's lettering, and its lamp by the door on Wharf Street (the lights burn late)
 	_sign(UNION_HALL, "signs/union", 0.0, 60.0)
 	d.alley_lamps.append(Vector2(3184, 2604))
+	_sign(QUILTY, "signs/quilty", 0.0, 34.0)
+	var quilty: Rect2 = d.buildings[d.building_named(QUILTY)].rect
+	d.locked_doors.append({"pos": Vector2(quilty.get_center().x, quilty.end.y + 14.0), "prompt": "Try the door",
+		"text": "Closed. On the glass: PATRICK J. QUILTY, ALDERMAN - YOUR NEIGHBOR AT CITY HALL. Office hours ten till four."})
 	var morgue: Rect2 = d.buildings[d.building_named("The Morgue")].rect
 	d.alley_lamps.append(Vector2(morgue.get_center().x, morgue.end.y + 2.0))  # one dim lamp over its doors
 	# Awnings and the club canopy hang over the sidewalk.

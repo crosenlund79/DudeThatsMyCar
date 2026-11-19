@@ -69,6 +69,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `facades/brick_brown_lit` | `custom/graphics/facades/brick_brown_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for brick_brown. |
 | `facades/brick_red` | `custom/graphics/facades/brick_red.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Red-brick apartments. |
 | `facades/brick_red_lit` | `custom/graphics/facades/brick_red_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for brick_red. |
+| `facades/civic` | `custom/graphics/facades/civic.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M011: City Hall - pale limestone, round-headed windows between fluted pilasters under a cornice; the ground storey rusticated with arched windows. |
+| `facades/civic_lit` | `custom/graphics/facades/civic_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | M011: window light for City Hall (offices lit late). |
 | `facades/club` | `custom/graphics/facades/club.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | The Copper Owl jazz club. |
 | `facades/club_lit` | `custom/graphics/facades/club_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window and bulb light for club. |
 | `facades/factory` | `custom/graphics/facades/factory.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M008: works building: sooty brick between pilasters, tall steel-framed windows, a sliding freight door. |
@@ -85,6 +87,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `facades/stone` | `custom/graphics/facades/stone.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Granite embankment wall. |
 | `facades/tenement` | `custom/graphics/facades/tenement.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M008: buff common-brick flats, paired sash windows, a stoop door. |
 | `facades/tenement_lit` | `custom/graphics/facades/tenement_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for tenement (more windows lit than elsewhere). |
+| `facades/townhouse` | `custom/graphics/facades/townhouse.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M011: a fine greystone townhouse kept clean: a carved cornice, curtained windows, a bay and a carved door. |
+| `facades/townhouse_lit` | `custom/graphics/facades/townhouse_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | M011: window light for the townhouse (warm behind the curtains, most windows lit). |
 | `facades/warehouse` | `custom/graphics/facades/warehouse.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Warehouse: steel windows, loading doors. |
 | `facades/warehouse_lit` | `custom/graphics/facades/warehouse_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for warehouse. |
 | `fences/boards` | `custom/graphics/fences/boards.png` | 128x48 | fence (seamless left-right fence face, drawn upright along a fence line (ground at the bottom edge)) | 64 px per repeat, 24 px high | M010: a weathered board fence standing up, seen face on: seamless left-right, ground at the bottom edge, a lit top edge. |
@@ -187,6 +191,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/truck` | `custom/graphics/props/truck.png` | 224x96 | sprite (image, scaled to its display size) | 104x44 | M008: a parked 1930s stake truck from above, nose right (+X); static and solid (not drivable). |
 | `props/truck_b` | `custom/graphics/props/truck_b.png` | 224x96 | sprite (image, scaled to its display size) | 104x44 | M008: the same truck in another colour. |
 | `roof/chimney` | `custom/graphics/roof/chimney.png` | 48x48 | sprite (image, scaled to its display size) | 27x27 | Brick chimney stack. |
+| `roof/cupola` | `custom/graphics/roof/cupola.png` | 128x128 | sprite (image, scaled to its display size) | 84x84 | M011: City Hall's copper cupola from above: a verdigris dome on a drum of little columns, the lantern and a gilt finial. |
 | `roof/laundry` | `custom/graphics/roof/laundry.png` | 128x64 | sprite (image, scaled to its display size) | 70x35 | Washing lines. |
 | `roof/skylight` | `custom/graphics/roof/skylight.png` | 96x64 | sprite (image, scaled to its display size) | 54x36 | Skylight. |
 | `roof/skylight_lit` | `custom/graphics/roof/skylight_lit.png` | 96x64 | light (additive night light; transparent where dark) | 54x36 | Skylight light. |
@@ -204,10 +209,12 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/bijou` | `custom/graphics/signs/bijou.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: The Bijou picture house, painted roof lettering, transparent. |
 | `signs/cafe` | `custom/graphics/signs/cafe.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M010: Rosie's Café, painted roof lettering, transparent. |
 | `signs/church` | `custom/graphics/signs/church.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: St. Brendan's, painted roof lettering, transparent. |
+| `signs/city_hall` | `custom/graphics/signs/city_hall.png` | 320x64 | sprite (image, scaled to its display size) | 180x36 | M011: City Hall, painted roof lettering, transparent. |
 | `signs/coal` | `custom/graphics/signs/coal.png` | 384x64 | sprite (image, scaled to its display size) | 210x35 | M008: Brennan Coal & Ice, painted roof lettering, transparent. |
 | `signs/cold_storage` | `custom/graphics/signs/cold_storage.png` | 384x64 | sprite (image, scaled to its display size) | 220x37 | Painted roof lettering, transparent. |
 | `signs/copper_owl` | `custom/graphics/signs/copper_owl.png` | 256x128 | sprite (image, scaled to its display size) | 150x75 | Copper Owl rooftop sign. |
 | `signs/copper_owl_lit` | `custom/graphics/signs/copper_owl_lit.png` | 256x128 | light (additive night light; transparent where dark) | 150x75 | Copper Owl neon. |
+| `signs/doran` | `custom/graphics/signs/doran.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M011: Alderman Doran's ward office (Halloran Square), painted roof lettering, transparent. |
 | `signs/drugstore` | `custom/graphics/signs/drugstore.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Halloran Drugs, painted roof lettering, transparent. |
 | `signs/freight` | `custom/graphics/signs/freight.png` | 384x64 | sprite (image, scaled to its display size) | 230x38 | M008: North Branch Freight, painted roof lettering, transparent. |
 | `signs/garage` | `custom/graphics/signs/garage.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Painted roof lettering, transparent. |
@@ -217,6 +224,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/hotel_lit` | `custom/graphics/signs/hotel_lit.png` | 256x64 | light (additive night light; transparent where dark) | 150x38 | Hotel Marlowe bulbs. |
 | `signs/lunch` | `custom/graphics/signs/lunch.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Dutch's Night Lunch, painted roof lettering, transparent. |
 | `signs/morgue` | `custom/graphics/signs/morgue.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M006: The Morgue, painted roof lettering, transparent. |
+| `signs/quilty` | `custom/graphics/signs/quilty.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M011: Alderman Quilty's ward office (Riverside Ward), painted roof lettering, transparent. |
+| `signs/regulars` | `custom/graphics/signs/regulars.png` | 320x64 | sprite (image, scaled to its display size) | 170x34 | M011: the Halloran Square Regulars' Club (the precinct men), painted roof lettering, transparent. |
 | `signs/tannery` | `custom/graphics/signs/tannery.png` | 384x64 | sprite (image, scaled to its display size) | 230x38 | M008: Great Lakes Tanning Co., painted roof lettering, transparent. |
 | `signs/union` | `custom/graphics/signs/union.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M011: Dock & Freight Workers, Local 9, painted roof lettering, transparent. |
 | `signs/vet` | `custom/graphics/signs/vet.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M006: Pettibone Animal Hospital, painted roof lettering, transparent. |

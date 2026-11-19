@@ -69,6 +69,10 @@ func _furnish_roofs() -> void:
 		var r: Rect2 = (b.rect as Rect2).grow(-16.0)
 		var taken: Array[Rect2] = []
 		var kinds: Array[String] = []
+		if b.opts.get("cupola", false):  # M011: City Hall's dome in the middle of its roof
+			var cs := AssetCatalog.display_size("roof/cupola")
+			b.props.append({"kind": "roof/cupola", "pos": r.get_center(), "rot": 0.0})
+			taken.append(Rect2(r.get_center() - cs / 2 - Vector2(10, 10), cs + Vector2(20, 20)))
 		if b.storeys >= 3:
 			kinds.append("roof/stair_hut")
 		if b.storeys >= 5 or (b.storeys == 4 and rnd.randf() < 0.5) or b.name == "Hotel Marlowe":

@@ -755,6 +755,12 @@ func _spot() -> Dictionary:
 	var door := interiors.door_at(walker.global_position)
 	if not door.is_empty():
 		door["id"] = "door"
+		return door
+	# M011: a door shut for the night that can be tried (City Hall, the mayor's gate, the aldermen)
+	var here := world.layout_at(walker.global_position) if world != null else layout
+	var locked := here.locked_door_at(walker.global_position) if here != null else {}
+	if not locked.is_empty():
+		return {"id": "locked", "prompt": locked.prompt, "text": locked.text}
 	return door
 
 
@@ -786,6 +792,9 @@ func _interact(_at: Vector2) -> bool:
 		open_slot(int(String(spot.id).substr(5)))
 	elif spot.id == "plant":
 		_plant_parcel()
+	elif spot.id == "locked":
+		soundscape.play("places/door", -10.0)  # the handle rattles; nobody comes
+		hud.show_notice(spot.text)
 	elif spot.id == "stand":
 		player.stand()
 	elif spot.get("kind", "") == "contact":

@@ -12,9 +12,13 @@ func before_all() -> void:
 
 
 func test_the_park() -> void:
-	var lawns := h.lots.filter(func(l: Dictionary) -> bool: return l.kind == "grass")
+	# the park's own (M011: the mayor's garden and railing across Pruitt Street are not the park's)
+	var park: Rect2 = Rect2(HalloranSquare.COLS[1][0], HalloranSquare.ROWS[2][0], HalloranSquare.COLS[1][1] - HalloranSquare.COLS[1][0],
+		HalloranSquare.ROWS[2][1] - HalloranSquare.ROWS[2][0])
+	park.position += HalloranSquare.ORIGIN
+	var lawns := h.lots.filter(func(l: Dictionary) -> bool: return l.kind == "grass" and park.encloses(l.rect))
 	assert_eq(lawns.size(), 4, "four lawns")
-	var railing := h.fences.filter(func(f: Array) -> bool: return f.size() > 2 and f[2] == "iron")
+	var railing := h.fences.filter(func(f: Array) -> bool: return f.size() > 2 and f[2] == "iron" and park.has_point(f[0]))
 	assert_eq(railing.size(), 8, "a railing round it, broken by four gates")
 	assert_eq(h.props.filter(func(p: Dictionary) -> bool: return p.kind == "props/flowerbed").size(), 4)
 	assert_eq(h.props.filter(func(p: Dictionary) -> bool: return p.kind == "props/hedge").size(), 4)

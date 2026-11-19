@@ -334,6 +334,33 @@ def skylight():
     return {"roof/skylight": finish(img, w, h), "roof/skylight_lit": finish(glow_from(lit, 3 * SS, 0.6), w, h)}
 
 
+def cupola():
+    """M011: City Hall's copper cupola from above: a verdigris dome on a stone drum, ribbed, with a
+    lantern and a gilt finial at its crown."""
+    w = h = 128
+    img = new(w, h)
+    soft_blob(img, S(70), S(70), S(52), S(52), "#000000", 130, 8 * SS)
+    paint_shape(img, SP(ellipse_pts(64, 64, 56, 56, n=72)), "#b8b1a0", 1, outline=OUT, ow=1.6, wob=0.2, tex=0.2,
+                light=(0.4, -1, 0.4))  # the stone drum
+    for k in range(12):
+        a = 2 * math.pi * k / 12
+        paint_shape(img, SP(ellipse_pts(64 + math.cos(a) * 51, 64 + math.sin(a) * 51, 3.4, 3.4)), "#d8d0bc", 10 + k,
+                    outline=OUT, ow=0.6, wob=0.05)  # little columns round the drum
+    paint_shape(img, SP(ellipse_pts(64, 64, 45, 45, n=72)), "#4f8a74", 2, outline=OUT, ow=1.4, wob=0.15, tex=0.25,
+                strokes_n=16, stroke_cols=["#6aa48c", "#3c6e5c"], light=(0.4, -1, 0.6), inner_shadow=0.3)
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    for k in range(16):
+        a = 2 * math.pi * k / 16
+        d.line([(S(64 + math.cos(a) * 12), S(64 + math.sin(a) * 12)), (S(64 + math.cos(a) * 44), S(64 + math.sin(a) * 44))],
+               fill=rgba("#2f5a4a", 170), width=SS)
+    img.alpha_composite(layer)
+    paint_shape(img, SP(ellipse_pts(64, 64, 13, 13)), "#c8c0aa", 3, outline=OUT, ow=1.0, wob=0.1, light=(0.4, -1, 0.5))
+    paint_shape(img, SP(ellipse_pts(64, 64, 6, 6)), "#e0b84a", 4, outline=OUT, ow=0.8, wob=0.05, light=(0.4, -1, 0.7))
+    soft_blob(img, S(52), S(46), S(14), S(8), "#ffffff", 50, 4 * SS, rot=-0.6)
+    return finish(img, w, h)
+
+
 def stair_hut():
     w = h = 96
     img = new(w, h)
@@ -551,13 +578,6 @@ def _pictogram(img, kind, cx, cy, col=MARK_CREAM):
         line(img, [(S(cx), S(cy - 8)), (S(cx), S(cy + 3))], col, 2.4 * SS, 255)
         hook = [(cx - 5 + 5 * math.cos(a), cy + 2 + 6 * math.sin(a)) for a in np.linspace(0.0, math.pi * 1.2, 14)]
         line(img, [S(x, y) for x, y in hook], col, 2.4 * SS, 255)
-    elif kind == "civic":  # M011: a domed civic building with columns - City Hall
-        paint_shape(img, SP([(cx - 11, cy - 2), (cx + 11, cy - 2), (cx, cy - 8)]), col, 27, outline=None, wob=0.03)
-        paint_shape(img, SP(ellipse_pts(cx, cy - 8, 5, 4)), col, 28, outline=None, wob=0.03)
-        for k in range(4):
-            x = cx - 7.5 + k * 5
-            line(img, [(S(x), S(cy)), (S(x), S(cy + 8))], col, 1.8 * SS, 255)
-        line(img, [(S(cx - 11), S(cy + 10)), (S(cx + 11), S(cy + 10))], col, 2.2 * SS, 255)
     elif kind == "home":  # a bed under a crescent moon: where the henchman sleeps by day
         paint_shape(img, SP(rrect_pts(cx - 10, cy + 1, cx + 10, cy + 7, 1.5)), col, 15, outline=None, wob=0.05)
         paint_shape(img, SP(rrect_pts(cx - 10, cy - 4, cx - 7, cy + 10, 1)), col, 16, outline=None, wob=0.03)
@@ -872,6 +892,7 @@ ASSETS = {
     "roof/vent": vent,
     "roof/skylight": skylight,
     "roof/stair_hut": stair_hut,
+    "roof/cupola": cupola,
     "roof/water_tank": water_tank,
     "roof/laundry": laundry,
     "signs/copper_owl": copper_owl_sign,
@@ -889,6 +910,10 @@ ASSETS = {
     "signs/vet": lambda: painted_roof_sign("vet", "PETTIBONE ANIMAL HOSPITAL", 16, 384, 64),
     "signs/morgue": lambda: painted_roof_sign("morgue", "THE MORGUE", 26, 256, 64, col="#d6dde4"),
     "signs/union": lambda: painted_roof_sign("union", "DOCK & FREIGHT WORKERS  LOCAL 9", 15, 384, 64),
+    "signs/city_hall": lambda: painted_roof_sign("city_hall", "CITY HALL", 30, 320, 64, col="#e8dcb4"),
+    "signs/doran": lambda: painted_roof_sign("doran", "ALD. M. J. DORAN  WARD OFFICE", 16, 384, 64),
+    "signs/quilty": lambda: painted_roof_sign("quilty", "ALD. P. J. QUILTY  WARD OFFICE", 16, 384, 64),
+    "signs/regulars": lambda: painted_roof_sign("regulars", "THE REGULARS' CLUB", 20, 320, 64),
     "ui/status_figure": status_figure,
     "ui/fight_dial": fight_dial,
     "ui/fight_needle": fight_needle,

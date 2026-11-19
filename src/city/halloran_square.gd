@@ -59,6 +59,7 @@ func _build() -> void:
 	_incident_spots()
 	_contacts()
 	_cafe()
+	_civic()
 	# the ways east into the Riverside Ward (Calloway Street ends at the ward's own barricade)
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, CALLOWAY - HALF - SW, 6, (HALF + SW) * 2.0)})
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, MARLOWE - AVENUE_HALF - SW, 6, (AVENUE_HALF + SW) * 2.0)})
@@ -147,19 +148,22 @@ func _rows() -> void:
 	_row(2381, CALLOWAY + HALF + SW, 1402, [[300, 3, "tenement", "tar"], [24], [279, 3, "greystone", "gravel"]])
 	_row(0, MARLOWE - AVENUE_HALF - SW, 1468, [[460, 3, "tenement", "tar"], [400, 2, "brick_brown", "tar", {"awning": "red", "name": "Rosie's Café"}],
 		[409, 3, "brick_brown", "tar", {"awning": "green", "name": "Halloran Drugs"}]])
-	_row(1531, MARLOWE - AVENUE_HALF - SW, 1468, [[300, 2, "brick_brown", "gravel", {"awning": "red"}], [288, 3, "tenement", "tar"]])
+	_row(1531, MARLOWE - AVENUE_HALF - SW, 1468, [[300, 2, "brick_brown", "gravel", {"awning": "red", "name": DORAN}],
+		[288, 3, "tenement", "tar"]])
 	_row(2381, MARLOWE - AVENUE_HALF - SW, 1468, [[260, 3, "tenement", "tar"],
 		[343, 3, "brick_brown", "tar", {"name": "The Bijou", "marquee": "props/marquee_bijou"}]])
 	# Between Marlowe and Pruitt: shops on the avenue, flats on Pruitt (the square in the middle block).
 	_row(2381, MARLOWE + AVENUE_HALF + SW, 2332, [[320, 2, "brick_brown", "tar", {"awning": "green", "name": "Kowalski Bakery"}],
 		[24], [259, 3, "tenement", "gravel"]])
 	_row(2381, PRUITT - HALF - SW, 2398, [[280, 3, "tenement", "tar"], [26], [297, 3, "greystone", "tar"]])
-	_row(0, MARLOWE + AVENUE_HALF + SW, 2332, [[420, 3, "brick_red", "tar"], [470, 2, "brick_brown", "gravel", {"awning": "red"}]])
+	_row(0, MARLOWE + AVENUE_HALF + SW, 2332, [[420, 3, "brick_red", "tar"],
+		[470, 2, "brick_brown", "gravel", {"awning": "red", "name": REGULARS}]])
 	_row(0, PRUITT - HALF - SW, 2398, [[460, 3, "tenement", "tar"], [24], [406, 3, "greystone", "gravel"]])
 	# South of Pruitt Street (barricades close the side streets at y 3450).
 	_row(0, PRUITT + HALF + SW, 3300, [[500, 3, "tenement", "tar"], [380, 3, "brick_red", "tar"], [389, 4, "greystone", "gravel"]])
-	_row(1531, PRUITT + HALF + SW, 3300, [[320, 3, "tenement", "tar"], [268, 2, "brick_brown", "tar", {"awning": "green"}]])
-	_row(2381, PRUITT + HALF + SW, 3300, [[300, 4, "tenement", "gravel"], [303, 3, "brick_red", "tar"]])
+	# M011: City Hall faces the park across Pruitt Street (see _civic)
+	_row(1531, PRUITT + HALF + SW, 3300, [[588, 4, "civic", "gravel", {"name": CITY_HALL, "cupola": true, "skylights": 0}]])
+	_row(2381, PRUITT + HALF + SW, 3300, [[300, 4, "tenement", "gravel"]])  # M011: and the mayor's house beside it (_civic)
 	_row(0, HEIGHT, 3500, [[1269, 4, "brick_red", "tar"]])
 	_row(1531, HEIGHT, 3500, [[588, 3, "greystone", "tar"]])
 	_row(2381, HEIGHT, 3500, [[603, 4, "tenement", "tar"]])
@@ -185,6 +189,9 @@ func _signs() -> void:
 	_sign("Halloran Drugs", "signs/drugstore", 0.0, 34.0)
 	_sign("Rosie's Café", "signs/cafe", 0.0, 34.0)  # M010
 	_sign("St. Brendan's Church", "signs/church", 0.0, 60.0)
+	_sign(CITY_HALL, "signs/city_hall", 0.0, 50.0)  # M011
+	_sign(DORAN, "signs/doran", 0.0, 34.0)
+	_sign(REGULARS, "signs/regulars", 0.0, 34.0)
 	for b in d.buildings:
 		if b.name != "" and not b.name in ["Railroad embankment", "St. Brendan's tower"]:
 			d.landmarks.append({"pos": (b.rect as Rect2).get_center(), "label": b.name})
@@ -280,6 +287,50 @@ func _cafe() -> void:
 		{"id": "stop_fire", "pos": Vector2(945, MARLOWE - 64.0)},
 		{"id": "stop_ambulance", "pos": Vector2(1115, MARLOWE - 68.0)},
 	]
+
+
+## M011: the city's powers, by name only (no politics to play): City Hall
+## facing the park across Pruitt Street - limestone, a copper cupola, granite
+## steps between two globe lamps, its doors locked at night with a light still
+## burning in the mayor's office; the mayor's own house a few doors along, a
+## clean greystone set back behind a railing and a little garden, its parlour
+## lit; Alderman Doran's ward office across Marlowe Avenue from the park, and
+## the Regulars' Club where the precinct men meet. All closed to Danny; each
+## door says so when he tries it.
+const CITY_HALL := "City Hall"
+const MAYOR := "Mayor Dunleavy's Residence"
+const DORAN := "Ald. Doran's Ward Office"
+const REGULARS := "Halloran Square Regulars' Club"
+
+
+func _civic() -> void:
+	var front := PRUITT + HALF + SW  # City Hall's front, the sidewalk's back edge
+	var steps := Rect2(1765, front - 38.0, 120, 38)
+	d.lots.append({"rect": steps, "kind": "concrete"})
+	d.lamps.append(Vector2(1752, front - 22.0))
+	d.lamps.append(Vector2(1898, front - 22.0))
+	d.locked_doors.append({"pos": Vector2(1825, front - 12.0), "prompt": "Try City Hall's doors",
+		"text": "Locked for the night. High up, one window still burns - the Mayor's office. Somebody's working late, or wants it to look that way."})
+	# the mayor's house: set back behind a garden and a railing, a gate in the middle, two lamps at it
+	var house := Rect2(2681, front + 70.0, 303, 3300.0 - front - 70.0)
+	_building(house, 3, "townhouse", "tar", Vector2.UP, {"name": MAYOR, "show_address": true})
+	var garden := Rect2(2681, front, 303, 70)
+	d.lots.append({"rect": garden, "kind": "grass"})
+	var gate_x := garden.get_center().x
+	d.fences.append([Vector2(garden.position.x, front + 4.0), Vector2(gate_x - 24.0, front + 4.0), "iron"])
+	d.fences.append([Vector2(gate_x + 24.0, front + 4.0), Vector2(garden.end.x, front + 4.0), "iron"])
+	d.lots.append({"rect": Rect2(gate_x - 22.0, front, 44, 70), "kind": "concrete"})  # the path to the door
+	d.lamps.append(Vector2(gate_x - 34.0, front - 10.0))
+	d.lamps.append(Vector2(gate_x + 34.0, front - 10.0))
+	d.locked_doors.append({"pos": Vector2(gate_x, front - 8.0), "prompt": "Try the gate",
+		"text": "The gate's chained. Warm lamps behind the parlour curtains - Mayor Dunleavy keeps late hours."})
+	# the alderman's office and the precinct men's club
+	var doran: Rect2 = d.buildings[d.building_named(DORAN)].rect
+	d.locked_doors.append({"pos": Vector2(doran.get_center().x, doran.end.y + 14.0), "prompt": "Try the door",
+		"text": "Closed. Gold letters on the glass: MARTIN J. DORAN, ALDERMAN - WARD OFFICE. A card underneath: Back Tuesday."})
+	var club: Rect2 = d.buildings[d.building_named(REGULARS)].rect
+	d.locked_doors.append({"pos": Vector2(club.get_center().x, club.position.y - 14.0), "prompt": "Try the door",
+		"text": "A brass plate: HALLORAN SQUARE REGULARS - MEMBERS. Voices and cigar smoke behind the blinds; nobody answers a stranger."})
 
 
 func _contacts() -> void:

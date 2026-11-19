@@ -11,7 +11,9 @@ func test_every_building_named_or_addressed() -> void:
 		var addressed := 0
 		for i in labels.size():
 			assert_ne(labels[i], "", "%s building %d" % [l.id, i])
-			if String(l.buildings[i].name) != "":
+			if String(l.buildings[i].name) != "" and (l.buildings[i].opts as Dictionary).get("show_address", false):
+				assert_true(labels[i].begins_with(l.buildings[i].name + ", "), "M011: the mayor's house, named and with its address")
+			elif String(l.buildings[i].name) != "":
 				assert_eq(labels[i], l.buildings[i].name, "a name stays a name")
 			elif labels[i] != "Building":
 				addressed += 1

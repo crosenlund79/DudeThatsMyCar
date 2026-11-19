@@ -22,6 +22,10 @@ static func all(layout: DistrictLayout) -> Array[String]:
 
 static func label(layout: DistrictLayout, b: Dictionary) -> String:
 	if String(b.get("name", "")) != "":
+		# M011: a house known by its owner shows its street address too (the mayor's)
+		if (b.get("opts", {}) as Dictionary).get("show_address", false):
+			var a := address(layout, b)
+			return "%s, %s" % [b.name, a] if a != "" else b.name
 		return b.name
 	var addr := address(layout, b)
 	var kind: String = KIND.get(String(b.get("facade", "")), "")

@@ -41,6 +41,9 @@ var errands: Array = []
 ## "bench"), pos, rot} - where Duggan parks, the café's door, the bench across
 ## the avenue to watch from.
 var cafe: Array = []
+## M011: doors that are shut for the night but can be tried (City Hall, the
+## mayor's gate, the aldermen's offices): {pos, prompt, text}.
+var locked_doors: Array = []
 
 
 ## M010: one of the café job's places ({} when the district has none).
@@ -175,6 +178,18 @@ func building_named(building_name: String) -> int:
 	return -1
 
 
+## M011: the locked door within `reach` of p ({} if none).
+func locked_door_at(p: Vector2, reach: float = 30.0) -> Dictionary:
+	var best := {}
+	var best_d := reach
+	for l in locked_doors:
+		var dist := p.distance_to(l.pos)
+		if dist <= best_d:
+			best = l
+			best_d = dist
+	return best
+
+
 ## M010: the building standing at p (-1: none).
 func building_at(p: Vector2) -> int:
 	for i in buildings.size():
@@ -256,7 +271,7 @@ func shift(offset: Vector2) -> DistrictLayout:
 			p.pos += offset
 		for sg in b.signs:
 			sg.pos += offset
-	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots, contacts, errands, cafe]:
+	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots, contacts, errands, cafe, locked_doors]:
 		for item in list2:
 			item.pos += offset
 	for e in exits:

@@ -406,6 +406,72 @@ def facade_stone(seed=950):
     return finalize(img, None)
 
 
+def facade_civic(seed=1100):
+    """M011: City Hall - pale limestone ashlar; the upper storey tall round-headed windows between
+    fluted pilasters under a heavy cornice; the ground storey rusticated (deep-cut courses) with
+    arched windows. Clean stone with just a little city grime; many windows lit late."""
+    n = tnoise(W * SS, H * SS, 4, seed, octaves=4)
+    img = ramp(n, ["#bdb6a6", "#c8c1b0", "#d2cbba", "#c2bba9"])
+    d = ImageDraw.Draw(img)
+    for y in range(0, 96, 16):  # ashlar courses above
+        d.line([(0, S(y)), (S(W), S(y))], fill=rgba("#a39c8b"), width=SS)
+        off = 0 if (y // 16) % 2 == 0 else 32
+        for x in range(off, W + 64, 64):
+            d.line([(S(x), S(y)), (S(x), S(y + 16))], fill=rgba("#a8a190"), width=SS)
+    for y in range(96, 184, 12):  # rusticated ground storey: deep joints
+        d.rectangle([0, S(y), S(W), S(y + 2)], fill=rgba("#857e6e"))
+    img = wrap_blur(img, 0.5 * SS)
+    strokes(img, 160, ["#ddd6c4", "#a29b8a", "#cbc4b2"], 16, 4, seed + 1, alpha=(12, 35))
+    lit = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    stone_band(d, 0, 9, "#e0d9c6", "#6a6456")  # the cornice
+    d.rectangle([0, S(9), S(W), S(12)], fill=rgba("#9a9383"))
+    rnd = random.Random(seed)
+    for cx in (0, 64, 128, 192):  # fluted pilasters
+        d.rectangle([S(cx - 5), S(12), S(cx + 5), S(94)], fill=rgba("#d6cfbd"))
+        for k in (-3, 0, 3):
+            d.line([(S(cx + k), S(16)), (S(cx + k), S(90))], fill=rgba("#b2ab99"), width=SS)
+    for i, cx in enumerate((32, 96, 160, 224)):
+        window(img, lit, cx - 14, 26, 28, 56, seed + i, rnd.random() < 0.6, style="grid", frame="#e8e2d2", lintel=None,
+               light_col="#ffe2a0")
+        d.pieslice([S(cx - 14), S(14), S(cx + 14), S(40)], 180, 360, fill=rgba("#e8e2d2"))  # the round head
+        d.chord([S(cx - 11), S(17), S(cx + 11), S(37)], 180, 360, fill=rgba("#25303b"))
+    for i, cx in enumerate((32, 96, 160, 224)):
+        window(img, lit, cx - 13, 118, 26, 46, seed + 10 + i, rnd.random() < 0.4, style="grid", frame="#e2dccc", lintel=None,
+               light_col="#ffe2a0")
+        d.chord([S(cx - 13), S(108), S(cx + 13), S(128)], 180, 360, fill=rgba("#e2dccc"))
+    d.rectangle([0, S(182), S(W), S(192)], fill=rgba("#8f8878"))  # the granite plinth
+    return finalize(soot(img, 0.08, 0.12), lit)
+
+
+def facade_townhouse(seed=1200):
+    """M011: a fine greystone townhouse - dressed limestone kept clean, a carved cornice, tall
+    windows with heavy curtains warm behind them, a bay on the ground floor and a carved oak door."""
+    n = tnoise(W * SS, H * SS, 4, seed, octaves=4)
+    img = ramp(n, ["#a49e92", "#aea89c", "#b6b0a3", "#a8a296"])
+    d = ImageDraw.Draw(img)
+    for y in range(0, H, 12):
+        d.line([(0, S(y)), (S(W), S(y))], fill=rgba("#8e897e"), width=SS)
+    img = wrap_blur(img, 0.5 * SS)
+    strokes(img, 160, ["#c4beb1", "#8a857a", "#b8b2a5"], 16, 4, seed + 1, alpha=(12, 35))
+    lit = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    stone_band(d, 0, 8, "#cfc8b8", "#5e584e")
+    for k in range(0, W, 16):  # dentils under the cornice
+        d.rectangle([S(k + 3), S(8), S(k + 10), S(12)], fill=rgba("#c2bba9"))
+    rnd = random.Random(seed)
+    for i, cx in enumerate((44, 108, 172, 236)):
+        window(img, lit, cx - 14, 24, 28, 54, seed + i, rnd.random() < 0.75, lintel="#cfc8b8",
+               curtain=rnd.choice(["#7a2a2a", "#5a3a5a", "#6d3434"]), light_col="#ffd890")
+    window(img, lit, 30, 114, 60, 52, seed + 20, True, style="grid", lintel="#cfc8b8", curtain="#7a2a2a", light_col="#ffd890")
+    window(img, lit, 196, 116, 30, 50, seed + 21, rnd.random() < 0.7, lintel="#cfc8b8", curtain="#6d3434", light_col="#ffd890")
+    door(d, 130, 118, 32, 66, color="#4a2a16")
+    d.rectangle([S(126), S(112), S(166), S(116)], fill=rgba("#d8d0bf"))
+    ImageDraw.Draw(lit).rectangle([S(132), S(120), S(160), S(127)], fill=rgba("#ffd890", 220))
+    d.rectangle([0, S(182), S(W), S(192)], fill=rgba("#7a7468"))
+    return finalize(soot(img, 0.05, 0.1), lit)
+
+
 def _pack(name, fn):
     def run():
         r = fn()
@@ -427,4 +493,6 @@ ASSETS = {
     "facades/rear": _pack("rear", facade_rear),
     "facades/steel": _pack("steel", facade_steel),
     "facades/stone": _pack("stone", facade_stone),
+    "facades/civic": _pack("civic", facade_civic),
+    "facades/townhouse": _pack("townhouse", facade_townhouse),
 }
