@@ -168,9 +168,10 @@ static func gaming_room(d: DistrictLayout) -> InteriorPlan:
 	]
 	p.people = [
 		{"id": "croupier", "name": "Leo Varga", "look": "characters/croupier", "pos": CROUPIER, "facing": PI / 2},
-		{"id": "player_a", "name": "", "look": "characters/patron_woman", "pos": Vector2(1858, 370), "facing": -PI / 2},
-		{"id": "player_b", "name": "", "look": "characters/patron_man", "pos": Vector2(1914, 278), "facing": PI / 2},
-		{"id": "drinker", "name": "", "look": "characters/clerk", "pos": Vector2(1869, 408), "facing": PI},
+		# M013: the regulars (Patrons.ROSTER): Mrs. Halloway and Big Stan at the rail, Bertie with his drink
+		{"id": "edna", "name": "", "look": "characters/lady", "pos": Vector2(1858, 370), "facing": -PI / 2},
+		{"id": "stan", "name": "", "look": "characters/patron_man", "pos": Vector2(1914, 278), "facing": PI / 2},
+		{"id": "bertie", "name": "", "look": "characters/clerk", "pos": Vector2(1869, 408), "facing": PI},
 	]
 	p.spots = [
 		{"id": "roulette", "pos": ROULETTE_SPOT, "radius": 22.0, "prompt": "Play the wheel"},

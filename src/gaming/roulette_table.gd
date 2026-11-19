@@ -28,6 +28,11 @@ extends RefCounted
 ## (paid: what Danny's chips returned, to be credited - once; played: whether
 ## he had chips riding on it still), {"event": "round_over"},
 ## {"event": "closed"} (the night is over, or the croupier is gone).
+## M013.3: the regulars at the rail (`patrons`, optional) put their own colour
+## chips down through the betting time ({"event": "patron_bet", "id", "key",
+## "cents"}), nothing after the call, and are settled at the rest by the same
+## rules ("rest" carries "others": [{id, staked, paid}]). Their purses are
+## theirs; their choices come from their own generator, never the draw's.
 
 enum Phase { OPEN, BALL, DROP, RESULT, CLOSED }
 
@@ -50,6 +55,8 @@ var closing := false
 ## Whether Danny's chips rode on this round's number.
 var danny_in := false
 var _called_last := false
+## M013.3: the other players at the rail (null: nobody but Danny).
+var patrons: RoulettePatrons = null
 
 
 func _init(p_rules: RouletteRules, p_danny: Roulette = null, p_seed := -1) -> void:
@@ -61,6 +68,13 @@ func _init(p_rules: RouletteRules, p_danny: Roulette = null, p_seed := -1) -> vo
 		rng.randomize()
 	motion.drop_time = rules.drop_seconds
 	_open()
+
+
+## The regulars join the table (their chips from the round under way on, if its bets are still open).
+func set_patrons(p: RoulettePatrons) -> void:
+	patrons = p
+	if patrons != null and betting_open():
+		patrons.plan_round(rules.open_seconds + rules.ball_seconds)
 
 
 func betting_open() -> bool:
@@ -105,11 +119,13 @@ func advance(dt: float) -> Array:
 		if to_next > left:
 			round_time += left
 			motion.advance(left)
+			_others(out)
 			_last_call(out)
 			break
 		round_time += to_next
 		motion.advance(to_next)
 		left -= to_next
+		_others(out)
 		_last_call(out)
 		_cross(out)
 	return out
@@ -128,6 +144,14 @@ func _next_boundary() -> float:
 	return INF
 
 
+## The regulars' chips whose moment has come (only while the bets are open).
+func _others(out: Array) -> void:
+	if patrons == null:
+		return
+	for b in patrons.advance(round_time, betting_open()):
+		out.append({"event": "patron_bet", "id": b.id, "key": b.key, "cents": b.cents})
+
+
 func _last_call(out: Array) -> void:
 	if phase == Phase.BALL and not _called_last and round_time >= close_time() - rules.last_call_seconds:
 		_called_last = true
@@ -144,6 +168,8 @@ func _cross(out: Array) -> void:
 			# no more bets: the number is drawn now, once, fairly
 			number = rng.randi_range(0, 36)
 			danny_in = danny.close_with(number)
+			if patrons != null:
+				patrons.advance(round_time, false)  # nothing more goes down
 			phase = Phase.DROP
 			motion.drop(number, rules.drop_seconds)
 			out.append({"event": "no_more_bets"})
@@ -155,7 +181,8 @@ func _cross(out: Array) -> void:
 				paid = danny.settle()
 			elif not danny_in:
 				danny.note(number)
-			out.append({"event": "rest", "number": number, "paid": paid, "played": played})
+			var others: Array = patrons.settle(number) if patrons != null else []
+			out.append({"event": "rest", "number": number, "paid": paid, "played": played, "others": others})
 		Phase.RESULT:
 			danny.new_round()
 			out.append({"event": "round_over"})
@@ -177,6 +204,8 @@ func _open() -> void:
 	rounds += 1
 	motion.kick()
 	motion.lift()
+	if patrons != null:
+		patrons.plan_round(rules.open_seconds + rules.ball_seconds)
 
 
 ## Danny walked away from the layout: Leo no longer waits on him.
@@ -193,6 +222,11 @@ func halt() -> int:
 		back = danny.walk_away()  # a number drawn and not yet paid is settled (and goes on the board)
 		if phase == Phase.DROP and not danny_in:
 			danny.note(number)
+		if patrons != null:
+			if phase == Phase.DROP:
+				patrons.settle(number)
+			else:
+				patrons.refund_all()  # their chips back to their purses
 	phase = Phase.CLOSED
 	return back
 
@@ -203,5 +237,7 @@ func halt() -> int:
 func begin_night() -> int:
 	closing = false
 	var back := danny.walk_away()
+	if patrons != null:
+		patrons.begin_night()
 	_open()
 	return back

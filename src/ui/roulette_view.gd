@@ -155,16 +155,23 @@ func chip() -> int:
 
 
 ## The ball has come to rest: what came up and what Danny's chips paid
-## (`played`: whether he had any on it).
-func show_result(paid: int, played: bool) -> void:
+## (`played`: whether he had any on it); M013.3: the regulars' biggest win
+## told too (`others`: [{id, staked, paid}]).
+func show_result(paid: int, played: bool, others: Array = []) -> void:
 	var n := wheel.number
 	var words := "%d  %s" % [n, "green" if n == 0 else Roulette.colour(n)]
 	if n != 0:
 		words += ", %s, %s" % ["odd" if n % 2 else "even", "low" if n <= 18 else "high"]
 	result_line = words
 	var net := paid - table.staked
+	var best := {}
+	for o in others:
+		if int(o.paid) > int(o.staked) and (best.is_empty() or int(o.paid) - int(o.staked) > int(best.paid) - int(best.staked)):
+			best = o
 	if not played:
 		message = "\"%s.\"" % words
+		if not best.is_empty():
+			message += "   %s collects %s." % [Patrons.name_of(best.id), PokerView.money_text(int(best.paid))]
 	elif paid > 0:
 		message = "%s.   You collect %s%s." % [words, PokerView.money_text(paid),
 			"  (%s ahead)" % PokerView.money_text(net) if net > 0 else ("  (%s down)" % PokerView.money_text(-net) if net < 0 else "")]
@@ -428,7 +435,29 @@ func _draw_chip(at: Vector2, cents: int, radius: float, faded: bool = false) -> 
 		draw_texture_rect(_chip, Rect2(p - Vector2(radius, radius), Vector2(radius, radius) * 2.0), false, col)
 
 
+## M013.3: the regulars' colour chips (each their own colour), set a little
+## to the left of where Danny's own would sit, under his.
+func _draw_others() -> void:
+	if wheel.patrons == null:
+		return
+	var result := wheel.phase == RouletteTable.Phase.RESULT
+	var ids: Array = Patrons.ROSTER.keys()
+	for id in wheel.patrons.bets:
+		var k := ids.find(id)
+		for key in wheel.patrons.bets[id]:
+			var at := _from_layout(RouletteLayout.anchor(key)) + Vector2(-_s(8) - _s(5) * k, -_s(5) + _s(3) * k)
+			var col := Patrons.colour_of(id)
+			var won := result and Roulette.wins(key, wheel.number)
+			if won:
+				draw_circle(at, _s(12), Color(GOLD, 0.4))
+			if result and not won:
+				col = Color(col, 0.35)
+			draw_texture_rect(_chip, Rect2(at - Vector2(_s(8), _s(8)), Vector2(_s(16), _s(16))), false, col)
+			draw_arc(at, _s(7.5), 0, TAU, 16, Color(1, 1, 1, 0.5 if not result or won else 0.2), maxf(1.0, _s(1.0)))
+
+
 func _draw_bets() -> void:
+	_draw_others()
 	var settled := wheel.phase == RouletteTable.Phase.RESULT and table.phase == Roulette.Phase.SETTLED
 	var won: Array[String] = table.winning_bets() if settled else ([] as Array[String])
 	for key in table.bets:
@@ -486,6 +515,25 @@ func _draw_tray() -> void:
 		_text(sr.get_center() + Vector2(0, _s(30)), "Leo waits on you", 12, DIM)
 
 
+## M013.3: who is at the rail with Danny, each by their chips' colour.
+func _draw_rail(wc: Vector2) -> void:
+	if wheel.patrons == null or wheel.patrons.seated().is_empty():
+		return
+	# on the row of the last numbers, left of them (over the wheel's corner of the baize)
+	var y := _from_layout(Vector2.ZERO).y - _s(18)
+	var names: Array = wheel.patrons.seated()
+	var fs := int(round(13 * ui_scale))
+	var x := centre.x - AssetCatalog.display_size("ui/roulette_felt").x * 0.5 * ui_scale + _s(38)
+	var label := "At the rail:"
+	draw_string(_font, Vector2(x, y), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, DIM)
+	x += _font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + _s(10)
+	for id in names:
+		draw_circle(Vector2(x + _s(5), y - _s(4)), _s(5), Patrons.colour_of(id))
+		var who := Patrons.name_of(id)
+		draw_string(_font, Vector2(x + _s(14), y), who, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, CREAM)
+		x += _s(24) + _font.get_string_size(who, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+
+
 static func _chip_words(c: int) -> String:
 	return "%d¢" % c if c < 100 else "$%d" % (c / 100)
 
@@ -493,6 +541,7 @@ static func _chip_words(c: int) -> String:
 func _draw_status() -> void:
 	var wc := centre + WHEEL_AT * ui_scale
 	var y := wc.y + _s(BOWL_RADIUS) + _s(34)
+	_draw_rail(wc)
 	var on_table := table.total_staked() if table.phase != Roulette.Phase.SETTLED else 0
 	_text(Vector2(wc.x, y), "In your pocket %s      On the table %s" % [PokerView.money_text(money),
 		PokerView.money_text(on_table)], 15, CREAM)

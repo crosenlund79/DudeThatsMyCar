@@ -157,6 +157,10 @@ var roulette: Roulette
 ## M013: Leo's wheel, round after round (Danny's chips are `roulette`).
 var wheel: RouletteTable
 var _drop_heard := false
+## M013.3: the regulars playing at Leo's wheel, and the words over heads in the room.
+var wheel_patrons: RoulettePatrons
+var room_lines: RoomLines
+var _react_rng := RandomNumberGenerator.new()
 ## What Danny had in his pocket when he stepped up to the wheel (to tell him how he did).
 var _wheel_start := 0
 ## M011: the gaming room's three nickel machines (one SlotMachine each, its own
@@ -433,6 +437,14 @@ func _ready() -> void:
 	hud.poker_view.sound.connect(func(kind: String) -> void: soundscape.play("poker/" + kind, -4.0))
 	roulette = Roulette.new(roulette_rules)
 	wheel = RouletteTable.new(roulette_rules, roulette)  # M013: an unpredictable draw in play (tests seed their own)
+	wheel_patrons = RoulettePatrons.new(roulette_rules)  # M013.3: their own generator, never the draw's
+	for id in ["edna", "stan"]:
+		wheel_patrons.seat(id)
+	wheel.set_patrons(wheel_patrons)
+	_react_rng.randomize()
+	room_lines = RoomLines.new()
+	add_child(room_lines)
+	room_lines.setup(load(Hud.FONT_PATH))
 	var rv := hud.roulette_view
 	rv.bet_requested.connect(_on_wheel_bet)
 	rv.take_back_requested.connect(_on_wheel_take_back)
@@ -1350,8 +1362,13 @@ func _on_wheel_event(e: Dictionary) -> void:
 		"open":
 			_drop_heard = false
 			_wheel_sound("roulette/cue", -12.0)  # Leo's bell: place your bets
+			_leo_says(["\"Place your bets, ladies and gentlemen.\"", "\"Faites vos jeux.\"", "\"Bets, please.\""])
 		"ball":
 			_wheel_sound("roulette/spin", -3.0)
+		"patron_bet":
+			_wheel_sound("gaming/chips_stack", -10.0)  # a regular's chips going down (not Danny's own sound)
+			if rv.is_open():
+				rv.refresh()
 		"last_call":
 			if rv.is_open():
 				rv.say("\"Last bets...\"")
@@ -1359,6 +1376,10 @@ func _on_wheel_event(e: Dictionary) -> void:
 			_wheel_sound("roulette/cue", -9.0)
 			if rv.is_open():
 				rv.say("\"No more bets.\"")
+			_leo_says(["\"No more bets.\"", "\"Rien ne va plus.\""])
+			var leo_w: Walker = interiors.view_of("gaming_room").people.get("croupier")
+			if leo_w != null:
+				leo_w.aim_point = RiversideInteriors.wheel_centre()  # his hand over the wheel as he calls it
 		"rest":
 			var paid := int(e.paid)
 			rackets.money += paid  # once: the table settles each round once
@@ -1366,17 +1387,85 @@ func _on_wheel_event(e: Dictionary) -> void:
 			if bool(e.played):
 				_wheel_sound("roulette/win" if paid > 0 else "roulette/lose", -3.0 if paid > 0 else -5.0)
 			if rv.is_open():
-				rv.show_result(paid, bool(e.played))
+				rv.show_result(paid, bool(e.played), e.get("others", []))
 				rv.set_money(rackets.money)
 			_show_purse()
+			_wheel_reactions(int(e.number), e.get("others", []))
 			if bool(e.played):
 				save_game()
 		"round_over":
 			if rv.is_open():
 				rv.refresh()
+			var room := interiors.view_of("gaming_room")
+			if room != null:
+				room.face_home()  # Leo back to his place, preparing the next round
 		"closed":
 			if rv.is_open():
 				rv.say("\"That's the last spin of the night, ladies and gentlemen.\"")
+
+
+## M013.3: the regulars take it as they take it (a line over a head now and
+## then - always for a big win - a hop for a win, a turn away for a loss), and
+## Leo calls the number, and names a big winner. Presentation only.
+func _wheel_reactions(number: int, others: Array) -> void:
+	var view := interiors.view_of("gaming_room")
+	if view == null or interiors.current == null or interiors.current.id != "gaming_room":
+		return
+	var said := 0
+	var leo: Walker = view.people.get("croupier")
+	var words := "%d, %s." % [number, "green" if number == 0 else Roulette.colour(number)]
+	var big := ""
+	for o in others:
+		var w: Walker = view.people.get(o.id)
+		if w == null or w.down or not view.person_ok(o.id):
+			continue
+		var net := int(o.paid) - int(o.staked)
+		var kind := "big_win" if int(o.paid) >= 10 * int(o.staked) and int(o.paid) >= 100 else ("win" if net > 0 else "lose")
+		var chance := 1.0 if kind == "big_win" else (0.55 if kind != "lose" else 0.3)
+		if kind == "big_win":
+			big = String(o.id)
+		if net > 0:
+			_hop(w)
+		elif net < 0:
+			_turn_away(w, view.plan.person(String(o.id)))
+		if said < 2 and _react_rng.randf() < chance:
+			room_lines.say(w, Patrons.line(String(o.id), kind, _react_rng))
+			said += 1
+	if leo != null and not hud.roulette_view.is_open():
+		room_lines.say(leo, words + ("  Well played, %s." % Patrons.name_of(big) if big != "" else ""))
+	if leo != null and big != "":
+		var bw: Walker = view.people.get(big)
+		leo.aim_point = bw.global_position  # Leo turns to the winner, then back to his wheel
+		var t := create_tween()
+		t.tween_interval(2.5)
+		t.tween_callback(view.face_home)
+
+
+## M013.3: Leo's call over his head, for a man watching from the room (at the
+## rail the words are on the table's screen) - now and then, not every round.
+func _leo_says(lines: Array) -> void:
+	if hud.roulette_view.is_open() or interiors.current == null or interiors.current.id != "gaming_room":
+		return
+	var leo: Walker = interiors.view_of("gaming_room").people.get("croupier")
+	if leo != null and _react_rng.randf() < 0.6:
+		room_lines.say(leo, String(lines[_react_rng.randi_range(0, lines.size() - 1)]))
+
+
+## A winner's little hop (the sprite up and back).
+func _hop(w: Walker) -> void:
+	var t := create_tween()
+	t.tween_property(w.sprite, "scale", w.base_scale * 1.14, 0.12)
+	t.tween_property(w.sprite, "scale", w.base_scale, 0.22)
+
+
+## A loser turns from the table a moment, then back.
+func _turn_away(w: Walker, home: Dictionary) -> void:
+	if home.is_empty():
+		return
+	w.aim_point = w.global_position - Vector2.from_angle(float(home.facing)).rotated(0.6) * 50.0
+	var t := create_tween()  # (dies with the scene, never outliving the people it turns)
+	t.tween_interval(1.6)
+	t.tween_property(w, "aim_point", (home.pos as Vector2) + Vector2.from_angle(float(home.facing)) * 50.0, 0.0)
 
 
 ## A sound of the wheel: on the table's own channel at the rail, from the
@@ -1751,6 +1840,8 @@ func _danny_down() -> void:
 ## and Rourke will remember. The Bird down means no more music tonight.
 func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
 	var w: Walker = view.people.get(id)
+	if view.plan.id == "gaming_room" and Patrons.ROSTER.has(id) and wheel_patrons != null:
+		wheel_patrons.unseat(id)  # M013.3: no more chips from a regular struck down
 	if not named:
 		ward_out[view.plan.id + "/" + id] = rackets.night  # M012: stays down tonight, whatever is unloaded or loaded
 		return

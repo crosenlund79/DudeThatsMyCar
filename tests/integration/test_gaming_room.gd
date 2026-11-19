@@ -69,7 +69,7 @@ func test_through_the_card_room_to_the_gaming_room_and_back() -> void:
 	assert_false(view.host.visible, "the house's roof gone while you are inside")
 	assert_almost_eq(main.interiors.view_of("back_room").alpha, 0.0, 0.01, "the card room shut behind")
 	assert_true((view.people.croupier as Walker).visible, "the croupier at the wheel")
-	for id in ["player_a", "player_b", "drinker"]:
+	for id in ["edna", "stan", "bertie"]:  # M013: the regulars
 		assert_true((view.people[id] as Walker).visible, "%s about the room" % id)
 	for kind in ["roulette_table", "roulette_rotor", "slot_machine_owl", "slot_machine_bell", "slot_machine_star", "side_table"]:
 		assert_not_null(view.get_node_or_null(kind), "the %s is there" % kind)
