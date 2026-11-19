@@ -122,6 +122,22 @@ sounds come every few seconds (−15 to −10 dB, at a spot in the room); the Co
 wall low-passed (two walls: at most 320 Hz, about −23 dB in the card room, fainter in the gaming room). Back in
 the club the bed is silent and the band full again; outside, as before. The bed is one player started once and
 only its level changes; speech and narration duck it like the rest of the night (−10 dB). Every level obeys the
-Master, Music, Effects, Voice and Ambience sliders on the pause screen; the Master limiter prevents clipping.
+Master, Music, Effects, Voice and Ambience sliders on the game menu's Sound page (M012; the pause screen before); the Master limiter prevents clipping.
 
-The `_inbox/` originals are untouched; nothing here was made from them.
+### Heavy weather (M012)
+
+Synthesised in numpy by `tools/template_audio/make_weather.py` (no recordings, no samples, nothing downloaded),
+OGG Vorbis, 44.1 kHz; overridden the same way (`custom/audio/<logical name>.ogg|.wav|.mp3`, restart to hear it).
+
+| Logical name (packaged file: `assets/audio/<dir>/template_<name>.ogg`) | Loop | Bus | Length (template / recommended) | Used for |
+| --- | --- | --- | --- | --- |
+| `ambience/downpour` | yes | Ambience (through the street's bus) | 12 s stereo / 10-30 s | A downpour over the rain bed: heavier hiss and rush, water off gutters and awnings, drumming on tin. Comes up with each downpour (at full −7 dB), duller and quieter indoors. |
+| `weather/thunder_far` | no | Ambience (through the street's bus) | 7.5 s stereo / 5-9 s | Distant thunder rolling over the roofs, now and then in a downpour (−9 dB; −15 dB indoors, low-passed). Start on the sound. |
+| `weather/thunder_near` | no | Ambience (through the street's bus) | 6.5 s stereo / 5-8 s | Thunder close by: a crack, a heavy roll, echoes off the walls; rarer (−4 dB; −10 dB indoors). |
+
+The thunder plays on the street's bus, so a room's walls dull it like the rest of the street; one clap at a time,
+whatever the clock's speed. The street is lit cold for a breath with each clap (dimmer from indoors).
+
+The `_inbox/` originals are untouched; nothing here was made from them. M012 adds no voices: the established
+recordings play as before, and the new characters' lines are text (their delivery notes for a future recording are
+in `docs/M012_PERFORMANCE_SCRIPT.md`).

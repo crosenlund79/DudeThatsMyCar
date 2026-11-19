@@ -271,3 +271,41 @@ The wheel's table is the costliest new screen under software OpenGL - fill rate 
 screen, the baize and the wheel's large textures, not the game: spinning costs nothing over the
 table standing still once the wheel was drawn on its own layer (before: 15.2 fps spinning). A real
 GPU has still not been measured.
+
+## Milestone 012: rooms in every district, the weather kept outside
+
+M012 builds a streamed district's rooms with the district: when the streamer reports a district ready,
+`Interiors.add_district` makes its rooms' walls, door glows and cut-away views under the district's own
+node (so they are freed with it) and adds them to the game's lists; when it lets a district go, the
+rooms leave the lists first (`remove_district`). The streamer never lets go of the district Danny
+stands in, so a room never disappears under him. Room plans are written in each district's own
+coordinates and moved with it (`InteriorPlan.shift`). What must outlast a room's nodes - who was struck
+down there tonight, the freight shed's emptied corner - lives in the game's state (`ward_out`,
+`FreightJob.crates_out`) and is put back on the rebuilt room. A saved game now resumes where and when it
+was saved: the district it was saved in is built at once (`load_now`) before the first frame.
+
+The weather is kept out of the room Danny is in: the rain overlay, the street fog and the fog at the
+buildings' feet each take one rectangle (the open room's building) where they draw nothing - a
+uniform, no new pass; the fog's feet got a four-line shader of their own for it. Downpours, wind and
+thunder are a few numbers on the night clock.
+
+From `tests/support/m012_probe.gd` (software OpenGL, 1280 x 720; two runs, the range shown):
+
+| | |
+| --- | --- |
+| Marlowe Avenue: clear / rain / a downpour | 16.0-17.2 / 15.2-17.2 / 15.2-16.8 fps |
+| Marlowe Avenue: fog / rain and fog | 10.8-12.0 / 9.6-10.8 fps |
+| The weather view's own update a frame (rain and fog) | 0.07-0.08 ms |
+| In Quilty's office with rain and fog outside | 10.0-11.2 fps |
+| At the ward's border with Halloran Square in fog, both built | 11.2-13.2 fps |
+| Halloran Square streamed in with its three rooms | 31.2 ms of work over 7 frames, worst slice 2.4 ms (M010 without rooms: 31.8 ms over 7) |
+| The yards with their two rooms built at once (load_now) | 46.1-69.1 ms |
+| In City Hall / the freight shed / the shed with rain and fog outside | 14.4-16.8 / 23.6-28.0 / 16.4-18.8 fps |
+| Call-outs and routines a frame (in the Copper Owl) | 0.08 ms |
+| The Bird's film / the game menu open | 14.2 / 15.6-24.8 fps |
+| Memory, ward + yards loaded | 104.1-109.3 MB static, 3904-5547 nodes |
+
+Rain, downpours and thunder cost next to nothing; the street fog stays the costliest effect (as in
+M010-M011), and it still covers the street outside a room's walls while Danny is inside (its hole is
+the room's building only). Nothing was optimised further: the fog's cost is fill rate under software
+rendering, and a real GPU has still not been measured.

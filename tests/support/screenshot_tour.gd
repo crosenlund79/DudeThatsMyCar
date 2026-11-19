@@ -701,6 +701,36 @@ func _run(shots: Array) -> void:
 						break
 				await _frames(10)
 				await _shot("m012_bird_question", false)
+			"m012_freight":
+				# M012: Freight Doesn't Walk - Leon's offer, Walt at his stove, the shed's corner after
+				main.weather.force("clear")
+				main.world.load_now("yards")
+				var office: InteriorPlan = main.interiors.plan_named("dispatch_office")
+				for sp in office.spots:
+					if sp.id == "leon":
+						_teleport_walker(sp.pos, PI / 2)
+				await _frames(40)
+				main.start_talk("leon")
+				main._answer(0)  # "Go on."
+				await _frames(10)
+				await _shot("m012_freight_offer", false)
+				main._answer(0)  # "I'll see to it."
+				main.end_talk()
+				main.rackets.freight.learn("docked")
+				var shed: InteriorPlan = main.interiors.plan_named("freight_shed")
+				for sp in shed.spots:
+					if sp.id == "walt":
+						_teleport_walker(sp.pos, PI)
+				await _frames(40)
+				main.start_talk("walt")
+				await _frames(10)
+				await _shot("m012_freight_walt", false)
+				main.end_talk()
+				main.rackets.money = 1500
+				main.rackets.freight.settle(main.rackets, "paid")
+				main._sync_freight()
+				await _frames(20)
+				await _shot("m012_freight_done", false)
 			"m012_menu", "m012_menu_controls":
 				# M012: the game menu on Esc (the Notebook with Rourke's offer; the Controls page)
 				main.weather.force("clear")

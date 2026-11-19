@@ -167,12 +167,17 @@ func test_the_bus_across_the_border_and_back() -> void:
 	cmd = PlayerCommand.new()
 	assert_gt(bus.global_position.x, -1300.0, "into the ward without a stop")
 	assert_eq(main.world.current, "riverside")
+	# M012: the streamer held still while we look - the bus stands inside its load
+	# distance, so it would otherwise build the square again within a frame or two
+	# (the race that made this test flaky; see docs/BACKLOG.md, 2026-11-19)
+	main.world.enabled = false
 	main.world.unload("halloran")
 	await wait_physics_frames(5)
 	assert_false(main.world.is_ready("halloran"))
 	assert_true(is_instance_valid(bus) and bus.visible and not bus.has_meta("away"), "Danny's bus is not put away with the square")
 	assert_eq(player().car, bus)
 	assert_eq(main.cars.size(), count, "no car made or lost")
+	main.world.enabled = true
 	# back west: the square is built again round him - and there is still one bus
 	await park(bus, Vector2(-1750, 640), PI)
 	main.world.load_now("halloran")

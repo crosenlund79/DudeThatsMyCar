@@ -5,7 +5,8 @@ extends SceneTree
 ## downpour, fog, rain and fog), in a room with fog and rain outside, on the
 ## ward's border with Halloran Square in fog; the weather view's own work a
 ## frame; then the new rooms - building Halloran Square and the yards with
-## their rooms, standing in City Hall and the freight shed - and the menu open.
+## their rooms, standing in City Hall and the freight shed - the people's
+## call-outs a frame, the Bird's film, and the menu open.
 
 var main: Node2D
 var cmd := PlayerCommand.new()
@@ -90,9 +91,13 @@ func _run() -> void:
 	var h: DistrictLayout = main.world.layouts.halloran
 	var border := Vector2(h.bounds.end.x + 120.0, 600.0)
 	await _place(border, PI)
-	var t1 := Time.get_ticks_usec()
-	main.world.load_now("halloran")
-	print("  Halloran Square with its three rooms built in %.1f ms (load_now, all at once)" % ((Time.get_ticks_usec() - t1) / 1000.0))
+	for i in 600:  # streamed in ahead of the border, a slice a frame
+		await process_frame
+		if main.world.is_ready("halloran"):
+			break
+	var st: Dictionary = main.world.stats.get("halloran", {})
+	print("  Halloran Square with its three rooms streamed in: %.1f ms of work over %d frames (worst slice %.1f ms)" % [
+		float(st.get("work_usec", 0)) / 1000.0, int(st.get("frames", 0)), float(st.get("worst_step_usec", 0)) / 1000.0])
 	await _fps("at the border in fog, both districts built")
 	print(" the new rooms:")
 	main.weather.force("clear")
@@ -108,6 +113,26 @@ func _run() -> void:
 	await _fps("in the freight shed")
 	main.weather.force("rain_fog")
 	await _fps("in the freight shed, rain and fog outside")
+	main.weather.force("clear")
+	print(" the people (call-outs and routines) and the Bird's film:")
+	await _place(Vector2(2290, 380))
+	var total := 0
+	for i in 240:
+		await process_frame
+		var t0 := Time.get_ticks_usec()
+		main._people_update(1.0 / 60.0)
+		total += Time.get_ticks_usec() - t0
+	print("  %-58s mean %6.3f ms" % ["call-outs and routines a frame, in the Copper Owl", total / 1000.0 / 240.0])
+	for id in VoiceLines.LINES:
+		main.voice_lines.mark(id)
+	main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
+	for i in 120:
+		await process_frame
+		if main.bird_scene == "asking":
+			break
+	await _place(main.BIRD_SEAT + Vector2(0, 34))
+	main._start_bird_film()
+	await _fps("the Bird's film (lights down, the room hushed)", 4.0)
 	main.weather.force("clear")
 	main.open_menu(true)
 	await _fps("the game menu open (the world paused)")

@@ -1,4 +1,4 @@
-# The Riverside Ward (Milestones 001–010)
+# The Riverside Ward (Milestones 001–012)
 
 A few blocks of a fictional Near North Side neighbourhood, Chicago, 1932, at night. Hand-made in `src/city/riverside_ward.gd`; built and drawn by `src/city/city.gd`. North is up. One world pixel is about 7 cm of street.
 
@@ -78,6 +78,20 @@ The ward is no longer alone: two neighbouring districts lie beside it in the sam
 - **Sound.** In the back rooms the Copper Owl's band comes through the wall, low and muffled, under the room's own murmur; now and then a laugh, chips being stacked, a shuffle, glasses, a chair. Step back into the club and the band is full again.
 - **The union hall.** Dock & Freight Workers, Local 9: a two-storey brick hall at the corner of Wharf Street and Front Street, where the Riverfront Yards begin (its cargo-hook badge over the door on Wharf Street, its name on the roof and on the city map, a lamp by the door). Inside: benches where the men wait, the noticeboard (E reads it: shift lists, a meeting notice, dues, a clipping), a pot-bellied stove; through a doorway the business agent's office - his desk under a green lamp, filing cabinets, the safe, a map of the docks, the local's charter. Nothing to join, nothing to do: a place to look round.
 - **City Hall and the aldermen.** City Hall faces Halloran Park across Pruitt Street: limestone, round-headed windows, a copper cupola on the roof, granite steps between two globe lamps. Mayor Dunleavy's house stands a few doors along, set back behind a little garden and an iron railing, its curtains lit (on the map with its address). Alderman Doran's ward office is across Marlowe Avenue from the park, the Regulars' Club (the precinct men) further west on the avenue; in the ward, Alderman Quilty's office on Marlowe Avenue. All shut at night: E at a door tries it and says why (City Hall: the mayor's window still lit). No elections, no favours, no politics to play - yet.
+
+## The city behind closed doors (Milestone 012)
+
+- **Rooms in every district.** The rooms of Halloran Square and the Riverfront Yards are built with their district (`src/city/halloran_interiors.gd`, `src/city/yards_interiors.gd`, written in the district's own coordinates) and let go with it; the district Danny stands in is never let go, so a room never disappears under him. A game saved mid-night goes on where and when it was saved, in the street or in any room.
+- **City Hall** (Halloran Square, Pruitt Street): the night door at the top of the steps opens on the marble hall - four columns, two flags, mayors past in oils, benches, the noticeboard, a tall clock and, across the back, the night clerk behind his counter's brass grille. The broad stair at the east end goes up to the Mayor's office: a velvet rope, BY APPOINTMENT. Through the door at the end of the counter, the City Clerk's office (a desk, filing cabinets, the vault's iron door) and the records room (bound ledgers: births, deaths, permits, the ward rolls).
+- **Alderman Doran's ward office** (Marlowe Avenue, across from the park): the waiting room - chairs along the wall, a horsehair couch under the photographs, the precinct captain's desk - and through a doorway the alderman's own office: his desk, the flag, his portrait, the cabinets and the safe. Doran is out; his precinct captain keeps the lamp lit.
+- **The Regulars' Club** (Marlowe Avenue, further west): the lounge - cracked leather armchairs round small tables, a couch, the steward's sideboard, old Mike Halloran in oils - and the billiard room under its green lamp. Members and their guests; nobody gambles and nobody joins tonight.
+- **Alderman Quilty's office** (the ward, Marlowe Avenue): one modest room - his desk under a green lamp, the visitors' chairs, the ward map in red pencil, the photographs, a stove, last campaign's handbills. Quilty is in until one, then goes home.
+- **North Branch Freight** (the yards, Front Street): the night **dispatch office** at the west end of the depot (the dispatch board, Leon Sobczak's desk and telephone, a bench for the drivers, a stove) and the **freight shed** at the east end, its wide door on the loading yard (stacked crates, a hand truck, the shed gang's stove, Walt Haney - and, while Leon's trouble lasts, twelve crates under a tarpaulin). The rest of the depot stays shut between them.
+- **The mayor's house** stays private: the bell at its gate brings the housekeeper down the path to say so.
+- **Entrances and the highlight.** A brass plate on the pavement before each street door Danny can try (warm: opens; cold: shut for the night; amber: a bell); a thin ring on the ground under what E would act on.
+- **People who speak first.** Rourke, Augie, Eddie, the Bird, Quilty and Leon call out when Danny comes near in their room, from what they remember and what the talk has told them; E answers, walking on lets it be.
+- **Freight Doesn't Walk** and **After the Last Song**: see the README and `docs/M012_PERFORMANCE_SCRIPT.md`.
+- **Weather.** Rain and fog stay out of the room Danny is in (its building), in every district; wet nights bring downpours and, now and then, thunder.
 
 ## A job for Rourke (Milestone 007)
 

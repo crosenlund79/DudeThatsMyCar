@@ -407,6 +407,12 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 	_notice_left -= delta
 	notice_label.visible = _notice_left > 0.0
 	notice_label.modulate.a = clampf(_notice_left / 0.5, 0.0, 1.0)
+	# M012: a long notice wraps instead of running off the screen
+	var widest := screen.x - 240.0
+	var one_line := _font.get_string_size(notice_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+		notice_label.get_theme_font_size("font_size")).x + 8.0
+	notice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if one_line > widest else TextServer.AUTOWRAP_OFF
+	notice_label.custom_minimum_size = Vector2(minf(one_line, widest), 0)
 	notice_label.reset_size()
 	notice_label.position = Vector2((screen.x - notice_label.size.x) * 0.5, screen.y * 0.3)
 	if _help_left > 0.0:

@@ -183,8 +183,8 @@ func objective() -> String:
 
 
 static func _clock(minute: float) -> String:
-	var h := int(minute / 60.0) % 12
-	return "%d o'clock" % (12 if h == 0 else h)
+	const HOURS := ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"]
+	return "%s o'clock" % HOURS[int(minute / 60.0) % 12]
 
 
 func to_dict() -> Dictionary:
