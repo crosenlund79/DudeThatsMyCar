@@ -419,3 +419,179 @@ ASSETS.update({
     "ui/roulette_ball": ui_ball,
     "ui/roulette_dolly": ui_dolly,
 })
+
+
+# ------------------------------------------------------------------ on screen (the nickel machines)
+
+FRONTS = {"owl": ("#9a5a26", "#d8a85a", "OWL"), "bell": ("#7e1c1c", "#e0c070", "BELL"), "star": ("#24463a", "#d0d4d8", "STAR")}
+# the reel windows in the front (holes the reels show through), the pay line's height
+WINDOWS = [(75, 150, 165, 270), (175, 150, 265, 270), (275, 150, 365, 270)]
+PAY_Y = 210
+
+
+def ui_front(kind, seed):
+    """A 1930s three-reel machine's cast front, 440 x 600: the crest at the top with its emblem
+    and name, the three reel windows (transparent: the game draws the reels behind), the
+    paytable plate (blank: the game prints the machine's own lines), the coin plaque and the
+    payout cup at the bottom. Worn paint, scuffed brass."""
+    body, trim, word = FRONTS[kind]
+    w, h = 440, 600
+    img = new(w, h)
+    soft_blob(img, S(w / 2 + 6), S(h / 2 + 10), S(w / 2 - 10), S(h / 2 - 10), "#000000", 150, 10 * SS)
+    # the cabinet with its arched crest
+    pts = [(30, 600), (30, 150)]
+    for k in range(25):
+        a = math.pi + math.pi * k / 24
+        pts.append((220 + math.cos(a) * 190, 150 + math.sin(a) * 130))
+    pts += [(410, 150), (410, 600)]
+    paint_shape(img, SP(pts), body, seed, outline=OUT, ow=2.2, wob=0.15, tex=0.3, strokes_n=40,
+                stroke_cols=[shade(body, 1.2), shade(body, 0.8)], light=(0.3, -1, 0.4), inner_shadow=0.3)
+    # cast ribs down the sides
+    for x in (46, 394):
+        for k in range(8):
+            y = 300 + k * 36
+            line(img, [S(x - 6, y), S(x + 6, y)], shade(trim, 0.8), 2.0 * SS, 170)
+    # the crest's emblem and name
+    cx, cy = 220, 70
+    paint_shape(img, SP(ellipse_pts(cx, cy, 56, 42)), shade(body, 1.3), seed + 1, outline=OUT, ow=1.4, wob=0.08, tex=0.2,
+                light=(0.3, -1, 0.5))
+    if kind == "owl":
+        paint_shape(img, SP(ellipse_pts(cx, cy + 4, 30, 34)), trim, seed + 2, outline=OUT, ow=1.2, wob=0.08, light=(0.3, -1, 0.5))
+        for ex in (-12, 12):
+            paint_shape(img, SP(ellipse_pts(cx + ex, cy - 6, 10, 10)), "#f2e6c0", seed + 3, outline=OUT, ow=0.9, wob=0.02)
+            soft_blob(img, S(cx + ex), S(cy - 6), S(4), S(4), "#1a1208", 255, 0.4 * SS)
+        paint_shape(img, SP([(cx - 4, cy + 6), (cx + 4, cy + 6), (cx, cy + 15)]), "#6a4010", seed + 4, outline=None, wob=0.0)
+        for ex in (-1, 1):
+            paint_shape(img, SP([(cx + ex * 18, cy - 26), (cx + ex * 28, cy - 40), (cx + ex * 26, cy - 18)]), trim, seed + 5,
+                        outline=OUT, ow=0.9, wob=0.02)
+    elif kind == "bell":
+        bell = [(cx - 8, cy - 32), (cx + 8, cy - 32), (cx + 16, cy - 12), (cx + 30, cy + 22), (cx - 30, cy + 22), (cx - 16, cy - 12)]
+        paint_shape(img, SP(bell), trim, seed + 2, outline=OUT, ow=1.2, wob=0.05, light=(0.3, -1, 0.6))
+        paint_shape(img, SP(ellipse_pts(cx, cy + 27, 6, 6)), trim, seed + 3, outline=OUT, ow=0.8, wob=0.02)
+    else:
+        star = [(cx + math.cos(-math.pi / 2 + k * math.pi / 5) * (36 if k % 2 == 0 else 15),
+                 cy + math.sin(-math.pi / 2 + k * math.pi / 5) * (36 if k % 2 == 0 else 15)) for k in range(10)]
+        paint_shape(img, SP(star), trim, seed + 2, outline=OUT, ow=1.2, wob=0.03, light=(0.3, -1, 0.6))
+    text(img, (cx, 124), word, 20, trim, stroke=1.2, stroke_color=(30, 20, 10), spacing=6)
+    # Art Deco fluting beside the window, a brass band round it
+    for x in (40, 50, 390, 400):
+        line(img, [S(x, 150), S(x, 280)], shade(body, 0.7), 1.6 * SS, 200)
+    line(img, [S(*q) for q in rrect_pts(56, 132, 384, 288, 11)] + [S(56 + 11, 132)], trim, 2.0 * SS, 230)
+    # the window frame, chromed, with the pay line's pointers
+    paint_shape(img, SP(rrect_pts(62, 138, 378, 282, 8)), "#b8b8be", seed + 6, outline=OUT, ow=1.4, wob=0.04, tex=0.15,
+                light=(0.3, -1, 0.6))
+    for k, (x0, y0, x1, y1) in enumerate(WINDOWS):
+        paint_shape(img, SP(rrect_pts(x0 - 3, y0 - 3, x1 + 3, y1 + 3, 3)), "#2a2a2e", seed + 7 + k, outline=None, wob=0.0)
+    for side in (1, -1):
+        x = 66 if side == 1 else 374
+        paint_shape(img, SP([(x, PAY_Y - 7), (x + side * 9, PAY_Y), (x, PAY_Y + 7)]), "#c0392b", seed + 12, outline=OUT, ow=0.6,
+                    wob=0.0)
+    # the paytable plate (the game prints it), the coin plaque, the payout cup
+    paint_shape(img, SP(rrect_pts(52, 296, 388, 478, 6)), trim, seed + 13, outline=OUT, ow=1.4, wob=0.05, light=(0.3, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(60, 304, 380, 470, 4)), "#ece2c8", seed + 14, outline=(90, 70, 40), ow=0.8, wob=0.03, tex=0.15)
+    paint_shape(img, SP(rrect_pts(320, 488, 396, 520, 4)), trim, seed + 15, outline=OUT, ow=1.0, wob=0.04, light=(0.3, -1, 0.5))
+    paint_shape(img, SP(rrect_pts(330, 500, 386, 506, 2)), "#1a1410", seed + 16, outline=None, wob=0.0)  # the coin slot
+    paint_shape(img, SP(rrect_pts(150, 520, 290, 590, 18)), trim, seed + 17, outline=OUT, ow=1.4, wob=0.05, light=(0.3, -1, 0.5),
+                inner_shadow=0.5)
+    paint_shape(img, SP(rrect_pts(164, 532, 276, 578, 12)), "#2a1e12", seed + 18, outline=(80, 60, 30), ow=0.8, wob=0.04,
+                inner_shadow=0.6)
+    # wear: chipped paint, scuffs, a little grime at the foot
+    rnd = random.Random(seed)
+    for k in range(26):
+        x, y = rnd.uniform(40, 400), rnd.uniform(160, 590)
+        if 62 < x < 378 and 138 < y < 282:
+            continue
+        soft_blob(img, S(x), S(y), S(rnd.uniform(1, 4)), S(rnd.uniform(0.6, 2)), rnd.choice(["#d8c8a0", "#3a2a1a", "#8a7a6a"]),
+                  rnd.randint(60, 140), 0.5 * SS, rot=rnd.uniform(0, 3))
+    soft_blob(img, S(220), S(596), S(180), S(14), "#1a120a", 90, 6 * SS)
+    soft_blob(img, S(150), S(60), S(40), S(14), "#ffffff", 40, 8 * SS, rot=-0.3)
+    img = grain(img, 4, seed)
+    # punch the reel windows through
+    a = np.asarray(img).copy()
+    for (x0, y0, x1, y1) in WINDOWS:
+        a[S(y0):S(y1), S(x0):S(x1), 3] = 0
+    img = Image.fromarray(a, "RGBA")
+    return finish(img, w, h)
+
+
+def ui_symbol(kind, seed):
+    """A reel symbol, 96 x 96, on nothing (the reel's cream paper is drawn by the game)."""
+    w = h = 96
+    img = new(w, h)
+    c = 48
+    if kind == "cherry":
+        line(img, [S(36, 62), S(46, 30), S(58, 18)], "#3a5a20", 3 * SS, 255)
+        line(img, [S(62, 64), S(54, 34), S(58, 18)], "#3a5a20", 3 * SS, 255)
+        paint_shape(img, SP([(58, 18), (78, 12), (84, 26), (66, 28)]), "#4a8a2a", seed, outline=OUT, ow=1.0, wob=0.1)
+        for x, y in ((34, 66), (62, 68)):
+            paint_shape(img, SP(ellipse_pts(x, y, 15, 15)), "#b01e22", seed + x, outline=OUT, ow=1.4, wob=0.1, tex=0.15,
+                        light=(-0.4, -1, 0.5))
+            soft_blob(img, S(x - 5), S(y - 6), S(4), S(3), "#ffffff", 150, 1 * SS)
+    elif kind == "lemon":
+        paint_shape(img, SP(ellipse_pts(c, c, 34, 24, rot=-0.25)), "#e8c830", seed, outline=OUT, ow=1.4, wob=0.2, tex=0.2,
+                    light=(-0.4, -1, 0.5))
+        for sx in (-1, 1):
+            paint_shape(img, SP(ellipse_pts(c + sx * 34, c - sx * 9, 5, 4, rot=-0.25)), "#d8b820", seed + 3, outline=OUT, ow=0.8, wob=0.05)
+        soft_blob(img, S(c - 10), S(c - 10), S(9), S(4), "#ffffff", 110, 2 * SS, rot=-0.25)
+    elif kind == "orange":
+        paint_shape(img, SP(ellipse_pts(c, c + 4, 30, 30)), "#e47a1e", seed, outline=OUT, ow=1.4, wob=0.12, tex=0.25,
+                    light=(-0.4, -1, 0.5))
+        paint_shape(img, SP([(c, c - 26), (c + 18, c - 38), (c + 22, c - 28), (c + 6, c - 24)]), "#3a7a2a", seed + 2, outline=OUT,
+                    ow=0.9, wob=0.05)
+        soft_blob(img, S(c - 10), S(c - 8), S(7), S(5), "#ffffff", 100, 2 * SS)
+    elif kind == "plum":
+        paint_shape(img, SP(ellipse_pts(c, c + 4, 26, 32)), "#5a2a6a", seed, outline=OUT, ow=1.4, wob=0.12, tex=0.2,
+                    light=(-0.4, -1, 0.5))
+        line(img, [S(c, c - 26), S(c + 4, c - 38)], "#4a3a20", 2.4 * SS, 255)
+        soft_blob(img, S(c - 8), S(c - 8), S(6), S(10), "#d8c8f0", 70, 3 * SS)
+    elif kind == "bell":
+        bell = [(c - 9, c - 32), (c + 9, c - 32), (c + 18, c - 12), (c + 32, c + 24), (c - 32, c + 24), (c - 18, c - 12)]
+        paint_shape(img, SP(bell), "#e0b030", seed, outline=OUT, ow=1.4, wob=0.05, tex=0.15, light=(-0.4, -1, 0.6))
+        paint_shape(img, SP(ellipse_pts(c, c + 30, 7, 7)), "#e0b030", seed + 1, outline=OUT, ow=1.0, wob=0.02)
+        line(img, [S(c - 24), S(c + 14), S(c + 24), S(c + 14)], "#a07010", 1.4 * SS, 200)
+        soft_blob(img, S(c - 8), S(c - 12), S(5), S(10), "#fff0c0", 140, 2 * SS)
+    elif kind == "bar":
+        paint_shape(img, SP(rrect_pts(10, 30, 86, 66, 4)), "#1a1612", seed, outline=OUT, ow=1.4, wob=0.05, tex=0.1)
+        text(img, (c, c), "BAR", 24, "#f0e4c8", spacing=3)
+    elif kind == "seven":
+        text(img, (c, c + 2), "7", 74, "#b01e22", stroke=2.5, stroke_color=(220, 170, 60))
+    return finish(grain(img, 2, seed), w, h)
+
+
+def ui_lever(seed=561):
+    """The lever on the machine's right side, upright, its pivot at the bottom middle."""
+    w, h = 40, 200
+    img = new(w, h)
+    line(img, [S(20, 190), S(20, 34)], "#9a9aa0", 7 * SS, 255)
+    line(img, [S(17, 186), S(17, 36)], "#e0e0e6", 2 * SS, 200)
+    paint_shape(img, SP(ellipse_pts(20, 22, 16, 16)), "#141210", seed, outline=OUT, ow=1.2, wob=0.02, light=(-0.4, -1, 0.6))
+    soft_blob(img, S(14), S(15), S(5), S(4), "#ffffff", 150, 1.4 * SS)
+    paint_shape(img, SP(ellipse_pts(20, 188, 11, 11)), "#b8b8be", seed + 1, outline=OUT, ow=1.0, wob=0.02, light=(-0.4, -1, 0.6))
+    return finish(img, w, h)
+
+
+def ui_coin(seed=571):
+    w = h = 40
+    img = new(w, h)
+    paint_shape(img, SP(ellipse_pts(20, 20, 17, 17)), "#b8b8b0", seed, outline=(70, 70, 66), ow=1.2, wob=0.02, tex=0.2,
+                light=(-0.4, -1, 0.5))
+    line(img, [S(*p) for p in ellipse_pts(20, 20, 13, 13)] + [S(33, 20)], "#8a8a84", 0.8 * SS, 200)
+    text(img, (20, 21), "5", 14, "#6a6a64")
+    soft_blob(img, S(14), S(13), S(4), S(3), "#ffffff", 140, 1 * SS)
+    return finish(img, w, h)
+
+
+ASSETS.update({
+    "ui/slot_front_owl": lambda: ui_front("owl", 601),
+    "ui/slot_front_bell": lambda: ui_front("bell", 603),
+    "ui/slot_front_star": lambda: ui_front("star", 605),
+    "ui/slot_cherry": lambda: ui_symbol("cherry", 611),
+    "ui/slot_lemon": lambda: ui_symbol("lemon", 613),
+    "ui/slot_orange": lambda: ui_symbol("orange", 615),
+    "ui/slot_plum": lambda: ui_symbol("plum", 617),
+    "ui/slot_bell": lambda: ui_symbol("bell", 619),
+    "ui/slot_bar": lambda: ui_symbol("bar", 621),
+    "ui/slot_seven": lambda: ui_symbol("seven", 623),
+    "ui/slot_lever": ui_lever,
+    "ui/slot_coin": ui_coin,
+})

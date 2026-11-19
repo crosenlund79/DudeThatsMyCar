@@ -126,6 +126,14 @@ var roulette: Roulette
 var _wheel_rng := RandomNumberGenerator.new()
 ## What Danny had in his pocket when he stepped up to the wheel (to tell him how he did).
 var _wheel_start := 0
+## M011: the gaming room's three nickel machines (one SlotMachine each, its own
+## rules), the one Danny is at (-1: none) and what he had when he stepped up.
+@export var slot_rules: Array[SlotRules] = [preload("res://src/gaming/slot_owl.tres"),
+	preload("res://src/gaming/slot_bell.tres"), preload("res://src/gaming/slot_star.tres")]
+var slot_machines: Array[SlotMachine] = []
+var _slot_at := -1
+var _slot_start := 0
+var _slot_rng := RandomNumberGenerator.new()
 ## M010: Rosie's Café (Rourke's job): the scene, and the blast's short film while it plays.
 var cafe_scene: CafeScene
 var cafe_film: Cinematic
@@ -374,6 +382,12 @@ func _ready() -> void:
 	rv.spin_finished.connect(_on_wheel_finished)
 	rv.leave_requested.connect(leave_roulette)
 	rv.sound.connect(_on_wheel_sound)
+	for r in slot_rules:
+		slot_machines.append(SlotMachine.new(r))
+	_slot_rng.randomize()
+	hud.slot_view.pull_requested.connect(_on_slot_pull)
+	hud.slot_view.reels_stopped.connect(_on_slot_stopped)
+	hud.slot_view.leave_requested.connect(leave_slot)
 	_show_purse()
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
@@ -703,8 +717,8 @@ func _spot() -> Dictionary:
 		var s := interiors.current.spot_at(walker.global_position)
 		if not s.is_empty() and (s.id == "bed" or s.id == "poker" or interiors.view_of(interiors.current.id).person_ok(s.id)):
 			return s
-		if not s.is_empty() and s.id == "roulette":
-			return s  # M011: the wheel (whether Leo is there to spin it is said when you step up)
+		if not s.is_empty() and (s.id == "roulette" or String(s.id).begins_with("slot_")):
+			return s  # M011: the wheel (whether Leo is there to spin it is said when you step up), the machines
 	if rival != null and not rival.is_down() and not rival.is_hostile() \
 			and walker.global_position.distance_to(rival.body.global_position) < 40.0:
 		return {"id": "lefty", "prompt": "Talk to Lefty Moran"}
@@ -759,6 +773,8 @@ func _interact(_at: Vector2) -> bool:
 		open_poker()
 	elif spot.id == "roulette":
 		open_roulette()
+	elif String(spot.id).begins_with("slot_"):
+		open_slot(int(String(spot.id).substr(5)))
 	elif spot.id == "plant":
 		_plant_parcel()
 	elif spot.id == "stand":
@@ -964,6 +980,76 @@ func leave_roulette() -> void:
 	_show_purse()
 	var net := rackets.money - _wheel_start
 	hud.show_notice("You step away from the wheel %s." % (
+		"%s ahead" % Rackets.dollars(net) if net > 0 else ("%s down" % Rackets.dollars(-net) if net < 0 else "even")))
+	save_game()
+
+
+## M011: at the wheel or at one of the machines.
+func _at_a_game() -> bool:
+	return hud.roulette_view.is_open() or hud.slot_view.is_open()
+
+
+## M011: E at one of the machines: Danny steps up to it (the gaming room closes
+## at the hour to go home, like the card game).
+func open_slot(i: int) -> void:
+	if _at_a_game() or i < 0 or i >= slot_machines.size() or interiors.current == null or interiors.current.id != "gaming_room":
+		return
+	if clock.minute >= float(night_rules.home_minute):
+		hud.show_notice("Somebody's thrown a cloth over the machines for the night.")
+		return
+	_slot_at = i
+	_slot_start = rackets.money
+	walker.aim_point = RiversideInteriors.SLOTS[i]
+	hud.slot_view.layout_for(get_viewport().get_visible_rect().size)
+	hud.slot_view.open(slot_machines[i], rackets.money)
+	if not command_source.is_valid():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _on_slot_pull() -> void:
+	if _slot_at < 0:
+		return
+	var m := slot_machines[_slot_at]
+	if hud.slot_view.phase in ["spinning", "stopped"]:
+		return
+	if clock.minute >= float(night_rules.home_minute):
+		hud.slot_view.say("That's the last pull of the night.")
+		return
+	var why := m.cannot_pull(rackets.money)
+	if why != "":
+		hud.slot_view.say(why)
+		return
+	rackets.money -= m.pull(rackets.money, _slot_rng.randi())
+	hud.slot_view.set_money(rackets.money)
+	_show_purse()
+	hud.slot_view.start_reels()
+
+
+## The reels have stopped: the line is paid, once.
+func _on_slot_stopped() -> void:
+	if _slot_at < 0:
+		return
+	var paid := slot_machines[_slot_at].collect()
+	rackets.money += paid
+	hud.slot_view.set_money(rackets.money)
+	hud.slot_view.show_paid(paid)
+	_show_purse()
+	save_game()
+
+
+## Danny steps away from the machine: a pull under way is paid at once.
+func leave_slot() -> void:
+	if not hud.slot_view.is_open():
+		return
+	if _slot_at >= 0:
+		rackets.money += slot_machines[_slot_at].walk_away()
+	hud.slot_view.close()
+	_slot_at = -1
+	if not command_source.is_valid():
+		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	_show_purse()
+	var net := rackets.money - _slot_start
+	hud.show_notice("You step away from the machine %s." % (
 		"%s ahead" % Rackets.dollars(net) if net > 0 else ("%s down" % Rackets.dollars(-net) if net < 0 else "even")))
 	save_game()
 
@@ -1184,6 +1270,7 @@ func _dispatch_emergency(at: Vector2) -> void:
 func _on_danny_hurt(region: String, level: int) -> void:
 	player.stand()  # M010: nobody stays sitting when he is hit
 	leave_roulette()  # M011: nor at the wheel
+	leave_slot()  # nor at a machine
 	hud.show_notice("Hit in the %s - %s." % [BodyCondition.NAMES[region], BodyCondition.label(level)])
 
 
@@ -1263,8 +1350,8 @@ func _show(page: Dictionary) -> void:
 
 ## While talking, the player's keys answer (1-4) or walk away (E).
 func _converse(cmd: PlayerCommand) -> bool:
-	if hud.poker_view.is_open() or hud.roulette_view.is_open():
-		return true  # M010: sitting in at the card table; M011: at the wheel
+	if hud.poker_view.is_open() or _at_a_game():
+		return true  # M010: sitting in at the card table; M011: at the wheel or a machine
 	if talking == "":
 		return false
 	if cmd.choice > 0:
@@ -1435,6 +1522,8 @@ func save_game() -> void:
 		data.rackets.money += poker.stake_for_save()  # M010: his chips count as his money; a hand under way is void
 	if roulette != null:
 		data.rackets.money += roulette.for_save()  # M011: chips on the layout are his; a spin under way counts as settled
+	for m in slot_machines:
+		data.rackets.money += m.for_save()  # M011: a pull under way is decided: its win counts
 	if walker != null:
 		data["danny"] = walker.condition.to_dict()
 	if rival != null:
@@ -1617,6 +1706,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if hud.roulette_view.is_open():
 		hud.roulette_view.handle_key(event)  # M011: at the wheel only the wheel's keys
+		return
+	if hud.slot_view.is_open():
+		hud.slot_view.handle_key(event)  # M011: at a machine only its keys
 		return
 	if cafe_film != null:
 		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
@@ -1830,7 +1922,7 @@ func next_moment() -> float:
 ## M010: while the drowsiness must keep out of the way (talk, a scene, the maps, a fight).
 func _drowsy_held() -> bool:
 	return talking != "" or opening != null or map_open or status_open or fighting or hud.poker_view.is_open() \
-		or cafe_film != null or hud.roulette_view.is_open()
+		or cafe_film != null or _at_a_game()
 
 
 func my_car() -> Car:
@@ -2030,8 +2122,8 @@ func _update_view(delta: float) -> void:
 		incident_views.refresh(camera.eye(), player.body().global_position, delta)  # M009
 		opportunity_views.refresh(player.body().global_position)
 	var prompt := ""
-	hud.minimap.visible = not hud.poker_view.is_open() and not hud.roulette_view.is_open()  # M010: the card table has the screen
-	if hud.poker_view.is_open() or hud.roulette_view.is_open():
+	hud.minimap.visible = not hud.poker_view.is_open() and not _at_a_game()  # M010: the card table has the screen
+	if hud.poker_view.is_open() or _at_a_game():
 		pass
 	elif player.on_foot():
 		var spot := _spot()

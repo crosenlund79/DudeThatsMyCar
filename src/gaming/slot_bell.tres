@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SlotRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/gaming/slot_rules.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+title = "The Bell"
+coin = 5
+strips = Array[PackedStringArray]([PackedStringArray("bell", "lemon", "orange", "cherry", "plum", "bell", "orange", "bar", "lemon", "plum", "cherry", "orange", "bell", "lemon", "plum", "cherry", "orange", "bell", "seven", "bar"), PackedStringArray("orange", "bell", "lemon", "plum", "cherry", "lemon", "bell", "bar", "orange", "plum", "lemon", "bell", "cherry", "orange", "seven", "plum", "lemon", "bell", "cherry", "lemon"), PackedStringArray("lemon", "bell", "plum", "orange", "lemon", "cherry", "bell", "bar", "lemon", "plum", "orange", "lemon", "bell", "seven", "plum", "lemon", "orange", "bell", "lemon", "bar")])
+pays = Array[Dictionary]([{"coins": 100, "line": ["bar", "bar", "bar"]}, {"coins": 50, "line": ["seven", "seven", "seven"]}, {"coins": 15, "line": ["bell", "bell", "bell"]}, {"coins": 15, "line": ["bell", "bell", "bar"]}, {"coins": 14, "line": ["plum", "plum", "plum"]}, {"coins": 14, "line": ["plum", "plum", "bar"]}, {"coins": 10, "line": ["orange", "orange", "orange"]}, {"coins": 10, "line": ["orange", "orange", "bar"]}, {"coins": 10, "line": ["cherry", "cherry", "cherry"]}, {"coins": 5, "line": ["cherry", "cherry", "*"]}, {"coins": 3, "line": ["cherry", "*", "*"]}])

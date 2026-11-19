@@ -622,6 +622,41 @@ func _run(shots: Array) -> void:
 					await _frames(40)
 				await _shot(s, false)
 				main.leave_roulette()
+			"slots", "slots_paid":
+				# M011: at the Bell: the reels running (slots), then stopped and paid (a winning pull found by seed)
+				main.weather.force("clear")
+				main.rackets.money = 500
+				_teleport_walker(RiversideInteriors.SLOTS[1] + Vector2(0, 32), -PI / 2)
+				await _frames(5)
+				main._interact(main.walker.global_position)
+				await _frames(5)
+				var sv: SlotView = main.hud.slot_view
+				if s == "slots_paid":
+					# the same pull the lever makes, with a seed that wins (the shot shows a payout)
+					var probe := SlotMachine.new(main.slot_rules[1])
+					var lucky := 0
+					for seed in 5000:
+						probe.pull(100, seed)
+						probe.collect()
+						if probe.win >= 50:
+							lucky = seed
+							break
+					var m: SlotMachine = main.slot_machines[1]
+					main.rackets.money -= m.pull(main.rackets.money, lucky)
+					sv.set_money(main.rackets.money)
+					sv.start_reels()
+				else:
+					main._on_slot_pull()
+				if s == "slots":
+					await _frames(50)
+				else:
+					for f in 400:
+						if sv.phase == "paid":
+							break
+						await _frames(1)
+					await _frames(40)
+				await _shot(s, false)
+				main.leave_slot()
 			"thompson":
 				# M010: Eddie's Thompson, borrowed, in a burst down the alley behind the Copper Owl
 				main.weather.force("clear")

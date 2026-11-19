@@ -30,6 +30,7 @@ var fight_dial: FightDial
 var poker_view: PokerView
 ## M011: the gaming room's wheel and its machines on screen.
 var roulette_view: RouletteView
+var slot_view: SlotView
 var clock_panel: PanelContainer
 var clock_label: Label
 var home_label: Label
@@ -245,6 +246,9 @@ func add_minimap(layout: DistrictLayout) -> void:
 	roulette_view = RouletteView.new()
 	add_child(roulette_view)
 	roulette_view.setup(resolver, _font)
+	slot_view = SlotView.new()
+	add_child(slot_view)
+	slot_view.setup(resolver, _font)
 
 
 ## The status screen open (true, showing `condition`) or closed.
@@ -433,6 +437,8 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 		poker_view.layout_for(screen)
 	if roulette_view != null and roulette_view.visible and roulette_view.size != screen:
 		roulette_view.layout_for(screen)
+	if slot_view != null and slot_view.visible and slot_view.size != screen:
+		slot_view.layout_for(screen)
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		wake_screen.size = screen
