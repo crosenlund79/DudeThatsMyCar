@@ -56,6 +56,18 @@ func _reload() -> void:
 	await wait_physics_frames(3)
 
 
+## M013: until Leo's wheel reaches `phase` (the next time it does).
+func _until_wheel(phase: int) -> void:
+	for i in 3000:
+		if main.wheel.phase != phase:
+			break
+		await wait_physics_frames(1)
+	for i in 3000:
+		if main.wheel.phase == phase:
+			return
+		await wait_physics_frames(1)
+
+
 func test_two_nights_of_power_and_vice() -> void:
 	main.save_path = SAVE
 	main.weather.force("clear")
@@ -110,6 +122,7 @@ func test_two_nights_of_power_and_vice() -> void:
 	assert_eq(main.interiors.current.id, "gaming_room")
 	walker().place(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
 	await wait_physics_frames(3)
+	await _until_wheel(RouletteTable.Phase.OPEN)  # M013: Leo's next round
 	await press_e()
 	var rv: RouletteView = main.hud.roulette_view
 	assert_true(rv.is_open())
@@ -119,13 +132,10 @@ func test_two_nights_of_power_and_vice() -> void:
 	await _click(rv, "corner:13-14-16-17")
 	await _click(rv, "straight:0")
 	assert_eq(main.rackets.money, after_cards - 150)
-	await _key(KEY_SPACE)
-	var n: int = main.roulette.result
-	for f in 900:
-		if main.roulette.phase == Roulette.Phase.SETTLED:
-			break
-		await wait_physics_frames(1)
-	assert_eq(rv.spin.pocket_under(rv.spin_t), n, "the ball in the number's pocket")
+	await _until_wheel(RouletteTable.Phase.DROP)  # M013: no more bets - Leo's call
+	var n: int = main.wheel.number
+	await _until_wheel(RouletteTable.Phase.RESULT)
+	assert_eq(main.wheel.motion.pocket_under(), n, "the ball in the number's pocket")
 	var won := Roulette.returns("black", 100, n) + Roulette.returns("corner:13-14-16-17", 25, n) + Roulette.returns("straight:0", 25, n)
 	assert_eq(main.rackets.money, after_cards - 150 + won, "paid what the rules say")
 	await _key(KEY_ESCAPE)
@@ -147,11 +157,12 @@ func test_two_nights_of_power_and_vice() -> void:
 	# a save mid-spin, and the game loaded: the spin counted once
 	walker().place(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
 	await wait_physics_frames(3)
+	await _until_wheel(RouletteTable.Phase.OPEN)
 	await press_e()
 	await _key(KEY_4)
 	await _click(rv, "red")
-	await _key(KEY_SPACE)
-	var n2: int = main.roulette.result
+	await _until_wheel(RouletteTable.Phase.DROP)
+	var n2: int = main.wheel.number
 	var expect: int = main.rackets.money + Roulette.returns("red", 100, n2)
 	await _reload()
 	assert_eq(main.rackets.money, expect, "the spin under way counted as settled, once")

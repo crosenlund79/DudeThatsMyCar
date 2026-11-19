@@ -2,15 +2,33 @@ extends "res://tests/support/city_test.gd"
 ## M011 the gaming room's wheel in the game: E at the rail brings up the
 ## layout (Danny cannot walk off or shoot meanwhile); clicks on the layout put
 ## chips down where they are clicked (the money goes at once), a right click
-## takes one back, Backspace all of them; Space spins - the number is decided
-## then, the wheel in the room turns with the one on screen, the ball comes to
-## rest in that number's pocket and the round is settled once, to the cent; a
-## chip put down after a spin starts the next round, R puts the same bets down
-## again; walking away mid-spin settles it at once and never again; a save
-## counts chips on the layout as Danny's and a spin under way as settled; no
+## takes one back, Backspace all of them; R puts the same bets down again; no
 ## money, no chip; no croupier or closing time, no game.
+## M013: Leo runs the wheel. Rounds go on whether Danny bets or only watches;
+## chips go down only while the bets are open (Space spins nothing); the call
+## comes by itself - later while Danny is still putting chips down, never past
+## the limit; the number is drawn at the call, the wheel in the room turns with
+## the one on screen, the ball comes to rest in that number's pocket and the
+## round is settled once, to the cent; the next round opens by itself; joining
+## after the call means waiting for the next; walking away after the call is
+## settled at once and never again; a save in any phase counts the chips
+## right; at the hour to go home the round under way is played out and no
+## other begins. The tests use shorter rounds (the same rules otherwise).
 
 const SAVE := "user://test_the_wheel_save.json"
+
+
+func before_each() -> void:
+	await super()
+	var quick: RouletteRules = main.roulette_rules.duplicate()
+	quick.open_seconds = 4.0
+	quick.ball_seconds = 3.0
+	quick.drop_seconds = 2.0
+	quick.result_seconds = 2.0
+	quick.grace_seconds = 1.5
+	quick.max_extension = 3.0
+	quick.last_call_seconds = 1.0
+	main.wheel.rules = quick
 
 
 func after_each() -> void:
@@ -21,6 +39,10 @@ func after_each() -> void:
 
 func _view() -> RouletteView:
 	return main.hud.roulette_view
+
+
+func _wheel() -> RouletteTable:
+	return main.wheel
 
 
 func _key(code: Key) -> void:
@@ -41,26 +63,41 @@ func _click(key: String, right: bool = false) -> void:
 	await wait_physics_frames(1)
 
 
-func _step_up(money: int = 1000) -> void:
-	main.rackets.money = money
+func _in_the_room() -> void:
 	walker().place(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
 	main.camera.snap_to(walker())
 	await wait_physics_frames(3)
+
+
+func _step_up(money: int = 1000) -> void:
+	main.rackets.money = money
+	await _in_the_room()
 	assert_string_contains(main.hud.prompt_label.text, "Play the wheel")
 	await press_e()
 	assert_true(_view().is_open(), "the wheel's layout up")
 
 
-func _until_settled(max_frames: int = 900) -> void:
+## Until the table reaches `phase` (the next time, if it is there already and `fresh`).
+func _until_phase(phase: int, fresh := false, max_frames: int = 2400) -> bool:
+	if fresh:
+		for i in max_frames:
+			if _wheel().phase != phase:
+				break
+			await wait_physics_frames(1)
 	for i in max_frames:
-		if main.roulette.phase == Roulette.Phase.SETTLED:
-			return
+		if _wheel().phase == phase:
+			return true
 		await wait_physics_frames(1)
+	return false
+
+
+func _until_settled(max_frames: int = 2400) -> void:
+	await _until_phase(RouletteTable.Phase.RESULT, false, max_frames)
 
 
 func test_stepping_up_and_walking_away() -> void:
 	await _step_up()
-	assert_eq(_view().phase, "betting")
+	assert_eq(_view().phase, "open")
 	var at := walker().global_position
 	cmd = PlayerCommand.make(Vector2(1, 0), false, false, at + Vector2(100, 0), true)
 	await wait_physics_frames(20)
@@ -74,7 +111,9 @@ func test_stepping_up_and_walking_away() -> void:
 	assert_string_contains(main.hud.notice_label.text, "You step away from the wheel even")
 
 
-func test_bets_a_spin_and_one_settling() -> void:
+func test_leo_calls_the_bets_and_settles_once() -> void:
+	await _in_the_room()
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN, true), "a fresh round")
 	await _step_up(2000)
 	await _key(KEY_3)  # 25 cents
 	await _click("straight:17")
@@ -96,27 +135,32 @@ func test_bets_a_spin_and_one_settling() -> void:
 	var bets: Dictionary = r.bets.duplicate()
 	var before: int = main.rackets.money
 	await _key(KEY_SPACE)
+	assert_true(_wheel().betting_open(), "Space spins nothing: Leo calls it")
+	assert_eq(r.phase, Roulette.Phase.BETTING)
+	assert_true(await _until_phase(RouletteTable.Phase.DROP), "the call comes by itself")
 	assert_eq(r.phase, Roulette.Phase.SPINNING, "no more bets")
-	var n := r.result
+	var n := _wheel().number
 	assert_true(n >= 0 and n <= 36)
+	assert_eq(r.result, n, "his chips ride on the number drawn")
 	await _click("black")
-	assert_false(r.bets.has("black"), "nothing goes down while it spins")
-	await wait_physics_frames(60)
+	assert_false(r.bets.has("black"), "nothing goes down after the call")
+	assert_string_contains(_view().message, "No more bets")
+	await wait_physics_frames(30)
 	var rotor := main.interiors.view_of("gaming_room").get_node("roulette_rotor") as Sprite2D
-	assert_ne(rotor.rotation, 0.0, "the wheel in the room turns too")
+	assert_almost_eq(rotor.rotation, _wheel().motion.rotor, 0.0001, "the wheel in the room turns as the one on screen")
 	await _until_settled()
 	assert_eq(r.phase, Roulette.Phase.SETTLED, "the ball came to rest")
-	assert_eq(_view().spin.pocket_under(_view().spin_t), n, "it rests in the pocket of the number the rules gave")
+	assert_eq(_wheel().motion.pocket_under(), n, "it rests in the pocket of the number drawn")
 	var expect := 0
 	for k in bets:
 		expect += Roulette.returns(k, bets[k], n)
 	assert_eq(main.rackets.money, before + expect, "settled to the cent")
 	assert_eq(r.history[0], n)
-	assert_eq(_view().phase, "result")
-	await wait_physics_frames(120)
+	await wait_physics_frames(60)
 	assert_eq(main.rackets.money, before + expect, "and only once")
-	# the next round: a chip put down starts it; R puts the same bets down again
-	await _key(KEY_BACKSPACE)
+	# the next round opens by itself; R puts the same bets down again
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN))
+	assert_true(r.bets.is_empty(), "a clean layout")
 	await _key(KEY_R)
 	assert_eq(r.bets, bets, "the same again")
 	assert_eq(main.rackets.money, before + expect - 280)
@@ -126,45 +170,122 @@ func test_bets_a_spin_and_one_settling() -> void:
 	await _key(KEY_ESCAPE)
 
 
-func test_walking_away_mid_spin_settles_once() -> void:
+func test_watching_without_a_chip_down() -> void:
+	await _step_up(500)
+	var board: int = main.roulette.history.size()
+	var turned: float = _wheel().motion.rotor
+	for i in 2:
+		assert_true(await _until_phase(RouletteTable.Phase.RESULT, true))
+		await wait_physics_frames(2)
+	assert_eq(main.roulette.history.size(), board + 2, "two numbers on the board")
+	assert_gt(_wheel().motion.rotor, turned, "the wheel never stops")
+	assert_eq(main.rackets.money, 500, "watching costs nothing")
+	await _key(KEY_ESCAPE)
+
+
+func test_joining_after_the_call() -> void:
+	await _in_the_room()  # in the room: Leo's rounds go on
+	assert_true(await _until_phase(RouletteTable.Phase.DROP, true))
+	await _step_up(500)
+	assert_string_contains(_view().message, "No more bets")
+	await _click("red")
+	assert_true(main.roulette.bets.is_empty(), "too late for this one")
+	assert_eq(main.rackets.money, 500)
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN))
+	await _key(KEY_3)
+	await _click("red")
+	assert_eq(main.roulette.bets.get("red", 0), 25, "the next round takes it")
+	await _key(KEY_ESCAPE)
+	assert_eq(main.rackets.money, 500, "walking off before the call: the chip back")
+
+
+func test_the_call_waits_while_he_is_still_betting() -> void:
+	await _in_the_room()
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN, true))
+	await _step_up(2000)
+	var usual := _wheel().rules.open_seconds + _wheel().rules.ball_seconds
+	while _wheel().round_time < usual - 0.4:
+		await wait_physics_frames(1)
+	await _key(KEY_1)
+	var placed := 0
+	while _wheel().betting_open():
+		await _click("straight:%d" % (placed % 37))
+		placed += 1
+		await wait_physics_frames(12)
+		if placed > 200:
+			break
+	assert_gt(_wheel().round_time, usual + 0.5, "Leo waited on him past the usual call")
+	assert_lte(_wheel().close_time(), usual + _wheel().rules.max_extension + 0.001, "but not past the limit")
+	assert_eq(main.roulette.phase, Roulette.Phase.SPINNING)
+	assert_eq(main.rackets.money + main.roulette.total_staked(), 2000, "every chip accounted for")
+	await _until_settled()
+	await _key(KEY_ESCAPE)
+
+
+func test_walking_away_after_the_call_settles_once() -> void:
+	await _in_the_room()
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN, true))
 	await _step_up(1000)
 	await _key(KEY_4)
 	await _click("even")
 	await _key(KEY_2)
 	await _click("straight:0")
-	await _key(KEY_SPACE)
-	var n: int = main.roulette.result
-	await wait_physics_frames(30)
+	assert_true(await _until_phase(RouletteTable.Phase.DROP))
+	var n: int = _wheel().number
+	await wait_physics_frames(10)
 	await _key(KEY_ESCAPE)
 	assert_false(_view().is_open())
 	var expect := 1000 - 110 + Roulette.returns("even", 100, n) + Roulette.returns("straight:0", 10, n)
 	assert_eq(main.rackets.money, expect, "settled when he walked away")
-	await wait_physics_frames(500)
+	assert_eq(main.roulette.history[0], n, "the number on the board")
+	var board: int = main.roulette.history.size()
+	await _until_phase(RouletteTable.Phase.OPEN)
 	assert_eq(main.rackets.money, expect, "never paid twice")
+	assert_eq(main.roulette.history.size(), board, "nor put on the board twice when the ball came to rest")
 	assert_eq(main.roulette.phase, Roulette.Phase.BETTING, "a fresh layout for next time")
 
 
-func test_a_save_counts_the_layout_and_the_spin() -> void:
+func test_a_save_in_every_phase() -> void:
 	main.save_path = SAVE
+	await _in_the_room()
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN, true))
 	await _step_up(1000)
 	await _key(KEY_4)
 	await _click("high")
 	await _click("low")
 	main.save_game()
-	assert_eq(int(SaveGame.read(SAVE).rackets.money), 1000, "chips on the layout are still his")
-	await _key(KEY_SPACE)
-	var n: int = main.roulette.result
+	assert_eq(int(SaveGame.read(SAVE).rackets.money), 1000, "bets open: the chips on the layout are still his")
+	assert_true(await _until_phase(RouletteTable.Phase.BALL))
+	main.save_game()
+	assert_eq(int(SaveGame.read(SAVE).rackets.money), 1000, "the ball going round, bets open: still his")
+	assert_true(await _until_phase(RouletteTable.Phase.DROP))
+	var n: int = _wheel().number
 	main.save_game()
 	var expect := 800 + Roulette.returns("high", 100, n) + Roulette.returns("low", 100, n)
-	assert_eq(int(SaveGame.read(SAVE).rackets.money), expect, "a spin under way counts as settled")
+	assert_eq(int(SaveGame.read(SAVE).rackets.money), expect, "after the call the number is decided: counted as settled")
 	await _until_settled()
 	assert_eq(main.rackets.money, expect, "the same in play")
-	assert_eq(int(SaveGame.read(SAVE).rackets.money), expect, "saved again after settling: the same")
-	await _key(KEY_ESCAPE)
+	assert_eq(int(SaveGame.read(SAVE).rackets.money), expect, "saved again after it came to rest: the same")
+	# loaded: a fresh round, the money right
+	remove_child(main)
+	main.free()
+	main = MAIN.instantiate()
+	main.command_source = _source
+	main.callouts_enabled = false
+	main.save_path = SAVE
+	main.settings_path = ""
+	main.quiet_streets = true
+	add_child_autofree(main)
+	await wait_physics_frames(3)
+	assert_eq(main.rackets.money, expect)
+	assert_true(main.roulette.bets.is_empty())
+	assert_true(main.wheel.betting_open(), "Leo opens a fresh round")
 	main.save_path = ""
 
 
 func test_no_money_no_chip() -> void:
+	await _in_the_room()
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN, true))
 	await _step_up(30)
 	await _key(KEY_4)
 	await _click("red")
@@ -175,7 +296,6 @@ func test_no_money_no_chip() -> void:
 	await _click("red")
 	assert_eq(main.roulette.bets.get("red", 0), 25)
 	assert_eq(main.rackets.money, 5)
-	await _key(KEY_SPACE)
 	await _until_settled()
 	assert_gte(main.rackets.money, 0)
 	await _key(KEY_ESCAPE)
@@ -184,15 +304,36 @@ func test_no_money_no_chip() -> void:
 func test_no_croupier_or_closing_time_no_game() -> void:
 	var view: InteriorView = main.interiors.view_of("gaming_room")
 	view.out["croupier"] = true
-	walker().place(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
-	main.camera.snap_to(walker())
-	await wait_physics_frames(3)
+	await _in_the_room()
 	await press_e()
 	assert_false(_view().is_open())
 	assert_string_contains(main.hud.notice_label.text, "Nobody at the wheel")
 	view.out.erase("croupier")
-	main.clock.set_time(float(main.night_rules.home_minute) + 5.0)
-	await wait_physics_frames(2)
+	main.wheel.begin_night()
+	# four o'clock while he plays: the round under way is played out, then the cover goes on
+	assert_true(await _until_phase(RouletteTable.Phase.OPEN, true))
+	await _step_up(1000)
+	await _key(KEY_3)
+	await _click("odd")
+	main.clock.set_time(float(main.night_rules.home_minute) + 1.0)
+	assert_true(await _until_phase(RouletteTable.Phase.CLOSED), "the last spin of the night")
+	assert_eq(main.roulette.history.size() > 0, true)
+	assert_eq(main.rackets.money + main.roulette.for_save(), 975 + Roulette.returns("odd", 25, main.roulette.history[0]), "his chip resolved")
+	await _click("red")
+	assert_true(main.roulette.bets.is_empty(), "nothing goes down after closing")
+	await _key(KEY_ESCAPE)
 	await press_e()
 	assert_false(_view().is_open())
 	assert_string_contains(main.hud.notice_label.text, "That's all for tonight")
+
+
+func test_the_wheel_rests_when_nobody_is_in_the_room() -> void:
+	await _in_the_room()
+	await wait_physics_frames(30)
+	walker().place(STREETCAR_STOP, 0.0)
+	await wait_physics_frames(5)
+	var t: float = _wheel().round_time
+	var r: int = _wheel().rounds
+	await wait_physics_frames(120)
+	assert_eq(_wheel().round_time, t, "no wheel turned for an empty room")
+	assert_eq(_wheel().rounds, r)

@@ -62,6 +62,18 @@ func _shot(name: String, settle: bool = true) -> void:
 	print("saved ", name)
 
 
+## M013: until Leo's wheel reaches `phase` (the next time it does).
+func _until_wheel(phase: int) -> void:
+	for i in 3000:
+		if main.wheel.phase != phase:
+			break
+		await _frames(1)
+	for i in 3000:
+		if main.wheel.phase == phase:
+			return
+		await _frames(1)
+
+
 func _teleport_walker(p: Vector2, facing: float) -> void:
 	main.walker.place(p, facing)
 	main.camera.snap_to(main.walker)
@@ -815,6 +827,7 @@ func _run(shots: Array) -> void:
 				main.rackets.money = 1500
 				_teleport_walker(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
 				await _frames(5)
+				await _until_wheel(RouletteTable.Phase.OPEN)  # M013: Leo's next round
 				main._interact(main.walker.global_position)
 				await _frames(5)
 				var rv: RouletteView = main.hud.roulette_view
@@ -823,15 +836,12 @@ func _run(shots: Array) -> void:
 					main._on_wheel_bet(b[0], rv.chip())
 				rv.hover_key = "corner:25-26-28-29"
 				await _frames(3)
-				main._on_wheel_spin()
 				rv.hover_key = ""
 				if s == "roulette":
-					await _frames(230)
+					await _until_wheel(RouletteTable.Phase.BALL)
+					await _frames(150)  # the ball going round, bets still open, the ring running down
 				else:
-					for f in 900:
-						if main.roulette.phase == Roulette.Phase.SETTLED:
-							break
-						await _frames(1)
+					await _until_wheel(RouletteTable.Phase.RESULT)
 					await _frames(40)
 				await _shot(s, false)
 				main.leave_roulette()

@@ -3,32 +3,30 @@ extends Control
 ## M011: the gaming room's wheel on screen, over the dimmed room: the wheel in
 ## its bowl at the left, the single-zero layout on the baize at the right, the
 ## chip tray, the last numbers, what Danny has in his pocket and on the table.
+## M013: Leo runs the wheel (RouletteTable): it turns all the time, round after
+## round, and the view shows the round as it stands - bets open (a brass ring
+## round the bowl runs down to the call, and waits while Danny is still putting
+## chips down), last bets, no more bets, the ball dropping, the number, the
+## payout - whether Danny bets or only watches. Space no longer spins.
 ##
 ## 1-4 (or a click on the tray, or the mouse wheel) picks a chip - 5¢, 10¢,
 ## 25¢, $1; a click on the layout puts it on the bet under the pointer (a
 ## number's middle, the line between two numbers, a crossing, the edge under a
 ## column of three or between two, the boxes outside); a right click takes one
-## back; Backspace takes them all back; R puts last spin's bets down again;
-## Space spins ("no more bets"); Esc or E walks away (chips not yet spun come
-## back; a spin under way is settled at once). The covered numbers light up
-## under the pointer, with what the bet pays.
+## back; Backspace takes them all back; R puts last round's bets down again;
+## Esc or E walks away (chips not yet called come back; a number already
+## drawn is settled at once). The covered numbers light up under the pointer,
+## with what the bet pays.
 ##
-## The money and the rules are Roulette's, moved by the game (main) on this
-## view's requests; the number is decided when the wheel is spun, and the
-## wheel and the ball here only show it (RouletteSpin lands the ball in that
-## pocket). When the ball comes to rest the view says so (`spin_finished`)
-## and the game settles - once.
+## The money and the rules are Roulette's and RouletteTable's, moved by the
+## game (main) on this view's requests and the table's events; the number is
+## drawn at the call, and the wheel here only shows it.
 
 signal bet_requested(key: String, chip: int)
 signal take_back_requested(key: String, chip: int)
 signal clear_requested
 signal repeat_requested
-signal spin_requested
-## The ball has come to rest in its pocket: time to settle.
-signal spin_finished
 signal leave_requested
-## A sound for the game to play: "chips", "spin", "ball_drop", "ball_rest", "win", "lose".
-signal sound(kind: String)
 
 const CREAM := Color("f1e4c6")
 const DIM := Color("f1e4c6", 0.55)
@@ -46,20 +44,19 @@ const BOWL_RADIUS := 165.0
 const LAYOUT_AT := Vector2(-150, -150)
 const LAYOUT_SCALE := 1.15
 
+## Danny's chips (his Roulette) and the round they are in (Leo's table).
 var table: Roulette
+var wheel: RouletteTable
 var money := 0
 var chip_index := 0
-var phase := "closed"  # closed / betting / spinning / result
+var phase := "closed"  # closed / open (the view; the round's own phase is wheel.phase)
 var message := ""
 var result_line := ""
 var hover_key := ""
 var centre := Vector2(640, 340)
 var ui_scale := 1.0
-var spin: RouletteSpin = null
-var spin_t := 0.0
-var rotor_angle := 0.0
-var _finished := false
-var _dropped := false
+var _shown_phase := -1
+var _shown_second := -1
 var _buttons: Array = []  # {rect, id}
 var _font: Font
 var _felt: Texture2D
@@ -68,10 +65,8 @@ var _rotor: Texture2D
 var _ball: Texture2D
 var _chip: Texture2D
 var _dolly: Texture2D
-var _rng := RandomNumberGenerator.new()
-var _ball_rest := -PI / 2.0  # where the ball lies (relative to the head) between spins
-## The wheel on a layer of its own: while it spins only the wheel is drawn
-## again each frame, not the whole table (its layout, chips and text).
+## The wheel on a layer of its own: it is drawn again each frame (it always
+## turns), the whole table (its layout, chips and text) only when it changes.
 var _wheel_layer: Control
 
 
@@ -88,7 +83,6 @@ func setup(resolver: AssetResolver, font: Font) -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	visible = false
-	_rng.randomize()
 	_wheel_layer = Control.new()
 	_wheel_layer.name = "Wheel"
 	_wheel_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -108,14 +102,15 @@ func is_open() -> bool:
 	return phase != "closed"
 
 
-func open(p_table: Roulette, p_money: int) -> void:
-	table = p_table
+func open(p_wheel: RouletteTable, p_money: int) -> void:
+	wheel = p_wheel
+	table = p_wheel.danny
 	money = p_money
-	phase = "betting"
-	message = "Place your bets."
+	phase = "open"
+	message = _call_for(wheel.phase)
 	result_line = ""
 	hover_key = ""
-	spin = null
+	_shown_phase = wheel.phase
 	visible = true
 	refresh()
 
@@ -123,7 +118,25 @@ func open(p_table: Roulette, p_money: int) -> void:
 func close() -> void:
 	phase = "closed"
 	visible = false
-	spin = null
+
+
+## What Leo is saying at this point of a round.
+static func _call_for(p: int) -> String:
+	match p:
+		RouletteTable.Phase.OPEN:
+			return "\"Place your bets, ladies and gentlemen.\""
+		RouletteTable.Phase.BALL:
+			return "The ball goes round. Bets are still open."
+		RouletteTable.Phase.DROP:
+			return "\"No more bets.\""
+		RouletteTable.Phase.CLOSED:
+			return "The cover's over the wheel for tonight."
+	return ""
+
+
+## Whether chips can go down now (the round's bets are open).
+func betting() -> bool:
+	return phase == "open" and wheel != null and wheel.betting_open()
 
 
 func set_money(cents: int) -> void:
@@ -141,53 +154,40 @@ func chip() -> int:
 	return table.rules.chips[clampi(chip_index, 0, table.rules.chips.size() - 1)]
 
 
-## The wheel is spun: the head and the ball show `number` coming up.
-func start_spin(number: int, seconds: float) -> void:
-	spin = RouletteSpin.new(number, rotor_angle, rotor_angle + _rng.randf_range(0.0, TAU), seconds)
-	spin_t = 0.0
-	_finished = false
-	_dropped = false
-	phase = "spinning"
-	message = "No more bets."
-	result_line = ""
-	sound.emit("spin")
-	refresh()
-
-
-## The round is settled: what came up and what it paid.
-func show_result(paid: int) -> void:
-	phase = "result"
-	var n := table.result
+## The ball has come to rest: what came up and what Danny's chips paid
+## (`played`: whether he had any on it).
+func show_result(paid: int, played: bool) -> void:
+	var n := wheel.number
 	var words := "%d  %s" % [n, "green" if n == 0 else Roulette.colour(n)]
 	if n != 0:
 		words += ", %s, %s" % ["odd" if n % 2 else "even", "low" if n <= 18 else "high"]
 	result_line = words
 	var net := paid - table.staked
-	if paid > 0:
+	if not played:
+		message = "\"%s.\"" % words
+	elif paid > 0:
 		message = "%s.   You collect %s%s." % [words, PokerView.money_text(paid),
 			"  (%s ahead)" % PokerView.money_text(net) if net > 0 else ("  (%s down)" % PokerView.money_text(-net) if net < 0 else "")]
-		sound.emit("win")
 	else:
 		message = "%s.   The house takes %s." % [words, PokerView.money_text(table.staked)]
-		sound.emit("lose")
-	queue_redraw()
+	refresh()
 
 
-func _process(delta: float) -> void:
-	if phase == "closed" or spin == null:
+func _process(_delta: float) -> void:
+	if phase == "closed" or wheel == null:
 		return
-	spin_t += delta
-	rotor_angle = spin.rotor_angle(spin_t)
-	if not _dropped and spin_t >= spin.duration * RouletteSpin.DROP:
-		_dropped = true
-		sound.emit("ball_drop")
-	if not _finished and spin.done(spin_t):
-		_finished = true
-		_ball_rest = RouletteSpin.pocket_angle(spin.result)
-		sound.emit("ball_rest")
-		spin_finished.emit()
-	if spin_t < spin.duration + 12.0:
-		_wheel_layer.queue_redraw()  # only the wheel moves
+	if wheel.phase != _shown_phase:  # the round moved on: the whole table drawn again once
+		_shown_phase = wheel.phase
+		if wheel.phase in [RouletteTable.Phase.OPEN, RouletteTable.Phase.DROP, RouletteTable.Phase.CLOSED]:
+			message = _call_for(wheel.phase)
+			if wheel.phase == RouletteTable.Phase.OPEN:
+				result_line = ""
+		queue_redraw()
+	var sec := ceili(wheel.seconds_to_close())
+	if sec != _shown_second:  # the plaque's count, once a second
+		_shown_second = sec
+		queue_redraw()
+	_wheel_layer.queue_redraw()  # the wheel always turns
 
 
 ## The whole table drawn again (state changed), the wheel with it.
@@ -215,7 +215,7 @@ func handle_key(event: InputEvent) -> bool:
 	elif k >= KEY_1 and k <= KEY_4:
 		pick_chip(k - KEY_1)
 	elif k == KEY_SPACE or k == KEY_ENTER or k == KEY_KP_ENTER:
-		spin_requested.emit()
+		say("Leo calls the bets, not you. Watch the ring round the wheel.")
 	elif k == KEY_BACKSPACE or k == KEY_DELETE:
 		clear_requested.emit()
 	elif k == KEY_R:
@@ -260,8 +260,6 @@ func _click(id: String) -> void:
 	match id:
 		"leave":
 			leave_requested.emit()
-		"spin":
-			spin_requested.emit()
 		"clear":
 			clear_requested.emit()
 		"repeat":
@@ -300,10 +298,8 @@ func _bet_under(p: Vector2) -> String:
 ## Where the ball is drawn now (screen px).
 func ball_position() -> Vector2:
 	var wc := centre + WHEEL_AT * ui_scale
-	var rw := _s(BOWL_RADIUS)
-	if spin != null:
-		return wc + Vector2.from_angle(spin.ball_angle(spin_t)) * spin.ball_radius(spin_t) * rw
-	return wc + Vector2.from_angle(rotor_angle + _ball_rest) * RouletteSpin.POCKET * rw
+	var m := wheel.motion
+	return wc + Vector2.from_angle(m.ball_angle) * m.ball_r * _s(BOWL_RADIUS)
 
 
 # ------------------------------------------------------------------ drawing
@@ -340,19 +336,35 @@ func _draw() -> void:
 
 
 func _draw_wheel() -> void:
-	if table == null or phase == "closed":
+	if table == null or wheel == null or phase == "closed":
 		return
 	var c := _wheel_layer
 	var wc := centre + WHEEL_AT * ui_scale
 	var rw := _s(BOWL_RADIUS)
+	_draw_call_ring(c, wc, rw)
 	c.draw_texture_rect(_bowl, Rect2(wc - Vector2(rw, rw), Vector2(rw, rw) * 2.0), false)
-	var rr := rw * RouletteSpin.ROTOR
-	c.draw_set_transform(wc, rotor_angle, Vector2.ONE)
+	var rr := rw * RouletteMotion.ROTOR
+	c.draw_set_transform(wc, wheel.motion.rotor, Vector2.ONE)
 	c.draw_texture_rect(_rotor, Rect2(-rr, -rr, rr * 2.0, rr * 2.0), false)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var b := _s(13.0)
 	var bp := ball_position()
 	c.draw_texture_rect(_ball, Rect2(bp - Vector2(b, b) * 0.5, Vector2(b, b)), false)
+
+
+## M013: a brass ring round the bowl, running down to the call (it holds
+## while Danny is still putting chips down); red for the last bets, gone once
+## the call has come.
+func _draw_call_ring(c: Control, wc: Vector2, rw: float) -> void:
+	if not wheel.betting_open():
+		return
+	var whole := wheel.close_time()
+	var left := wheel.seconds_to_close()
+	var frac := clampf(left / maxf(whole, 0.1), 0.0, 1.0)
+	var last := left <= wheel.rules.last_call_seconds
+	var col := Color(RED.lightened(0.25), 0.95) if last else Color(GOLD, 0.85)
+	c.draw_arc(wc, rw + _s(9), 0, TAU, 72, Color(0, 0, 0, 0.45), _s(7))
+	c.draw_arc(wc, rw + _s(9), -PI / 2.0, -PI / 2.0 + TAU * frac, 72, col, _s(4.5))
 
 
 func _cell_colour(n: int) -> Color:
@@ -361,8 +373,8 @@ func _cell_colour(n: int) -> Color:
 
 func _draw_layout() -> void:
 	var k := _k()
-	var lit: Array[int] = Roulette.covers(hover_key) if phase != "spinning" and hover_key != "" else ([] as Array[int])
-	var won := table.result if phase == "result" or (phase == "spinning" and _finished) else -1
+	var lit: Array[int] = Roulette.covers(hover_key) if betting() and hover_key != "" else ([] as Array[int])
+	var won := wheel.number if wheel.phase == RouletteTable.Phase.RESULT else -1
 	for n in 37:
 		var c := RouletteLayout.cell(n)
 		var r := Rect2(_from_layout(c.position), c.size * k)
@@ -380,7 +392,7 @@ func _draw_layout() -> void:
 			draw_rect(r2.grow(-_s(4)), Color(RED, 0.9))
 		elif key == "black":
 			draw_rect(r2.grow(-_s(4)), Color(BLACK, 0.9))
-		if key == hover_key and phase != "spinning":
+		if key == hover_key and betting():
 			draw_rect(r2, Color(GOLD, 0.25))
 		if won > 0 and Roulette.wins(key, won):
 			draw_rect(r2, Color(GOLD, 0.3))
@@ -417,10 +429,11 @@ func _draw_chip(at: Vector2, cents: int, radius: float, faded: bool = false) -> 
 
 
 func _draw_bets() -> void:
-	var won: Array[String] = table.winning_bets() if phase == "result" else ([] as Array[String])
+	var settled := wheel.phase == RouletteTable.Phase.RESULT and table.phase == Roulette.Phase.SETTLED
+	var won: Array[String] = table.winning_bets() if settled else ([] as Array[String])
 	for key in table.bets:
 		var at := _from_layout(RouletteLayout.anchor(key))
-		var lost: bool = phase == "result" and not key in won
+		var lost: bool = settled and not key in won
 		if key in won:
 			draw_circle(at, _s(16), Color(GOLD, 0.45))
 		_draw_chip(at, int(table.bets[key]), _s(11), lost)
@@ -451,13 +464,26 @@ func _draw_tray() -> void:
 		_text(p + Vector2(0, _s(38)), "%d  %s" % [i + 1, _chip_words(c)], 13, GOLD if i == chip_index else DIM)
 		_buttons.append({"rect": Rect2(p - Vector2(_s(24), _s(24)), Vector2(_s(48), _s(48))), "id": "chip%d" % i})
 	var bx := x0 + _s(270)
-	var items := [["spin", "Space   Spin"], ["repeat", "R   Same again"], ["clear", "Backspace   Clear"]]
+	var items := [["repeat", "R   Same again"], ["clear", "Backspace   Clear"]]
+	var on := betting()
 	for i in items.size():
 		var r := Rect2(Vector2(bx + i * _s(128), y - _s(18)), Vector2(_s(120), _s(32)))
-		var on := phase != "spinning"
-		_panel(r, Color(GOLD if items[i][0] == "spin" and on else COPPER, 0.7 if on else 0.25), 1.0)
+		_panel(r, Color(COPPER, 0.7 if on else 0.25), 1.0)
 		_text(r.get_center() + Vector2(0, _s(6)), items[i][1], 13, CREAM if on else DIM)
 		_buttons.append({"rect": r, "id": items[i][0]})
+	# the round as it stands, beside them (Leo calls it, not Danny)
+	var sr := Rect2(Vector2(bx + 2 * _s(128), y - _s(18)), Vector2(_s(136), _s(32)))
+	var left := wheel.seconds_to_close()
+	var last := on and left <= wheel.rules.last_call_seconds
+	var state: String = {RouletteTable.Phase.OPEN: "Bets open  %d" % ceili(left), RouletteTable.Phase.BALL: "Bets open  %d" % ceili(left),
+		RouletteTable.Phase.DROP: "No more bets", RouletteTable.Phase.RESULT: "Paying out",
+		RouletteTable.Phase.CLOSED: "Closed"}[wheel.phase]
+	if last:
+		state = "Last bets!"
+	_panel(sr, Color(RED.lightened(0.3) if last else (GOLD if on else COPPER), 0.75 if on else 0.35), 1.0)
+	_text(sr.get_center() + Vector2(0, _s(6)), state, 14, GOLD if on else DIM)
+	if on and wheel.changed_at >= 0.0 and wheel.close_time() > wheel.rules.open_seconds + wheel.rules.ball_seconds:
+		_text(sr.get_center() + Vector2(0, _s(30)), "Leo waits on you", 12, DIM)
 
 
 static func _chip_words(c: int) -> String:
@@ -467,16 +493,18 @@ static func _chip_words(c: int) -> String:
 func _draw_status() -> void:
 	var wc := centre + WHEEL_AT * ui_scale
 	var y := wc.y + _s(BOWL_RADIUS) + _s(34)
+	var on_table := table.total_staked() if table.phase != Roulette.Phase.SETTLED else 0
 	_text(Vector2(wc.x, y), "In your pocket %s      On the table %s" % [PokerView.money_text(money),
-		PokerView.money_text(table.total_staked() if phase != "result" else 0)], 15, CREAM)
+		PokerView.money_text(on_table)], 15, CREAM)
 	var top := centre.y - AssetCatalog.display_size("ui/roulette_felt").y * 0.5 * ui_scale
 	_text(Vector2(centre.x, top + _s(52)), "The wheel  -  single zero.   A number pays 35 to 1, a split 17, a street 11, a corner 8, a line 5, dozens and columns 2, the rest even money.", 13, CREAM)
 	var line := message
-	if hover_key != "" and phase != "spinning":
+	if hover_key != "" and betting():
 		line = "%s  -  pays %d to 1%s" % [Roulette.words(hover_key), Roulette.pays(hover_key),
-			"  (on it: %s)" % PokerView.money_text(int(table.bets[hover_key])) if table.bets.has(hover_key) and phase == "betting" else ""]
+			"  (on it: %s)" % PokerView.money_text(int(table.bets[hover_key])) if table.bets.has(hover_key) else ""]
+	var result := wheel.phase == RouletteTable.Phase.RESULT
 	var r := Rect2(Vector2(centre.x - _s(420), size.y - _s(108)), Vector2(_s(840), _s(36)))
-	_panel(r, Color(GOLD if phase == "result" else COPPER, 0.6), 1.0)
-	_text(r.get_center() + Vector2(0, _s(6)), line, 16, GOLD if phase == "result" and hover_key == "" else CREAM)
+	_panel(r, Color(GOLD if result else COPPER, 0.6), 1.0)
+	_text(r.get_center() + Vector2(0, _s(6)), line, 16, GOLD if result and hover_key == "" else CREAM)
 	_text(Vector2(centre.x, size.y - _s(20)),
-		"1-4 / wheel  Chip     Click  Bet     Right-click  Take one back     Backspace  Clear     R  Same again     Space  Spin     Esc  Leave", 13, DIM)
+		"1-4 / wheel  Chip     Click  Bet     Right-click  Take one back     Backspace  Clear     R  Same again     Esc  Leave", 13, DIM)

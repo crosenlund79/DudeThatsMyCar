@@ -95,19 +95,30 @@ func test_the_wheels_sounds_in_order() -> void:
 	main.camera.snap_to(walker())
 	await wait_physics_frames(3)
 	await press_e()
+	# M013: Leo runs the wheel - wait for a fresh round, put a chip down, let it run
+	for i in 3000:
+		if main.wheel.phase != RouletteTable.Phase.OPEN:
+			break
+		await wait_physics_frames(1)
+	for i in 3000:
+		if main.wheel.phase == RouletteTable.Phase.OPEN:
+			break
+		await wait_physics_frames(1)
 	var heard := []
 	sound().sound_played.connect(func(l: String) -> void: heard.append(l))
 	main._on_wheel_bet("red", 25)
-	main._on_wheel_spin()
-	for i in 600:
+	for i in 3000:
 		await wait_physics_frames(1)
-		if main.roulette.phase == Roulette.Phase.SETTLED:
+		if main.wheel.phase == RouletteTable.Phase.RESULT:
 			break
 	await wait_physics_frames(2)
 	var order := heard.filter(func(l: String) -> bool: return l.begins_with("roulette/"))
-	assert_eq(order.slice(0, 4), ["roulette/chips", "roulette/spin", "roulette/ball_drop", "roulette/ball_rest"])
-	assert_true("roulette/cue" in order, "the croupier's bell as the number is marked")
+	var no_bells := order.filter(func(l: String) -> bool: return l != "roulette/cue")
+	assert_eq(no_bells.slice(0, 4), ["roulette/chips", "roulette/spin", "roulette/ball_drop", "roulette/ball_rest"])
+	assert_lt(order.find("roulette/spin"), order.rfind("roulette/cue"), "the croupier's bell at the call")
+	assert_lt(order.rfind("roulette/cue"), order.find("roulette/ball_drop"), "before the ball drops")
 	assert_true(("roulette/win" in order) != ("roulette/lose" in order), "won or lost, not both")
+	assert_eq(order.count("roulette/ball_rest"), 1, "the ball comes to rest once")
 	main.leave_roulette()
 
 

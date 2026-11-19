@@ -89,10 +89,13 @@ func _run() -> void:
 	await _place(RiversideInteriors.ROULETTE_SPOT)
 	main.open_roulette()
 	await _fps("at the wheel, between spins (the table on screen)")
+	for i in 3000:  # M013: Leo's next round
+		if main.wheel.phase == RouletteTable.Phase.OPEN:
+			break
+		await process_frame
 	for b in [["straight:17", 25], ["red", 100], ["dozen:2", 25]]:
 		main._on_wheel_bet(b[0], b[1])
-	main._on_wheel_spin()
-	await _fps("at the wheel, spinning", 4.0)
+	await _fps("at the wheel, bets open, the wheel turning", 4.0)
 	await _view_cost("the wheel's view", main.hud.roulette_view)
 	main.leave_roulette()
 	# a machine

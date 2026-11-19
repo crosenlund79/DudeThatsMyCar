@@ -292,6 +292,27 @@ func spin(seed: int) -> int:
 	return result
 
 
+## M013: the croupier has called no more bets and the table has drawn
+## `number` (RouletteTable): Danny's chips, if he has any down, ride on it.
+## Returns whether they do.
+func close_with(number: int) -> bool:
+	if phase != Phase.BETTING or bets.is_empty():
+		return false
+	result = number
+	staked = total_staked()
+	last_bets = bets.duplicate()
+	spins += 1
+	phase = Phase.SPINNING
+	return true
+
+
+## M013: a round Danny sat out still goes on the board of last numbers.
+func note(number: int) -> void:
+	history.push_front(number)
+	if history.size() > 12:
+		history.resize(12)
+
+
 ## The ball has dropped: every bet is settled once. Returns the cents paid
 ## back to Danny (stakes and winnings of the winning bets; 0 a second time).
 func settle() -> int:

@@ -269,25 +269,65 @@ func test_clicks_land_on_the_expected_bets() -> void:
 		assert_eq(RouletteLayout.bet_at(RouletteLayout.cell(n).get_center()), "straight:%d" % n, "%d's box" % n)
 
 
+## M013: RouletteMotion (the wheel all night): however long the ball circled
+## before the call, it drops into the pocket of the number drawn, stays there
+## as the head turns on, never jumps, never leaves the bowl.
 func test_the_ball_comes_to_rest_where_the_rules_say() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 77
+	var dt := 1.0 / 60.0
 	for n in 37:
-		for k in 4:
-			var spin := RouletteSpin.new(n, rng.randf_range(-PI, PI), rng.randf_range(-PI, PI), rng.randf_range(5.0, 8.0))
-			assert_eq(spin.pocket_under(spin.duration), n, "the ball rests in %d's pocket" % n)
-			assert_eq(spin.pocket_under(spin.duration + 4.0), n, "and stays there as the head turns on")
-			assert_almost_eq(spin.ball_radius(spin.duration), RouletteSpin.POCKET, 0.0001)
-			var dt := 1.0 / 60.0
+		for k in 3:
+			var m := RouletteMotion.new()
+			m.rotor = rng.randf_range(-PI, PI)
+			m.kick()
+			m.lift()
+			m.advance(rng.randf_range(1.0, 9.0))  # the round open: the ball held on the track
+			m.launch()
+			var circling := rng.randf_range(4.0, 14.0)  # however long the call is put off
 			var biggest := 0.0
 			var t := 0.0
-			while t < spin.duration + 0.5:
-				biggest = maxf(biggest, absf(spin.ball_angle(t + dt) - spin.ball_angle(t)))
-				var r := spin.ball_radius(t)
-				assert_true(r >= RouletteSpin.POCKET - 0.001 and r <= RouletteSpin.TRACK + 0.07, "the ball stays in the bowl")
+			while t < circling:
+				var before := m.ball_angle
+				m.advance(dt)
+				biggest = maxf(biggest, absf(angle_difference(before, m.ball_angle)))
+				assert_almost_eq(m.ball_r, RouletteMotion.TRACK, 0.001, "on the track while bets are open")
 				t += dt
+			assert_gt(absf(m.ball_speed), RouletteMotion.BALL_FLOOR - 0.01, "still going round at the call")
+			m.drop(n, 3.6)
+			t = 0.0
+			while t < 3.6 + dt:
+				var before2 := m.ball_angle
+				m.advance(dt)
+				biggest = maxf(biggest, absf(angle_difference(before2, m.ball_angle)))
+				assert_true(m.ball_r >= RouletteMotion.POCKET - 0.001 and m.ball_r <= RouletteMotion.TRACK + 0.07, "the ball stays in the bowl")
+				t += dt
+			assert_true(m.resting())
+			assert_eq(m.pocket_under(), n, "the ball rests in %d's pocket" % n)
+			m.advance(4.0)
+			assert_eq(m.pocket_under(), n, "and stays there as the head turns on")
+			assert_almost_eq(m.ball_r, RouletteMotion.POCKET, 0.0001)
 			assert_lt(biggest, 0.4, "no jumps: the ball moves smoothly (%.2f rad a frame at most)" % biggest)
 	# the pockets are where the head's art has them: the zero at the top, 32 next clockwise
-	assert_eq(RouletteSpin.pocket_at(-PI / 2.0), 0)
-	assert_eq(RouletteSpin.pocket_at(-PI / 2.0 + TAU / 37.0), 32)
-	assert_eq(RouletteSpin.pocket_at(-PI / 2.0 - TAU / 37.0), 26)
+	assert_eq(RouletteMotion.pocket_at(-PI / 2.0), 0)
+	assert_eq(RouletteMotion.pocket_at(-PI / 2.0 + TAU / 37.0), 32)
+	assert_eq(RouletteMotion.pocket_at(-PI / 2.0 - TAU / 37.0), 26)
+
+
+func test_the_head_never_stops_and_never_snaps() -> void:
+	var m := RouletteMotion.new()
+	var dt := 1.0 / 60.0
+	var last_speed := m.rotor_speed
+	for round_i in 4:
+		m.kick()
+		m.lift()
+		for i in 60 * 25:
+			var before := m.rotor
+			m.advance(dt)
+			assert_gt(m.rotor - before, 0.0, "the head always turns")
+			assert_lt(absf(m.rotor_speed - last_speed), 0.06, "its speed changes smoothly")
+			last_speed = m.rotor_speed
+			if i == 60 * 3:
+				m.launch()
+			if i == 60 * 12:
+				m.drop(round_i * 9, 3.6)

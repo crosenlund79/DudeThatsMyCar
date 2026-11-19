@@ -14,5 +14,16 @@ extends Resource
 @export var max_outside := 500
 ## The most on the whole layout in one spin.
 @export var max_total := 1000
-## Seconds the wheel turns before the ball drops into its pocket (presentation).
-@export var spin_seconds := 6.5
+## M013: Leo's rounds (seconds): bets open while the head turns, then with the
+## ball going round; the call ("no more bets") comes ball_seconds after it is
+## sent; the ball drops for drop_seconds; the number stands for result_seconds.
+@export var open_seconds := 9.0
+@export var ball_seconds := 7.0
+@export var drop_seconds := 3.6
+@export var result_seconds := 5.5
+## While Danny is still putting chips down, the call waits until he has left
+## them alone this long - but never more than max_extension past its time.
+@export var grace_seconds := 2.5
+@export var max_extension := 6.0
+## "Last bets" this long before the call.
+@export var last_call_seconds := 2.5
