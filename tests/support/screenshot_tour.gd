@@ -596,6 +596,32 @@ func _run(shots: Array) -> void:
 				_teleport_walker(RiversideInteriors.ROULETTE_SPOT + Vector2(26, 0), -PI / 2 - 0.6)
 				await _frames(40)
 				await _shot(s, false)
+			"roulette", "roulette_result":
+				# M011: at the wheel - chips down, the ball going round (roulette), then where it came to rest
+				main.weather.force("clear")
+				main.rackets.money = 1500
+				_teleport_walker(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
+				await _frames(5)
+				main._interact(main.walker.global_position)
+				await _frames(5)
+				var rv: RouletteView = main.hud.roulette_view
+				for b in [["straight:17", 2], ["split:20-23", 1], ["red", 3], ["corner:25-26-28-29", 0], ["dozen:3", 2], ["straight:32", 1]]:
+					rv.pick_chip(b[1])
+					main._on_wheel_bet(b[0], rv.chip())
+				rv.hover_key = "corner:25-26-28-29"
+				await _frames(3)
+				main._on_wheel_spin()
+				rv.hover_key = ""
+				if s == "roulette":
+					await _frames(230)
+				else:
+					for f in 900:
+						if main.roulette.phase == Roulette.Phase.SETTLED:
+							break
+						await _frames(1)
+					await _frames(40)
+				await _shot(s, false)
+				main.leave_roulette()
 			"thompson":
 				# M010: Eddie's Thompson, borrowed, in a burst down the alley behind the Copper Owl
 				main.weather.force("clear")

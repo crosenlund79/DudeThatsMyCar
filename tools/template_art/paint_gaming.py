@@ -302,3 +302,120 @@ ASSETS = {
     "interiors/tall_clock": tall_clock,
     "interiors/spittoon": spittoon,
 }
+
+
+# ------------------------------------------------------------------ on screen (the wheel table)
+
+def ui_felt(seed=501):
+    """The wheel table on screen: green baize inside a dark wooden rail with a brass inlay (the
+    layout and the wheel are drawn on it by the game)."""
+    w, h = 720, 320
+    img = new(w, h)
+    soft_blob(img, S(w / 2), S(h / 2 + 6), S(w / 2 - 6), S(h / 2 - 6), "#000000", 140, 8 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, w - 4, h - 4, 34)), WOOD, seed, outline=OUT, ow=2.0, wob=0.1, tex=0.25,
+                strokes_n=40, stroke_cols=["#4a2c1c", "#2a160c"], light=(0.3, -1, 0.35))
+    line(img, [S(*p) for p in rrect_pts(13, 13, w - 13, h - 13, 27)] + [S(13 + 27, 13)], BRASS, 1.2 * SS, 150)
+    paint_shape(img, SP(rrect_pts(20, 20, w - 20, h - 20, 24)), BAIZE, seed + 1, outline=(16, 30, 20), ow=1.4, wob=0.08,
+                tex=0.22, strokes_n=60, stroke_cols=["#2c6244", "#1e4630"], light=(0.2, -1, 0.25), inner_shadow=0.5)
+    # wear: a lighter patch where the croupier's rake goes, a couple of old burns
+    soft_blob(img, S(w * 0.62), S(h * 0.5), S(150), S(70), "#3a7a54", 40, 20 * SS)
+    rnd = random.Random(seed)
+    for k in range(3):
+        soft_blob(img, S(rnd.uniform(60, w - 60)), S(rnd.uniform(40, h - 40)), S(1.6), S(1.2), "#0e1a12", 160, 0.6 * SS)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def ui_bowl(seed=511):
+    """The wheel's wooden bowl from above (the rotor is drawn on top, turning): the outer rim,
+    the polished ball track, eight brass deflectors, the dark gap round the rotor."""
+    w = h = 512
+    img = new(w, h)
+    c = 256
+    R = 250
+    soft_blob(img, S(c + 6), S(c + 10), S(R), S(R), "#000000", 150, 10 * SS)
+    paint_shape(img, SP(ellipse_pts(c, c, R, R, n=160)), "#3a2014", seed, outline=OUT, ow=2.0, wob=0.04, tex=0.25,
+                strokes_n=40, stroke_cols=["#4a2a18", "#2a140a"], light=(0.3, -1, 0.4))
+    paint_shape(img, SP(ellipse_pts(c, c, R * 0.95, R * 0.95, n=160)), "#7a4a26", seed + 1, outline=(40, 24, 12), ow=1.2,
+                wob=0.02, tex=0.2, light=(-0.3, 1, 0.45))  # the ball track, sloping in
+    paint_shape(img, SP(ellipse_pts(c, c, R * 0.80, R * 0.80, n=160)), "#4a2a16", seed + 2, outline=(30, 18, 10), ow=1.0,
+                wob=0.02, tex=0.2, light=(0.3, -1, 0.3))
+    for k in range(8):  # the deflectors ("diamonds")
+        a = k * math.pi / 4 + math.pi / 8
+        x, y = c + math.cos(a) * R * 0.85, c + math.sin(a) * R * 0.85
+        pts = [(x + math.cos(a) * 7, y + math.sin(a) * 7), (x + math.cos(a + math.pi / 2) * 3.4, y + math.sin(a + math.pi / 2) * 3.4),
+               (x - math.cos(a) * 7, y - math.sin(a) * 7), (x - math.cos(a + math.pi / 2) * 3.4, y - math.sin(a + math.pi / 2) * 3.4)]
+        paint_shape(img, SP(pts), "#e0c070", seed + 10 + k, outline=OUT, ow=0.7, wob=0.0, light=(0.3, -1, 0.6))
+    paint_shape(img, SP(ellipse_pts(c, c, R * 0.785, R * 0.785, n=160)), "#140a06", seed + 3, outline=None, wob=0.0, tex=0.1)
+    soft_blob(img, S(c - 70), S(c - 150), S(70), S(18), "#ffffff", 30, 10 * SS, rot=-0.4)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def ui_rotor(seed=521):
+    """The wheel head on screen, its zero at the top, pockets clockwise in the European order:
+    the number ring (white numbers on red, black and green), the pockets with brass frets, the
+    cone and the turret. The game turns it."""
+    w = h = 512
+    img = new(w, h)
+    c = 256
+    R = 254
+    paint_shape(img, SP(ellipse_pts(c, c, R, R, n=180)), "#2a1a10", seed, outline=OUT, ow=1.4, wob=0.0, tex=0.15)
+    for k, n in enumerate(WHEEL):
+        a0 = -math.pi / 2 + 2 * math.pi * (k - 0.5) / 37
+        a1 = -math.pi / 2 + 2 * math.pi * (k + 0.5) / 37
+        for r_out, r_in, col in ((R * 0.99, R * 0.86, _pocket_colour(n)), (R * 0.86, R * 0.66, shade(_pocket_colour(n), 0.62))):
+            pts = [(c + math.cos(t) * r_out, c + math.sin(t) * r_out) for t in np.linspace(a0, a1, 6)]
+            pts += [(c + math.cos(t) * r_in, c + math.sin(t) * r_in) for t in np.linspace(a1, a0, 6)]
+            paint_shape(img, SP(pts), col, seed + k, outline=None, wob=0.0, tex=0.12)
+        # the fret between this pocket and the next
+        line(img, [S(c + math.cos(a1) * R * 0.66, c + math.sin(a1) * R * 0.66), S(c + math.cos(a1) * R * 0.99, c + math.sin(a1) * R * 0.99)],
+             "#d8b060", 1.4 * SS, 230)
+        # the number, standing out from the middle
+        am = -math.pi / 2 + 2 * math.pi * k / 37
+        tile = Image.new("RGBA", (S(40), S(28)), (0, 0, 0, 0))
+        text(tile, (20, 14), str(n), 17, "#f4ecd8")
+        tile = tile.rotate(-math.degrees(am) - 90, resample=Image.BICUBIC, expand=True)
+        tx, ty = c + math.cos(am) * R * 0.925, c + math.sin(am) * R * 0.925
+        img.alpha_composite(tile, (int(S(tx) - tile.width / 2), int(S(ty) - tile.height / 2)))
+    line(img, [S(*p) for p in ellipse_pts(c, c, R * 0.86, R * 0.86, n=180)] + [S(c + R * 0.86, c)], "#d8b060", 1.4 * SS, 220)
+    line(img, [S(*p) for p in ellipse_pts(c, c, R * 0.66, R * 0.66, n=180)] + [S(c + R * 0.66, c)], "#d8b060", 1.6 * SS, 230)
+    paint_shape(img, SP(ellipse_pts(c, c, R * 0.655, R * 0.655, n=160)), "#6a3e20", seed + 50, outline=None, wob=0.0, tex=0.25,
+                strokes_n=20, stroke_cols=["#7a4a28", "#4a2a14"], light=(0.3, -1, 0.45))
+    for k in range(4):
+        a = k * math.pi / 2 + math.pi / 4
+        line(img, [S(c, c), S(c + math.cos(a) * R * 0.42, c + math.sin(a) * R * 0.42)], BRASS, 6 * SS, 255)
+        paint_shape(img, SP(ellipse_pts(c + math.cos(a) * R * 0.42, c + math.sin(a) * R * 0.42, 9, 9)), "#e0c070",
+                    seed + 60 + k, outline=OUT, ow=0.8, wob=0.0, light=(0.3, -1, 0.6))
+    paint_shape(img, SP(ellipse_pts(c, c, 26, 26)), "#e0c070", seed + 70, outline=OUT, ow=1.0, wob=0.0, light=(0.3, -1, 0.6))
+    soft_blob(img, S(c - 8), S(c - 10), S(9), S(6), "#ffffff", 130, 2 * SS)
+    return finish(grain(img, 2, seed), w, h)
+
+
+def ui_ball(seed=531):
+    w = h = 32
+    img = new(w, h)
+    soft_blob(img, S(17), S(18), S(12), S(12), "#000000", 120, 2 * SS)
+    paint_shape(img, SP(ellipse_pts(16, 16, 12, 12)), "#f3eee2", seed, outline=(90, 80, 70), ow=0.8, wob=0.0, tex=0.06,
+                light=(-0.4, -1, 0.5))
+    soft_blob(img, S(12), S(11), S(4), S(3), "#ffffff", 220, 1 * SS)
+    return finish(img, w, h)
+
+
+def ui_dolly(seed=541):
+    """The croupier's brass marker set on the winning number."""
+    w = h = 48
+    img = new(w, h)
+    soft_blob(img, S(25), S(27), S(14), S(14), "#000000", 130, 3 * SS)
+    paint_shape(img, SP(ellipse_pts(24, 24, 14, 14)), "#b8913e", seed, outline=OUT, ow=1.0, wob=0.02, light=(0.3, -1, 0.6))
+    paint_shape(img, SP(ellipse_pts(24, 24, 8, 8)), "#e8cc7a", seed + 1, outline=(90, 60, 20), ow=0.8, wob=0.02,
+                light=(0.3, -1, 0.6))
+    soft_blob(img, S(20), S(19), S(4), S(2.5), "#ffffff", 150, 1 * SS)
+    return finish(img, w, h)
+
+
+ASSETS.update({
+    "ui/roulette_felt": ui_felt,
+    "ui/roulette_bowl": ui_bowl,
+    "ui/roulette_rotor": ui_rotor,
+    "ui/roulette_ball": ui_ball,
+    "ui/roulette_dolly": ui_dolly,
+})
