@@ -84,3 +84,44 @@ loops the whole file; the join is the song ending in silence and starting again 
 Everything else here is a Claude-made `template_` sound: the M002 effects (`tools/template_audio/make_audio.py`),
 the HyperCars engine, tyre and impact sounds, and the M005 ambience and place sounds
 (`tools/template_audio/make_ambience.py`). Replace any of them through `custom/audio/`.
+
+### The Copper Owl's back rooms (M011)
+
+Synthesised in numpy by `tools/template_audio/make_gaming.py` (no recordings, no samples, nothing downloaded),
+OGG Vorbis, 44.1 kHz. Each plays from its packaged `template_` file unless you put your own at the override
+path: `custom/audio/<logical name>.ogg` (or `.wav` / `.mp3`), in the project folder while developing or next
+to an exported Windows/Linux game; restart the game to hear it. A missing or unreadable override falls back
+to the template. Loops repeat the whole file (make both ends meet); one-shots should start on the sound.
+
+| Logical name (packaged file: `assets/audio/<dir>/template_<name>.ogg`) | Loop | Bus | Length (template / recommended) | Used for |
+| --- | --- | --- | --- | --- |
+| `ambience/gaming_room` | yes | Ambience | 24 s stereo / 15-60 s | The back rooms' bed (card room and gaming room): room tone, quiet voices (no words), a chip or card now and then. Only heard inside the back rooms. Keep it low and even. |
+| `gaming/laugh` | no | Ambience | 1.2 s / under 2 s | A laugh across the room (no words), now and then at a spot in the room. |
+| `gaming/chips_stack` | no | Ambience | 0.9 s / under 1.5 s | Somebody stacking chips. |
+| `gaming/shuffle` | no | Ambience | 1.2 s / under 2 s | A riffle shuffle somewhere in the room. |
+| `gaming/glass` | no | Ambience | 1.0 s / under 1.5 s | Glasses touching, one set down. |
+| `gaming/chair` | no | Ambience | 1.0 s / under 1.5 s | A chair pushed back on the boards. |
+| `roulette/spin` | no | Effects | 4.2 s / 3.5-4.5 s | The wheel spun, the ball round the track; fades out before the drop (at 62 % of the 6.5 s spin). |
+| `roulette/ball_drop` | no | Effects | 2.8 s / 2-2.5 s | The ball off the track, bouncing over the frets, settling. |
+| `roulette/ball_rest` | no | Effects | 0.15 s / under 0.3 s | The ball's last knock into its pocket. |
+| `roulette/chips` | no | Effects | 0.2 s / under 0.3 s | A chip set down on the layout. |
+| `roulette/cue` | no | Effects | 1.4 s / under 2 s | The croupier's call bell as the number is marked (no speech). |
+| `roulette/win` | no | Effects | 1.0 s / about 1 s | Winnings pushed across the felt. |
+| `roulette/lose` | no | Effects | 0.8 s / under 1 s | The rake drawing the lost chips off. |
+| `slots/lever` | no | Effects | 0.7 s / under 1 s | A machine's lever: ratchet, spring, a clunk. |
+| `slots/reels` | yes | Effects | 1.0 s stereo / 0.5-2 s | The reels running; stopped with the last reel (never doubled). |
+| `slots/stop` | no | Effects | 0.3 s / under 0.4 s | One reel stopping (played for each). |
+| `slots/coin` | no | Effects | 0.35 s / under 0.4 s | One coin into the payout cup (played for each coin). |
+| `slots/bell` | no | Effects | 1.8 s / under 2.5 s | The machine's bell for a good payout (10 coins or more). |
+| `poker/shuffle` | no | Effects | 1.3 s / under 1.5 s | The dealer's riffle before each hand at the card table. |
+| `poker/pot` | no | Effects | 1.0 s / about 1 s | The pot pushed to the winner. |
+| `poker/reveal` | no | Effects | 0.45 s / under 0.6 s | Hole cards turned over at a showdown. |
+
+The mix (`SoundscapeMix`): in the card room and the gaming room the bed plays at −12 dB and the room's own
+sounds come every few seconds (−15 to −10 dB, at a spot in the room); the Copper Owl's band comes through the
+wall low-passed (two walls: at most 320 Hz, about −23 dB in the card room, fainter in the gaming room). Back in
+the club the bed is silent and the band full again; outside, as before. The bed is one player started once and
+only its level changes; speech and narration duck it like the rest of the night (−10 dB). Every level obeys the
+Master, Music, Effects, Voice and Ambience sliders on the pause screen; the Master limiter prevents clipping.
+
+The `_inbox/` originals are untouched; nothing here was made from them.

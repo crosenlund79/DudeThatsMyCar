@@ -17,3 +17,13 @@ python3 tools/template_audio/make_ambience.py assets/audio
 Writes the stereo loops `ambience/template_street_night.ogg`, `template_alley.ogg`, `template_river.ogg` and `template_club_crowd.ogg` (built on a circular buffer, so they repeat without a seam) and the one-shots `ambience/template_horn.ogg`, `template_foghorn.ogg`, `template_clatter.ogg`, `places/template_door.ogg`, `template_shop_bell.ogg`, `template_register.ogg`, `template_bottles.ogg` and `vehicles/template_door.ogg`.
 
 The Copper Owl's song and Danny's monologue are the user's recordings, not templates; how the shipped song was cleaned is recorded in `assets/audio/README.md`.
+
+M011 adds the Copper Owl's back rooms - the room's bed and its odd sounds, the wheel, the nickel machines, and
+a few more card-table sounds (numpy + ffmpeg, all synthesised, deterministic):
+
+```bash
+python3 tools/template_audio/make_gaming.py assets/audio
+```
+
+or one sound alone: `python3 tools/template_audio/make_gaming.py assets/audio slots/reels`. The list, lengths and
+uses are in `assets/audio/README.md`.

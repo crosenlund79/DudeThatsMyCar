@@ -134,6 +134,13 @@ var slot_machines: Array[SlotMachine] = []
 var _slot_at := -1
 var _slot_start := 0
 var _slot_rng := RandomNumberGenerator.new()
+## M011: now and then Leo spins the wheel for the other players while Danny is
+## in the gaming room (the wheel turning, the ball's rattle; nothing more).
+var _bg_spin: RouletteSpin = null
+var _bg_t := 0.0
+var _bg_wait := 12.0
+var _bg_dropped := false
+var _bg_rng := RandomNumberGenerator.new()
 ## M010: Rosie's Café (Rourke's job): the scene, and the blast's short film while it plays.
 var cafe_scene: CafeScene
 var cafe_film: Cinematic
@@ -373,6 +380,7 @@ func _ready() -> void:
 	hud.poker_view.sound.connect(func(kind: String) -> void: soundscape.play("poker/" + kind, -4.0))
 	roulette = Roulette.new(roulette_rules)
 	_wheel_rng.randomize()
+	_bg_rng.randomize()
 	var rv := hud.roulette_view
 	rv.bet_requested.connect(_on_wheel_bet)
 	rv.take_back_requested.connect(_on_wheel_take_back)
@@ -388,6 +396,7 @@ func _ready() -> void:
 	hud.slot_view.pull_requested.connect(_on_slot_pull)
 	hud.slot_view.reels_stopped.connect(_on_slot_stopped)
 	hud.slot_view.leave_requested.connect(leave_slot)
+	hud.slot_view.sound.connect(_on_slot_sound)
 	_show_purse()
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
@@ -859,6 +868,10 @@ func open_roulette() -> void:
 		roulette.new_round()
 	view.face("croupier", walker.global_position)
 	walker.aim_point = RiversideInteriors.WHEEL_TABLE
+	_bg_spin = null  # Leo has a customer
+	var rotor := view.get_node_or_null("roulette_rotor") as Sprite2D
+	if rotor != null:
+		hud.roulette_view.rotor_angle = rotor.rotation
 	_wheel_start = rackets.money + roulette.for_save()
 	hud.roulette_view.layout_for(get_viewport().get_visible_rect().size)
 	hud.roulette_view.open(roulette, rackets.money)
@@ -895,7 +908,7 @@ func _on_wheel_bet(key: String, chip: int) -> void:
 		return
 	rackets.money -= roulette.place(key, chip, rackets.money)
 	hud.roulette_view.say("%s on %s." % [RouletteView._chip_words(chip), Roulette.words(key)])
-	soundscape.play("poker/chips", -6.0)
+	soundscape.play("roulette/chips", -5.0)
 	_wheel_money()
 
 
@@ -903,7 +916,7 @@ func _on_wheel_take_back(key: String, chip: int) -> void:
 	var back := roulette.remove(key, chip)
 	if back > 0:
 		rackets.money += back
-		soundscape.play("poker/chips", -8.0)
+		soundscape.play("roulette/chips", -7.0)
 		_wheel_money()
 
 
@@ -912,7 +925,7 @@ func _on_wheel_clear() -> void:
 	if back > 0:
 		rackets.money += back
 		hud.roulette_view.say("You take your chips back.")
-		soundscape.play("poker/chips", -6.0)
+		soundscape.play("roulette/chips", -5.0)
 		_wheel_money()
 
 
@@ -927,7 +940,7 @@ func _on_wheel_repeat() -> void:
 		return
 	rackets.money -= taken
 	hud.roulette_view.say("The same again: %s on the table." % Rackets.dollars(taken))
-	soundscape.play("poker/chips", -6.0)
+	soundscape.play("roulette/chips", -5.0)
 	_wheel_money()
 
 
@@ -955,8 +968,38 @@ func _on_wheel_finished() -> void:
 
 func _on_wheel_sound(kind: String) -> void:
 	match kind:
+		"spin":
+			soundscape.play("roulette/spin", -3.0)
+		"ball_drop":
+			soundscape.play("roulette/ball_drop", -2.0)
+		"ball_rest":
+			soundscape.play("roulette/ball_rest", -4.0)
 		"win":
-			soundscape.play("poker/chips", -3.0)
+			soundscape.play("roulette/cue", -9.0)  # the croupier marks the number
+			soundscape.play("roulette/win", -3.0)
+		"lose":
+			soundscape.play("roulette/cue", -9.0)
+			soundscape.play("roulette/lose", -5.0)
+
+
+## M011: a machine's sounds: the lever, the reels running (one loop, never
+## doubled) until the last one stops, each stop, a coin a coin, the bell for a good win.
+func _on_slot_sound(kind: String) -> void:
+	match kind:
+		"lever":
+			soundscape.play("slots/lever", -3.0)
+		"reels":
+			soundscape.start_loop("reels", "slots/reels", -9.0)
+		"stop":
+			soundscape.play("slots/stop", -4.0)
+		"stop_last":
+			soundscape.play("slots/stop", -3.0)
+			soundscape.stop_loop("reels")
+		"coin":
+			soundscape.play("slots/coin", -7.0)
+		"win":
+			if _slot_at >= 0 and slot_machines[_slot_at].win >= slot_machines[_slot_at].rules.coin * 10:
+				soundscape.play("slots/bell", -6.0)
 
 
 ## The wheel in the room turns as the one on screen does.
@@ -965,6 +1008,35 @@ func _turn_the_wheel() -> void:
 	var rotor := view.get_node_or_null("roulette_rotor") as Sprite2D if view != null else null
 	if rotor != null:
 		rotor.rotation = hud.roulette_view.rotor_angle
+
+
+## M011: the wheel spun for the other players now and then while Danny is in
+## the gaming room and not at it (the head turning, the ball's rattle from the
+## table). Presentation only: no money, no number that counts.
+func _background_wheel(delta: float) -> void:
+	if interiors.current == null or interiors.current.id != "gaming_room":
+		return
+	var view := interiors.view_of("gaming_room")
+	var rotor := view.get_node_or_null("roulette_rotor") as Sprite2D
+	if rotor == null or not view.person_ok("croupier"):
+		return
+	var at := RiversideInteriors.wheel_centre()
+	if _bg_spin == null:
+		_bg_wait -= delta
+		if _bg_wait <= 0.0:
+			_bg_spin = RouletteSpin.new(_bg_rng.randi_range(0, 36), rotor.rotation, rotor.rotation, roulette_rules.spin_seconds)
+			_bg_t = 0.0
+			_bg_dropped = false
+			soundscape.play_at("roulette/spin", at, -12.0)
+		return
+	_bg_t += delta
+	rotor.rotation = _bg_spin.rotor_angle(_bg_t)
+	if not _bg_dropped and _bg_t >= _bg_spin.duration * RouletteSpin.DROP:
+		_bg_dropped = true
+		soundscape.play_at("roulette/ball_drop", at, -11.0)
+	if _bg_t >= _bg_spin.duration + 3.0:
+		_bg_spin = null
+		_bg_wait = _bg_rng.randf_range(45.0, 80.0)
 
 
 ## Danny walks away from the wheel: chips not yet spun come back; a spin under
@@ -1043,6 +1115,7 @@ func leave_slot() -> void:
 		return
 	if _slot_at >= 0:
 		rackets.money += slot_machines[_slot_at].walk_away()
+	soundscape.stop_loop("reels")
 	hud.slot_view.close()
 	_slot_at = -1
 	if not command_source.is_valid():
@@ -2086,6 +2159,8 @@ func _process(delta: float) -> void:
 		_sync_card_players()  # M010: busted players go home, the late man pulls up a chair
 	if hud.roulette_view.spin != null:
 		_turn_the_wheel()  # M011
+	elif not paused:
+		_background_wheel(delta)
 	if not paused and stage.update(delta):
 		soundscape.resume_music()  # the band counts her back in
 		if bird_show != null:

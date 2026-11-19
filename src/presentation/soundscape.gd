@@ -65,6 +65,23 @@ var _traffic: Array = []
 var _engine: AudioStream
 ## The last sounds played for Danny's dealings (newest last; for tests).
 var played: Array[String] = []
+## M011: the Copper Owl's back rooms: their bed (one player, started once), the
+## odd sound of the room now and then (a laugh, chips, a shuffle, a glass, a
+## chair) at a spot in the room, the game sounds that run on (the machines'
+## reels) and positional one-shots (the wheel spun for somebody else).
+const GAMING := "ambience/gaming_room"
+const ROOM_EVENTS := {
+	"back_room": ["gaming/chips_stack", "gaming/shuffle", "gaming/glass", "gaming/chair", "gaming/laugh"],
+	"gaming_room": ["gaming/chips_stack", "gaming/glass", "gaming/chair", "gaming/laugh", "gaming/laugh"],
+}
+var gaming_bed: AudioStreamPlayer
+var gaming_starts := 0
+## The room events played (newest last; for tests).
+var room_played: Array[String] = []
+var _room: InteriorPlan = null
+var _room_timer := 3.0
+var _room_pool: Array[AudioStreamPlayer2D] = []
+var _loops := {}
 
 
 ## Creates the internal buses once: ClubMusic (to Music) and ClubRoom (to
@@ -122,6 +139,18 @@ func setup(resolver: AssetResolver, p_layout: DistrictLayout, club: InteriorPlan
 		add_child(p)
 		_pool.append(p)
 	_engine = resolver.get_audio("vehicles/engine_loop", true)
+	gaming_bed = _loop(GAMING, "Ambience")
+	gaming_bed.volume_db = SoundscapeMix.SILENT_DB
+	if gaming_bed.stream != null:
+		gaming_bed.play()
+		gaming_starts += 1
+	for i in 3:
+		var rp := AudioStreamPlayer2D.new()
+		rp.bus = "Ambience"
+		rp.max_distance = 900.0
+		rp.attenuation = 1.2
+		add_child(rp)
+		_room_pool.append(rp)
 	for p in [music, crowd] + beds.values():
 		var player := p as AudioStreamPlayer
 		player.volume_db = SoundscapeMix.SILENT_DB
@@ -221,9 +250,11 @@ func update_listener(p: Vector2, room: InteriorPlan, driving: bool, activity: fl
 		else:
 			level[k] = lerpf(level[k], target[k], 1.0 - exp(-delta / LEVEL_TAU))
 	duck = move_toward(duck, maxf(_duck_target, 1.0 if _speech else 0.0), delta / DUCK_TAU)
+	_room = room
 	_apply()
 	_update_traffic()
 	_distant_sounds(p, delta)
+	_room_events(delta)
 
 
 func _apply() -> void:
@@ -232,6 +263,7 @@ func _apply() -> void:
 	crowd.volume_db = _quiet(level.crowd_db + back)
 	for k in beds:
 		(beds[k] as AudioStreamPlayer).volume_db = _quiet(level[k + "_db"] + back)
+	gaming_bed.volume_db = _quiet(float(level.get("gaming_db", SoundscapeMix.SILENT_DB)) + back)
 	var open: bool = level.club_cutoff >= SoundscapeMix.OPEN * 0.9
 	_route(music, "Music" if open else BUS_CLUB_MUSIC)
 	_route(crowd, "Ambience" if open else BUS_CLUB_ROOM)
@@ -328,6 +360,89 @@ func play(logical: String, volume_db: float = 0.0) -> void:
 	played.append(logical)
 	if played.size() > 12:
 		played.pop_front()
+	sound_played.emit(logical)
+
+
+## M011: now and then, something in the back room Danny is in: a laugh,
+## chips stacked, a shuffle, glasses, a chair - at a spot in the room, never
+## outside it, never two at once.
+func _room_events(delta: float) -> void:
+	_room_timer -= delta
+	if _room_timer > 0.0:
+		return
+	_room_timer = SoundscapeMix.next_gap("room", 1.0, _rng.randf())
+	if _room == null or not SoundscapeMix.can_hear("room", listening) or not ROOM_EVENTS.has(_room.id):
+		return
+	var kinds: Array = ROOM_EVENTS[_room.id]
+	var logical: String = kinds[_rng.randi_range(0, kinds.size() - 1)]
+	var s := _sound(logical)
+	if s == null:
+		return
+	var player := _room_pool[0]
+	for q in _room_pool:
+		if not q.playing:
+			player = q
+			break
+	var r := _room.room.grow(-24.0)
+	player.global_position = Vector2(_rng.randf_range(r.position.x, r.end.x), _rng.randf_range(r.position.y, r.end.y))
+	player.stream = s
+	player.volume_db = SoundscapeMix.ROOM_EVENT_DB + _rng.randf_range(-4.0, 1.0) + SoundscapeMix.DUCK_DB * duck
+	player.pitch_scale = _rng.randf_range(0.92, 1.08)
+	player.play()
+	room_played.append(logical)
+	if room_played.size() > 12:
+		room_played.pop_front()
+
+
+## M011: a sound that runs until it is stopped (a machine's reels), on its own
+## player: started again while it runs, it is not restarted or doubled.
+## Returns true when it started.
+func start_loop(id: String, logical: String, volume_db: float = 0.0) -> bool:
+	var p: AudioStreamPlayer = _loops.get(id)
+	if p == null:
+		p = AudioStreamPlayer.new()
+		p.bus = "Effects"
+		add_child(p)
+		_loops[id] = p
+	if p.playing:
+		return false
+	p.stream = _resolver.get_audio(logical, true)
+	if p.stream == null:
+		return false
+	p.volume_db = volume_db
+	p.play()
+	played.append(logical)
+	sound_played.emit(logical)
+	return true
+
+
+func stop_loop(id: String) -> void:
+	var p: AudioStreamPlayer = _loops.get(id)
+	if p != null:
+		p.stop()
+
+
+func loop_playing(id: String) -> bool:
+	var p: AudioStreamPlayer = _loops.get(id)
+	return p != null and p.playing
+
+
+## M011: a one-shot from a place in the world (the wheel spun for somebody else).
+func play_at(logical: String, at: Vector2, volume_db: float = 0.0) -> void:
+	var s := _sound(logical)
+	if s == null:
+		return
+	var player := _room_pool[_room_pool.size() - 1]
+	for q in _room_pool:
+		if not q.playing:
+			player = q
+			break
+	player.global_position = at
+	player.stream = s
+	player.volume_db = volume_db + SoundscapeMix.DUCK_DB * duck
+	player.pitch_scale = 1.0
+	player.play()
+	played.append(logical)
 	sound_played.emit(logical)
 
 

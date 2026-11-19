@@ -13,7 +13,8 @@ signal pull_requested
 ## The reels have stopped: time to pay.
 signal reels_stopped
 signal leave_requested
-## A sound for the game to play: "lever", "reels", "stop", "coin", "win", "lose".
+## A sound for the game to play: "lever", "reels" (they start running), "stop", "stop_last"
+## (the last reel: the running stops), "coin" (each coin into the cup), "win", "lose".
 signal sound(kind: String)
 
 const CREAM := Color("f1e4c6")
@@ -55,6 +56,7 @@ var _coin: Texture2D
 var _font: Font
 var _buttons: Array = []
 var _space_down := false
+var _running_said := false
 
 
 func setup(resolver: AssetResolver, font: Font) -> void:
@@ -126,6 +128,7 @@ func start_reels() -> void:
 	reels = SlotReels.new(from, machine.stops, machine.rules.stop_times,
 		[machine.rules.strips[0].size(), machine.rules.strips[1].size(), machine.rules.strips[2].size()])
 	t = 0.0
+	_running_said = false
 	_stopped = [false, false, false]
 	_paid_line = -1
 	_coins = 0
@@ -156,13 +159,14 @@ func _process(delta: float) -> void:
 		return
 	if reels != null and phase == "spinning":
 		t += delta
-		if t >= reels.begin and t - delta < reels.begin:
+		if not _running_said and t >= reels.begin:
+			_running_said = true
 			sound.emit("reels")
 		for r in 3:
 			_positions[r] = reels.position(r, t)
 			if not _stopped[r] and reels.stopped(r, t):
 				_stopped[r] = true
-				sound.emit("stop")
+				sound.emit("stop_last" if r == 2 else "stop")
 		if reels.done(t):
 			for r in 3:
 				_positions[r] = float(reels.on_line(r, t))

@@ -22,7 +22,7 @@ signal leave_requested
 ## `player` is the seat's id, `action` what he did) - the hook for anything
 ## that reacts to a particular player's play (e.g. recorded taunts later).
 signal beat_shown(beat: Dictionary)
-## A sound for the game to play: "chips", "cards".
+## A sound for the game to play: "chips", "cards"; M011: "shuffle", "reveal", "pot".
 signal sound(kind: String)
 
 const CREAM := Color("f1e4c6")
@@ -157,7 +157,7 @@ func _process(delta: float) -> void:
 		banner = ""
 		raise_to = 0
 		_wait = _rng.randf_range(think.x, think.y)
-		sound.emit("cards")
+		sound.emit("shuffle")  # M011: the riffle before the deal
 		_log("Hand %d: %s deals." % [night.hands, t.seats[t.button].name])
 		_show(pacing.read(t, night.danny))  # a hand can be settled at once (all-in blinds)
 	else:
@@ -182,6 +182,9 @@ func _show(beat: Dictionary) -> void:
 		"result":
 			banner = beat.text
 			_log(beat.text)
+			if night != null and night.table != null and night.table.shown:
+				sound.emit("reveal")  # M011: the hands turned over
+			sound.emit("pot")  # M011: the pot pushed to the winner
 	beat_shown.emit(beat)
 	queue_redraw()
 

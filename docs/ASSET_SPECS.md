@@ -275,6 +275,7 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `ambience/clatter` | `custom/audio/ambience/clatter.ogg` (or .wav / .mp3) | `template_clatter.ogg` | no | Ambience | A lid or a can clattering somewhere down an alley. |
 | `ambience/club_crowd` | `custom/audio/ambience/club_crowd.ogg` (or .wav / .mp3) | `template_club_crowd.ogg` | yes | Ambience | The Copper Owl's room: chatter, glasses, footsteps. Muffled with the music outside. |
 | `ambience/foghorn` | `custom/audio/ambience/foghorn.ogg` (or .wav / .mp3) | `template_foghorn.ogg` | no | Ambience | A tug's whistle out on the river (heard near the water). |
+| `ambience/gaming_room` | `custom/audio/ambience/gaming_room.ogg` (or .wav / .mp3) | `template_gaming_room.ogg` | yes | Ambience | M011: the back rooms' bed (the card room and the gaming room): smoky room tone, a few quiet voices talking over each other (no words), a chip or a card now and then. A seamless loop, about 24 s; keep it low and even (the game's sounds sit over it). |
 | `ambience/horn` | `custom/audio/ambience/horn.ogg` (or .wav / .mp3) | `template_horn.ogg` | no | Ambience | A car horn a few streets away (now and then; rarer late at night). |
 | `ambience/rain` | `custom/audio/ambience/rain.ogg` (or .wav / .mp3) | `template_rain.ogg` | yes | Ambience | M010: steady rain on the street: a hiss, the gutters' rush, drops ticking on tin and puddles. Louder with the rain, dull indoors. |
 | `ambience/river` | `custom/audio/ambience/river.ogg` (or .wav / .mp3) | `template_river.ogg` | yes | Ambience | By the river: water against the quay, a factory's drone across it. |
@@ -285,6 +286,11 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `fight/punch_taken` | `custom/audio/fight/punch_taken.ogg` (or .wav / .mp3) | `template_punch_taken.ogg` | no | Effects | M007: Danny takes a punch (under 0.5 s; no voice). |
 | `fx/blast` | `custom/audio/fx/blast.ogg` (or .wav / .mp3) | `template_blast.ogg` | no | Effects | M010: the parcel going off under a parked car: crack, a rolling boom, glass and debris falling (about 4.5 s). |
 | `fx/fire` | `custom/audio/fx/fire.ogg` (or .wav / .mp3) | `template_fire.ogg` | yes | Effects | M010: a car burning at the kerb: flame roar and crackle (seamless loop). |
+| `gaming/chair` | `custom/audio/gaming/chair.ogg` (or .wav / .mp3) | `template_chair.ogg` | no | Ambience | M011: a chair pushed back on the boards, a creak (about 1 s). |
+| `gaming/chips_stack` | `custom/audio/gaming/chips_stack.ogg` (or .wav / .mp3) | `template_chips_stack.ogg` | no | Ambience | M011: someone stacking and riffling chips (under 1 s). |
+| `gaming/glass` | `custom/audio/gaming/glass.ogg` (or .wav / .mp3) | `template_glass.ogg` | no | Ambience | M011: two glasses touching, one set down (about 1 s). |
+| `gaming/laugh` | `custom/audio/gaming/laugh.ogg` (or .wav / .mp3) | `template_laugh.ogg` | no | Ambience | M011: a short laugh across the back room, muffled (about 1 s; no words). Played now and then at a spot in the room. |
+| `gaming/shuffle` | `custom/audio/gaming/shuffle.ogg` (or .wav / .mp3) | `template_shuffle.ogg` | no | Ambience | M011: a riffle shuffle somewhere in the room (about 1 s). |
 | `music/copper_owl_jazz` | `custom/audio/music/copper_owl_jazz.ogg` (or .wav / .mp3) | `copper_owl_jazz.ogg` | yes | Music | The Copper Owl's singer, "Leave the Lights Low" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet. |
 | `music/record_scratch` | `custom/audio/music/record_scratch.ogg` (or .wav / .mp3) | `template_record_scratch.ogg` | no | Music | M006: the needle dragged off the record when Danny interrupts the Bird (under 1 s). Heard through the club's walls like the song. |
 | `places/bottles` | `custom/audio/places/bottles.ogg` (or .wav / .mp3) | `template_bottles.ogg` | no | Effects | Bottles of rye changing hands. |
@@ -293,7 +299,22 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `places/shop_bell` | `custom/audio/places/shop_bell.ogg` (or .wav / .mp3) | `template_shop_bell.ogg` | no | Effects | The bell over a shop door (barber, grocer, hardware). |
 | `poker/cards` | `custom/audio/poker/cards.ogg` (or .wav / .mp3) | `template_cards.ogg` | no | Effects | M010: a card dealt across the baize (a flick and a slide). |
 | `poker/chips` | `custom/audio/poker/chips.ogg` (or .wav / .mp3) | `template_chips.ogg` | no | Effects | M010: chips pushed into the pot at the back-room card table (under 0.5 s). |
+| `poker/pot` | `custom/audio/poker/pot.ogg` (or .wav / .mp3) | `template_pot.ogg` | no | Effects | M011: the pot pushed to the winner (about 1 s). |
+| `poker/reveal` | `custom/audio/poker/reveal.ogg` (or .wav / .mp3) | `template_reveal.ogg` | no | Effects | M011: hole cards turned over at a showdown (two flips). |
+| `poker/shuffle` | `custom/audio/poker/shuffle.ogg` (or .wav / .mp3) | `template_shuffle.ogg` | no | Effects | M011: the dealer's riffle before each hand at the card table (about 1.3 s). |
 | `police/whistle` | `custom/audio/police/whistle.ogg` (or .wav / .mp3) | `template_whistle.wav` | no | Effects | The officer's whistle when he spots you. |
+| `roulette/ball_drop` | `custom/audio/roulette/ball_drop.ogg` (or .wav / .mp3) | `template_ball_drop.ogg` | no | Effects | M011: the ball off the track, bouncing over the deflectors and frets, settling (about 2.5 s). |
+| `roulette/ball_rest` | `custom/audio/roulette/ball_rest.ogg` (or .wav / .mp3) | `template_ball_rest.ogg` | no | Effects | M011: the ball's last knock into its pocket (a short one-shot). |
+| `roulette/chips` | `custom/audio/roulette/chips.ogg` (or .wav / .mp3) | `template_chips.ogg` | no | Effects | M011: a chip set down on the layout (under 0.3 s). |
+| `roulette/cue` | `custom/audio/roulette/cue.ogg` (or .wav / .mp3) | `template_cue.ogg` | no | Effects | M011: the croupier's call bell as the number is marked (one ring; no speech). |
+| `roulette/lose` | `custom/audio/roulette/lose.ogg` (or .wav / .mp3) | `template_lose.ogg` | no | Effects | M011: the rake drawing the lost chips off (under 1 s). |
+| `roulette/spin` | `custom/audio/roulette/spin.ogg` (or .wav / .mp3) | `template_spin.ogg` | no | Effects | M011: the wheel spun and the ball sent round the track, slowing (about 4 s, fading out before the ball drops at 62% of the spin). |
+| `roulette/win` | `custom/audio/roulette/win.ogg` (or .wav / .mp3) | `template_win.ogg` | no | Effects | M011: winnings pushed across the felt (a run of chips, about 1 s). |
+| `slots/bell` | `custom/audio/slots/bell.ogg` (or .wav / .mp3) | `template_bell.ogg` | no | Effects | M011: the machine's win bell for a good payout (about 2 s; mechanical, no electronics). |
+| `slots/coin` | `custom/audio/slots/coin.ogg` (or .wav / .mp3) | `template_coin.ogg` | no | Effects | M011: one coin dropping into the payout cup (played for each coin paid). |
+| `slots/lever` | `custom/audio/slots/lever.ogg` (or .wav / .mp3) | `template_lever.ogg` | no | Effects | M011: a machine's lever pulled: ratchet, spring, a heavy clunk (under 1 s). |
+| `slots/reels` | `custom/audio/slots/reels.ogg` (or .wav / .mp3) | `template_reels.ogg` | yes | Effects | M011: the reels running: a mechanical whirr with the detents' clicks (a seamless loop of about 1 s, stopped when the last reel stops). |
+| `slots/stop` | `custom/audio/slots/stop.ogg` (or .wav / .mp3) | `template_stop.ogg` | no | Effects | M011: one reel stopping: a metallic clunk (played for each reel). |
 | `vehicles/door` | `custom/audio/vehicles/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Getting into or out of a car: the handle and a heavy door shutting. |
 | `vehicles/engine_load` | `custom/audio/vehicles/engine_load.ogg` (or .wav / .mp3) | `template_engine_load.wav` | yes | Engine | Engine load layer, louder while accelerating. |
 | `vehicles/engine_loop` | `custom/audio/vehicles/engine_loop.ogg` (or .wav / .mp3) | `template_engine_loop.wav` | yes | Engine | Engine foundation loop (pitch follows speed). |

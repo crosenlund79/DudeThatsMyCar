@@ -136,3 +136,37 @@ func test_distant_sounds_come_now_and_then() -> void:
 	assert_true(SoundscapeMix.can_hear("clatter", street))
 	street.in_club = true
 	assert_false(SoundscapeMix.can_hear("horn", street), "not over the band")
+
+
+## M011: the Copper Owl's back rooms (the card room, the gaming room): their own
+## bed, prominent inside, silent anywhere else; the band muffled through the
+## walls there, fainter in the gaming room (a room further off) than in the
+## card room; the room's own sounds only in the back rooms.
+func test_the_back_rooms() -> void:
+	var rooms := {}
+	for p in layout.interiors:
+		rooms[(p as InteriorPlan).id] = p
+	var card := SoundscapeMix.targets(SoundscapeMix.listen(layout, club, RiversideInteriors.TABLE + Vector2(0, 54), rooms.back_room, false, 1.0))
+	var gaming := SoundscapeMix.targets(SoundscapeMix.listen(layout, club, RiversideInteriors.ROULETTE_SPOT, rooms.gaming_room, false, 1.0))
+	var in_club := SoundscapeMix.targets(SoundscapeMix.listen(layout, club, Vector2(2290, 300), club, false, 1.0))
+	var street := SoundscapeMix.targets(SoundscapeMix.listen(layout, club, Vector2(2290, 600), null, false, 1.0))
+	var shop := SoundscapeMix.targets(SoundscapeMix.listen(layout, club, Vector2(990, 366), rooms.barber_shop, false, 1.0))
+	for t in [card, gaming]:
+		assert_eq(t.gaming_db, SoundscapeMix.GAMING_DB, "the back rooms' bed")
+		assert_gt(t.gaming_db, t.music_db + 6.0, "the room is louder than the band through the wall")
+		assert_lte(t.club_cutoff, SoundscapeMix.OTHER_ROOM_CUTOFF, "the band muffled")
+		assert_gt(t.music_db, SoundscapeMix.SILENT_DB, "but there")
+	assert_lt(gaming.music_db, card.music_db, "fainter a room further off")
+	for t in [in_club, street, shop]:
+		assert_eq(t.gaming_db, SoundscapeMix.SILENT_DB, "the back rooms' bed nowhere else")
+	assert_eq(in_club.club_cutoff, SoundscapeMix.OPEN, "back in the club: the band full again")
+	var l_card := SoundscapeMix.listen(layout, club, RiversideInteriors.TABLE, rooms.back_room, false, 1.0)
+	var l_club := SoundscapeMix.listen(layout, club, Vector2(2290, 300), club, false, 1.0)
+	assert_true(SoundscapeMix.can_hear("room", l_card))
+	assert_false(SoundscapeMix.can_hear("room", l_club))
+	assert_false(SoundscapeMix.can_hear("room", SoundscapeMix.listen(layout, club, Vector2(2290, 600), null, false, 1.0)))
+	var gaps := []
+	for i in 20:
+		gaps.append(SoundscapeMix.next_gap("room", 1.0, i / 20.0))
+	assert_gt(gaps.min(), 2.5, "not one on top of the other")
+	assert_lt(gaps.max(), 9.0, "but the room never goes dead")

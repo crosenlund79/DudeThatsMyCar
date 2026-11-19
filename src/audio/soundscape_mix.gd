@@ -38,6 +38,11 @@ const INDOOR_STREET_CUTOFF := 650.0
 const CAR_STREET_CUTOFF := 2800.0
 ## Narration over the city: everything else steps back this far.
 const DUCK_DB := -10.0
+## M011: the Copper Owl's back rooms (the card room, the gaming room): their own
+## bed, quiet under the games, and the odd sound of the room now and then.
+const BACK_ROOMS := ["back_room", "gaming_room"]
+const GAMING_DB := -12.0
+const ROOM_EVENT_DB := -11.0
 
 
 ## Where the listener stands, as plain numbers for `targets`. `room` is the
@@ -55,6 +60,7 @@ static func listen(layout: DistrictLayout, club: InteriorPlan, p: Vector2, room:
 	return {
 		"in_club": club != null and room == club,
 		"indoors": room != null,
+		"back_room": room != null and room.id in BACK_ROOMS,
 		"driving": driving,
 		"club_distance": rect_distance(club_rect, p) if club != null else INF,
 		"club_dx": club_rect.get_center().x - p.x,
@@ -87,6 +93,7 @@ static func targets(l: Dictionary) -> Dictionary:
 	var rain_lin := float(l.get("rain", 0.0)) * (0.45 if indoors else (0.7 if l.driving else 1.0))
 	out.rain_db = _db(RAIN_DB, rain_lin)
 	out.street_cutoff = INDOOR_STREET_CUTOFF if indoors else (CAR_STREET_CUTOFF if l.driving else OPEN)
+	out.gaming_db = GAMING_DB if l.get("back_room", false) else SILENT_DB
 	return out
 
 
@@ -158,6 +165,8 @@ static func next_gap(kind: String, activity: float, u: float) -> float:
 			base = 55.0
 		"clatter":
 			base = 38.0
+		"room":
+			base = 5.5  # M011: something in the back room every few seconds
 		_:
 			base = 30.0
 	return base * (0.6 + 0.8 * u)
@@ -165,6 +174,8 @@ static func next_gap(kind: String, activity: float, u: float) -> float:
 
 ## Whether a distant sound of a kind would be heard here at all.
 static func can_hear(kind: String, l: Dictionary) -> bool:
+	if kind == "room":
+		return l.get("back_room", false)  # M011
 	if l.in_club:
 		return false
 	match kind:
