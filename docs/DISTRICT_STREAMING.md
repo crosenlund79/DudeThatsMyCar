@@ -238,3 +238,36 @@ From `tests/support/district_probe.gd` (re-run) and `tests/support/m010_probe.gd
 The fog is the expensive part under software OpenGL (fill rate: it is drawn over every open cell of
 the district in view); everything else costs within the run-to-run noise of this renderer or a
 few fps. A real GPU has still not been measured.
+
+## M011: the back rooms, the union hall and City Hall
+
+M011 adds no streaming: the gaming room and the union hall are rooms of the ward (built at start-up
+with its other rooms; the ward is always loaded), and City Hall, the mayor's house and the aldermen's
+offices are ordinary buildings of Halloran Square and the ward (two new facades, a cupola on a roof,
+roof lettering, a few lamps, locked doors as data). The games are simulated only while Danny plays
+them: the wheel's and the machines' models are a handful of numbers, the view moves the wheel and the
+reels only while they turn (the wheel on a layer of its own, so the table is not drawn again each
+frame), and Leo's spins for the other players turn the room's wheel sprite only while Danny is in the
+gaming room. The back rooms' sound is one looping player started at start-up (silent outside) and at
+most one short sound every few seconds inside.
+
+From `tests/support/m011_probe.gd` (software OpenGL, 1280 x 720, clear weather unless said):
+
+| | |
+| --- | --- |
+| The scene up / rooms built at start-up | 577-643 ms / 9 (the gaming room and the union hall among them) |
+| The Copper Owl / the card room / the gaming room, idle | 18.8-19.2 / 20.0-21.2 / 19.2-19.6 fps |
+| The soundscape's update a frame in the gaming room | 0.16 ms |
+| At the wheel between spins / spinning (the table on screen, dimmed room) | 15.6 / 16.2 fps |
+| At a machine, idle / the reels running | 19.6 / 17.0 fps |
+| The wheel's and a machine's own updates a frame | 0.01-0.04 ms |
+| At the card table, a hand under way | 18.0-18.8 fps |
+| In the union hall | 21.6-22.4 fps |
+| Halloran Square built at once (with City Hall and the mayor's house) | 29.5-35.9 ms (M010: 31.8 ms over 7 frames when streamed) |
+| In front of City Hall, clear / fog | 22.4-24.0 / 13.2-13.6 fps |
+| Memory, the ward with Halloran Square loaded | 111.6 MB static, 5644 nodes |
+
+The wheel's table is the costliest new screen under software OpenGL - fill rate for the dimmed
+screen, the baize and the wheel's large textures, not the game: spinning costs nothing over the
+table standing still once the wheel was drawn on its own layer (before: 15.2 fps spinning). A real
+GPU has still not been measured.

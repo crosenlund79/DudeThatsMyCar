@@ -608,6 +608,46 @@ func _run(shots: Array) -> void:
 				_teleport_walker(RiversideInteriors.ROULETTE_SPOT + Vector2(26, 0), -PI / 2 - 0.6)
 				await _frames(40)
 				await _shot(s, false)
+			"union_hall", "union_inside":
+				# M011: the Dock & Freight Workers' hall from Wharf Street (its badge and lit door), and inside
+				main.weather.force("clear")
+				var hall: InteriorPlan = main.interiors.view_of("union_hall").plan
+				if s == "union_hall":
+					main.world.load_now("yards")
+					_teleport_walker(hall.outside_door(0, 60.0) + Vector2(10, 60), PI)
+				else:
+					_teleport_walker(Vector2(3060, 2620), -PI / 2 - 0.4)
+				await _frames(40)
+				await _shot(s, false)
+			"city_hall", "mayors_house", "ward_office":
+				# M011: City Hall across Pruitt Street from Halloran Park; the mayor's house behind its railing;
+				# Alderman Doran's office across Marlowe Avenue from the park
+				main.weather.force("clear")
+				var hd: DistrictLayout = main.world.layouts.halloran
+				var spot: Vector2 = {"city_hall": hd.locked_doors[0].pos + Vector2(0, -110),
+					"mayors_house": hd.locked_doors[1].pos + Vector2(-40, -70),
+					"ward_office": hd.locked_doors[2].pos + Vector2(60, 60)}[s]
+				_teleport_walker(spot, PI / 2)
+				main.world.load_now("halloran")
+				await _frames(40)
+				await _shot(s, false)
+			"city_map_civic":
+				# M011: the city map close over Halloran Park: City Hall, the mayor's house (with its address), the aldermen
+				main.weather.force("clear")
+				_teleport_walker(Vector2(2300, 600), 0.0)
+				await _frames(5)
+				var mc := InputEventAction.new()
+				mc.action = CityInput.MAP
+				mc.pressed = true
+				main._unhandled_input(mc)
+				var cmc: CityMap = main.hud.city_map
+				cmc.scale_px = 3.2
+				cmc.centre = Vector2(-2700, 1100)
+				cmc._clamp_centre()
+				cmc.queue_redraw()
+				await _frames(5)
+				await _shot(s, false)
+				main._unhandled_input(mc)
 			"roulette", "roulette_result":
 				# M011: at the wheel - chips down, the ball going round (roulette), then where it came to rest
 				main.weather.force("clear")

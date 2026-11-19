@@ -93,6 +93,8 @@ func refresh_districts() -> void:
 			building_labels.append({"rect": br, "label": labels[i]})
 		for b in layout.buildings:
 			var label := String(b.get("name", ""))
+			if label != "" and (b.get("opts", {}) as Dictionary).get("show_address", false):
+				label = BuildingNames.label(layout, b)  # M011: the mayor's house, with its address (one label, not two)
 			if label == "" or named.has(label) or label in ["Railroad embankment", "Bridge tender", "Tannery stack", "St. Brendan's tower"]:
 				continue
 			if _is_place(b.rect):

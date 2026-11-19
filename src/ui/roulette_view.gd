@@ -70,6 +70,9 @@ var _chip: Texture2D
 var _dolly: Texture2D
 var _rng := RandomNumberGenerator.new()
 var _ball_rest := -PI / 2.0  # where the ball lies (relative to the head) between spins
+## The wheel on a layer of its own: while it spins only the wheel is drawn
+## again each frame, not the whole table (its layout, chips and text).
+var _wheel_layer: Control
 
 
 func setup(resolver: AssetResolver, font: Font) -> void:
@@ -86,13 +89,19 @@ func setup(resolver: AssetResolver, font: Font) -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	visible = false
 	_rng.randomize()
+	_wheel_layer = Control.new()
+	_wheel_layer.name = "Wheel"
+	_wheel_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_wheel_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_wheel_layer.draw.connect(_draw_wheel)
+	add_child(_wheel_layer)
 
 
 func layout_for(screen: Vector2) -> void:
 	size = screen
 	ui_scale = minf(screen.x / 1280.0, screen.y / 720.0)
 	centre = Vector2(screen.x * 0.5, screen.y * 0.5 - 20.0 * ui_scale)
-	queue_redraw()
+	refresh()
 
 
 func is_open() -> bool:
@@ -108,7 +117,7 @@ func open(p_table: Roulette, p_money: int) -> void:
 	hover_key = ""
 	spin = null
 	visible = true
-	queue_redraw()
+	refresh()
 
 
 func close() -> void:
@@ -142,7 +151,7 @@ func start_spin(number: int, seconds: float) -> void:
 	message = "No more bets."
 	result_line = ""
 	sound.emit("spin")
-	queue_redraw()
+	refresh()
 
 
 ## The round is settled: what came up and what it paid.
@@ -178,7 +187,14 @@ func _process(delta: float) -> void:
 		sound.emit("ball_rest")
 		spin_finished.emit()
 	if spin_t < spin.duration + 12.0:
-		queue_redraw()
+		_wheel_layer.queue_redraw()  # only the wheel moves
+
+
+## The whole table drawn again (state changed), the wheel with it.
+func refresh() -> void:
+	queue_redraw()
+	if _wheel_layer != null:
+		_wheel_layer.queue_redraw()
 
 
 ## The keys at the table (the game hands them on while the view is open).
@@ -312,7 +328,6 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.015, 0.02, 0.62))
 	var felt_size := AssetCatalog.display_size("ui/roulette_felt") * ui_scale
 	draw_texture_rect(_felt, Rect2(centre - felt_size * 0.5, felt_size), false)
-	_draw_wheel()
 	_draw_layout()
 	_draw_bets()
 	_draw_history()
@@ -325,16 +340,19 @@ func _draw() -> void:
 
 
 func _draw_wheel() -> void:
+	if table == null or phase == "closed":
+		return
+	var c := _wheel_layer
 	var wc := centre + WHEEL_AT * ui_scale
 	var rw := _s(BOWL_RADIUS)
-	draw_texture_rect(_bowl, Rect2(wc - Vector2(rw, rw), Vector2(rw, rw) * 2.0), false)
+	c.draw_texture_rect(_bowl, Rect2(wc - Vector2(rw, rw), Vector2(rw, rw) * 2.0), false)
 	var rr := rw * RouletteSpin.ROTOR
-	draw_set_transform(wc, rotor_angle, Vector2.ONE)
-	draw_texture_rect(_rotor, Rect2(-rr, -rr, rr * 2.0, rr * 2.0), false)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	c.draw_set_transform(wc, rotor_angle, Vector2.ONE)
+	c.draw_texture_rect(_rotor, Rect2(-rr, -rr, rr * 2.0, rr * 2.0), false)
+	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var b := _s(13.0)
 	var bp := ball_position()
-	draw_texture_rect(_ball, Rect2(bp - Vector2(b, b) * 0.5, Vector2(b, b)), false)
+	c.draw_texture_rect(_ball, Rect2(bp - Vector2(b, b) * 0.5, Vector2(b, b)), false)
 
 
 func _cell_colour(n: int) -> Color:
