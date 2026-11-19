@@ -546,6 +546,18 @@ def _pictogram(img, kind, cx, cy, col=MARK_CREAM):
         paint_shape(img, SP(coffin), col, 26, outline=None, wob=0.04)
         line(img, [(S(cx), S(cy - 8)), (S(cx), S(cy + 2))], "#3a3f46", 1.6 * SS, 255)
         line(img, [(S(cx - 3.5), S(cy - 4.5)), (S(cx + 3.5), S(cy - 4.5))], "#3a3f46", 1.6 * SS, 255)
+    elif kind == "union":  # M011: a longshoreman's cargo hook - the dock and freight men's union hall
+        line(img, [(S(cx - 7), S(cy - 9)), (S(cx + 7), S(cy - 9))], col, 4.2 * SS, 255)  # the wooden grip
+        line(img, [(S(cx), S(cy - 8)), (S(cx), S(cy + 3))], col, 2.4 * SS, 255)
+        hook = [(cx - 5 + 5 * math.cos(a), cy + 2 + 6 * math.sin(a)) for a in np.linspace(0.0, math.pi * 1.2, 14)]
+        line(img, [S(x, y) for x, y in hook], col, 2.4 * SS, 255)
+    elif kind == "civic":  # M011: a domed civic building with columns - City Hall
+        paint_shape(img, SP([(cx - 11, cy - 2), (cx + 11, cy - 2), (cx, cy - 8)]), col, 27, outline=None, wob=0.03)
+        paint_shape(img, SP(ellipse_pts(cx, cy - 8, 5, 4)), col, 28, outline=None, wob=0.03)
+        for k in range(4):
+            x = cx - 7.5 + k * 5
+            line(img, [(S(x), S(cy)), (S(x), S(cy + 8))], col, 1.8 * SS, 255)
+        line(img, [(S(cx - 11), S(cy + 10)), (S(cx + 11), S(cy + 10))], col, 2.2 * SS, 255)
     elif kind == "home":  # a bed under a crescent moon: where the henchman sleeps by day
         paint_shape(img, SP(rrect_pts(cx - 10, cy + 1, cx + 10, cy + 7, 1.5)), col, 15, outline=None, wob=0.05)
         paint_shape(img, SP(rrect_pts(cx - 10, cy - 4, cx - 7, cy + 10, 1)), col, 16, outline=None, wob=0.03)
@@ -873,8 +885,10 @@ ASSETS = {
     "ui/marker_home": lambda: place_marker("home"),
     "ui/marker_vet": lambda: place_marker("vet"),
     "ui/marker_morgue": lambda: place_marker("morgue"),
+    "ui/marker_union": lambda: place_marker("union"),
     "signs/vet": lambda: painted_roof_sign("vet", "PETTIBONE ANIMAL HOSPITAL", 16, 384, 64),
     "signs/morgue": lambda: painted_roof_sign("morgue", "THE MORGUE", 26, 256, 64, col="#d6dde4"),
+    "signs/union": lambda: painted_roof_sign("union", "DOCK & FREIGHT WORKERS  LOCAL 9", 15, 384, 64),
     "ui/status_figure": status_figure,
     "ui/fight_dial": fight_dial,
     "ui/fight_needle": fight_needle,

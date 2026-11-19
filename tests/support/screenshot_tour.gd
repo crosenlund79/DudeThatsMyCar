@@ -73,6 +73,18 @@ func _run(shots: Array) -> void:
 	if main.hud.help_panel.visible:
 		main.hud.toggle_help()  # the controls card would cover the view
 	for s in shots:
+		if String(s).begins_with("at_"):
+			# any place: at_<x>_<y> (world px), e.g. at_2300_2760 - for looking round while building
+			var parts := String(s).split("_")
+			var p := Vector2(float(parts[1]), float(parts[2]))
+			main.weather.force("clear")
+			_teleport_walker(p, PI / 2)
+			for id in main.world.layouts:
+				if (main.world.layouts[id] as DistrictLayout).bounds.has_point(p):
+					main.world.load_now(id)
+			await _frames(40)
+			await _shot(s, false)
+			continue
 		match s:
 			"street":
 				# the M001 / M002 starting view at the streetcar stop (since M003 the night begins at home: see "home")

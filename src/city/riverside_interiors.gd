@@ -14,6 +14,7 @@ static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(hardware_store(d))
 	d.interiors.append(flat(d))
 	d.interiors.append(vet(d))
+	d.interiors.append(union_hall(d))
 	# the barber's pole beside Sal's door
 	d.props.append({"kind": "props/barber_pole", "pos": Vector2(1102, 444), "rot": 0.0, "height": 0.0, "radius": 4.0})
 
@@ -354,5 +355,58 @@ static func vet(d: DistrictLayout) -> InteriorPlan:
 	]
 	p.spots = [
 		{"id": "pettibone", "pos": Vector2(2150, 1300), "radius": 24.0, "prompt": "Talk to Doc Pettibone"},
+	]
+	return p
+
+
+## M011: the Dock & Freight Workers' hall, Local 9, at the corner of Wharf
+## Street and Front Street where the yards begin: the door off Wharf Street
+## into the hall - benches for the men waiting on the shape-up, the
+## noticeboard, a stove; through a doorway the business agent's office - his
+## desk under a green lamp, filing cabinets, the safe, a map of the docks and
+## the yards, the local's charter. The lights burn late. A place to look
+## round, not a job: nobody here has work for Danny.
+static func union_hall(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("union_hall", RiversideWard.UNION_HALL)
+	p.marker = "ui/marker_union"
+	p.building = d.building_named(RiversideWard.UNION_HALL)
+	p.building_rect = d.buildings[p.building].rect  # x 2831..3169, y 2370..2700
+	p.room = Rect2(2831, 2440, 338, 260)  # the front of the house; the stairs and the meeting hall above stay shut
+	p.floor = "interiors/floor_boards"
+	p.doors = [{"side": Vector2.RIGHT, "at": 2560.0, "width": 28.0}]  # off Wharf Street
+	p.partitions = [{"a": Vector2(3000, 2440), "b": Vector2(3000, 2700), "door_at": 2648.0, "door_width": 28.0}]
+	p.furniture = [
+		# the hall
+		{"kind": "interiors/bench", "pos": Vector2(3058, 2458), "box": Vector2(70, 14)},
+		{"kind": "interiors/noticeboard", "pos": Vector2(3124, 2451)},
+		{"kind": "interiors/bench", "pos": Vector2(3154, 2660), "rot": PI / 2, "box": Vector2(70, 14)},
+		{"kind": "interiors/potbelly", "pos": Vector2(3024, 2560), "radius": 11.0},
+		{"kind": "interiors/spittoon", "pos": Vector2(3046, 2600)},
+		{"kind": "interiors/coat_rack", "pos": Vector2(3156, 2486), "radius": 6.0},
+		# the business agent's office
+		{"kind": "interiors/desk", "pos": Vector2(2915, 2522), "box": Vector2(70, 32)},
+		{"kind": "interiors/chair", "pos": Vector2(2915, 2496)},
+		{"kind": "interiors/chair", "pos": Vector2(2898, 2554), "rot": PI},
+		{"kind": "interiors/chair", "pos": Vector2(2934, 2554), "rot": PI},
+		{"kind": "interiors/filing_cabinet", "pos": Vector2(2848, 2510), "rot": -PI / 2, "box": Vector2(22, 18)},
+		{"kind": "interiors/filing_cabinet", "pos": Vector2(2848, 2534), "rot": -PI / 2, "box": Vector2(22, 18)},
+		{"kind": "interiors/filing_cabinet", "pos": Vector2(2848, 2558), "rot": -PI / 2, "box": Vector2(22, 18)},
+		{"kind": "interiors/safe", "pos": Vector2(2852, 2676), "box": Vector2(18, 18)},
+		{"kind": "interiors/wall_map", "pos": Vector2(2905, 2450)},
+		{"kind": "interiors/charter", "pos": Vector2(2968, 2450)},
+		{"kind": "interiors/smoke", "pos": Vector2(3080, 2520), "z": 11},
+	]
+	p.lamps = [
+		{"pos": Vector2(2915, 2522), "color": Color(0.9, 1.0, 0.76), "energy": 1.0, "radius": 120.0},  # the green desk lamp
+		{"pos": Vector2(3085, 2560), "color": Color(1.0, 0.78, 0.52), "energy": 0.85, "radius": 150.0},  # the hall's bulb
+		{"pos": Vector2(3024, 2560), "color": Color(1.0, 0.55, 0.3), "energy": 0.35, "radius": 50.0},  # the stove's glow
+	]
+	p.people = [
+		{"id": "agent", "name": "", "look": "characters/clerk", "pos": Vector2(2915, 2496), "facing": PI / 2},
+		{"id": "docker_a", "name": "", "look": "characters/worker", "pos": Vector2(3046, 2476), "facing": PI / 2},
+		{"id": "docker_b", "name": "", "look": "characters/worker", "pos": Vector2(3112, 2478), "facing": -PI / 2},
+	]
+	p.spots = [
+		{"id": "union_board", "pos": Vector2(3134, 2486), "radius": 18.0, "prompt": "Read the noticeboard"},
 	]
 	return p

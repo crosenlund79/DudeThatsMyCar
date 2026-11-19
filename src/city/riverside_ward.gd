@@ -27,6 +27,8 @@ const FAR_BANK_X := 4400.0
 const EMBANKMENT_Y := -950.0
 const WEST_EDGE := -800.0
 const SOUTH_EDGE := 2150.0
+## M011: the union hall's name (on its roof, the map and the HUD).
+const UNION_HALL := "Dock & Freight Workers, Local 9"
 
 
 
@@ -185,7 +187,11 @@ func _outer_rows() -> void:
 	_row(131, 2700, 1950, [[700, 4, "warehouse", "tin"], [688, 3, "brick_red", "tar"]])
 	_row(1781, 1631, 1950, [[320, 4, "brick_brown", "tar", {"awning": "green"}], [260, 3, "brick_red", "tar"], [280, 3, "greystone", "gravel"],
 		[240, 2, "brick_brown", "tar"], [288, 3, "brick_red", "tar"]])
-	_row(1781, 2700, 1950, [[688, 5, "warehouse", "tin"], [700, 3, "greystone", "gravel"]])
+	# M011: the dock and freight men's union hall at the corner of Wharf Street and Front Street, at the
+	# Riverfront Yards' doorstep (its door on Wharf Street), and the yard behind it
+	_row(1781, 2700, 1950, [[688, 5, "warehouse", "tin"], [362, 3, "greystone", "gravel"],
+		[338, 2, "brick_red", "tar", {"name": UNION_HALL, "depth": 330}]])
+	d.lots.append({"rect": Rect2(2831, 1950, 338, 420), "kind": "concrete"})
 	# Between Wharf Street and the river.
 	_row(3431, -431, EMBANKMENT_Y, [[469, 4, "warehouse", "tin"]])
 	_row(3431, 1631, 1980, [[469, 4, "warehouse", "tin"]])
@@ -228,6 +234,9 @@ func _street_furniture() -> void:
 	# M006: the vet who patches up the ward's gangsters, and the Morgue (a landmark only)
 	_sign("Pettibone Animal Hospital", "signs/vet", 0.0, 34.0)
 	_sign("The Morgue", "signs/morgue", 0.0, 44.0)
+	# M011: the union hall's lettering, and its lamp by the door on Wharf Street (the lights burn late)
+	_sign(UNION_HALL, "signs/union", 0.0, 60.0)
+	d.alley_lamps.append(Vector2(3184, 2604))
 	var morgue: Rect2 = d.buildings[d.building_named("The Morgue")].rect
 	d.alley_lamps.append(Vector2(morgue.get_center().x, morgue.end.y + 2.0))  # one dim lamp over its doors
 	# Awnings and the club canopy hang over the sidewalk.

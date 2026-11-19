@@ -16,7 +16,8 @@ func _frame() -> void:
 func test_the_places_are_marked() -> void:
 	var ids := markers().markers.map(func(m: Dictionary) -> String: return (m.plan as InteriorPlan).id)
 	ids.sort()
-	assert_eq(ids, ["barber_shop", "copper_owl", "grocery", "hardware", "home", "vet"], "the five of M004 and the vet (M006)")
+	assert_eq(ids, ["barber_shop", "copper_owl", "grocery", "hardware", "home", "union_hall", "vet"],
+		"the five of M004, the vet (M006) and the union hall (M011)")
 	var home: Dictionary = markers().marker_of("home")
 	assert_eq(home.plan.marker, "ui/marker_home")
 	for m in markers().markers:

@@ -111,9 +111,12 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/cabinet` | `custom/graphics/interiors/cabinet.png` | 64x52 | sprite (image, scaled to its display size) | 30x24 | Tall cupboard (Sal keeps the rye in it). |
 | `interiors/card_table` | `custom/graphics/interiors/card_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Back-room card table with two chairs, centred. |
 | `interiors/chair` | `custom/graphics/interiors/chair.png` | 36x36 | sprite (image, scaled to its display size) | 16x16 | M010 a bentwood chair, its back at the top (turned by the game). |
+| `interiors/charter` | `custom/graphics/interiors/charter.png` | 84x24 | sprite (image, scaled to its display size) | 40x11 | M011 a framed charter and a photograph of the members on a wall (the wall at the top). |
 | `interiors/coat_rack` | `custom/graphics/interiors/coat_rack.png` | 40x40 | sprite (image, scaled to its display size) | 18x18 | Coat stand with two coats. |
+| `interiors/desk` | `custom/graphics/interiors/desk.png` | 160x80 | sprite (image, scaled to its display size) | 72x36 | M011 the union's business agent's desk: green-shaded lamp, papers, a ledger, the telephone (the chair is separate); the wall side at the top. |
 | `interiors/door` | `custom/graphics/interiors/door.png` | 64x12 | sprite (image, scaled to its display size) | 28x5 | Door leaf from above; hinge at the left end (stretched to the doorway). |
 | `interiors/exam_table` | `custom/graphics/interiors/exam_table.png` | 128x64 | sprite (image, scaled to its display size) | 62x31 | M006: the vet's steel examining table with a sheet and a strap. |
+| `interiors/filing_cabinet` | `custom/graphics/interiors/filing_cabinet.png` | 48x40 | sprite (image, scaled to its display size) | 22x18 | M011 a steel filing cabinet, three drawers (wall side at the top). |
 | `interiors/flat_table` | `custom/graphics/interiors/flat_table.png` | 112x112 | sprite (image, scaled to its display size) | 50x50 | Kitchen table with two chairs, centred. |
 | `interiors/floor_boards` | `custom/graphics/interiors/floor_boards.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | Worn pine floorboards (shops, the flat). |
 | `interiors/floor_carpet` | `custom/graphics/interiors/floor_carpet.png` | 256x256 | tile (seamless in both directions) | 128 px per repeat | M010 worn wine-red carpet with a faded diamond lattice (the back room). |
@@ -124,15 +127,18 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/kennel` | `custom/graphics/interiors/kennel.png` | 80x72 | sprite (image, scaled to its display size) | 38x34 | M006: a wire kennel with a sleeping basset hound. |
 | `interiors/medicine_cabinet` | `custom/graphics/interiors/medicine_cabinet.png` | 112x40 | sprite (image, scaled to its display size) | 56x20 | M006: the vet's cabinet of bottles, wall side at the top. |
 | `interiors/microphone` | `custom/graphics/interiors/microphone.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | M006: the Bird's ribbon microphone on its stand, from above; the grille faces the singer (right). |
+| `interiors/noticeboard` | `custom/graphics/interiors/noticeboard.png` | 128x30 | sprite (image, scaled to its display size) | 60x14 | M011 a cork noticeboard crowded with notices (on a wall; the wall at the top). |
 | `interiors/palm` | `custom/graphics/interiors/palm.png` | 72x72 | sprite (image, scaled to its display size) | 28x28 | Potted palm. |
 | `interiors/piano` | `custom/graphics/interiors/piano.png` | 128x88 | sprite (image, scaled to its display size) | 56x38 | Baby grand, keyboard and bench at the left. |
 | `interiors/poker_table` | `custom/graphics/interiors/poker_table.png` | 160x160 | sprite (image, scaled to its display size) | 72x72 | M010 the Copper Owl's back-room poker table: baize, rail, chips, cards, an ashtray (the chairs are separate), centred. |
+| `interiors/potbelly` | `custom/graphics/interiors/potbelly.png` | 52x52 | sprite (image, scaled to its display size) | 24x24 | M011 a cast-iron pot-bellied stove with a glow at the grate. |
 | `interiors/produce` | `custom/graphics/interiors/produce.png` | 132x56 | sprite (image, scaled to its display size) | 60x25 | Three crates of apples, potatoes and cabbages. |
 | `interiors/radio` | `custom/graphics/interiors/radio.png` | 44x34 | sprite (image, scaled to its display size) | 18x14 | Cathedral radio, grille towards the bottom. |
 | `interiors/roulette_rotor` | `custom/graphics/interiors/roulette_rotor.png` | 96x96 | sprite (image, scaled to its display size) | 32x32 | M011 the wheel head from above, drawn over the table's bowl and turned by the game while it spins: 37 pockets in the European order clockwise from the zero at the top, the brass turret. |
 | `interiors/roulette_table` | `custom/graphics/interiors/roulette_table.png` | 288x136 | sprite (image, scaled to its display size) | 128x60 | M011 the gaming room's wheel table from above: rail, green baize, the wheel's bowl at the left end (centre 58 px in from the left of the template, middle), the single-zero layout to the right. |
 | `interiors/rug` | `custom/graphics/interiors/rug.png` | 160x100 | sprite (image, scaled to its display size) | 72x45 | Oval rag rug (flat on the floor). |
 | `interiors/sacks` | `custom/graphics/interiors/sacks.png` | 64x64 | sprite (image, scaled to its display size) | 28x28 | Flour and sugar sacks. |
+| `interiors/safe` | `custom/graphics/interiors/safe.png` | 44x44 | sprite (image, scaled to its display size) | 20x20 | M011 a small iron safe. |
 | `interiors/shelf_grocery` | `custom/graphics/interiors/shelf_grocery.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of tins and boxes. |
 | `interiors/shelf_hardware` | `custom/graphics/interiors/shelf_hardware.png` | 260x44 | sprite (image, scaled to its display size) | 118x20 | Wall shelves of paint, rope, nails and tools. |
 | `interiors/shop_counter` | `custom/graphics/interiors/shop_counter.png` | 220x56 | sprite (image, scaled to its display size) | 96x24 | Shop counter with cash register and scale; the shopkeeper's side at the top. |
@@ -147,6 +153,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `interiors/stove` | `custom/graphics/interiors/stove.png` | 60x56 | sprite (image, scaled to its display size) | 26x24 | Small kitchen range with a kettle. |
 | `interiors/table_club` | `custom/graphics/interiors/table_club.png` | 128x128 | sprite (image, scaled to its display size) | 56x56 | Round club table with lamp and three chairs, centred. |
 | `interiors/tall_clock` | `custom/graphics/interiors/tall_clock.png` | 40x32 | sprite (image, scaled to its display size) | 18x14 | M011 a tall-case clock against the wall (wall at the top). |
+| `interiors/wall_map` | `custom/graphics/interiors/wall_map.png` | 150x26 | sprite (image, scaled to its display size) | 70x12 | M011 a map of the docks and the rail yards pinned to a wall (the wall at the top). |
 | `interiors/wall_prints` | `custom/graphics/interiors/wall_prints.png` | 140x26 | sprite (image, scaled to its display size) | 64x12 | M011 three framed prints hanging on a wall (racehorses, a prize fighter); the wall at the top. |
 | `props/awning_green` | `custom/graphics/props/awning_green.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
 | `props/awning_red` | `custom/graphics/props/awning_red.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
@@ -211,6 +218,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/lunch` | `custom/graphics/signs/lunch.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Dutch's Night Lunch, painted roof lettering, transparent. |
 | `signs/morgue` | `custom/graphics/signs/morgue.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M006: The Morgue, painted roof lettering, transparent. |
 | `signs/tannery` | `custom/graphics/signs/tannery.png` | 384x64 | sprite (image, scaled to its display size) | 230x38 | M008: Great Lakes Tanning Co., painted roof lettering, transparent. |
+| `signs/union` | `custom/graphics/signs/union.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M011: Dock & Freight Workers, Local 9, painted roof lettering, transparent. |
 | `signs/vet` | `custom/graphics/signs/vet.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M006: Pettibone Animal Hospital, painted roof lettering, transparent. |
 | `ui/alert` | `custom/graphics/ui/alert.png` | 48x48 | sprite (image, scaled to its display size) | 30x30 | Over the officer: he has seen you. |
 | `ui/card_back` | `custom/graphics/ui/card_back.png` | 72x100 | sprite (image, scaled to its display size) | 50x70 | M010 the back of the Copper Owl's deck (screen px). |
@@ -228,6 +236,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/marker_hardware` | `custom/graphics/ui/marker_hardware.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Lindqvist Hardware. |
 | `ui/marker_home` | `custom/graphics/ui/marker_home.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: your flat (house-shaped, unlike the businesses). |
 | `ui/marker_morgue` | `custom/graphics/ui/marker_morgue.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 landmark badge: The Morgue (slate grey: a landmark, not a business; ward map only). |
+| `ui/marker_union` | `custom/graphics/ui/marker_union.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M011 place marker: the dock and freight workers' union hall (a cargo hook). |
 | `ui/marker_vet` | `custom/graphics/ui/marker_vet.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 place marker: Pettibone Animal Hospital (a paw print). |
 | `ui/panel` | `custom/graphics/ui/panel.png` | 96x96 | sprite (image, scaled to its display size) | 96x96 | Nine-patch panel, 24 px margins. |
 | `ui/poker_chip` | `custom/graphics/ui/poker_chip.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | M010 a clay chip from above, light grey (tinted by the game for its value). |

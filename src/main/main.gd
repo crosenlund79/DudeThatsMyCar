@@ -724,7 +724,7 @@ func _spot() -> Dictionary:
 		return {}
 	if interiors.current != null:
 		var s := interiors.current.spot_at(walker.global_position)
-		if not s.is_empty() and (s.id == "bed" or s.id == "poker" or interiors.view_of(interiors.current.id).person_ok(s.id)):
+		if not s.is_empty() and (s.id == "bed" or s.id == "poker" or s.id == "union_board" or interiors.view_of(interiors.current.id).person_ok(s.id)):
 			return s
 		if not s.is_empty() and (s.id == "roulette" or String(s.id).begins_with("slot_")):
 			return s  # M011: the wheel (whether Leo is there to spin it is said when you step up), the machines
@@ -800,7 +800,7 @@ func _interact(_at: Vector2) -> bool:
 		talking = "incident"
 		_incident_talking = spot.incident
 		_show(talk.open("incident", _talk_context()))
-	elif spot.id == "bed" or not interiors.current.person(spot.id).is_empty():
+	elif spot.id == "bed" or spot.id == "union_board" or not interiors.current.person(spot.id).is_empty():
 		start_talk(spot.id)
 	return true
 

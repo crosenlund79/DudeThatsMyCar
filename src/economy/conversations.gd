@@ -16,7 +16,7 @@ extends RefCounted
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
 	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "pettibone": "Doc Pettibone", "bed": "Home",
 	"dutch": "Dutch", "feeney": "Mr. Feeney", "irv": "Irv Feldman", "red": "Red Gallagher", "pete": "Lucky Pete",
-	"moe": "Moe Brandt", "croupier": "Leo Varga"}
+	"moe": "Moe Brandt", "croupier": "Leo Varga", "union_board": "The noticeboard"}
 
 var rackets: Rackets
 
@@ -89,6 +89,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _feeney(step, context)
 		"bed":
 			return _bed(step, context)
+		"union_board":
+			return _union_board(step)
 	return {}
 
 
@@ -774,6 +776,19 @@ func _bed(step: String, context: Dictionary) -> Dictionary:
 			])
 		"sleep":
 			return _page("bed", "You hang up your hat, pull the blind and sleep like the dead.", [], {"sleep": true})
+	return {}
+
+
+## M011: the noticeboard in the union hall - what is pinned up there tonight
+## (the world as it is; nothing here is a job for Danny).
+func _union_board(step: String) -> Dictionary:
+	match step:
+		"hello":
+			return _told("union_board", "Shift lists for the North Branch Freight bays, smudged with coal dust. A typed notice: "
+				+ "GENERAL MEETING, THURSDAY, 8 P.M. - ALL MEMBERS IN GOOD STANDING. Dues are fifty cents a week, payable at "
+				+ "the office. A hand-lettered card: NO WORK FOR MEN WITHOUT A BOOK. A clipping from the Evening Courier about the "
+				+ "new mayor's budget, with somebody's pencil all over it. A picnic at the Forest Preserve, if the weather holds.",
+				[{"id": "bye", "text": "Leave it be."}])
 	return {}
 
 

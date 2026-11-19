@@ -595,3 +595,127 @@ ASSETS.update({
     "ui/slot_lever": ui_lever,
     "ui/slot_coin": ui_coin,
 })
+
+
+# ------------------------------------------------------------------ M011: the union hall (wall side at the top)
+
+def desk(seed=701):
+    """The business agent's desk: a scuffed oak top, a green-shaded lamp, a telephone, a ledger and papers."""
+    w, h = 160, 80
+    img = new(w, h)
+    soft_blob(img, S(82), S(44), S(74), S(34), "#000000", 100, 4 * SS)
+    paint_shape(img, SP(rrect_pts(6, 8, w - 6, h - 8, 3)), "#5a3a20", seed, outline=OUT, ow=1.4, wob=0.08, tex=0.25,
+                strokes_n=16, stroke_cols=["#6a4628", "#462a16"], light=(0.3, -1, 0.35))
+    paint_shape(img, SP(rrect_pts(40, 22, 96, 56, 1)), "#e8dcbc", seed + 1, outline=(90, 70, 40), ow=0.6, wob=0.04, tex=0.15)
+    paint_shape(img, SP(rrect_pts(52, 30, 92, 60, 1)), "#efe4c6", seed + 2, outline=(90, 70, 40), ow=0.6, wob=0.04, tex=0.15)
+    for k in range(5):
+        line(img, [S(56, 36 + k * 4), S(86, 36 + k * 4)], "#7a6a50", 0.6 * SS, 150)
+    paint_shape(img, SP(rrect_pts(104, 18, 140, 44, 2)), "#2a3a2a", seed + 3, outline=OUT, ow=0.8, wob=0.04, light=(0.3, -1, 0.4))
+    line(img, [S(110, 22), S(134, 22)], "#c9a24e", 1.0 * SS, 200)  # the ledger's band
+    paint_shape(img, SP(ellipse_pts(26, 26, 11, 11)), "#2f6a46", seed + 4, outline=OUT, ow=0.9, wob=0.03, light=(0.3, -1, 0.6))
+    soft_blob(img, S(26), S(26), S(4), S(4), "#fff0c0", 200, 1.2 * SS)  # the lamp lit
+    paint_shape(img, SP(rrect_pts(108, 50, 132, 66, 3)), "#1a1614", seed + 5, outline=OUT, ow=0.8, wob=0.03)  # the telephone
+    line(img, [S(110, 52), S(130, 52)], "#3a3430", 2.4 * SS, 255)
+    soft_blob(img, S(30), S(60), S(5), S(3), "#3a2a1a", 120, 1 * SS)  # a ring from a cup
+    return finish(grain(img, 3, seed), w, h)
+
+
+def filing_cabinet(seed=711):
+    w, h = 48, 40
+    img = new(w, h)
+    soft_blob(img, S(25), S(22), S(20), S(16), "#000000", 90, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, w - 4, h - 4, 2)), "#5a5e52", seed, outline=OUT, ow=1.1, wob=0.05, tex=0.2,
+                light=(0.3, -1, 0.4))
+    for k in range(3):
+        y = 12 + k * 8
+        line(img, [S(10, y), S(w - 10, y)], "#3a3c34", 1.0 * SS, 200)
+        paint_shape(img, SP(rrect_pts(20, y + 1.5, 28, y + 4, 1)), "#b8b8a8", seed + k, outline=None, wob=0.02)
+    soft_blob(img, S(14), S(10), S(5), S(2), "#ffffff", 50, 1 * SS)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def safe(seed=721):
+    w = h = 44
+    img = new(w, h)
+    soft_blob(img, S(23), S(24), S(18), S(18), "#000000", 110, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 4, w - 4, h - 4, 3)), "#2a2c30", seed, outline=OUT, ow=1.2, wob=0.04, tex=0.15,
+                light=(0.3, -1, 0.45))
+    paint_shape(img, SP(ellipse_pts(22, 24, 7, 7)), "#9a8a5a", seed + 1, outline=OUT, ow=0.8, wob=0.02, light=(0.3, -1, 0.6))
+    line(img, [S(8, 9), S(36, 9)], "#c9a24e", 1.0 * SS, 200)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def noticeboard(seed=731):
+    """A cork board on the wall (wall at the top) crowded with notices, shift lists and a poster, pinned."""
+    w, h = 128, 30
+    img = new(w, h)
+    soft_blob(img, S(64), S(18), S(60), S(10), "#000000", 70, 3 * SS)
+    paint_shape(img, SP(rrect_pts(3, 2, w - 3, h - 4, 1)), "#5a3a20", seed, outline=OUT, ow=1.0, wob=0.04, tex=0.2)
+    paint_shape(img, SP(rrect_pts(6, 4, w - 6, h - 7, 1)), "#a07a4a", seed + 1, outline=None, wob=0.03, tex=0.35)
+    rnd = random.Random(seed)
+    x = 9
+    while x < w - 16:
+        pw = rnd.uniform(10, 18)
+        col = rnd.choice(["#efe6cf", "#e8dca8", "#f2ece0", "#d8c8a0", "#c8d8e8"])
+        paint_shape(img, SP(rrect_pts(x, 5 + rnd.uniform(0, 2), x + pw, 20 + rnd.uniform(0, 3), 0.5)), col, seed + int(x), outline=(90, 80, 60),
+                    ow=0.4, wob=0.05)
+        for k in range(3):
+            line(img, [S(x + 2, 9 + k * 3.5), S(x + pw - 2, 9 + k * 3.5)], "#5a5040", 0.5 * SS, 140)
+        soft_blob(img, S(x + pw / 2), S(6), S(1), S(1), rnd.choice(["#b02a2a", "#2a4a9a"]), 255, 0.2 * SS)
+        x += pw + rnd.uniform(1, 4)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def wall_map(seed=741):
+    """A big map of the river docks and the rail yards pinned to the wall (wall at the top)."""
+    w, h = 150, 26
+    img = new(w, h)
+    soft_blob(img, S(75), S(15), S(70), S(9), "#000000", 70, 3 * SS)
+    paint_shape(img, SP(rrect_pts(3, 2, w - 3, h - 4, 1)), "#e4d8b8", seed, outline=(80, 66, 46), ow=0.9, wob=0.04, tex=0.25)
+    paint_shape(img, SP([(100, 3), (118, 3), (114, 21), (96, 21)]), "#8aa4b8", seed + 1, outline=None, wob=0.1)  # the river
+    for k in range(4):
+        line(img, [S(10, 7 + k * 4), S(92, 7 + k * 4)], "#6a5a40", 0.6 * SS, 160)  # the sidings
+    for x in (24, 46, 70):
+        paint_shape(img, SP(rrect_pts(x, 6, x + 14, 18, 0.5)), "#b8956a", seed + x, outline=(80, 60, 40), ow=0.4, wob=0.05)
+    for k in range(6):
+        soft_blob(img, S(20 + k * 22), S(12 + (k % 3)), S(1.2), S(1.2), "#b02a2a", 255, 0.3 * SS)
+    return finish(grain(img, 3, seed), w, h)
+
+
+def charter(seed=751):
+    """The local's charter, framed, and a photograph of the members on the wall (wall at the top)."""
+    w, h = 84, 24
+    img = new(w, h)
+    soft_blob(img, S(42), S(14), S(38), S(8), "#000000", 70, 3 * SS)
+    paint_shape(img, SP(rrect_pts(4, 2, 40, 20, 1)), "#6a4a22", seed, outline=OUT, ow=0.9, wob=0.04, light=(0.3, -1, 0.4))
+    paint_shape(img, SP(rrect_pts(7, 4, 37, 18, 0.5)), "#efe4c6", seed + 1, outline=None, wob=0.02, tex=0.15)
+    soft_blob(img, S(22), S(14), S(3), S(3), "#b02a2a", 220, 0.4 * SS)  # the seal
+    for k in range(2):
+        line(img, [S(10, 7 + k * 3), S(34, 7 + k * 3)], "#5a4a30", 0.6 * SS, 160)
+    paint_shape(img, SP(rrect_pts(46, 3, 80, 20, 1)), "#2a2018", seed + 2, outline=OUT, ow=0.9, wob=0.04)
+    paint_shape(img, SP(rrect_pts(49, 5, 77, 18, 0.5)), "#8a8274", seed + 3, outline=None, wob=0.02, tex=0.3)
+    for k in range(6):
+        soft_blob(img, S(52 + k * 4.4), S(12), S(1.6), S(2.6), "#3a342c", 220, 0.4 * SS)  # the men in a row
+    return finish(grain(img, 3, seed), w, h)
+
+
+def potbelly(seed=761):
+    """A cast-iron pot-bellied stove from above, its pipe going up, a warm glow at the grate."""
+    w = h = 52
+    img = new(w, h)
+    soft_blob(img, S(27), S(28), S(20), S(20), "#000000", 110, 3 * SS)
+    paint_shape(img, SP(ellipse_pts(26, 26, 18, 18)), "#24221f", seed, outline=OUT, ow=1.2, wob=0.06, tex=0.2, light=(0.3, -1, 0.4))
+    paint_shape(img, SP(ellipse_pts(26, 26, 9, 9)), "#3a3632", seed + 1, outline=OUT, ow=0.8, wob=0.03, light=(0.3, -1, 0.5))
+    soft_blob(img, S(26), S(40), S(7), S(3), "#ff8a3a", 160, 1.5 * SS)
+    return finish(grain(img, 3, seed), w, h)
+
+
+ASSETS.update({
+    "interiors/desk": desk,
+    "interiors/filing_cabinet": filing_cabinet,
+    "interiors/safe": safe,
+    "interiors/noticeboard": noticeboard,
+    "interiors/wall_map": wall_map,
+    "interiors/charter": charter,
+    "interiors/potbelly": potbelly,
+})
