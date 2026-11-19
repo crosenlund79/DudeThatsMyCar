@@ -20,6 +20,10 @@ const COURSES := {
 	2: [[0, "clear"], [200, "fog"], [420, "clear"]],
 	3: [[0, "clear"], [260, "rain"], [380, "clear"]],
 }
+## M012: how slowly the downpours swell (radians a game minute), and how
+## often a downpour has a chance of thunder (game minutes).
+const DOWNPOUR_RATE := 0.045
+const THUNDER_STEP := 14.0
 const PATTERNS := [
 	[[0, "clear"]],
 	[[0, "rain"], [240, "clear"]],
@@ -86,11 +90,59 @@ func advance(p_minute: float) -> void:
 	fog = move_toward(fog, lv[1], dt / CHANGE_MINUTES)
 
 
-## How hard it is raining now (the rain level, varying gently as it falls).
+## How hard it is raining now (the rain level, varying as it falls; M012:
+## heavier in the downpours).
 func rain_strength() -> float:
 	var t := minute * 0.35 + night * 13.0
-	var wobble := 0.78 + 0.14 * sin(t) + 0.08 * sin(t * 2.7 + 1.3)
-	return clampf(rain * wobble, 0.0, 1.0)
+	var wobble := 0.66 + 0.12 * sin(t) + 0.06 * sin(t * 2.7 + 1.3)
+	return clampf(rain * wobble + 0.36 * downpour(), 0.0, 1.0)
+
+
+## M012: how much of a downpour this is (0..1): now and then, on a wet night,
+## the rain swells for a few minutes and eases off again (a slow swell, about
+## one an hour and a half, never on a dry night).
+func downpour() -> float:
+	return _downpour_at(minute)
+
+
+func _downpour_at(m: float) -> float:
+	if rain <= 0.0:
+		return 0.0
+	return smoothstep(0.55, 0.95, sin(m * DOWNPOUR_RATE + night * 2.1)) * rain
+
+
+## M012: how the wind drives the rain - its slant across the screen (sideways
+## px a px of fall), shifting slowly, harder in a downpour.
+func wind() -> float:
+	return 0.16 + 0.18 * sin(minute * 0.05 + night * 0.7) + 0.12 * downpour()
+
+
+## M012: thunder in a downpour - now and then, never two on top of each
+## other: the claps that fall after `from_minute` up to `to_minute`, each
+## {minute, near: bool} (near: the crack overhead; far: the roll over the roofs).
+## The same night always thunders at the same minutes.
+func thunder_between(from_minute: float, to_minute: float) -> Array:
+	var out := []
+	if to_minute <= from_minute or rain <= 0.0:
+		return out
+	var k0 := floori((from_minute - _dusk) / THUNDER_STEP)
+	var k1 := floori((to_minute - _dusk) / THUNDER_STEP)
+	for k in range(k0, k1 + 1):
+		var h := _hash(night, k)
+		var m := _dusk + k * THUNDER_STEP + h * THUNDER_STEP * 0.7
+		if m <= from_minute or m > to_minute:
+			continue
+		if _downpour_at(m) < 0.35 or _hash(night + 77, k) < 0.4:
+			continue  # only in a downpour, and not at every chance
+		out.append({"minute": m, "near": _hash(night + 151, k) < 0.3})
+	return out
+
+
+static func _hash(a: int, b: int) -> float:
+	var x := (a * 374761393 + b * 668265263) & 0xFFFFFFFF
+	x = ((x ^ (x >> 13)) * 1274126177) & 0xFFFFFFFF
+	x = x ^ (x >> 16)
+	return float(x & 0xFFFF) / 65535.0
 
 
 ## The state as people would name it.

@@ -664,6 +664,14 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(700, 470), 0.0)
 				await _frames(40)
 				await _shot(s, false)
+			"m012_weather_out", "m012_weather_in":
+				# M012: rain and fog at Alderman Quilty's door, then in his office (dry, clear, the street still wet outside)
+				main.weather.force("rain_fog")
+				var q: InteriorPlan = main.interiors.plan_named("quilty_office")
+				_teleport_walker(q.outside_door(0, 60.0) if s == "m012_weather_out" else q.inside_door(0, 40.0), -PI / 2)
+				await _frames(60)
+				await _shot(s, false)
+				main.weather.force("clear")
 			"m012_menu", "m012_menu_controls":
 				# M012: the game menu on Esc (the Notebook with Rourke's offer; the Controls page)
 				main.weather.force("clear")

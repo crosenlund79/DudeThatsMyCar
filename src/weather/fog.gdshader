@@ -10,6 +10,9 @@ uniform float density : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 fog_color : source_color = vec4(0.66, 0.7, 0.78, 1.0);
 // the banks: a seamless cloudy tile (fx/fog), drifted twice at different scales
 uniform sampler2D banks_tex : repeat_enable, filter_linear;
+// M012: no fog in the building whose room Danny is in (its roof is off):
+// world x, y, w, h (zero size for none).
+uniform vec4 hole = vec4(0.0);
 
 varying vec2 world;
 
@@ -19,6 +22,9 @@ void vertex() {
 
 void fragment() {
 	if (density <= 0.001) {
+		discard;
+	}
+	if (hole.z > 0.0 && world.x > hole.x && world.x < hole.x + hole.z && world.y > hole.y && world.y < hole.y + hole.w) {
 		discard;
 	}
 	vec2 w = world / 900.0;

@@ -373,11 +373,12 @@ var fog_layer: DrawLayer
 var _wet := -1.0
 
 
-func set_weather(rain: float, fog: float, fog_color: Color, fog_material: Material = null) -> void:
+func set_weather(rain: float, fog: float, fog_color: Color, fog_material: Material = null, feet_material: Material = null) -> void:
 	if _fog_feet == null and fog > 0.0:
 		_fog_mesh = Shadows.mesh_of(layout.fog_feet())
 		_fog_feet = DrawLayer.new(func(ci: CanvasItem) -> void: ci.draw_mesh(_fog_mesh, null), Layers.Z_STEAM + 1)
 		_fog_feet.name = "FogFeet"
+		_fog_feet.material = feet_material  # M012: kept out of an open room
 		_props.add_child(_fog_feet)
 		if fog_material != null:
 			var cover := layout.fog_cover()

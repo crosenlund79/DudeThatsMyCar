@@ -21,7 +21,8 @@ const BUS_CLUB_ROOM := "ClubRoom"
 const BUS_STREET := "Street"
 const MUSIC := "music/copper_owl_jazz"
 const CROWD := "ambience/club_crowd"
-const BEDS := {"street": "ambience/street_night", "alley": "ambience/alley", "river": "ambience/river", "rain": "ambience/rain"}
+const BEDS := {"street": "ambience/street_night", "alley": "ambience/alley", "river": "ambience/river", "rain": "ambience/rain",
+	"downpour": "ambience/downpour"}
 const DISTANT := {"horn": "ambience/horn", "foghorn": "ambience/foghorn", "clatter": "ambience/clatter"}
 const DISTANT_DB := {"horn": -9.0, "foghorn": -7.0, "clatter": -11.0}
 ## Shops with a bell over the door.
@@ -124,6 +125,10 @@ func setup(resolver: AssetResolver, p_layout: DistrictLayout, club: InteriorPlan
 	crowd = _loop(CROWD, BUS_CLUB_ROOM)
 	for k in BEDS:
 		beds[k] = _loop(BEDS[k], BUS_STREET)
+	thunder_player = AudioStreamPlayer.new()  # M012: through the street's bus - dull indoors
+	thunder_player.name = "Thunder"
+	thunder_player.bus = BUS_STREET
+	add_child(thunder_player)
 	for k in DISTANT:
 		var p := AudioStreamPlayer2D.new()
 		p.stream = _sound(DISTANT[k])
@@ -234,11 +239,17 @@ func set_speech(on: bool) -> void:
 ## whether he drives, and the street activity of the hour.
 ## M010: how hard it is raining (0..1), set by the weather.
 var rain := 0.0
+## M012: how much of a downpour it is (0..1), set by the weather.
+var downpour := 0.0
+var thunder_player: AudioStreamPlayer
+## M012: the claps heard ({near, indoors, db}; tests).
+var thunder_heard: Array = []
 
 
 func update_listener(p: Vector2, room: InteriorPlan, driving: bool, activity: float, delta: float) -> void:
 	listening = SoundscapeMix.listen(layout, club_plan, p, room, driving, activity)
 	listening["rain"] = rain
+	listening["downpour"] = downpour
 	var target := SoundscapeMix.targets(listening)
 	if level.is_empty():
 		level = target.duplicate()
@@ -341,6 +352,19 @@ func _distant_spot(kind: String, p: Vector2) -> Vector2:
 		"clatter":
 			return p + Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(160.0, 320.0)
 	return p + Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(550.0, 950.0)
+
+
+## M012: a clap of thunder - the crack overhead or the roll over the roofs -
+## on the street's bus, so a room's walls dull it (and take a little more off).
+func thunder(near: bool) -> void:
+	var indoors := _room != null
+	var db := (-4.0 if near else -9.0) + (-6.0 if indoors else 0.0)
+	thunder_player.stream = _sound("weather/thunder_near" if near else "weather/thunder_far")
+	thunder_player.volume_db = db + _rng.randf_range(-1.5, 1.0)
+	thunder_player.pitch_scale = _rng.randf_range(0.9, 1.05)
+	thunder_player.play()
+	thunder_heard.append({"near": near, "indoors": indoors, "db": db})
+	sound_played.emit("weather/thunder_near" if near else "weather/thunder_far")
 
 
 ## One of Danny's own sounds (a door, a till, a car door), close by.

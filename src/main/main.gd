@@ -1692,6 +1692,10 @@ func _update_clock(delta: float) -> void:
 		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
 		_advance_incidents()
 		weather.advance(clock.minute)  # M010
+		var claps := weather.thunder_between(before, clock.minute)  # M012: thunder in a downpour
+		if not claps.is_empty():  # one at a time, however fast the night runs
+			soundscape.thunder(claps[-1].near)
+			weather_view.lightning(claps[-1].near)
 		for e in rackets.opportunities.advance(clock.minute):  # M009: too late is too late
 			_opportunity_over(e)
 		if cafe_scene != null:  # M010: Rosie's Café
@@ -2356,7 +2360,10 @@ func _update_view(delta: float) -> void:
 	for id in world.ready_ids():
 		if id != layout.id:
 			cities.append(world.city_of(id))
-	weather_view.refresh(camera.view_rect(), camera.eye(), camera.zoom.x, cities)
+	# M012: no rain and no fog in the building whose room he is in (its roof is off)
+	var open_room: InteriorView = interiors.view_of(interiors.current.id) if interiors.current != null else null
+	weather_view.indoors = open_room.host.rect if open_room != null and open_room.host != null else Rect2()
+	weather_view.refresh(camera.view_rect(), camera.eye(), camera.zoom.x, cities, delta)
 	if not get_tree().paused:
 		incident_views.refresh(camera.eye(), player.body().global_position, delta)  # M009
 		opportunity_views.refresh(player.body().global_position)
@@ -2409,6 +2416,7 @@ func _update_view(delta: float) -> void:
 		_update_map()
 	soundscape.set_speech(opening != null or voice.speaking())
 	soundscape.rain = weather.rain_strength()  # M010
+	soundscape.downpour = weather.downpour()  # M012
 	if opening != null:
 		camera.zoom_override = opening.zoom
 		# the camera is the listener: the night as it drifts past
