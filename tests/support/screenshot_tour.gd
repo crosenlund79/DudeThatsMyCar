@@ -672,6 +672,56 @@ func _run(shots: Array) -> void:
 				await _frames(60)
 				await _shot(s, false)
 				main.weather.force("clear")
+			"m013_rain", "m013_downpour", "m013_rain_in":
+				# M013: the rain rebuilt - steady rain and a downpour on Marlowe Avenue by the
+				# Copper Owl's lamps, then from inside Quilty's office (dry; the street wet outside)
+				main.weather.force("rain")
+				if s == "m013_downpour":
+					for m in range(0, 600):
+						main.weather.minute = 19 * 60 + 30.0 + m
+						if main.weather.downpour() > 0.9:
+							main.clock.set_time(main.weather.minute)  # the weather follows the clock
+							break
+				var qi: InteriorPlan = main.interiors.plan_named("quilty_office")
+				_teleport_walker(qi.inside_door(0, 40.0) if s == "m013_rain_in" else Vector2(2350, 560), -PI / 2)
+				await _frames(60)
+				await _shot(s, false)
+				main.weather.force("clear")
+			"m013_car_loaded":
+				# M013: saved at the wheel in Halloran Square, loaded: behind the same wheel, there
+				main.weather.force("rain")
+				main.world.load_now("halloran")
+				var hl: DistrictLayout = main.world.layouts.halloran
+				var mar := Rect2()
+				for st in hl.streets:
+					if st.name == "Marlowe Avenue":
+						mar = st.rect
+				var rd: Car = null
+				for c in main.cars:
+					if c.vehicle.id == "coupe":
+						rd = c
+						break
+				rd.place(Transform2D(PI, Vector2(mar.end.x - 400.0, mar.get_center().y + 30.0)))
+				main.walker.place(rd.global_position + Vector2(0, 40), 0.0)
+				main.player.enter(rd)
+				var path := OS.get_user_data_dir().path_join("tour_car_save.json")
+				main.save_path = path
+				main.save_game()
+				root.remove_child(main)
+				main.free()
+				main = load("res://src/main/main.tscn").instantiate()
+				main.save_path = path
+				main.settings_path = ""
+				main.opening_enabled = false
+				main.command_source = func(_c): return PlayerCommand.make(cmd.move, cmd.interact, cmd.handbrake, cmd.aim)
+				root.add_child(main)
+				main.street.clear()
+				main.hud.help_panel.visible = false
+				await _frames(60)
+				await _shot(s, false)
+				DirAccess.remove_absolute(path)
+				main.save_path = ""
+				main.weather.force("clear")
 			"m012_callout":
 				# M012: Alderman Quilty calls out as Danny comes in, and steps round his desk
 				main.weather.force("clear")

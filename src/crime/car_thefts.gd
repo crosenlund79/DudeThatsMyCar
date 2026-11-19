@@ -46,6 +46,12 @@ func get_in(index: int) -> bool:
 	return true
 
 
+## M013: a car taken earlier tonight, as the save has it (not a new theft).
+func mark_taken(index: int) -> void:
+	if index >= 0 and not is_dannys(index):
+		taken[index] = true
+
+
 func is_stolen(index: int) -> bool:
 	return taken.has(index)
 

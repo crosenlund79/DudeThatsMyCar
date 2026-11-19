@@ -156,7 +156,9 @@ func test_only_his_own_money_no_envelope() -> void:
 	assert_eq(r.boss.expected, expect_before)
 
 
-func test_a_saved_night_starts_again_at_dusk() -> void:
+## M013: a game saved mid-night goes on from where it stood (M012 resumes the
+## clock at the saved minute; M009 started the night again at dusk).
+func test_a_saved_night_goes_on_from_where_it_stood() -> void:
 	r.opportunities.take_reel()
 	r.opportunities.find_reel()
 	r.return_reel()
@@ -165,5 +167,11 @@ func test_a_saved_night_starts_again_at_dusk() -> void:
 	var again := Rackets.new(EconomyRules.new())
 	again.from_dict(JSON.parse_string(JSON.stringify(d)))
 	assert_eq(again.opportunities.reel, "returned", "what is over tonight stays over")
-	assert_eq(again.opportunities.crate, "waiting", "a crate not yet loaded: the night starts again at dusk")
+	assert_eq(again.opportunities.crate, "taken", "the crate Danny took on is still his to load")
 	assert_eq(again.return_reel(), 0, "and is not paid twice")
+	again.opportunities.load_crate()
+	var third := Rackets.new(EconomyRules.new())
+	third.from_dict(JSON.parse_string(JSON.stringify(again.to_dict())))
+	assert_eq(third.opportunities.crate, "loaded", "in the boot it stays")
+	assert_gt(third.deliver_crate(), 0)
+	assert_eq(third.deliver_crate(), 0, "paid once")

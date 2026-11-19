@@ -138,8 +138,11 @@ func to_dict() -> Dictionary:
 	return {"night": night, "crate": crate, "reel": reel, "reel_promised": reel_promised, "history": history.duplicate(true)}
 
 
-## A saved game always starts at dusk: tonight's work as it stood at dusk,
-## the earlier nights remembered.
+## A saved game: the earlier nights remembered; what was already over tonight
+## stays over. M013: a game saved mid-night goes on from where it stood (M012
+## resumes it at the saved minute), so an errand Danny took on is still his -
+## the crate taken or in a boot (the boot is restored with the cars), the reel
+## being looked for or in his coat - rather than starting again at dusk.
 func from_dict(d: Dictionary) -> void:
 	history = []
 	for h in d.get("history", []):
@@ -152,3 +155,9 @@ func from_dict(d: Dictionary) -> void:
 				crate = h.outcome
 			else:
 				reel = h.outcome
+	if int(d.get("night", -1)) == night:
+		if crate == "waiting" and String(d.get("crate", "")) in ["taken", "loaded"]:
+			crate = String(d.crate)
+		if reel == "lost" and String(d.get("reel", "")) in ["looking", "found"]:
+			reel = String(d.reel)
+			reel_promised = bool(d.get("reel_promised", false))

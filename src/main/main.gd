@@ -102,6 +102,12 @@ var _districts := {}
 ## district's as it is first built: `cars` only ever grows, a car in a freed
 ## district is put away, not freed, so nothing is ever duplicated).
 var car_specs: Array = []
+## M013: each parked car's lasting name, "<district>/<n>" (the district whose
+## layout parks it and its place in that list) - the same in every session,
+## whichever district happened to be built first. Parallel to `cars`.
+var car_ids: Array[String] = []
+## M013: a car being put back as it was saved (no door slam, no theft).
+var _restoring := false
 ## Tests: no passers-by or traffic in the neighbouring districts either.
 var quiet_streets := false
 var officer: PoliceOfficer
@@ -652,8 +658,12 @@ func _still_out(plan: InteriorPlan) -> Array:
 func _resume_place() -> void:
 	var place: Dictionary = _saved.get("place", {})
 	if place.is_empty() or int(place.get("night", -1)) != rackets.night:
+		_crate_without_a_car()
 		return
 	var at := Vector2(float(place.get("x", 0.0)), float(place.get("y", 0.0)))
+	var seat := _restore_cars()  # M013: the cars where they stood; the one he sat in
+	if seat != null:
+		at = seat.global_position  # in his car (put back at its own place if it could not stand where it was saved)
 	var id := world.district_at(at)
 	if id == "":
 		return
@@ -661,9 +671,96 @@ func _resume_place() -> void:
 	if id != layout.id:
 		world.load_now(id)
 	walker.place(at, float(place.get("facing", 0.0)))
-	interiors.update_player(at)
+	if seat != null and not seat.has_meta("away"):
+		_restoring = true
+		player.enter(seat)  # behind the wheel, the engine running, standing still
+		_restoring = false
+	interiors.update_player(at if seat == null else Vector2.INF)
 	interiors.snap()
-	camera.snap_to(walker)
+	camera.snap_to(walker if seat == null else seat)
+
+
+## M013: where the cars stood tonight, as the save has it: a car moved from its
+## parking place stands where it was left (in any district - a district not
+## built yet keeps it put away until it is), a car Danny took tonight is still
+## taken, a crate is still in its boot. Returns the car he was sitting in (or
+## null). A saved place a car could not stand on (inside a building or the
+## river, or outside the city) leaves it at its own parking place instead.
+func _restore_cars() -> Car:
+	var saved: Dictionary = _saved.get("cars", {})
+	if saved.is_empty() or int(saved.get("night", -1)) != rackets.night:
+		_crate_without_a_car()
+		return null
+	var moved: Dictionary = saved.get("moved", {})
+	var named := {}
+	for id in moved.keys() + (saved.get("taken", []) as Array) + [String(saved.get("driving", ""))]:
+		named[String(id).get_slice("/", 0)] = true
+	for d in named:  # a neighbouring district's cars are made the first time they are needed
+		if d != layout.id and world.layouts.has(d):
+			_district_cars(world.layouts[d])
+	for id in moved:
+		var i := car_ids.find(String(id))
+		if i < 0:
+			continue
+		var m: Dictionary = moved[id]
+		if m.has("x"):
+			var p := Vector2(float(m.x), float(m.y))
+			if car_can_stand(cars[i], p):
+				cars[i].place(Transform2D(float(m.get("rot", 0.0)), p))
+		if String(m.get("cargo", "")) != "":
+			_set_cargo(cars[i], true)
+	for id in saved.get("taken", []):
+		thefts.mark_taken(car_ids.find(String(id)))
+	for c in cars:
+		_put_away(c, not world.is_ready(world.district_at(c.global_position)))
+	if rackets.opportunities.crate == "loaded" and not cars.any(func(c: Car) -> bool: return c.has_meta("cargo")):
+		_crate_without_a_car()
+	var seat := car_ids.find(String(saved.get("driving", "")))
+	return cars[seat] if seat >= 0 else null
+
+
+## M013: whether a car could be put down at `p`: inside a district, on open
+## ground (not in a building or the river) with room for its body.
+func car_can_stand(c: Car, p: Vector2) -> bool:
+	var d := world.district_at(p)
+	if d == "":
+		return false
+	var l: DistrictLayout = world.layouts[d]
+	return l.is_open_ground(p, minf(c.vehicle.size.y * 0.5, 12.0))
+
+
+## M013: a game saved before the cars were (or with no car carrying it): Dutch's
+## crate loaded into a boot that is not there any more goes back to the kerb, to
+## be loaded again, rather than being lost.
+func _crate_without_a_car() -> void:
+	if rackets.opportunities.crate == "loaded" and not cars.any(func(c: Car) -> bool: return c.has_meta("cargo")):
+		rackets.opportunities.crate = "taken"
+
+
+## M013: tonight's cars for the save: those moved from their parking places
+## (where and which way), what is in a boot, which Danny took and which one he
+## is sitting in - each by its lasting name.
+func _cars_to_save() -> Dictionary:
+	var moved := {}
+	var taken := []
+	for i in cars.size():
+		if car_ids[i] == "":
+			continue  # a car a test made by hand
+		var c := cars[i]
+		var spec: Dictionary = car_specs[i]
+		var m := {}
+		if c.global_position.distance_to(spec.pos) > 0.5 or absf(angle_difference(c.global_rotation, float(spec.rot))) > 0.002:
+			m = {"x": c.global_position.x, "y": c.global_position.y, "rot": c.global_rotation}
+		if c.has_meta("cargo"):
+			m["cargo"] = String(c.get_meta("cargo"))
+		if not m.is_empty():
+			moved[car_ids[i]] = m
+		if thefts.is_stolen(i):
+			taken.append(car_ids[i])
+	var driving := ""
+	if player != null and player.car != null and cars.has(player.car):
+		driving = car_ids[cars.find(player.car)]
+	return {"night": rackets.night, "moved": moved, "taken": taken, "driving": driving}
 
 
 ## M008: a beat cop in the game: his own revolver is seen and heard like
@@ -755,8 +852,8 @@ func _district_cars(l: DistrictLayout) -> void:
 	if e.cars_made:
 		return
 	e.cars_made = true
-	for spec in l.cars:
-		_make_car(spec)
+	for j in l.cars.size():
+		_make_car(l.cars[j], "%s/%d" % [l.id, j])
 
 
 ## A district is complete: the camera may show it, the cars parked in it come
@@ -912,13 +1009,13 @@ func _end_opening() -> void:
 
 
 func _park_cars() -> void:
-	for spec in layout.cars:
-		_make_car(spec)
+	for j in layout.cars.size():
+		_make_car(layout.cars[j], "%s/%d" % [layout.id, j])
 
 
 ## A parked car from a layout entry (M008: any district's), added to `cars`,
-## its owner to `thefts` (once that exists).
-func _make_car(spec: Dictionary) -> Car:
+## its owner to `thefts` (once that exists). `id`: its lasting name (M013).
+func _make_car(spec: Dictionary, id: String = "") -> Car:
 	var vehicle: VehicleType = VEHICLES[spec.type]
 	var c: Car = CAR_SCENE.instantiate()
 	c.position = spec.pos
@@ -934,6 +1031,7 @@ func _make_car(spec: Dictionary) -> Car:
 		c.process_mode = Node.PROCESS_MODE_PAUSABLE
 	cars.append(c)
 	car_specs.append(spec)
+	car_ids.append(id)
 	if thefts != null:
 		thefts.add(String(spec.get("owner", "")))
 	return c
@@ -955,7 +1053,8 @@ func _plan(id: String) -> InteriorPlan:
 
 
 func _on_entered_car(c: Car) -> void:
-	soundscape.play("vehicles/door", -3.0)
+	if not _restoring:
+		soundscape.play("vehicles/door", -3.0)
 	var i := cars.find(c)
 	if thefts.get_in(i):
 		theft_incidents += 1
@@ -1919,6 +2018,8 @@ func save_game() -> void:
 		data.rackets.loan.spare = thompson.spare
 	if world != null:
 		data["districts"] = _districts_to_save()
+	if thefts != null:
+		data["cars"] = _cars_to_save()  # M013: where the cars stand, which are taken, the one he sits in
 	if walker != null and clock != null:  # M012: where and when (in the street or in a room, any district)
 		var at: Vector2 = walker.global_position if player == null or player.on_foot() else player.body().global_position
 		data["place"] = {"night": rackets.night, "minute": clock.minute, "x": at.x, "y": at.y, "facing": walker.model.facing}
