@@ -65,6 +65,10 @@ FIREMAN = {"coat": "#1e1e22", "coat_light": "#34343a", "trouser": "#1a1a1d", "ha
            "stripes": False, "front": "buttons"}
 ATTENDANT = {"coat": "#e6e2d8", "coat_light": "#f6f3ec", "arm": "#e6e2d8", "trouser": "#2c2c32", "hat": "cap",
              "hat_color": "#ece8de", "stripes": False, "front": "buttons"}
+# M011: the gaming room's croupier: white shirt sleeves held by garters, a black waistcoat,
+# a bow tie and a green eyeshade over slicked dark hair.
+CROUPIER = {"coat": "#1d1c20", "coat_light": "#33323a", "arm": "#ece7da", "trouser": "#18181b", "hat": "visor",
+            "hat_color": "#20160f", "stripes": False, "front": "bowtie"}
 PATRON_WOMAN = {"coat": "#7a1f30", "coat_light": "#a8384a", "arm": SKIN, "trouser": "#c79a7c", "hat": "bob",
                 "hat_color": "#1d1410", "stripes": False, "front": "pearls"}
 
@@ -199,6 +203,20 @@ def _hat(img, cx, cy, look):
         line(img, [(S(cx - 5), S(cy)), (S(cx + 3), S(cy))], shade(HAT, 0.7), 1.0 * SS, 200)
         soft_blob(img, S(cx + 1), S(cy - 3), S(2.4), S(1.4), "#ffffff", 40, 0.8 * SS)
         return finish(img, F, F)
+    if look["hat"] == "visor":
+        # M011: the croupier's green celluloid eyeshade over slicked hair: the head bare
+        # behind, a translucent green brim jutting out over the eyes at the front
+        hair = look["hat_color"]
+        paint_shape(img, SP(ellipse_pts(cx + 1.5, cy, 7.4, 7.0)), SKIN, 7, outline=OUT, ow=1.0, wob=0.15, tex=0.1,
+                    light=(0.5, -1, 0.4))
+        paint_shape(img, SP(ellipse_pts(cx - 1.4, cy, 6.6, 6.4)), hair, 72, outline=OUT, ow=1.1, wob=0.2, tex=0.15,
+                    strokes_n=8, stroke_cols=[shade(hair, 1.4), shade(hair, 0.8)], light=(0.4, -1, 0.6))
+        line(img, [(S(cx - 3.6), S(cy - 6.4)), (S(cx - 3.6), S(cy + 6.4))], "#1e3a26", 1.2 * SS, 230)  # the band
+        brim = [(cx - 3.0, cy - 7.4), (cx + 4.5, cy - 8.6), (cx + 10.5, cy - 4.0), (cx + 11.2, cy),
+                (cx + 10.5, cy + 4.0), (cx + 4.5, cy + 8.6), (cx - 3.0, cy + 7.4)]
+        paint_shape(img, SP(brim), "#3f9a5c", 73, outline=(20, 50, 30), ow=0.8, wob=0.08, tex=0.1, light=(0.4, -1, 0.7))
+        soft_blob(img, S(cx + 6), S(cy - 2.5), S(3.0), S(1.6), "#d8ffe0", 70, 0.8 * SS)
+        return finish(img, F, F)
     if look["hat"] in ("hair", "bob"):
         hair = look["hat_color"]
         bob = look["hat"] == "bob"
@@ -326,4 +344,5 @@ ASSETS = {
     "characters/feeney": lambda: sheet(FEENEY),
     "characters/fireman": lambda: sheet(FIREMAN),
     "characters/attendant": lambda: sheet(ATTENDANT),
+    "characters/croupier": lambda: sheet(CROUPIER),
 }

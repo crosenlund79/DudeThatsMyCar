@@ -590,6 +590,12 @@ func _run(shots: Array) -> void:
 				await _shot(s, false)
 				if s == "poker_game":
 					main.leave_poker()
+			"gaming_room":
+				# M011: the Copper Owl's gaming room - the wheel and its croupier, the machines, the small tables
+				main.weather.force("clear")
+				_teleport_walker(RiversideInteriors.ROULETTE_SPOT + Vector2(26, 0), -PI / 2 - 0.6)
+				await _frames(40)
+				await _shot(s, false)
 			"thompson":
 				# M010: Eddie's Thompson, borrowed, in a burst down the alley behind the Copper Owl
 				main.weather.force("clear")

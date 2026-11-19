@@ -16,7 +16,7 @@ extends RefCounted
 const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist": "Mr. Lindqvist", "eddie": "Eddie",
 	"rourke": "Rourke", "bird": "The Bird", "lefty": "Lefty Moran", "pettibone": "Doc Pettibone", "bed": "Home",
 	"dutch": "Dutch", "feeney": "Mr. Feeney", "irv": "Irv Feldman", "red": "Red Gallagher", "pete": "Lucky Pete",
-	"moe": "Moe Brandt"}
+	"moe": "Moe Brandt", "croupier": "Leo Varga"}
 
 var rackets: Rackets
 

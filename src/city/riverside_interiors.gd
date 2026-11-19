@@ -8,6 +8,7 @@ extends RefCounted
 static func add_to(d: DistrictLayout) -> void:
 	d.interiors.append(copper_owl(d))
 	d.interiors.append(back_room(d))
+	d.interiors.append(gaming_room(d))
 	d.interiors.append(barber_shop(d))
 	d.interiors.append(grocery(d))
 	d.interiors.append(hardware_store(d))
@@ -84,7 +85,10 @@ static func back_room(d: DistrictLayout) -> InteriorPlan:
 	p.building_rect = d.buildings[p.building].rect  # x 1981..2151, y 168..439
 	p.room = Rect2(1981, 168, 170, 150)  # the back of the house; the front stays shut
 	p.floor = "interiors/floor_carpet"
-	p.doors = [{"side": Vector2.RIGHT, "at": 269.0, "width": 26.0, "inner": true}]
+	p.doors = [
+		{"side": Vector2.RIGHT, "at": 269.0, "width": 26.0, "inner": true},
+		{"side": Vector2.LEFT, "at": GAMING_DOOR, "width": 26.0, "inner": true},  # M011: through to the gaming room
+	]
 	var t := TABLE
 	p.furniture = [
 		{"kind": "interiors/poker_table", "pos": t, "radius": 28.0},
@@ -115,6 +119,79 @@ static func back_room(d: DistrictLayout) -> InteriorPlan:
 
 ## The back room's card table; the chairs stand round it 44 px out (Danny's to the south).
 const TABLE := Vector2(2062, 243)
+## M011: the door between the card room and the gaming room (y in the shared wall at x 1981).
+const GAMING_DOOR := 268.0
+
+
+## M011: the rest of the Copper Owl's back rooms - the gaming room, through the
+## door in the card room's west wall, on the ground floor of the house next
+## door (which keeps its outside look: flats above, the shop front shuttered).
+## Dark boards, a long shaded lamp low over the wheel, three nickel machines
+## along the back wall, a couple of small tables with drinks and ashtrays, old
+## prints and a clock on the walls, smoke under the ceiling; the croupier at
+## the wheel and a few players. Each game has its own place: the wheel's rail
+## (RouletteTable), each machine (SlotMachine); E there plays.
+static func gaming_room(d: DistrictLayout) -> InteriorPlan:
+	var p := InteriorPlan.new("gaming_room", "The Copper Owl's Gaming Room")
+	p.building = d.building_at(Vector2(1880, 300))
+	p.building_rect = d.buildings[p.building].rect  # x 1781..1981, y 168..439
+	p.room = p.building_rect
+	p.floor = "interiors/floor_gaming"
+	p.doors = [{"side": Vector2.RIGHT, "at": GAMING_DOOR, "width": 26.0, "inner": true}]
+	var w := WHEEL_TABLE
+	p.furniture = [
+		{"kind": "interiors/roulette_table", "pos": w, "box": Vector2(124, 56)},
+		{"kind": "interiors/roulette_rotor", "pos": wheel_centre(), "z": 1},
+		{"kind": "interiors/slot_machine_owl", "pos": SLOTS[0], "box": Vector2(26, 28)},
+		{"kind": "interiors/slot_machine_bell", "pos": SLOTS[1], "box": Vector2(26, 28)},
+		{"kind": "interiors/slot_machine_star", "pos": SLOTS[2], "box": Vector2(26, 28)},
+		{"kind": "interiors/wall_prints", "pos": Vector2(1935, 183)},
+		{"kind": "interiors/tall_clock", "pos": Vector2(1797, 240), "rot": -PI / 2, "box": Vector2(18, 14)},
+		{"kind": "interiors/sideboard", "pos": Vector2(1799, 394), "rot": -PI / 2, "box": Vector2(56, 20)},
+		{"kind": "interiors/coat_rack", "pos": Vector2(1962, 226), "radius": 6.0},
+		{"kind": "interiors/side_table", "pos": Vector2(1846, 408), "radius": 13.0},
+		{"kind": "interiors/chair", "pos": Vector2(1846 - 22, 408), "rot": -PI / 2},
+		{"kind": "interiors/chair", "pos": Vector2(1846 + 22, 408), "rot": PI / 2},
+		{"kind": "interiors/side_table", "pos": Vector2(1946, 404), "radius": 13.0},
+		{"kind": "interiors/chair", "pos": Vector2(1946 - 22, 404), "rot": -PI / 2},
+		{"kind": "interiors/spittoon", "pos": Vector2(1964, 356)},
+		{"kind": "interiors/smoke", "pos": w + Vector2(10, -6), "z": 11},
+		{"kind": "interiors/smoke", "pos": Vector2(1900, 404), "rot": 1.4, "z": 11},
+	]
+	p.lamps = [
+		{"pos": w, "color": Color(1.0, 0.8, 0.52), "energy": 1.15, "radius": 150.0},  # the long shade over the wheel
+		{"pos": Vector2(1850, 206), "color": Color(1.0, 0.7, 0.45), "energy": 0.6, "radius": 90.0},  # over the machines
+		{"pos": Vector2(1846, 408), "color": Color(1.0, 0.66, 0.4), "energy": 0.45, "radius": 70.0},
+		{"pos": Vector2(1946, 404), "color": Color(1.0, 0.66, 0.4), "energy": 0.45, "radius": 70.0},
+	]
+	p.people = [
+		{"id": "croupier", "name": "Leo Varga", "look": "characters/croupier", "pos": CROUPIER, "facing": PI / 2},
+		{"id": "player_a", "name": "", "look": "characters/patron_woman", "pos": Vector2(1858, 370), "facing": -PI / 2},
+		{"id": "player_b", "name": "", "look": "characters/patron_man", "pos": Vector2(1914, 278), "facing": PI / 2},
+		{"id": "drinker", "name": "", "look": "characters/clerk", "pos": Vector2(1869, 408), "facing": PI},
+	]
+	p.spots = [
+		{"id": "roulette", "pos": ROULETTE_SPOT, "radius": 22.0, "prompt": "Play the wheel"},
+	]
+	for i in SLOTS.size():
+		p.spots.append({"id": "slot_%d" % i, "pos": SLOTS[i] + Vector2(0, 32), "radius": 15.0,
+			"prompt": "Play the %s" % SLOT_NAMES[i]})
+	return p
+
+
+## M011: the gaming room's wheel table (its wheel at the left end), where the
+## croupier stands and where Danny steps up to bet.
+const WHEEL_TABLE := Vector2(1874, 322)
+const CROUPIER := Vector2(1850, 276)
+const ROULETTE_SPOT := Vector2(1892, 372)
+## M011: the three machines along the back wall, left to right, and their names.
+const SLOTS: Array[Vector2] = [Vector2(1816, 194), Vector2(1850, 194), Vector2(1884, 194)]
+const SLOT_NAMES: Array[String] = ["Owl", "Bell", "Star"]
+
+
+## Where the wheel turns in the table (its bowl at the table's left end).
+static func wheel_centre() -> Vector2:
+	return WHEEL_TABLE + Vector2(-64.0 + 58.0 * 128.0 / 288.0, 0.0)
 
 
 ## Sal's Barber Shop, a block west of the club on Marlowe Avenue: two chairs
