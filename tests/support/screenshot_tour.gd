@@ -614,6 +614,40 @@ func _run(shots: Array) -> void:
 				await _shot(s, false)
 				if s == "poker_game":
 					main.leave_poker()
+			"m013_poker_stakes", "m013_poker_leave":
+				# M013: the buy-in with the stakes (dime and quarter chosen); then at that table, his turn
+				# in a hand, Esc: the question before he gets up mid-hand
+				main.weather.force("clear")
+				main.rackets.money = 6000
+				var bp2: InteriorPlan = main.interiors.view_of("back_room").plan
+				_teleport_walker(bp2.spots[0].pos, -PI / 2)
+				await _frames(3)
+				main._interact(main.walker.global_position)
+				await _frames(5)
+				var pv2: PokerView = main.hud.poker_view
+				pv2.level_requested.emit(1)
+				await _frames(5)
+				if s == "m013_poker_leave":
+					pv2.choose_buy_in(1)
+					pv2.think = Vector2(0.05, 0.1)
+					for f in 4000:
+						var tb2: Holdem = main.poker.table
+						if tb2 == null:
+							break
+						if pv2.pacing.waiting():
+							pv2.continue_step()
+						elif tb2.running() and tb2.to_act == main.poker.danny and tb2.street >= Holdem.FLOP:
+							break
+						elif tb2.running() and tb2.to_act == main.poker.danny:
+							pv2.act(2)
+						await _frames(1)
+					pv2.request_leave()
+					await _frames(10)
+				await _shot(s, false)
+				if s == "m013_poker_leave":
+					pv2.answer_leave(true)
+				else:
+					pv2.bought_in.emit(0)
 			"gaming_room":
 				# M011: the Copper Owl's gaming room - the wheel and its croupier, the machines, the small tables
 				main.weather.force("clear")

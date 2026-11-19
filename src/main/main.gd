@@ -434,6 +434,11 @@ func _ready() -> void:
 	hud.dialogue_choice.connect(_answer)
 	hud.poker_view.bought_in.connect(_on_bought_in)
 	hud.poker_view.leave_requested.connect(leave_poker)
+	hud.poker_view.level_requested.connect(func(i: int) -> void:  # M013: the stakes, before he sits down
+		if poker.set_level(i):
+			hud.poker_view.refresh_buy_in(rackets.money))
+	hud.poker_view.hand_over.connect(save_game)  # M013: every hand's result kept (a save never undoes a loss)
+	hud.poker_view.beat_shown.connect(_poker_taunt)  # M013: the hook for recorded taunts
 	hud.poker_view.sound.connect(func(kind: String) -> void: soundscape.play("poker/" + kind, -4.0))
 	roulette = Roulette.new(roulette_rules)
 	wheel = RouletteTable.new(roulette_rules, roulette)  # M013: an unpredictable draw in play (tests seed their own)
@@ -442,6 +447,7 @@ func _ready() -> void:
 		wheel_patrons.seat(id)
 	wheel.set_patrons(wheel_patrons)
 	_react_rng.randomize()
+	_taunt_rng.randomize()
 	room_lines = RoomLines.new()
 	add_child(room_lines)
 	room_lines.setup(load(Hud.FONT_PATH))
@@ -1645,6 +1651,31 @@ func leave_poker() -> void:
 			"%s ahead" % Rackets.dollars(won) if won > 0 else ("%s down" % Rackets.dollars(-won) if won < 0 else "even")))
 	_sync_card_players()
 	save_game()
+
+
+## M013: the card players' taunts - only where a recording of the line exists
+## (custom/audio/voice/poker/<id>; none ship), now and then, never over
+## another voice. `last_taunt` keeps the line picked (for tests and the
+## recording draft), recorded or not.
+var last_taunt := {}
+var _taunt_rng := RandomNumberGenerator.new()
+
+
+func _poker_taunt(beat: Dictionary) -> void:
+	if poker.table == null:
+		return
+	for want in PokerTaunts.situations(beat, poker.table, poker.danny):
+		if _taunt_rng.randf() > 0.35:
+			continue
+		var line := PokerTaunts.pick(String(want.player), String(want.situation), _taunt_rng)
+		if line.is_empty():
+			continue
+		var name := PokerTaunts.audio_name(line)
+		var recorded := resolver.has_audio_override(name) or AssetResolver.audio_fallback_path(name) != ""
+		last_taunt = {"player": want.player, "situation": want.situation, "line": line, "recorded": recorded}
+		if recorded and not voice.speaking():
+			soundscape.play(name, -2.0)
+		return  # one at a time
 
 
 ## The card players in their chairs: whoever is still about tonight; the late

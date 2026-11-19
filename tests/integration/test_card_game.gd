@@ -150,7 +150,9 @@ func test_raising_with_the_keys() -> void:
 	assert_eq(last.to, to, "raised to what the table showed")
 
 
-func test_a_save_mid_hand_counts_the_hand_for_nothing() -> void:
+## M013: a save mid-hand counts the hand as folded (M010 counted it void,
+## which let a save undo a losing hand): what he has put in is gone.
+func test_a_save_mid_hand_counts_the_hand_as_folded() -> void:
 	main.save_path = SAVE
 	main.rackets.money = 1000
 	await _to_the_table()
@@ -161,12 +163,15 @@ func test_a_save_mid_hand_counts_the_hand_for_nothing() -> void:
 			break
 		await wait_process_frames(1)
 	assert_true(main.poker.table.running())
+	var in_pot: int = main.poker.table.seats[main.poker.danny].total
 	main.save_game()
 	var saved := SaveGame.read(SAVE)
-	assert_eq(int(saved.rackets.money), 500 + 500, "his five dollars counted as his: the blind he posted is not lost")
+	assert_eq(int(saved.rackets.money), 500 + 500 - in_pot, "what he has in the pot is gone, as if he had folded")
 	main.save_path = ""
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
 	await _press(KEY_ESCAPE)
+	if main.hud.poker_view.is_open():
+		await _press(KEY_ENTER)  # M013: yes, fold and leave
 
 
 func test_closing_time() -> void:

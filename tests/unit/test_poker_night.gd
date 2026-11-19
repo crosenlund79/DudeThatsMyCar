@@ -1,8 +1,11 @@
 extends GutTest
 ## M010 the back-room game's books: buy-in limits, every cent accounted for
 ## from sitting down to getting up (mid-hand too), players going bust and home,
-## the late man taking a free chair once, closing time, an unfinished hand
-## void in the save, and the same night playing out the same way.
+## the late man taking a free chair once, closing time, and the same night
+## playing out the same way. M013: the stakes chosen before sitting down
+## (blinds, buy-ins and the regulars' stacks to match, never changed while he
+## sits); a hand under way counts as folded in the save (no undoing a loss);
+## what getting up mid-hand would cost, spelled out.
 
 
 func _night() -> PokerNight:
@@ -72,13 +75,20 @@ func test_leaving_mid_hand() -> void:
 	assert_eq(money[0] + n.players_money(), books, "the others play the hand out between them")
 
 
-func test_saved_mid_hand_the_hand_is_void() -> void:
+## M013 (M010 counted a hand under way void, which let a save undo a loss).
+func test_saved_mid_hand_the_hand_counts_as_folded() -> void:
 	var n := _night()
 	n.sit_down(500, 1000)
 	assert_eq(n.stake_for_save(), 500)
 	n.next_hand()
 	assert_true(n.table.running())
-	assert_eq(n.stake_for_save(), 500, "an unfinished hand counts for nothing")
+	var in_pot: int = n.table.seats[n.danny].total
+	assert_eq(n.stake_for_save(), 500 - in_pot, "a hand under way counts as folded: what is in the pot is gone")
+	while n.ai_to_act():
+		n.ai_turn()
+	if n.table.running() and n.table.to_act == n.danny and n.table.legal(n.danny).all_in > 0:
+		n.danny_acts("all_in")
+		assert_eq(n.stake_for_save(), 0, "all in: everything is in the pot, nothing comes back from a save")
 	while n.table.running():
 		if n.ai_to_act():
 			n.ai_turn()
@@ -111,7 +121,7 @@ func test_bust_the_late_man_and_closing_time() -> void:
 	assert_eq(n.cannot_sit(5000), "The game's breaking up for the night.")
 	n.begin_night(2)
 	assert_eq(n.cannot_sit(5000), "", "the next night they are all back, with fresh money")
-	assert_eq(n.purses.red, 500)
+	assert_eq(n.purses.red, 500 * PokerNight.BANKROLL, "M013: a night's bankroll (he sits with 500 at these stakes)")
 
 
 func test_danny_cleaned_out() -> void:
@@ -145,3 +155,58 @@ func test_the_same_night_plays_the_same() -> void:
 		_play(n, money, books, 6)
 		results.append(n.danny_chips())
 	assert_eq(results[0], results[1])
+
+
+func test_the_stakes_chosen_before_sitting_down() -> void:
+	var n := _night()
+	assert_eq(n.level, 0, "nickel and dime, as ever")
+	assert_eq([n.small_blind, n.big_blind], [5, 10])
+	assert_eq(n.buy_in_choices(5000), [200, 500, 1000] as Array[int])
+	assert_true(n.set_level(1))
+	assert_eq([n.small_blind, n.big_blind], [10, 25])
+	assert_eq(n.buy_in_choices(5000), [500, 1000, 2500] as Array[int])
+	assert_string_contains(n.cannot_sit(400), "dime and quarter game's a $5 buy-in")
+	assert_true(n.set_level(2))
+	assert_eq([n.small_blind, n.big_blind], [25, 50])
+	assert_eq(n.buy_in_choices(3000), [1000, 2500] as Array[int])
+	assert_false(n.set_level(7))
+	var money := [6000]
+	var books: int = money[0] + n.players_money()
+	assert_true(n.sit_down(2500, money[0]))
+	money[0] -= 2500
+	assert_eq([n.table.small_blind, n.table.big_blind], [25, 50], "the table plays the stakes chosen")
+	for s in n.table.seats:
+		if s.id != "danny":
+			var p := PokerNight.person(String(s.id))
+			assert_eq(int(s.stack), int(p.purse) * 5, "%s sits with five times his usual stake" % s.name)
+	assert_false(n.set_level(0), "never changed while he sits")
+	_play(n, money, books, 8)
+	money[0] += n.leave()
+	assert_eq(money[0] + n.players_money(), books, "every cent accounted for at the higher stakes")
+	assert_true(n.set_level(0), "back up: he may choose again")
+
+
+func test_at_the_low_stakes_the_regulars_sit_as_they_always_did() -> void:
+	var n := _night()
+	n.sit_down(500, 1000)
+	for s in n.table.seats:
+		if s.id != "danny":
+			assert_eq(int(s.stack), int(PokerNight.person(String(s.id)).purse), "%s: his usual stake" % s.name)
+
+
+func test_what_getting_up_mid_hand_would_cost() -> void:
+	var n := _night()
+	assert_false(n.leave_terms().in_hand)
+	n.sit_down(1000, 1000)
+	var t := n.leave_terms()
+	assert_false(t.in_hand, "between hands: nothing at stake")
+	assert_eq(t.takes, 1000)
+	n.next_hand()
+	while n.ai_to_act():
+		n.ai_turn()
+	if n.table.running() and n.table.to_act == n.danny:
+		t = n.leave_terms()
+		assert_true(t.in_hand)
+		assert_eq(t.in_pot, int(n.table.seats[n.danny].total))
+		assert_eq(t.takes, int(n.table.seats[n.danny].stack))
+		assert_eq(n.leave(), t.takes, "and that is what he takes home")

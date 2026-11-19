@@ -15,8 +15,19 @@ extends Control
 ## until Danny presses Space (one press, one beat; holding it does nothing
 ## more); the betting keys wait meanwhile. Runs the game's pace; the rules and
 ## the money are PokerNight's and Holdem's.
+## M013: the stakes chosen on the buy-in (three brass plates: a click, or the
+## left and right arrows), shown on a plaque at the table; getting up during a
+## hand he is still in asks first - what he has in the pot is lost, what he
+## takes home - Enter or Y to go, Esc or N to stay; chips slide from the
+## players to the pot and the pot to the winner; a copper marker at the player
+## to act and the pot's last rise beside it.
 
 signal bought_in(amount: int)
+## M013: Danny chose the stakes (a PokerNight.LEVELS index) on the buy-in.
+signal level_requested(i: int)
+## M013: a hand is over (its result shown): the game saves.
+signal hand_over
+## Danny gets up (after saying yes, if a hand was at stake).
 signal leave_requested
 ## A beat came on show (PokerPacing's {kind, ...}; an action names its player:
 ## `player` is the seat's id, `action` what he did) - the hook for anything
@@ -65,6 +76,15 @@ var _suits: Array[Texture2D] = []
 var _chip: Texture2D
 var _dealer: Texture2D
 var _rng := RandomNumberGenerator.new()
+## M013: asking whether to get up mid-hand ({} when not): PokerNight.leave_terms().
+var confirm := {}
+## Chips on their way across the baize: {from, to, amount, t}.
+var _moves: Array = []
+## The pot's last rise (cents) and how long ago.
+var _pot_rise := 0
+var _pot_rise_t := 9.0
+var _last_pot := 0
+const MOVE_TIME := 0.35
 
 
 func setup(resolver: AssetResolver, font: Font) -> void:
@@ -103,10 +123,42 @@ func open(p_night: PokerNight, p_money: int) -> void:
 	banner = ""
 	over_text = night.cannot_sit(money)
 	said = {}
+	confirm = {}
+	_moves.clear()
 	log_lines.clear()
 	pacing.new_hand()
 	visible = true
 	queue_redraw()
+
+
+## M013: the stakes changed on the buy-in screen: what he can buy in for now.
+func refresh_buy_in(p_money: int) -> void:
+	money = p_money
+	choices = night.buy_in_choices(money)
+	over_text = night.cannot_sit(money)
+	queue_redraw()
+
+
+## M013: Esc, E or a click on "Leave": straight up between hands (or once he
+## has folded); during a hand he is still in, first the question.
+func request_leave() -> void:
+	if phase == "play" and night != null and night.seated() and confirm.is_empty():
+		var terms := night.leave_terms()
+		if terms.in_hand:
+			confirm = terms
+			queue_redraw()
+			return
+	confirm = {}
+	leave_requested.emit()
+
+
+func answer_leave(go: bool) -> void:
+	if confirm.is_empty():
+		return
+	confirm = {}
+	queue_redraw()
+	if go:
+		leave_requested.emit()
 
 
 ## He has bought in: the game begins.
@@ -121,6 +173,8 @@ func begin_play() -> void:
 func close() -> void:
 	phase = "closed"
 	visible = false
+	confirm = {}
+	_moves.clear()
 
 
 static func money_text(cents: int) -> String:
@@ -139,6 +193,17 @@ func _process(delta: float) -> void:
 	if phase != "play" or night == null or not night.seated():
 		return
 	queue_redraw()
+	for m in _moves:
+		m.t = float(m.t) + delta
+	_moves = _moves.filter(func(m: Dictionary) -> bool: return float(m.t) < MOVE_TIME)
+	_pot_rise_t += delta
+	var pot := night.table.pot_total()
+	if pot > _last_pot:
+		_pot_rise = pot - _last_pot
+		_pot_rise_t = 0.0
+	_last_pot = pot
+	if not confirm.is_empty():
+		return  # the question waits for an answer; the game with it
 	if pacing.waiting():
 		return  # one beat on show: nothing moves until Space
 	var t := night.table
@@ -176,17 +241,53 @@ func _show(beat: Dictionary) -> void:
 			_log("%s: %s" % [beat.name, String(beat.text).to_lower()])
 			if beat.action != "fold" and beat.action != "check":
 				sound.emit("chips")
+				_slide(_slot(night.table, int(beat.seat)), _bet_spot(int(beat.seat)), int(beat.amount))  # M013
 		"deal":
 			_log(beat.text)
 			sound.emit("cards")
+			_sweep_to_pot()
 		"result":
 			banner = beat.text
 			_log(beat.text)
 			if night != null and night.table != null and night.table.shown:
 				sound.emit("reveal")  # M011: the hands turned over
 			sound.emit("pot")  # M011: the pot pushed to the winner
+			_pot_to_winners()
+			hand_over.emit()  # M013: the game saves after every hand
 	beat_shown.emit(beat)
 	queue_redraw()
+
+
+## M013: chips sliding across the baize.
+func _slide(from: Vector2, to: Vector2, amount: int) -> void:
+	if amount > 0:
+		_moves.append({"from": from, "to": to, "amount": amount, "t": 0.0})
+
+
+func _bet_spot(seat: int) -> Vector2:
+	return centre + BETS[_slot_index(night.table, seat)] * ui_scale
+
+
+func _pot_spot() -> Vector2:
+	return centre + Vector2(0, _s(-74))
+
+
+## A new street: what was bet goes into the middle.
+func _sweep_to_pot() -> void:
+	if night == null or night.table == null:
+		return
+	for i in night.table.seats.size():
+		var s: Dictionary = night.table.seats[i]
+		if s.in_hand and int(s.total) > 0 and not s.out:
+			_slide(_bet_spot(i), _pot_spot(), mini(int(s.total), 100))
+
+
+## The result: the pot to whoever won it.
+func _pot_to_winners() -> void:
+	var t := night.table
+	for r in t.results:
+		for w in r.winners:
+			_slide(_pot_spot(), _slot(t, int(w)), int(r.amount) / maxi(1, (r.winners as Array).size()))
 
 
 ## Space (or a click on the prompt): the next beat, or play goes on.
@@ -285,6 +386,14 @@ func handle_key(event: InputEvent) -> bool:
 			adjust(-1)
 			return true
 		return false
+	if not confirm.is_empty():  # M013: the question first - nothing else moves
+		if event is InputEventKey and event.pressed and not event.echo:
+			var ck: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+			if ck in [KEY_ENTER, KEY_KP_ENTER, KEY_Y]:
+				answer_leave(true)
+			elif ck in [KEY_ESCAPE, KEY_N, KEY_E]:
+				answer_leave(false)
+		return true
 	if event is InputEventKey and (event.physical_keycode == KEY_SPACE or event.keycode == KEY_SPACE):
 		# one press, one beat: a held Space (its auto-repeat, or a press before it is let go) moves nothing more
 		if phase == "play":
@@ -297,7 +406,10 @@ func handle_key(event: InputEvent) -> bool:
 		if phase == "buyin":
 			bought_in.emit(0)
 		else:
-			leave_requested.emit()
+			request_leave()
+		return true
+	if phase == "buyin" and (k == KEY_LEFT or k == KEY_RIGHT):
+		level_requested.emit(clampi(night.level + (1 if k == KEY_RIGHT else -1), 0, PokerNight.LEVELS.size() - 1))
 		return true
 	if k >= KEY_1 and k <= KEY_4:
 		if phase == "buyin":
@@ -327,9 +439,15 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _click(id: String) -> void:
+	if not confirm.is_empty():
+		if id == "leave_yes":
+			answer_leave(true)
+		elif id == "leave_no":
+			answer_leave(false)
+		return
 	match id:
 		"leave":
-			leave_requested.emit()
+			request_leave()
 		"continue":
 			continue_step()
 		"buy0", "buy1", "buy2":
@@ -343,6 +461,8 @@ func _click(id: String) -> void:
 		_:
 			if id.begins_with("act"):
 				act(int(id.substr(3)))
+			elif id.begins_with("level"):
+				level_requested.emit(int(id.substr(5)))
 
 
 # ------------------------------------------------------------------ drawing
@@ -385,9 +505,58 @@ func _draw() -> void:
 		var r := Rect2(centre + Vector2(_s(-360), _s(50)), Vector2(_s(720), _s(40)))
 		_panel(r, Color(GOLD, 0.7))
 		_text(r.get_center() + Vector2(0, _s(7)), banner, 17, GOLD)
+	_draw_moves()
+	_draw_stakes_plaque()
 	if phase == "over":
 		_draw_over()
 	_leave_hint()
+	if not confirm.is_empty():
+		_draw_confirm()
+
+
+## M013: the chips on their way.
+func _draw_moves() -> void:
+	for m in _moves:
+		var k := smoothstep(0.0, 1.0, float(m.t) / MOVE_TIME)
+		var p: Vector2 = (m.from as Vector2).lerp(m.to, k)
+		_chips(p, int(m.amount))
+
+
+## M013: the stakes on a plaque at the table's corner.
+func _draw_stakes_plaque() -> void:
+	var felt := AssetCatalog.display_size("ui/poker_felt") * ui_scale
+	var r := Rect2(centre - felt * 0.5 + Vector2(_s(30), _s(24)), Vector2(_s(250), _s(30)))
+	_panel(r, Color(COPPER, 0.5), 1.0)
+	_text(r.get_center() + Vector2(0, _s(6)), "%s   blinds %s / %s" % [night.level_name(), _cents(night.small_blind),
+		_cents(night.big_blind)], 13, CREAM)
+
+
+static func _cents(c: int) -> String:
+	return "%d¢" % c if c < 100 else money_text(c)
+
+
+## M013: getting up during a hand he is still in - first the question.
+func _draw_confirm() -> void:
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.45))
+	var r := Rect2(centre - Vector2(_s(330), _s(110)), Vector2(_s(660), _s(220)))
+	_panel(r, Color(GOLD, 0.8), 2.5)
+	_text(r.position + Vector2(r.size.x * 0.5, _s(40)), "Leave in the middle of a hand?", 22, COPPER)
+	var lines := []
+	if confirm.all_in:
+		lines.append("You're all in: leaving now forfeits all %s in the pot." % money_text(int(confirm.in_pot)))
+	else:
+		lines.append("You fold. The %s you've put in stays in the pot." % money_text(int(confirm.in_pot)))
+	lines.append("You take %s home." % money_text(int(confirm.takes)))
+	for k in lines.size():
+		_text(r.position + Vector2(r.size.x * 0.5, _s(84) + k * _s(26)), lines[k], 16, CREAM)
+	var yes := Rect2(r.position + Vector2(_s(70), _s(150)), Vector2(_s(240), _s(40)))
+	var no := Rect2(r.position + Vector2(_s(350), _s(150)), Vector2(_s(240), _s(40)))
+	_panel(yes, Color(RED, 0.8), 1.5)
+	_text(yes.get_center() + Vector2(0, _s(7)), "Enter   Fold and leave", 16, CREAM)
+	_panel(no, Color(GOLD, 0.8), 1.5)
+	_text(no.get_center() + Vector2(0, _s(7)), "Esc   Stay at the table", 16, GOLD)
+	_buttons.append({"rect": yes, "id": "leave_yes"})
+	_buttons.append({"rect": no, "id": "leave_no"})
 
 
 func _leave_hint() -> void:
@@ -398,12 +567,21 @@ func _leave_hint() -> void:
 
 
 func _draw_buy_in() -> void:
-	var r := Rect2(centre - Vector2(_s(300), _s(150)), Vector2(_s(600), _s(300)))
+	var r := Rect2(centre - Vector2(_s(320), _s(190)), Vector2(_s(640), _s(380)))
 	_panel(r, Color(COPPER, 0.8), 2.5)
 	_text(r.position + Vector2(r.size.x * 0.5, _s(46)), "The back-room game", 28, COPPER)
 	_text(r.position + Vector2(r.size.x * 0.5, _s(80)),
-		"No-Limit Hold'em.  Blinds a nickel and a dime.  No house cut, no markers.", 15, DIM)
-	var y := r.position.y + _s(124)
+		"No-Limit Hold'em.  No house cut, no markers.  Choose the stakes, then the buy-in.", 15, DIM)
+	# M013: the stakes (click, or the left and right arrows)
+	for i in PokerNight.LEVELS.size():
+		var l: Dictionary = PokerNight.LEVELS[i]
+		var b := Rect2(r.position + Vector2(_s(20) + i * _s(204), _s(100)), Vector2(_s(192), _s(52)))
+		var on := i == night.level
+		_panel(b, Color(GOLD if on else COPPER, 0.9 if on else 0.35), 2.0 if on else 1.0)
+		_text(b.get_center() + Vector2(0, _s(-4)), String(l.name), 15, GOLD if on else CREAM)
+		_text(b.get_center() + Vector2(0, _s(16)), "blinds %s / %s" % [_cents(int(l.sb)), _cents(int(l.bb))], 12, DIM)
+		_buttons.append({"rect": b, "id": "level%d" % i})
+	var y := r.position.y + _s(196)
 	if over_text != "":
 		_text(Vector2(r.get_center().x, y), over_text, 18, CREAM)
 		y += _s(46)
@@ -418,7 +596,7 @@ func _draw_buy_in() -> void:
 	_panel(nb, Color(COPPER, 0.3), 1.0)
 	_text(nb.get_center() + Vector2(0, _s(7)), "Esc   Not tonight", 18, DIM)
 	_buttons.append({"rect": nb, "id": "no"})
-	_text(Vector2(r.get_center().x, r.end.y - _s(16)), "In your pocket: %s" % money_text(money), 14, DIM)
+	_text(Vector2(r.get_center().x, r.end.y - _s(16)), "In your pocket: %s      left / right: the stakes" % money_text(money), 14, DIM)
 
 
 func _draw_over() -> void:
@@ -456,6 +634,9 @@ func _draw_seat(t: Holdem, i: int) -> void:
 	if turn:
 		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.006)
 		draw_rect(pr.grow(_s(5)), Color(COPPER, 0.35 * pulse))
+		# M013: a copper marker pointing at the player to act (or who just did)
+		var tip := pr.position + Vector2(-_s(14), pr.size.y * 0.5)
+		draw_colored_polygon(PackedVector2Array([tip, tip + Vector2(-_s(14), -_s(9)), tip + Vector2(-_s(14), _s(9))]), Color(GOLD, 0.9))
 	_panel(pr, COPPER if turn else Color(COPPER, 0.45), 2.0 if turn else 1.0)
 	var name_colour := DIM if folded else (GOLD if mine else CREAM)
 	_text(pr.position + Vector2(_s(100), _s(22)), String(s.name), 18, name_colour)
@@ -533,6 +714,9 @@ func _draw_board(t: Holdem) -> void:
 	if pot > 0:
 		_chips(centre + Vector2(0, _s(-74)), pot)
 		_text(centre + Vector2(0, _s(-92)), "Pot  %s" % money_text(pot), 18, GOLD)
+		if _pot_rise > 0 and _pot_rise_t < 1.6:  # M013: what just went in
+			var fade := clampf(1.6 - _pot_rise_t, 0.0, 1.0)
+			_text(centre + Vector2(_s(96), _s(-92)), "+%s" % money_text(_pot_rise), 15, Color(GOLD, fade))
 		var pots := t.pots()
 		var all_in := t.contenders().any(func(i: int) -> bool: return t.seats[i].all_in)
 		if pots.size() > 1 and all_in:

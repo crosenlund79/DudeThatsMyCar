@@ -8,10 +8,18 @@ extends RefCounted
 ##
 ## Money is only ever moved, never made: Danny's money + the players' purses
 ## (what they have away from the table) + the chips on the table add up the
-## same from the moment the night begins to the moment it ends. A hand left
-## unfinished because the game was quit counts for nothing: the save keeps
-## Danny's chips as they were when it was dealt (stake_for_save).
+## same from the moment the night begins to the moment it ends.
 ## Pure and deterministic (each hand and each decision from the night's seed).
+##
+## M013: the stakes are Danny's choice before he sits down - LEVELS: nickel
+## and dime (as ever), dime and quarter, quarter and half - with buy-ins to
+## match; they never change while he sits. The regulars bring a night's
+## bankroll big enough for any of them (BANKROLL x their purse) and sit down
+## with a level's stake (their purse x the level's `scale`), the rest kept in
+## their pocket: at the nickel-dime game they sit with what they always did.
+## A hand under way when the game is saved counts as folded (stake_for_save):
+## what Danny has put in the pot is gone - a save can never undo a losing
+## hand (M010 counted it void, which could).
 
 const REGULARS := [
 	{"id": "irv", "name": "Irv Feldman", "style": "cautious", "purse": 600, "look": "characters/clerk",
@@ -24,7 +32,17 @@ const REGULARS := [
 const LATE := {"id": "moe", "name": "Moe Brandt", "style": "cautious", "purse": 400, "look": "characters/barber",
 	"what": "a cutter from the garment trade, in late off the streetcar"}
 const STYLE_WORDS := {"cautious": "careful", "aggressive": "pushy", "loose": "loose"}
+## M013: the stakes (cents): blinds, the chip, Danny's buy-ins, and how much
+## of their usual stake the regulars sit down with.
+const LEVELS := [
+	{"id": "low", "name": "Nickel and dime", "sb": 5, "bb": 10, "chip": 5, "buy_ins": [200, 500, 1000], "scale": 1.0},
+	{"id": "medium", "name": "Dime and quarter", "sb": 10, "bb": 25, "chip": 5, "buy_ins": [500, 1000, 2500], "scale": 2.5},
+	{"id": "high", "name": "Quarter and half", "sb": 25, "bb": 50, "chip": 25, "buy_ins": [1000, 2500, 5000], "scale": 5.0},
+]
+## A regular's bankroll for the night, in his usual purses.
+const BANKROLL := 5
 
+var level := 0
 var small_blind := 5
 var big_blind := 10
 var chip := 5
@@ -46,7 +64,6 @@ var closing := false
 var net := 0
 var hands := 0
 var _bought := 0
-var _stake_at_deal := 0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -54,7 +71,7 @@ func begin_night(n: int) -> void:
 	night = n
 	purses = {}
 	for p in REGULARS + [LATE]:
-		purses[p.id] = p.purse
+		purses[p.id] = int(p.purse) * BANKROLL
 	gone = {}
 	table = null
 	danny = -1
@@ -82,6 +99,30 @@ func seated() -> bool:
 	return table != null and danny >= 0
 
 
+## M013: the stakes Danny will sit down at (not while he sits). False: not now.
+func set_level(i: int) -> bool:
+	if seated() or i < 0 or i >= LEVELS.size():
+		return false
+	level = i
+	var l: Dictionary = LEVELS[i]
+	small_blind = int(l.sb)
+	big_blind = int(l.bb)
+	chip = int(l.chip)
+	min_buy_in = int(l.buy_ins[0])
+	max_buy_in = int(l.buy_ins[-1])
+	return true
+
+
+func level_name() -> String:
+	return String(LEVELS[level].name)
+
+
+## What a regular sits down with at these stakes (no more than he has).
+func _stake_of(p: Dictionary) -> int:
+	var want := int(round(int(p.purse) * float(LEVELS[level].scale) / chip)) * chip
+	return mini(want, int(purses[p.id]) / chip * chip)
+
+
 ## Why Danny cannot sit in now ("" when he can).
 func cannot_sit(money: int) -> String:
 	if closing:
@@ -89,16 +130,17 @@ func cannot_sit(money: int) -> String:
 	if players_tonight().is_empty():
 		return "Nobody left at the table tonight - they've cleaned each other out."
 	if money < min_buy_in:
-		return "The game's a two-dollar buy-in. You haven't got it."
+		return "The %s game's a %s buy-in. You haven't got it." % [level_name().to_lower(), Rackets.dollars(min_buy_in)] if level > 0 \
+			else "The game's a two-dollar buy-in. You haven't got it."
 	return ""
 
 
 ## The buy-ins Danny can choose from with this much money.
 func buy_in_choices(money: int) -> Array[int]:
 	var out: Array[int] = []
-	for amount in [200, 500, 1000]:
+	for amount in LEVELS[level].buy_ins:
 		if amount <= money and amount >= min_buy_in and amount <= max_buy_in:
-			out.append(amount)
+			out.append(int(amount))
 	return out
 
 
@@ -111,11 +153,13 @@ func sit_down(amount: int, money: int) -> bool:
 	table = Holdem.new(small_blind, big_blind, chip)
 	danny = table.sit("Danny", amount, {"id": "danny"})
 	for p in players_tonight():
-		table.sit(p.name, purses[p.id], {"id": p.id, "style": p.style})
-		purses[p.id] = 0
+		var stake := _stake_of(p)
+		table.sit(p.name, stake, {"id": p.id, "style": p.style})
+		purses[p.id] = int(purses[p.id]) - stake
 	if late_joined and not gone.has(LATE.id) and purses[LATE.id] > 0:
-		table.sit(LATE.name, purses[LATE.id], {"id": LATE.id, "style": LATE.style})
-		purses[LATE.id] = 0
+		var late := _stake_of(LATE)
+		table.sit(LATE.name, late, {"id": LATE.id, "style": LATE.style})
+		purses[LATE.id] = int(purses[LATE.id]) - late
 	_rng.seed = hash([night, "button", hands])
 	table.button = _rng.randi_range(0, table.seats.size() - 1)
 	_bought = amount
@@ -131,13 +175,13 @@ func next_hand() -> bool:
 	if table.seats[danny].out or closing:
 		return false
 	# a chair came free: the late man pulls it up, once a night
-	if not late_joined and _empty_chair() and purses[LATE.id] > 0:
+	if not late_joined and _empty_chair() and _stake_of(LATE) > 0:
 		late_joined = true
-		table.sit(LATE.name, purses[LATE.id], {"id": LATE.id, "style": LATE.style, "joined": true})
-		purses[LATE.id] = 0
+		var late := _stake_of(LATE)
+		table.sit(LATE.name, late, {"id": LATE.id, "style": LATE.style, "joined": true})
+		purses[LATE.id] = int(purses[LATE.id]) - late
 	if not table.can_start():
 		return false
-	_stake_at_deal = table.seats[danny].stack
 	hands += 1
 	return table.start_hand(hash([night, hands, "deal"]))
 
@@ -153,8 +197,7 @@ func _empty_chair() -> bool:
 func _settle_busted() -> void:
 	for s in table.seats:
 		if s.get("busted", false) and s.id != "danny" and not gone.has(s.id):
-			gone[s.id] = "bust"
-			purses[s.id] = 0
+			gone[s.id] = "bust"  # cleaned out at the table: he goes home (with whatever he left in his pocket)
 
 
 ## It is a card player's turn (not Danny's).
@@ -210,13 +253,25 @@ func leave() -> int:
 	return chips
 
 
-## What Danny's money should be counted as if the game were saved now: his
-## chips when the hand under way was dealt (an unfinished hand is void), or
-## what is in front of him between hands.
+## What Danny's money should be counted as if the game were saved now: what
+## is in front of him. M013: a hand under way counts as folded - what he has
+## put in the pot is gone (as when he gets up mid-hand), so saving and loading
+## can never undo a losing hand.
 func stake_for_save() -> int:
 	if not seated():
 		return 0
-	return _stake_at_deal if table.running() else int(table.seats[danny].stack)
+	return int(table.seats[danny].stack)
+
+
+## M013: what getting up now would mean: {"in_hand" (he is still in a hand
+## under way), "in_pot" (what he has put in it, lost if he goes), "takes" (the
+## chips he would take home), "all_in"}.
+func leave_terms() -> Dictionary:
+	if not seated():
+		return {"in_hand": false, "in_pot": 0, "takes": 0, "all_in": false}
+	var s: Dictionary = table.seats[danny]
+	var live: bool = table.running() and s.in_hand and not s.folded
+	return {"in_hand": live, "in_pot": int(s.total) if live else 0, "takes": int(s.stack), "all_in": live and bool(s.all_in)}
 
 
 ## Every cent belonging to the card players tonight: their purses and their
@@ -239,9 +294,10 @@ func danny_chips() -> int:
 
 
 func to_dict() -> Dictionary:
-	return {"net": net, "hands": hands}
+	return {"net": net, "hands": hands, "level": level}
 
 
 func from_dict(d: Dictionary) -> void:
 	net = int(d.get("net", 0))
 	hands = int(d.get("hands", 0))
+	set_level(clampi(int(d.get("level", 0)), 0, LEVELS.size() - 1))  # the stakes he played last
