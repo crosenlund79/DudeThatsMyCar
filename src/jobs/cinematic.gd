@@ -9,6 +9,8 @@ extends CanvasLayer
 
 signal cue(id: String)
 signal finished
+## M012: the film reached its last key and waits there (bars on) for `release`.
+signal held
 
 const BARS_IN := 0.8
 const BARS_OUT := 0.9
@@ -24,6 +26,9 @@ var captions: Array = []
 ## {t, id} moments to announce.
 var cues: Array = []
 var running := false
+## M012: wait at the end with the bars on (a talk inside the film) until released.
+var hold := false
+var _held := false
 var _fired := {}
 var _flash := 0.0
 var _out := -1.0
@@ -96,7 +101,15 @@ func skip() -> void:
 			_fired[c.id] = true
 			cue.emit(c.id)
 	time = length
-	_out = 0.0
+	if not hold:
+		_out = 0.0
+
+
+## M012: a held film goes on to its end (the bars slide away).
+func release() -> void:
+	hold = false
+	if running and _out < 0.0 and time >= length:
+		_out = 0.0
 
 
 func _process(delta: float) -> void:
@@ -108,8 +121,11 @@ func _process(delta: float) -> void:
 			if time >= float(c.t) and not _fired.has(c.id):
 				_fired[c.id] = true
 				cue.emit(c.id)
-		if time >= length:
+		if time >= length and not hold:
 			_out = 0.0
+		elif time >= length and not _held:
+			_held = true
+			held.emit()
 	else:
 		_out += delta
 		if _out >= BARS_OUT:

@@ -77,6 +77,7 @@ func test_rourke_remembers_meeting_him_across_saves() -> void:
 	main.free()
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.callouts_enabled = callouts  # M012: as in before_each
 	main.save_path = _save
 	main.settings_path = ""
 	add_child_autofree(main)

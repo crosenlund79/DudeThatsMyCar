@@ -32,6 +32,8 @@ var current: InteriorPlan = null
 ## district id -> {holder: Node2D, plans: Array, views: Array, layout}
 var _districts := {}
 var _resolver: AssetResolver
+## M012: furniture boxes by "plan id/kind" (to take one away).
+var _shapes := {}
 
 
 func build(p_layout: DistrictLayout, city: City, resolver: AssetResolver) -> void:
@@ -64,7 +66,7 @@ func add_district(l: DistrictLayout, city: City, parent: Node) -> Array:
 			_box(walls, box.get_center(), box.size, 0.0)
 		for f in p.furniture:
 			if f.has("box"):
-				_box(walls, f.pos, f.box, f.get("rot", 0.0))
+				_shapes[p.id + "/" + String(f.kind)] = _box(walls, f.pos, f.box, f.get("rot", 0.0))
 			elif f.has("radius"):
 				var shape := CollisionShape2D.new()
 				var circle := CircleShape2D.new()
@@ -116,6 +118,9 @@ func remove_district(id: String) -> void:
 	var e: Dictionary = _districts[id]
 	for p in e.plans:
 		plans.erase(p)
+		for key in _shapes.keys():  # its furniture's boxes go with it
+			if String(key).begins_with((p as InteriorPlan).id + "/"):
+				_shapes.erase(key)
 	for v in e.views:
 		views.erase(v)
 	if current != null and e.plans.has(current):
@@ -141,7 +146,7 @@ func district_of(plan: InteriorPlan) -> String:
 	return ""
 
 
-func _box(body: StaticBody2D, pos: Vector2, size: Vector2, rot: float) -> void:
+func _box(body: StaticBody2D, pos: Vector2, size: Vector2, rot: float) -> CollisionShape2D:
 	var shape := CollisionShape2D.new()
 	var box := RectangleShape2D.new()
 	box.size = size
@@ -149,6 +154,21 @@ func _box(body: StaticBody2D, pos: Vector2, size: Vector2, rot: float) -> void:
 	shape.position = pos
 	shape.rotation = rot
 	body.add_child(shape)
+	return shape
+
+
+## M012: a piece of furniture there or gone (the held freight loaded and
+## away): its sprite and its solid box. Kept by the game's own state, so a
+## room built again shows it as it is.
+func set_furniture_present(plan_id: String, kind: String, on: bool) -> void:
+	var v := view_of(plan_id)
+	if v != null:
+		var sprite := v.get_node_or_null(NodePath(kind.get_file()))
+		if sprite != null:
+			(sprite as CanvasItem).visible = on
+	var shape: Variant = _shapes.get(plan_id + "/" + kind)
+	if shape != null and is_instance_valid(shape):
+		(shape as CollisionShape2D).set_deferred("disabled", not on)
 
 
 ## The room at p (doorways count as inside, so the roof opens as you step in).

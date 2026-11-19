@@ -16,6 +16,8 @@ var quiet_streets := true
 ## M006: Danny already knows everybody (their first-meeting lines count as
 ## heard) unless a script about meeting people sets this to true.
 var meet_people := false
+## M012: whether the people Danny knows call out to him (tests about it set it).
+var callouts := false
 
 
 func _source(_c: PlayerController) -> PlayerCommand:
@@ -49,6 +51,7 @@ func before_each() -> void:
 	main.save_path = ""  # never touch the player's real save
 	main.settings_path = ""  # nor their sound levels
 	main.opening_enabled = false  # straight into the night (test_opening covers the opening)
+	main.callouts_enabled = callouts  # M012: nobody calls out unless the test is about it
 	main.quiet_streets = quiet_streets  # M008: the neighbouring districts' street life too
 	add_child_autofree(main)
 	if quiet_streets:

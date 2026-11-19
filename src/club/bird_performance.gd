@@ -15,6 +15,8 @@ var bird: Walker
 var stage: StageAct
 ## Seconds of singing since the song (re)started.
 var time := 0.0
+## M012: off the bandstand (after her last song): she walks like anyone.
+var off_stage := false
 
 
 func setup(p_bird: Walker, p_stage: StageAct) -> void:
@@ -38,6 +40,9 @@ static func pose_at(t: float) -> Dictionary:
 
 func _process(delta: float) -> void:
 	if bird == null or not is_instance_valid(bird):
+		return
+	bird.animate = off_stage
+	if off_stage:
 		return
 	if stage.singing():
 		time += delta

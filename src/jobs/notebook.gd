@@ -15,7 +15,14 @@ static func entries(r: Rackets, night_minute: float) -> Array:
 	_crate(r, night_minute, out)
 	_reel(r, night_minute, out)
 	_thompson(r, out)
+	_freight(r, out)
 	return out
+
+
+static func _freight(r: Rackets, out: Array) -> void:
+	var line := r.freight.objective()
+	if line != "":
+		_add(out, "North Branch Freight", line)
 
 
 static func _add(out: Array, title: String, line: String) -> void:

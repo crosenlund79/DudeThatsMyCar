@@ -157,6 +157,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 	main.free()
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.callouts_enabled = callouts  # M012: as in before_each
 	main.save_path = _save
 	main.settings_path = ""
 	main.opening_enabled = false

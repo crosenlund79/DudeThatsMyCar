@@ -123,6 +123,7 @@ func test_a_night_beyond_the_ward() -> void:
 	main.free()
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.callouts_enabled = callouts  # M012: as in before_each
 	main.save_path = _save
 	main.settings_path = ""
 	main.quiet_streets = true

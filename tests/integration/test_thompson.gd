@@ -25,6 +25,7 @@ func _reload_game() -> void:
 	main.free()
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.callouts_enabled = callouts  # M012: as in before_each
 	main.save_path = SAVE
 	main.settings_path = ""
 	main.opening_enabled = false

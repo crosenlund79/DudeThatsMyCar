@@ -28,6 +28,9 @@ var save_path := SaveGame.DEFAULT_PATH
 ## Whether a new game (no saved game) begins with Danny's monologue over the
 ## ward (tests switch it off).
 var opening_enabled := true
+## M012: whether the people Danny knows call out to him (scene tests switch it
+## off unless they are about it, like the opening).
+var callouts_enabled := true
 ## Where the sound levels are kept ("" = never saved; tests and screenshots).
 var settings_path := AudioSettings.DEFAULT_PATH
 
@@ -40,6 +43,22 @@ var markers: PlaceMarkers
 ## M012: the brass plates at the street doors and the ring under what E would act on.
 var plates: EntrancePlates
 var highlight: InteractionHighlight
+## M012: who may call out to Danny, and the room they are in.
+const CALLERS := {"rourke": "copper_owl", "augie": "copper_owl", "bird": "copper_owl", "eddie": "hardware",
+	"quilty": "quilty_office", "leon": "dispatch_office"}
+## Those who come over a few steps when they call, and where to (from their
+## place: round the desk or the counter, clear of the furniture); the rest
+## call from where they are.
+const COME_OVER := {"eddie": Vector2(30, 0), "quilty": Vector2(-50, 8), "leon": Vector2(-58, 0)}
+## M012: a call-out waiting for an answer: {id, who, walker, home, facing,
+## left (s), answered, returning}; {} for none.
+var _callout := {}
+var _callout_tick := 0.0
+## When a gun last went off within earshot (s, engine time).
+var _last_gunfire := -1000.0
+var overhead: OverheadLine
+## M012: Leon at Dutch's counter after midnight (made with the yards, freed with them).
+var _leon_at_dutch: Walker
 var cars: Array[Car] = []
 var walker: Walker
 var player: PlayerController
@@ -150,6 +169,16 @@ var _bg_rng := RandomNumberGenerator.new()
 ## M010: Rosie's Café (Rourke's job): the scene, and the blast's short film while it plays.
 var cafe_scene: CafeScene
 var cafe_film: Cinematic
+## M012 "After the Last Song": the Bird's scene ("" none tonight; "asking" -
+## her last song over, she asks Danny to stay; "film" - the scene playing),
+## its film, and how long she waits for an answer.
+var bird_film: Cinematic
+var bird_scene := ""
+var _bird_ask_left := 0.0
+## After this hour (1:30 AM) her next song is her last, if Danny is in the club.
+const BIRD_LAST_SONG := 25 * 60 + 30.0
+## Where she sits after it: the end of the bar.
+const BIRD_SEAT := Vector2(2334, 262)
 ## M010: the police car, the fire engine and the ambulance that come to it.
 var emergency := EmergencyResponse.new()
 var emergency_views: EmergencyViews
@@ -223,6 +252,9 @@ func _ready() -> void:
 	highlight = InteractionHighlight.new()
 	add_child(highlight)
 	highlight.setup()
+	overhead = OverheadLine.new()
+	add_child(overhead)
+	overhead.setup(load(Hud.FONT_PATH))
 	world = DistrictStreamer.new()
 	add_child(world)
 	world.setup(resolver, CityPlan.layouts(layout))
@@ -291,6 +323,9 @@ func _ready() -> void:
 		elif e == "switched":
 			hud.show_notice("The Thompson in your hands." if walker.gun == thompson else "Your .45 in your hand."))
 	bullets.impact.connect(gunfire.on_impact)
+	bullets.impact.connect(func(_p: Vector2, _n: Vector2, _c: Object, _d: Vector2) -> void:
+		_last_gunfire = Time.get_ticks_msec() / 1000.0)  # M012: nobody calls out with guns going off
+	player.fired.connect(func(_m: Vector2, _d: Vector2) -> void: _last_gunfire = Time.get_ticks_msec() / 1000.0)
 	navigator = CityNavigator.new(layout, Walker.RADIUS + 3.0)
 	world.adopt(layout.id, city, navigator)
 	officer = PoliceOfficer.new()
@@ -430,6 +465,118 @@ func _ready() -> void:
 		_start_opening()
 
 
+## M012: the people of the city, a little more alive: who is where at this
+## hour (Routines), and who calls out to Danny (Callouts) - checked a few
+## times a second, never every person every frame.
+func _people_update(delta: float) -> void:
+	_apply_routines()
+	_bird_after_last_song(delta)
+	if not _callout.is_empty():
+		_callout_follow(delta)
+		return
+	_callout_tick -= delta
+	if _callout_tick > 0.0 or not callouts_enabled:
+		return
+	_callout_tick = 0.25
+	if not player.on_foot() or interiors.current == null:
+		return
+	var room := interiors.current.id
+	var v := interiors.view_of(room)
+	var ctx := {"minute": clock.minute, "driving": not player.on_foot(), "talking": talking != "",
+		"busy": hud.poker_view.is_open() or _at_a_game() or not player.seat.is_empty(),
+		"film": cafe_film != null or opening != null or bird_film != null or bird_scene != "", "fighting": fighting,
+		"menu": paused or map_open or status_open,
+		"since_gunfire": Time.get_ticks_msec() / 1000.0 - _last_gunfire,
+		"rourke_business": rackets.job.rourke_has_business(rackets.night), "singing": stage.singing()}
+	for who in CALLERS:
+		if CALLERS[who] != room or v == null or not v.person_ok(who):
+			continue
+		var w: Walker = v.people.get(who)
+		ctx["near"] = walker.global_position.distance_to(w.global_position)
+		var id := rackets.callouts.pick(who, ctx, rackets)
+		if id != "":
+			_call_out(id, who, w)
+			return
+
+
+## M012: `who` calls out to Danny: the line over his head, a turn towards
+## him, and (some of them) a few steps his way. E answers; walking on ignores it.
+func _call_out(id: String, who: String, w: Walker) -> void:
+	rackets.callouts.mark(id, clock.minute)
+	overhead.say(w, String(Callouts.LINES[id].call))
+	var home := w.global_position
+	var facing := w.model.facing
+	for v in interiors.views:
+		for p in v.plan.people:
+			if v.people.get(p.id) == w:
+				home = p.pos
+				facing = p.facing
+	_callout = {"id": id, "who": who, "walker": w, "home": home, "facing": facing,
+		"left": Callouts.ANSWER_SECONDS, "answered": false, "returning": false}
+	save_game()  # what was said stays said
+
+
+func _callout_follow(delta: float) -> void:
+	var w: Walker = _callout.walker
+	if not is_instance_valid(w) or w.down:
+		_callout = {}
+		return
+	if not w.is_visible_in_tree():  # out of sight (he left the room): back in their place at once
+		w.move = Vector2.ZERO
+		w.place(_callout.home, _callout.facing)
+		w.aim_point = (_callout.home as Vector2) + Vector2.from_angle(_callout.facing) * 50.0
+		overhead.hush()
+		_callout = {}
+		return
+	var home: Vector2 = _callout.home
+	if _callout.returning:
+		var back := home - w.global_position
+		_callout.left = float(_callout.left) - delta
+		if back.length() < 4.0 or not COME_OVER.has(_callout.who) or _callout.left <= 0.0:
+			w.move = Vector2.ZERO
+			w.place(home, _callout.facing)
+			w.aim_point = home + Vector2.from_angle(_callout.facing) * 50.0
+			_callout = {}
+		else:
+			w.move = back.normalized() * 0.6
+			w.aim_point = home
+		return
+	_callout.left = float(_callout.left) - delta
+	var to := walker.global_position - w.global_position
+	w.aim_point = walker.global_position
+	w.move = Vector2.ZERO
+	if COME_OVER.has(_callout.who) and talking != _callout.who:  # a few steps his way, round the furniture
+		var step: Vector2 = home + COME_OVER[_callout.who] - w.global_position
+		if step.length() > 3.0 and to.length() > 40.0:
+			w.move = step.normalized() * 0.6
+	var over: bool = _callout.answered and talking != _callout.who
+	if over or _callout.left <= 0.0 or to.length() > Callouts.RANGE * 1.6 or not player.on_foot():
+		overhead.hush()
+		_callout.returning = true  # back to their place
+		_callout.left = 6.0  # however they get there (a chair in the way: they are back in it all the same)
+
+
+## M012: Quilty goes home at one; Leon has his coffee at Dutch's after midnight.
+func _apply_routines() -> void:
+	var qv := interiors.view_of("quilty_office")
+	if qv != null:
+		qv.set_away("quilty", not Routines.in_room("quilty", clock.minute))
+	var lv := interiors.view_of("dispatch_office")
+	if lv != null:
+		lv.set_away("leon", not Routines.in_room("leon", clock.minute))
+	var at_dutch := Routines.where("leon", clock.minute) == "dutch" and world.is_ready("yards") \
+		and not ward_out.has("leon")
+	if at_dutch and _leon_at_dutch == null:
+		_leon_at_dutch = Walker.create(resolver, "characters/dispatcher", {"glow": false})
+		_leon_at_dutch.name = "LeonAtDutch"
+		world.loaded["yards"].node.add_child(_leon_at_dutch)
+		var at := Routines.LEON_AT_DUTCH + RiverfrontYards.ORIGIN
+		_leon_at_dutch.place(at, PI / 2)
+		_leon_at_dutch.aim_point = at + Vector2(0, 50)
+	if _leon_at_dutch != null and is_instance_valid(_leon_at_dutch):
+		_leon_at_dutch.visible = at_dutch
+
+
 ## M012: a person's ring is wider than his figure (drawn under it).
 const PERSON_RING := 24.0
 
@@ -485,6 +632,7 @@ func _wire_rooms(new_views: Array) -> void:
 			v.reset_people(still)
 	interiors.update_player(player.body().global_position if player != null and player.on_foot() else Vector2.INF)
 	interiors.snap()
+	_sync_freight()  # the shed as the job left it
 
 
 ## M012: who in a room is out tonight: the named people carried off (by id)
@@ -652,6 +800,10 @@ func _on_district_ready(id: String) -> void:
 ## let go of bullets still flying there.
 func _on_district_unloading(id: String) -> void:
 	interiors.remove_district(id)  # M012: its rooms go with it
+	if id == "yards":
+		_leon_at_dutch = null  # freed with the yards
+	if not _callout.is_empty() and not is_instance_valid(_callout.walker):
+		_callout = {}
 	plates.remove_district(id)
 	if not _districts.has(id):
 		return
@@ -830,6 +982,9 @@ func _on_exited_car(c: Car) -> void:
 func _spot() -> Dictionary:
 	if not player.on_foot():
 		return {}
+	# M012: the Bird off the bandstand, asking him to stay (before the room's own spots)
+	if bird_scene == "asking" and bird_show != null and walker.global_position.distance_to(bird_show.bird.global_position) < 60.0:
+		return {"id": "bird_scene", "prompt": "Stay a minute with the Bird", "pos": bird_show.bird.global_position}
 	if interiors.current != null:
 		var s := interiors.current.spot_at(walker.global_position)
 		if not s.is_empty() and (s.id == "bed" or s.id == "poker" or Conversations.is_readable(s.id) or interiors.view_of(interiors.current.id).person_ok(s.id)):
@@ -849,6 +1004,9 @@ func _spot() -> Dictionary:
 	if cafe_scene != null and rackets.parcels > 0 and rackets.cafe.stage == CafeJob.Stage.ACCEPTED \
 			and cafe_scene.near_car(walker.global_position):
 		return {"id": "plant", "prompt": "Slip the parcel under the Packard"}
+	# M012: Leon at Dutch's counter, his coffee after midnight
+	if _leon_at_dutch != null and _leon_at_dutch.visible and walker.global_position.distance_to(_leon_at_dutch.global_position) < 40.0:
+		return {"id": "leon", "prompt": "Talk to Leon Sobczak", "routine": true, "pos": _leon_at_dutch.global_position}
 	# M009: Dutch, Mr. Feeney and their errands
 	var op := opportunity_views.near(walker.global_position) if opportunity_views != null else {}
 	if not op.is_empty():
@@ -907,6 +1065,10 @@ func _interact(_at: Vector2) -> bool:
 		hud.show_notice(spot.text)
 	elif spot.id == "stand":
 		player.stand()
+	elif spot.get("routine", false):
+		start_talk(spot.id)  # M012: Leon at Dutch's
+	elif spot.id == "bird_scene":
+		_start_bird_film()
 	elif spot.get("kind", "") == "contact":
 		talking = spot.id
 		var w := opportunity_views.contact(spot.id)
@@ -925,6 +1087,9 @@ func _interact(_at: Vector2) -> bool:
 
 
 func start_talk(who: String, extra: Dictionary = {}) -> void:
+	if not _callout.is_empty() and _callout.who == who and not _callout.answered:
+		extra = extra.merged({"callout": _callout.id})  # M012: answering a call-out
+		_callout.answered = true
 	talking = who
 	if interiors.current != null:
 		interiors.view_of(interiors.current.id).face(who, walker.global_position)
@@ -939,6 +1104,7 @@ func talk_to_bird() -> void:
 	var interrupted := stage.interrupt()
 	if interrupted:
 		soundscape.interrupt_music()
+		rackets.memory.remember("bird", "interrupted", rackets.night)  # M012: she remembers who stopped her song
 	else:
 		stage.hold()
 	start_talk("bird", {"interrupted": interrupted})
@@ -1523,7 +1689,7 @@ func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
 
 func _talk_context() -> Dictionary:
 	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0,
-		"time": clock.text(), "late": clock.is_late(), "first_meeting": voice_lines.due(Conversations.greeting_line(talking)),
+		"time": clock.text(), "minute": clock.minute, "late": clock.is_late(), "done": stage.done, "first_meeting": voice_lines.due(Conversations.greeting_line(talking)),
 		"treatment": walker.condition.treatment_price(), "lefty_dead": rival != null and rival.is_down(),
 		"lefty_hurt": rival != null and rival.body.condition.worst() >= BodyCondition.Level.WOUNDED,
 		"danny_worst": walker.condition.worst(), "night": rackets.night, "money": rackets.money,
@@ -1579,6 +1745,10 @@ func _apply(effects: Dictionary) -> void:
 		_opportunity(String(effects.opportunity))
 	if effects.has("fight"):
 		_fight_pending = String(effects.fight)  # starts when Danny raises his fists
+	if effects.has("bird_scene"):  # M012: what he told the Bird
+		_bird_said(String(effects.bird_scene))
+	if effects.has("freight"):  # M012: Freight Doesn't Walk
+		_freight_effect(String(effects.freight))
 	if effects.has("job"):
 		var step := rackets.job.objective()
 		if not step.is_empty():
@@ -1622,8 +1792,14 @@ func end_talk() -> void:
 	_incident_talking = ""
 	if _fight_pending == "lefty":
 		call_deferred("_fight_lefty")
+	elif _fight_pending == "walt":
+		call_deferred("_fight_walt")  # M012
 	if talking == "bird":
 		stage.release()
+	if talking == "bird_scene" and bird_film != null:
+		if rackets.bird_scene == "":
+			_bird_said("silent")  # walked away from her question: that is an answer too
+		bird_film.release()  # the bars slide away, the camera comes back
 	talking = ""
 	_page = {}
 	if player != null:
@@ -1641,6 +1817,12 @@ func end_talk() -> void:
 func sleep() -> void:
 	end_talk()
 	stage.reset()  # the Bird is singing when the club opens
+	if bird_show != null:
+		bird_show.off_stage = false  # M012: back at her microphone
+	bird_scene = ""
+	var owl := interiors.view_of("copper_owl")
+	if owl != null:
+		owl.dim(1.0)  # the house lights up for a new night
 	ward_out.clear()  # back from the Doc's, patched up (and they remember)
 	thefts.clear()  # the cars are back with their owners
 	for c in cars:
@@ -1698,6 +1880,9 @@ func _update_clock(delta: float) -> void:
 			weather_view.lightning(claps[-1].near)
 		for e in rackets.opportunities.advance(clock.minute):  # M009: too late is too late
 			_opportunity_over(e)
+		if rackets.freight.advance(rackets, clock.minute) == "lapsed":  # M012: the truck came; Leon sorted it himself
+			_sync_freight()
+			save_game()
 		if cafe_scene != null:  # M010: Rosie's Café
 			cafe_scene.job = rackets.cafe
 			if clock.minute >= rackets.cafe.due(rackets.night) and cafe_film == null:
@@ -1916,6 +2101,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
 				or event.is_action_pressed(CityInput.HANDBRAKE) or (event is InputEventMouseButton and event.pressed):
 			cafe_film.skip()
+		return
+	if bird_film != null and talking == "":  # M012: E, Esc, Space or a click skips to her question
+		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
+				or event.is_action_pressed(CityInput.HANDBRAKE) or (event is InputEventMouseButton and event.pressed):
+			bird_film.skip()
 		return
 	if opening != null:
 		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
@@ -2216,6 +2406,174 @@ func _fight_lefty() -> void:
 	start_fight(rival.body, Rival.NAME, _on_lefty_fight, bonus, pace)
 
 
+## M012 "After the Last Song": once, on a night Danny is in the Copper Owl
+## after half past one and has met her, the Bird's next song is her last: the
+## song ends, she steps down from the bandstand to the end of the bar and asks
+## him to stay. He can let her be (she waits a while, then goes up), or answer.
+func _bird_after_last_song(delta: float) -> void:
+	if bird_scene == "asking":
+		var b: Walker = bird_show.bird if bird_show != null else null
+		if b == null or b.down:
+			bird_scene = ""
+			return
+		var to := BIRD_SEAT - b.global_position
+		b.move = to.normalized() * 0.5 if to.length() > 4.0 else Vector2.ZERO
+		if to.length() <= 4.0:
+			b.aim_point = walker.global_position
+		_bird_ask_left -= delta
+		var away: bool = interiors.current == null or interiors.current.id != "copper_owl"
+		if _bird_ask_left <= 0.0 or away:
+			bird_scene = ""  # she let it be; she'll sing again tomorrow and ask another night
+			overhead.hush()
+			b.move = Vector2.ZERO
+		return
+	if bird_scene != "" or not callouts_enabled or rackets.bird_scene != "" or clock.minute < BIRD_LAST_SONG:
+		return
+	if not stage.singing() or ward_out.has("bird") or bird_show == null:
+		return
+	if interiors.current == null or interiors.current.id != "copper_owl" or not player.on_foot():
+		return
+	if voice_lines.due("bird_greeting") or talking != "" or fighting or hud.poker_view.is_open() or _at_a_game() \
+			or Time.get_ticks_msec() / 1000.0 - _last_gunfire < 30.0 or not player.seat.is_empty():
+		return  # they have not met yet, or Danny is busy
+	stage.finish()
+	soundscape.stop_music()
+	bird_show.off_stage = true
+	bird_scene = "asking"
+	_bird_ask_left = 40.0
+	overhead.say(bird_show.bird, "That's the last one, folks. ...Stay a minute, Mercer?")
+	hud.show_notice("The last song of the night. The Bird steps down from the bandstand.")
+
+
+## The scene itself, in the game (like the café's film): the bars in, the
+## camera leaving Danny for the end of the bar, the club's lamps low and the
+## room hushed, a few lines - then her question, and his answer.
+func _start_bird_film() -> void:
+	end_talk()
+	bird_scene = "film"
+	overhead.hush()
+	var me := walker.global_position
+	var her := BIRD_SEAT
+	var bird: Walker = bird_show.bird
+	bird.move = Vector2.ZERO  # at the end of the bar, turned to him
+	bird.place(her, (me - her).angle())
+	bird.aim_point = me
+	var z := camera.zoom.x
+	walker.aim_point = her
+	var keys := [
+		{"t": 0.0, "pos": me, "zoom": z},
+		{"t": 3.0, "pos": me.lerp(her, 0.5), "zoom": z * 1.2},
+		{"t": 6.5, "pos": her + Vector2(0, 10), "zoom": z * 1.55},
+		{"t": 13.0, "pos": her + Vector2(-6, 4), "zoom": z * 1.65},
+	]
+	var captions := [
+		{"t": 0.3, "text": "The band packs up. Somebody starts stacking chairs on the tables."},
+		{"t": 3.4, "text": "The Bird sits at the end of the bar with a glass of water dressed up as gin."},
+		{"t": 7.4, "text": "\"Every night a man at that corner table decides what I'm worth,\" she says. \"Tonight it was Rourke.\""},
+	]
+	var cues := [{"t": 0.4, "id": "lamps"}, {"t": 1.0, "id": "hush"}]
+	bird_film = Cinematic.new()
+	add_child(bird_film)
+	bird_film.hold = true
+	bird_film.start(keys, captions, cues, load(Hud.FONT_PATH))
+	bird_film.cue.connect(_on_bird_cue)
+	bird_film.held.connect(_on_bird_question)
+	bird_film.finished.connect(_end_bird_film)
+	hud.visible = false
+	markers.visible = false
+	player.set_physics_process(false)
+	walker.move = Vector2.ZERO
+	_follow_rate = camera.follow_rate
+	camera.follow_rate = 2.2
+	camera.target = bird_film.rig
+
+
+func _on_bird_cue(id: String) -> void:
+	match id:
+		"lamps":
+			var owl := interiors.view_of("copper_owl")
+			if owl != null:
+				owl.dim(0.55)  # the house lights down after the last number
+		"hush":
+			soundscape.set_duck(true)
+
+
+## The film has reached her: the question, and his answer (a talk inside the film).
+func _on_bird_question() -> void:
+	bird_film.captions = []  # her words go to the talk below; the film's line and its "skip" make room
+	bird_film.caption.text = ""
+	bird_film.hint.visible = false
+	hud.visible = true
+	player.set_physics_process(true)
+	start_talk("bird_scene")
+
+
+func _bird_said(what: String) -> void:
+	if rackets.bird_scene != "":
+		return
+	rackets.bird_scene = what
+	rackets.bird_scene_night = rackets.night
+	var kind: String = {"truth": "told_truth", "kind": "kept_quiet", "guard": "held_back"}.get(what, "")
+	if kind != "":
+		rackets.memory.remember("bird", kind, rackets.night)
+	save_game()
+
+
+func _end_bird_film() -> void:
+	hud.visible = true
+	markers.visible = true
+	player.set_physics_process(true)
+	camera.target = player.body()
+	camera.follow_rate = _follow_rate
+	camera.zoom_override = 0.0
+	soundscape.set_duck(false)
+	var owl := interiors.view_of("copper_owl")
+	if owl != null:
+		owl.dim(0.85)  # after hours: the house lights stay a little low tonight
+	bird_film.queue_free()
+	bird_film = null
+	bird_scene = ""
+	save_game()
+
+
+## M012: the fistfight with Walt Haney in the freight shed (the M007 dial).
+func _fight_walt() -> void:
+	_fight_pending = ""
+	var walt := interiors.person("freight_shed", "walt")
+	if walt == null or walt.down or walker.global_position.distance_to(walt.global_position) > 120.0:
+		return
+	start_fight(walt, "Walt Haney", _on_walt_fight)
+
+
+func _on_walt_fight(won: bool, _results: Array) -> void:
+	rackets.freight.fought(rackets, won)
+	start_talk("walt")
+	_show(talk.choose("walt", "fight_won" if won else "fight_lost", _talk_context()))
+	_freight_effect("settled" if won else "")
+	save_game()
+
+
+## M012: what a step of the freight job changes in the game: the crates in the
+## shed, a word on the notebook, the purse.
+func _freight_effect(what: String) -> void:
+	var f := rackets.freight
+	match what:
+		"accepted", "learned", "leon_agrees":
+			hud.show_notice(f.objective())
+		"settled":
+			if f.crates_out:
+				soundscape.play("places/door", -6.0)
+				hud.show_notice("The Hartmann's crates are going out on the truck. Leon owes you ten dollars.")
+		"fee":
+			_show_purse()
+	_sync_freight()
+
+
+## M012: the held crates in the shed while they are held; gone once they went.
+func _sync_freight() -> void:
+	interiors.set_furniture_present("freight_shed", "interiors/freight_crates", not rackets.freight.crates_out)
+
+
 func _on_lefty_fight(won: bool, _results: Array) -> void:
 	talking = "lefty"
 	rival.body.aim_point = walker.global_position
@@ -2334,6 +2692,8 @@ func _process(delta: float) -> void:
 		if bird_show != null:
 			bird_show.restart()
 	_update_clock(delta)
+	if not paused:
+		_people_update(delta)  # M012: routines and call-outs
 	if not get_tree().paused:
 		world.update(player.body().global_position)  # M008: neighbours streamed in and out
 	_update_view(delta)
@@ -2350,6 +2710,8 @@ func _update_view(delta: float) -> void:
 		camera.offset += Vector2(randf_range(-1, 1), randf_range(-1, 1)) * 14.0 * _shake * _shake
 	if cafe_film != null:
 		camera.zoom_override = cafe_film.zoom
+	if bird_film != null:
+		camera.zoom_override = bird_film.zoom
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	world.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
@@ -2369,7 +2731,7 @@ func _update_view(delta: float) -> void:
 		opportunity_views.refresh(player.body().global_position)
 	var prompt := ""
 	var target := {}
-	hud.minimap.visible = not hud.poker_view.is_open() and not _at_a_game()  # M010: the card table has the screen
+	hud.minimap.visible = not hud.poker_view.is_open() and not _at_a_game() and bird_film == null  # M010: the card table has the screen
 	if hud.poker_view.is_open() or _at_a_game():
 		pass
 	elif player.on_foot():

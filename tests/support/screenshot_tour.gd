@@ -672,6 +672,35 @@ func _run(shots: Array) -> void:
 				await _frames(60)
 				await _shot(s, false)
 				main.weather.force("clear")
+			"m012_callout":
+				# M012: Alderman Quilty calls out as Danny comes in, and steps round his desk
+				main.weather.force("clear")
+				var qo: InteriorPlan = main.interiors.plan_named("quilty_office")
+				_teleport_walker(qo.inside_door(0, 24.0), -PI / 2)
+				await _frames(70)
+				await _shot(s, false)
+			"m012_bird_film":
+				# M012: after the Bird's last song - the film at the end of the bar, then her question
+				main.weather.force("clear")
+				for id in VoiceLines.LINES:
+					main.voice_lines.mark(id)
+				main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
+				_teleport_walker(Vector2(2290, 380), -PI / 2)
+				for i in 300:
+					await _frames(1)
+					if main.bird_scene == "asking" and main.bird_show.bird.global_position.distance_to(main.BIRD_SEAT) < 5.0:
+						break
+				_teleport_walker(main.BIRD_SEAT + Vector2(0, 34), -PI / 2)
+				await _frames(5)
+				main._start_bird_film()
+				await _frames(500)
+				await _shot("m012_bird_film", false)
+				for i in 600:
+					await _frames(1)
+					if main.talking == "bird_scene":
+						break
+				await _frames(10)
+				await _shot("m012_bird_question", false)
 			"m012_menu", "m012_menu_controls":
 				# M012: the game menu on Esc (the Notebook with Rourke's offer; the Controls page)
 				main.weather.force("clear")

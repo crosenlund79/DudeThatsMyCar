@@ -47,6 +47,7 @@ var paid_total := {}
 func _init(p_rules: EconomyRules = null) -> void:
 	rules = p_rules if p_rules != null else EconomyRules.new()
 	money = rules.start_money
+	callouts.night = night  # M012
 	town = Neighbourhood.riverside()
 	boss = Boss.new()
 	boss.observe_club(town.club(), night)
@@ -299,8 +300,10 @@ func buy_ammo(spare: int) -> int:
 func end_night() -> Array:
 	for e in opportunities.advance(INF):  # M009: whatever was left undone tonight resolves
 		opportunity_over(e)
+	freight.advance(self, INF)  # M012: Leon sorted his freight out himself
 	night += 1
 	opportunities.begin_night(night)
+	callouts.begin_night(night)  # M012
 	sold_by_barber = 0
 	bought_by_bar = 0
 	paid.clear()
@@ -357,6 +360,14 @@ var parcel_wanted := false
 const PARCEL_PRICE := 600
 ## M010: Rourke's job at Rosie's Café.
 var cafe := CafeJob.new()
+## M012: who has called out to Danny, and which lines have been said (saved).
+var callouts := Callouts.new()
+## M012: "Freight Doesn't Walk" - Leon Sobczak's held freight (Danny's own job).
+var freight := FreightJob.new()
+## M012: "After the Last Song" - what Danny said to the Bird ("" not yet;
+## "truth", "kind", "guard", or "silent"), and the night it happened.
+var bird_scene := ""
+var bird_scene_night := -1
 
 
 ## M010: Danny takes Rourke's café job on: Eddie will sell him the parcel.
@@ -593,7 +604,8 @@ func to_dict() -> Dictionary:
 		"memory": memory.to_dict(), "rumours": rumours.to_dict(), "loans": loans.duplicate(true),
 		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees, "job": job.to_dict(),
 		"opportunities": opportunities.to_dict(), "loan": loan.to_dict(), "parcels": parcels,
-		"parcel_wanted": parcel_wanted, "cafe": cafe.to_dict()}
+		"parcel_wanted": parcel_wanted, "cafe": cafe.to_dict(), "callouts": callouts.to_dict(),
+		"freight": freight.to_dict(), "bird_scene": bird_scene, "bird_scene_night": bird_scene_night}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -611,8 +623,15 @@ func from_dict(d: Dictionary) -> void:
 	parcel_wanted = bool(d.get("parcel_wanted", false))
 	cafe = CafeJob.new()
 	cafe.from_dict(d.get("cafe", {}))
+	callouts = Callouts.new()  # M012
+	callouts.from_dict(d.get("callouts", {}))
+	freight = FreightJob.new()
+	freight.from_dict(d.get("freight", {}))
+	bird_scene = String(d.get("bird_scene", ""))
+	bird_scene_night = int(d.get("bird_scene_night", -1))
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
+	callouts.night = night
 	sold_by_barber = int(d.get("sold_by_barber", 0))
 	bought_by_bar = int(d.get("bought_by_bar", 0))
 	paid = (d.get("paid", {}) as Dictionary).duplicate()

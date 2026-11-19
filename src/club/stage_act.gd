@@ -23,6 +23,15 @@ func singing() -> bool:
 	return state == State.SINGING
 
 
+## M012: her last song of the night is over - she is done until tomorrow.
+var done := false
+
+
+func finish() -> void:
+	done = true
+	state = State.STOPPED
+
+
 ## Danny walks up to her while she sings: the song stops. False (and nothing
 ## happens) when she is not singing.
 func interrupt() -> bool:
@@ -47,7 +56,7 @@ func knock_out() -> void:
 
 ## The talk is over: she goes back to the microphone.
 func release() -> void:
-	if state == State.STOPPED and not out:
+	if state == State.STOPPED and not out and not done:
 		state = State.RESUMING
 		resume_left = RESUME_DELAY
 
@@ -67,6 +76,7 @@ func update(delta: float) -> bool:
 func reset() -> void:
 	interruptions = 0
 	out = false
+	done = false
 	if state != State.SINGING:
 		state = State.RESUMING
 		resume_left = 0.0

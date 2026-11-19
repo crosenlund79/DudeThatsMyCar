@@ -128,6 +128,7 @@ func test_one_night_one_problem() -> void:
 	main.free()
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.callouts_enabled = callouts  # M012: as in before_each
 	main.save_path = _save
 	main.settings_path = ""
 	add_child_autofree(main)

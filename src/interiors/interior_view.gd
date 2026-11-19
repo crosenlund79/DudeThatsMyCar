@@ -101,10 +101,42 @@ func _on_struck_down(id: String, named: bool) -> void:
 	person_down.emit(id, named)
 
 
-## Whether someone is there to talk to (not down, not carried off).
+## Whether someone is there to talk to (not down, not carried off, M012: not away).
 func person_ok(id: String) -> bool:
 	var w: Walker = people.get(id)
-	return w != null and not w.down and not out.has(id)
+	return w != null and not w.down and not out.has(id) and not away.has(id)
+
+
+## M012: the house lights (1 = as set; lower after the last song, back up for a new night).
+var light_scale := 1.0
+
+
+func dim(scale: float) -> void:
+	light_scale = scale
+	_apply()
+
+
+## M012: someone not in tonight at this hour (gone home, out for coffee):
+## hidden and not to be talked to; back in their place when they return.
+var away := {}
+
+
+func set_away(id: String, on: bool) -> void:
+	var w: Walker = people.get(id)
+	if w == null or away.has(id) == on:
+		return
+	if on:
+		away[id] = true
+		w.visible = false
+		w.set_physics_process(false)
+	else:
+		away.erase(id)
+		if not out.has(id) and not w.down:
+			w.visible = true
+			w.set_physics_process(true)
+			for p in plan.people:
+				if p.id == id:
+					w.place(p.pos, p.facing)
 
 
 ## A new night: everybody back in their place, unhurt - except the named
@@ -169,7 +201,7 @@ func _apply() -> void:
 		host.modulate = Color(1, 1, 1, 1.0 - open)
 		host.visible = open < 1.0
 	for i in lights.size():
-		lights[i].energy = _energy[i] * alpha
+		lights[i].energy = _energy[i] * alpha * light_scale
 		lights[i].enabled = alpha > 0.0
 
 

@@ -8,8 +8,8 @@ extends RefCounted
 ## reaches Rourke two nights later, and what he does in the club, at once.
 
 const LINKS := {
-	"novak": ["sal", "augie", "lindqvist"],
-	"sal": ["novak", "augie"],
+	"novak": ["sal", "augie", "lindqvist", "quilty"],
+	"sal": ["novak", "augie", "quilty"],
 	"augie": ["sal", "rourke", "eddie", "novak"],
 	"rourke": ["augie"],
 	"lindqvist": ["novak", "eddie"],
@@ -20,6 +20,12 @@ const LINKS := {
 	# of the Bijou gets his shave at Sal's
 	"dutch": ["novak"],
 	"feeney": ["sal"],
+	# M012: Alderman Quilty hears the ward's talk in the barber's chair and over
+	# Novak's counter (and passes it back in the chair)
+	"quilty": ["sal"],
+	# M012: Leon Sobczak takes his coffee at Dutch's; Walt Haney's shed gang eats there
+	"leon": ["dutch"],
+	"walt": ["dutch"],
 }
 
 ## {id, kind, about, business, cents, night, seq, text, known: [people]}

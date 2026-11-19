@@ -81,6 +81,7 @@ func test_shoot_him_and_he_fights_back_until_he_goes_down() -> void:
 	main.free()
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.callouts_enabled = callouts  # M012: as in before_each
 	main.save_path = _save
 	main.settings_path = ""
 	add_child_autofree(main)
@@ -190,6 +191,7 @@ func test_dannys_wounds_are_saved() -> void:
 	main.free()
 	main = MAIN.instantiate()
 	main.command_source = _source
+	main.callouts_enabled = callouts  # M012: as in before_each
 	main.save_path = _save
 	main.settings_path = ""
 	add_child_autofree(main)

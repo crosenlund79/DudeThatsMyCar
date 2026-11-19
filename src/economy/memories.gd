@@ -18,6 +18,10 @@ const WEIGHTS := {
 	"kept_promise": [0.0, 0.5, 1.5],
 	"broken_promise": [0.0, -1.5, -2.0],
 	"shot": [5.0, -4.0, -3.0],
+	# M012: what Danny told the Bird after her last song
+	"told_truth": [0.0, 0.5, 2.0],
+	"kept_quiet": [0.0, 1.5, 0.5],
+	"held_back": [0.0, 0.0, 0.5],
 }
 const FADE := 0.75
 

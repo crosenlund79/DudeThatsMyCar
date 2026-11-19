@@ -21,7 +21,7 @@ const NAMES := {"augie": "Augie", "sal": "Sal", "novak": "Mr. Novak", "lindqvist
 	"nightclerk": "The night clerk", "city_board": "The notices", "city_stairs": "The stairs", "city_records": "The records",
 	"steward": "The steward", "regulars_portrait": "The portrait", "quilty": "Ald. Quilty", "quilty_map": "The ward map",
 	"leon": "Leon Sobczak", "dispatch_board": "The dispatch board", "walt": "Walt Haney", "held_crates": "The crates",
-	"mayor_gate": "At the gate"}
+	"mayor_gate": "At the gate", "bird_scene": "The Bird"}
 
 ## M012: things in a room to look at, each a narrated page (nothing changes hands).
 const READS := {
@@ -49,6 +49,32 @@ const READS := {
 }
 
 
+## M012: a thing to look at - and while Leon's freight is held, what the
+## yards' boards and the crates themselves give away.
+func _read(who: String) -> Dictionary:
+	var f := rackets.freight
+	var text: String = READS[who]
+	var effects := {}
+	match who:
+		"dispatch_board":
+			if f.stage != FreightJob.Stage.NOT_OFFERED and not f.crates_out:
+				text += " At the bottom, underlined twice: HARTMANN'S - 12 CR - RADIO CABINETS - %s TRUCK. HELD IN SHED??" \
+					% FreightJob._clock(f.deadline).to_upper()
+				if f.is_open():
+					f.learn("consignee")
+					effects = {"freight": "learned"}
+		"held_crates":
+			if f.crates_out:
+				text = "Just the marks on the concrete where a dozen crates stood, and a scrap of tarpaulin."
+			else:
+				text = "A dozen crates under a tarpaulin, stencilled NBF. The waybill tag: HARTMANN'S DEPT. STORE, STATE ST. - 12 CS. " \
+					+ "RADIO CABINETS - FRAGILE. Somebody has chalked on the top crate: NOT TILL WE'RE PAID."
+				if f.is_open():
+					f.learn("consignee")
+					effects = {"freight": "learned"}
+	return _told(who, text, [{"id": "bye", "text": "Leave it be."}], effects)
+
+
 ## M012: whether E at this spot reads something rather than talking to someone.
 static func is_readable(id: String) -> bool:
 	return id == "union_board" or READS.has(id)
@@ -73,13 +99,21 @@ const GREETINGS := {
 
 
 ## The first page when you walk up to someone and press E.
+## M012: `context.callout` - Danny answers someone who called out to him: they
+## open on what they called him over for, then their usual choices.
 func open(who: String, context: Dictionary = {}) -> Dictionary:
 	if context.get("first_meeting", false) and GREETINGS.has(who):
 		var g: Array = GREETINGS[who]
 		var page := _page(who, VoiceLines.text(g[0]), [{"id": "hello", "text": g[1]}])
 		page["voice"] = [g[0]]
 		return page
-	return _say(who, "hello", context)
+	var hello := _say(who, "hello", context)
+	var called := String(context.get("callout", ""))
+	if called != "" and Callouts.LINES.has(called) and not hello.is_empty():
+		var line: Dictionary = Callouts.LINES[called]
+		hello["text"] = line.follow
+		hello["delivery"] = line.tag  # for the actor, never shown
+	return hello
 
 
 ## The recorded greeting someone has for a first meeting ("" for none).
@@ -112,6 +146,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _rourke(step, context)
 		"bird":
 			return _bird(step, context)
+		"bird_scene":
+			return _bird_scene(step)
 		"lefty":
 			return _lefty(step, context)
 		"pettibone":
@@ -119,7 +155,15 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 		"incident":
 			return _incident(step, context)
 		"dutch":
-			return _dutch(step, context)
+			var dp := _dutch(step, context)
+			if step == "hello" and rackets.freight.is_open() and not rackets.freight.learned.has("docked") and not dp.is_empty():
+				(dp.options as Array).insert(0, {"id": "freight_ask", "text": "Know anything about the North Branch shed?"})
+			if step == "freight_ask":
+				rackets.freight.learn("docked")
+				return _told("dutch", "\"Walt Haney's boys sat right where you're standing, sore as boils. Company docked the "
+					+ "whole gang six bucks for a crate Mickey Duffy dropped. Walt says nothing leaves that shed till it's put "
+					+ "back.\" He pours you a coffee you didn't ask for.", [], {"freight": "learned"})
+			return dp
 		"feeney":
 			return _feeney(step, context)
 		"bed":
@@ -141,7 +185,7 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 		"mayor_gate":
 			return _mayor_gate(step)
 	if READS.has(who) and step == "hello":
-		return _told(who, READS[who], [{"id": "bye", "text": "Leave it be."}])
+		return _read(who)
 	return {}
 
 
@@ -305,6 +349,17 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is you saved the late show at the Bijou over in Halloran Square. Feeney's telling the whole square."
 		"reel_cancelled":
 			return "Word is the Bijou in Halloran Square had to cancel its late show. The reel never came. Twenty-two refunds."
+		# M012: North Branch Freight
+		"freight_paid":
+			return "Word is you paid a freight shed gang their docked wages out of your own pocket. Walt Haney's buying the rounds."
+		"freight_squared":
+			return "Word is you talked the North Branch dispatcher into giving his shed gang back their six bucks. Talked a company man out of money, Dimes."
+		"freight_leaned":
+			return "Word is you showed Walt Haney at the North Branch shed something shiny, and twelve crates got loaded in ten minutes."
+		"freight_beaten":
+			return "Word is you went a few rounds with the North Branch shed foreman. The freight went out on time, anyhow."
+		"freight_lapsed":
+			return "Word is the North Branch dispatcher was counting on you, and paid his shed gang out of his own pocket in the end."
 		# M010: Rosie's Café
 		"cafe_blast":
 			return "Word is somebody blew Vince Duggan's Packard sky-high outside Rosie's in Halloran Square. Duggan was inside with his coffee. Never spilled a drop, they say."
@@ -544,7 +599,14 @@ func _bird(step: String, context: Dictionary) -> Dictionary:
 				return page
 			if context.get("first_meeting", false):
 				return _bird("who", context)
-			return _page("bird", "Make it quick, Mercer. The band won't wait all night.", chat)
+			if context.get("done", false):  # M012: her last song is sung
+				chat = [chat[0], {"id": "bye", "text": "Goodnight, Bird."}]
+			var after := {"truth": "My honest man. Make it quick, the band won't wait.",
+				"kind": "The gentleman who hears nothing worth repeating. What'll it be?",
+				"guard": "Know me any better yet, Mercer?",
+				"silent": "You again. Still saving your words?"}  # M012: what he said after her last song
+			var plain := "The set's over, Mercer. What is it?" if context.get("done", false) else "Make it quick, Mercer. The band won't wait all night."
+			return _page("bird", after.get(rackets.bird_scene, plain), chat)
 		"who":
 			page = _page("bird", VoiceLines.text("bird_greeting"), chat)
 			page["voice"] = ["bird_greeting"]
@@ -830,6 +892,14 @@ func _bed(step: String, context: Dictionary) -> Dictionary:
 	return {}
 
 
+## M012: reading the shed gang's notice tells Danny why the freight is held.
+func _union_learns() -> Dictionary:
+	if rackets.freight.is_open() and not rackets.freight.learned.has("docked"):
+		rackets.freight.learn("docked")
+		return {"freight": "learned"}
+	return {}
+
+
 ## M011: the noticeboard in the union hall - what is pinned up there tonight
 ## (the world as it is; nothing here is a job for Danny).
 func _union_board(step: String) -> Dictionary:
@@ -838,8 +908,10 @@ func _union_board(step: String) -> Dictionary:
 			return _told("union_board", "Shift lists for the North Branch Freight bays, smudged with coal dust. A typed notice: "
 				+ "GENERAL MEETING, THURSDAY, 8 P.M. - ALL MEMBERS IN GOOD STANDING. Dues are fifty cents a week, payable at "
 				+ "the office. A hand-lettered card: NO WORK FOR MEN WITHOUT A BOOK. A clipping from the Evening Courier about the "
-				+ "new mayor's budget, with somebody's pencil all over it. A picnic at the Forest Preserve, if the weather holds.",
-				[{"id": "bye", "text": "Leave it be."}])
+				+ "new mayor's budget, with somebody's pencil all over it. A picnic at the Forest Preserve, if the weather holds."
+				+ (" Pinned at the bottom, in pencil: SHED GANG, NORTH BRANCH FRT. - $6 DOCKED FOR ONE BROKEN CRATE. NOT ONE BOX "
+				+ "MOVES TILL IT'S BACK. - W.H." if rackets.freight.is_open() else ""),
+				[{"id": "bye", "text": "Leave it be."}], _union_learns())
 	return {}
 
 
@@ -917,21 +989,146 @@ func _quilty(step: String, _context: Dictionary) -> Dictionary:
 	return {}
 
 
-## M012: North Branch Freight's night dispatcher (Freight Doesn't Walk builds on him).
-func _leon(step: String, _context: Dictionary) -> Dictionary:
+## M012: Leon Sobczak, North Branch Freight's night dispatcher - and his
+## held freight, "Freight Doesn't Walk" (FreightJob; Danny's own job).
+func _leon(step: String, context: Dictionary) -> Dictionary:
+	var f := rackets.freight
+	var truck := FreightJob._clock(f.deadline)
 	match step:
 		"hello":
-			return _page("leon", "North Branch Freight, night dispatch. If you're not a driver with a waybill, you're "
-				+ "standing in my light.")
+			match f.stage:
+				FreightJob.Stage.NOT_OFFERED:
+					return _page("leon", "North Branch Freight, night dispatch.\" He looks you over. \"You've got the look of a fella "
+						+ "who can carry a problem. Mine weighs twelve crates.", [{"id": "freight_hear", "text": "Go on."}])
+				FreightJob.Stage.OFFERED:
+					return _page("leon", "Well? Twelve crates, the %s truck, ten dollars." % truck,
+						[{"id": "freight_accept", "text": "I'll see to it."}, {"id": "freight_decline", "text": "Find somebody else."}])
+				FreightJob.Stage.ACCEPTED:
+					var opts := []
+					if f.learned.has("docked") and not f.leon_agreed:
+						opts.append({"id": "freight_square", "text": "Your shed gang got docked six dollars for a dropped crate. Put it back."})
+					else:
+						opts.append({"id": "freight_beef", "text": "What's Walt's beef?"})
+					var text := "Walt's still sitting on my freight. Truck's at %s." % truck
+					if f.leon_agreed:
+						text = "Petty cash is six dollars lighter in my head already. Go tell Walt before I change my mind."
+					return _page("leon", text, opts)
+				FreightJob.Stage.SETTLED:
+					f.collect_fee(rackets)
+					return _page("leon", "The truck's loading! Twelve crates, all present and correct.\" He counts ten dollars "
+						+ "onto the blotter. \"Mine, not the company's. Worth every cent.", [], {"freight": "fee"})
+				FreightJob.Stage.PAID:
+					return _page("leon", "Hartmann's got their radios. If I ever need a problem carried, I know where you drink.")
+				FreightJob.Stage.LAPSED:
+					if f.how == "" and rackets.memory.recent("leon", "broken_promise", rackets.night, 14) > 0:
+						return _page("leon", "I paid Walt's six myself at a quarter to the truck. It went out late. Next time "
+							+ "just say no, Mercer - it's cheaper.")
+					return _page("leon", "Paid the six out of my own pocket in the end. The company'll never know.")
+				FreightJob.Stage.DECLINED:
+					return _page("leon", "Suit yourself. I'll think of something before the truck.")
+		"freight_hear":
+			f.offer(rackets.night, float(context.get("minute", 20 * 60.0)))
+			truck = FreightJob._clock(f.deadline)
+			return _page("leon", "Radio cabinets for Hartmann's on State Street. Twelve crates, on the %s truck, or the "
+				% truck + "company hangs it on me. They're sitting in my own shed under a tarp, and Walt Haney's gang won't "
+				+ "lift a finger. Won't say why - not to the company man. Get that freight on the truck and there's ten "
+				+ "dollars in it. Mine, not the company's.",
+				[{"id": "freight_accept", "text": "I'll see to it."}, {"id": "freight_decline", "text": "Find somebody else."}],
+				{"freight": "offered"})
+		"freight_accept":
+			if not f.accept():
+				return _page("leon", "Too late for that, Mercer.")
+			return _page("leon", "Good man. The shed's at the far end - the loading door on the yard. Walt Haney runs it. "
+				+ "Don't tell him I sent you; it won't help.", [], {"freight": "accepted"})
+		"freight_decline":
+			f.decline()
+			return _page("leon", "Suit yourself. I'll think of something before the truck.")
+		"freight_beef":
+			return _page("leon", "If I knew that, mister, I wouldn't need you. Ask around the yard - Dutch's counter hears "
+				+ "everything that's said with a mouth full of pie.")
+		"freight_square":
+			if not f.talk_leon_round():
+				return _page("leon", "We'll see.")
+			return _page("leon", "Six dollars. For a crate Mickey Duffy dropped on his own foot.\" He rubs his eyes. "
+				+ "\"...Fine. Petty cash. Better six dollars than twelve crates and my job. Tell Walt it's back.",
+				[], {"freight": "leon_agrees"})
 	return {}
 
 
-## M012: the freight shed's foreman (Freight Doesn't Walk builds on him).
-func _walt(step: String, _context: Dictionary) -> Dictionary:
+## M012: Walt Haney, foreman of the freight shed, sitting on the Hartmann's freight.
+func _walt(step: String, context: Dictionary) -> Dictionary:
+	var f := rackets.freight
 	match step:
 		"hello":
+			match f.stage:
+				FreightJob.Stage.ACCEPTED:
+					var hello := "If Sobczak sent you about them crates, tell him what I told him: nothing."
+					if f.fight_lost_night == rackets.night:
+						hello = "Back for seconds? Go home, Mercer. Put something on that eye."
+					return _page("walt", hello, _walt_choices(context, not f.learned.has("docked")))
+				FreightJob.Stage.SETTLED, FreightJob.Stage.PAID:
+					return _page("walt", {"paid": "Mercer. Drinks are on the gang, any night you like.",
+						"squared": "Six bucks back and nobody had to bleed for it. You ain't bad, for one of Rourke's.",
+						"leaned": "Got what you came for. Now get out of my shed.",
+						"beaten": "You got lucky. Don't count on it twice."}.get(f.how, "Freight's gone. Shed's closed."))
+				FreightJob.Stage.LAPSED:
+					return _page("walt", "Sobczak paid up himself in the end. Funny how money turns up when the truck's waiting.")
 			return _page("walt", "Shed's closed to visitors, pal. Company rules - which this week we're keeping real careful.")
+		"walt_why":
+			return _page("walt", "Ask the company. They know everything, the company.\" He goes back to his stove. \"The whole "
+				+ "yard knows, if you ask around. Ain't my job to tell you.", _walt_choices(context, false))
+		"walt_six":
+			f.learn("walt_said")
+			return _page("walt", "Mickey Duffy dropped one crate of glassware. One. Company takes six bucks off the whole "
+				+ "gang for it - off men making forty cents an hour. So no, we ain't in a hurry for the company.",
+				_walt_choices(context, false))
+		"walt_pay":
+			if not f.settle(rackets, "paid"):
+				return _page("walt", "Six dollars, Mercer. Not a nickel less.", _walt_choices(context, false))
+			return _told("walt", "Walt looks at the money a long while, then at you. \"Boys! The Hartmann's crates. Shake a leg - "
+				+ "Mercer's buying.\" The tarpaulin comes off and the shed gang get to work.", [], {"freight": "settled"})
+		"walt_squared":
+			if not f.settle(rackets, "squared"):
+				return _page("walt", "Sobczak ain't said nothing to me.", _walt_choices(context, false))
+			return _told("walt", "\"Sobczak said that? Out of petty cash?\" He spits in the stove. \"All right. Boys - the "
+				+ "Hartmann's crates.\" The tarpaulin comes off.", [], {"freight": "settled"})
+		"walt_threat":
+			if f.threaten(rackets, context.get("gun_drawn", false)):
+				return _told("walt", "Walt looks at the gun, then at his men. \"Boys. Load the Hartmann's crates. Mr. Mercer "
+					+ "is in a hurry.\" Nobody looks at you while they work.", [], {"freight": "settled"})
+			var opts := _walt_choices(context, false).filter(func(o: Dictionary) -> bool: return o.id != "walt_threat")
+			return _page("walt", "With what, harsh language?\" The shed gang laughs. \"Go home, Mercer.", opts)
+		"walt_fight":
+			if not f.can_fight(rackets.night):
+				return _page("walt", "Once a night's plenty.")
+			return _page("walt", "The old way, huh?\" He takes off his cap and hangs it on a nail. \"Suits me.",
+				[{"id": "bye", "text": "Raise your fists."}], {"fight": "walt"})
+		"fight_won":
+			return _told("walt", "Walt sits down hard on a crate and wipes his mouth. \"...Boys. Load the damn crates.\" "
+				+ "They do it without a word.", [], {"freight": "settled"})
+		"fight_lost":
+			return _page("walt", "That's how it goes in the yards, pal. Freight stays where it is.\" He puts his cap back on. "
+				+ "\"Come back when you've got something better than fists.")
 	return {}
+
+
+## Danny's ways with Walt: ask, know about the six, pay it, Leon's word, a threat, a fight.
+func _walt_choices(context: Dictionary, ask_why: bool) -> Array:
+	var f := rackets.freight
+	var opts := []
+	if ask_why:
+		opts.append({"id": "walt_why", "text": "Why's the Hartmann's freight sitting here?"})
+	if f.learned.has("docked") and not f.learned.has("walt_said"):
+		opts.append({"id": "walt_six", "text": "This is about the six dollars the company docked your gang."})
+	if f.learned.has("docked") or f.learned.has("walt_said"):
+		if f.leon_agreed:
+			opts.append({"id": "walt_squared", "text": "Sobczak's putting the six back out of petty cash. My word on it."})
+		opts.append({"id": "walt_pay", "text": "Here's six dollars for the gang. Load the truck."})
+	if f.threat_failed_night != rackets.night or context.get("gun_drawn", false):  # laughed off once; not with a gun out
+		opts.append({"id": "walt_threat", "text": "Load those crates, Walt. Now."})
+	if f.can_fight(rackets.night):
+		opts.append({"id": "walt_fight", "text": "Then we settle it the old way."})
+	return opts
 
 
 ## M012: the bell at the Mayor's gate: his house stays private, and his housekeeper says so.
@@ -945,6 +1142,34 @@ func _mayor_gate(step: String) -> Dictionary:
 		"rourke":
 			return _told("mayor_gate", "\"I'll tell him a man called.\" The lamp goes back up the path. A curtain moves in the "
 				+ "parlour, and is still.", [{"id": "bye", "text": "Walk on."}])
+	return {}
+
+
+## M012 "After the Last Song": the Bird at the end of the bar after her last
+## number, a glass of water dressed up as gin. Her question, and what Danny
+## tells her - remembered (BirdScene's lines and the delivery notes are in
+## docs/M012_PERFORMANCE_SCRIPT.md).
+func _bird_scene(step: String) -> Dictionary:
+	match step:
+		"hello":
+			return _told("bird", "\"Last week it was a fella from the Water Department. They all want the same thing from a "
+				+ "singer - to hear they're not like the other fellas.\" She turns the glass and doesn't drink. \"You sit by "
+				+ "the door and watch the room, not the stage. So tell me, Mercer: what do they say about me, when I'm not up "
+				+ "there?\"", [{"id": "truth", "text": "That you're Rourke's canary, and you hear more than you sing."},
+				{"id": "kind", "text": "Nothing worth repeating."},
+				{"id": "guard", "text": "Ask me again when I know you better."}])
+		"truth":
+			return _told("bird", "\"Rourke's canary.\" She laughs once, without much in it. \"Honest. That's rarer in here than "
+				+ "gin.\" She sets the glass down. \"Here's one back, then. I hear everything up there. I just never decided "
+				+ "what it's worth - to keep it, or to stay.\"", [{"id": "bye", "text": "Goodnight, Bird."}], {"bird_scene": "truth"})
+		"kind":
+			return _told("bird", "\"Liar.\" But she smiles at the glass. \"A kind one. Kind comes dear in this town, Mercer - "
+				+ "mind it doesn't cost you more than it costs them.\"", [{"id": "bye", "text": "Goodnight, Bird."}],
+				{"bird_scene": "kind"})
+		"guard":
+			return _told("bird", "\"Fair.\" She looks at you a little longer than she needs to. \"Knowing a man and trusting "
+				+ "him ain't the same animal. Most of them in here never learned the difference.\"",
+				[{"id": "bye", "text": "Goodnight, Bird."}], {"bird_scene": "guard"})
 	return {}
 
 
