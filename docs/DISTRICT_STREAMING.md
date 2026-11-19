@@ -309,3 +309,39 @@ Rain, downpours and thunder cost next to nothing; the street fog stays the costl
 M010-M011), and it still covers the street outside a room's walls while Danny is inside (its hole is
 the room's building only). Nothing was optimised further: the fog's cost is fill rate under software
 rendering, and a real GPU has still not been measured.
+
+## Milestone 013: cars across saves, the rain rebuilt, a living gaming room
+
+Cars keep their place across saves by a lasting name (`<district>/<n>`: the district whose layout
+parks the car and its index there - the same whichever district was built first). A save lists the
+cars moved from their parking places (place, heading, cargo), the ones taken tonight and the one Danny
+sits in. On loading, a neighbouring district named in the save has its cars made at once (put away
+until the district is built, as when it is unloaded); the district the car stands in is built with
+`load_now` before the first frame and Danny is put back in the seat. Nothing new streams.
+
+The rain is still one screen-wide shader, now with its fall integrated on the CPU (three depths, a
+handful of uniforms a frame) and one copy of the screen it reads to catch the light. The gaming room's
+regulars and Leo's wheel run only while Danny is in that room (the schedule is pure: walking in, it
+is read at that minute).
+
+From `tests/support/m013_probe.gd` (software OpenGL - Mesa llvmpipe, no GPU - at 1280 x 720; one run):
+
+| | |
+| --- | --- |
+| Marlowe Avenue: clear / rain / a downpour | 18.8 / 15.6 / 16.0 fps |
+| Marlowe Avenue: fog / rain and fog | 12.4 / 11.2 fps |
+| The rain's fall and parameters a frame (`WeatherView.refresh`) | 0.06 ms |
+| The gaming room near midnight, all five regulars about | 19.6 fps |
+| ... the regulars' life a frame (`GamingRoomLife.update`) / Leo's wheel a frame (`RouletteTable.advance`) | 0.16 ms / 0.03 ms |
+| The gaming room with rain and fog outside | 9.6 fps |
+| At the wheel: bets open, the regulars' chips going down / the ball dropping and paid | 12.5 / 15.0 fps |
+| At the Owl, its reels running / at the card table (dime and quarter), a hand under way | 18.0 / 18.0 fps |
+| Loading a game saved at the wheel in Halloran Square (the scene, the square, the car, Danny in it) | 423 ms; then 12.0 fps driving there in the rain |
+| Memory after the run | 112.0 MB static, 5895 nodes |
+
+The new work a frame is small (well under a millisecond together). The rain costs about as much as
+M012's (15.2-17.2 fps then, 15.6-16.0 now, against 16.0-18.8 clear); the street fog stays the costliest
+effect, and it still covers the street outside the gaming room's walls (9.6 fps inside with rain and
+fog out). The wheel's screen is the heaviest table screen under software rendering (the wheel is
+redrawn every frame now, since it always turns, and the table once a second for its count). Nothing
+was optimised further; a real GPU has still not been measured.
