@@ -25,11 +25,13 @@ const RECENTRE := "map_recentre"
 const SPRINT := "sprint"
 ## M010: Tab on foot: the other gun (the pistol or Eddie's Thompson, while it is on loan).
 const SWITCH := "switch_gun"
+## M012: H on foot: draw the gun in hand and keep it out, or put it away.
+const HOLSTER := "holster"
 const CHOICES := ["choice_1", "choice_2", "choice_3", "choice_4"]
 
 const KEYS := {
 	UP: [KEY_W, KEY_UP], DOWN: [KEY_S, KEY_DOWN], LEFT: [KEY_A, KEY_LEFT], RIGHT: [KEY_D, KEY_RIGHT],
-	INTERACT: [KEY_E], HANDBRAKE: [KEY_SPACE], MENU: [KEY_ESCAPE], HELP: [KEY_F1], QUIT: [KEY_Q], MAP: [KEY_M], STATUS: [KEY_C], RECENTRE: [KEY_R], SWITCH: [KEY_TAB],
+	INTERACT: [KEY_E], HANDBRAKE: [KEY_SPACE], MENU: [KEY_ESCAPE], HELP: [KEY_F1], QUIT: [KEY_Q], MAP: [KEY_M], STATUS: [KEY_C], RECENTRE: [KEY_R], SWITCH: [KEY_TAB], HOLSTER: [KEY_H],
 	"choice_1": [KEY_1, KEY_KP_1], "choice_2": [KEY_2, KEY_KP_2], "choice_3": [KEY_3, KEY_KP_3], "choice_4": [KEY_4, KEY_KP_4],
 }
 
@@ -66,6 +68,7 @@ static func read(aim: Vector2) -> PlayerCommand:
 	c.handbrake = Input.is_action_pressed(HANDBRAKE)
 	c.sprint = Input.is_action_pressed(SPRINT)
 	c.switch_gun = Input.is_action_just_pressed(SWITCH)
+	c.holster = Input.is_action_just_pressed(HOLSTER)
 	c.fire = Input.is_action_pressed(FIRE)
 	c.fire_pressed = Input.is_action_just_pressed(FIRE)
 	for i in CHOICES.size():

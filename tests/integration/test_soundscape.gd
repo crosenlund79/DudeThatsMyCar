@@ -186,7 +186,11 @@ func test_passing_cars_carry_their_engines() -> void:
 func test_sound_levels_on_the_pause_screen() -> void:
 	main._unhandled_input(_key(CityInput.MENU))
 	assert_true(main.paused)
-	assert_true(main.hud.pause_panel.visible)
+	assert_true(main.hud.game_menu.visible, "M012: the game menu")
+	while main.hud.game_menu.current() != "sound":  # its Sound page
+		main._unhandled_input(_key("ui_down"))
+	main._unhandled_input(_key("ui_accept"))
+	assert_eq(main.hud.game_menu.page, "sound")
 	assert_eq(main.hud.sound_rows.size(), 6, "Master, Music, Engine, Effects, Voice, Ambience")
 	var music: float = main.settings.volume["Music"]
 	main._unhandled_input(_key("ui_down"))
@@ -203,4 +207,6 @@ func test_sound_levels_on_the_pause_screen() -> void:
 	assert_almost_eq(main.settings.volume["Ambience"], minf(amb + 0.1, 1.0), 0.001, "louder")
 	assert_eq(main.hud.sound_rows[5][2].text, "%d%%" % int(round(main.settings.volume["Ambience"] * 100.0)))
 	main._unhandled_input(_key(CityInput.MENU))
-	assert_false(main.paused)
+	assert_true(main.paused, "Esc: back to the menu's list")
+	main._unhandled_input(_key(CityInput.MENU))
+	assert_false(main.paused, "Esc again: back to the street")

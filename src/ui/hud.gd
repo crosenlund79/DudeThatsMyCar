@@ -16,7 +16,7 @@ const COPPER := Color("d8a060")
 const DIM := Color("f1e4c6", 0.65)
 ## px per second -> miles per hour (one world px is about 7.5 cm of street).
 const MPH_PER_PX := 0.168
-const HELP_TEXT := "ON FOOT\nW A S D   walk\nMouse   aim\nLeft click   shoot\nE   talk / go in, out / get in a car\n1 - 4   answer\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nM   map      C   how you are\nF1   this card      Esc   pause"
+const HELP_TEXT := "ON FOOT\nW A S D   walk      Shift   run\nMouse   aim\nLeft click   shoot\nH   draw / put away      Tab   the other gun\nE   talk / go in, out / get in a car\n1 - 4   answer\n\nDRIVING\nW   accelerate\nS   brake / reverse\nA  D   steer\nSpace   handbrake\nE   get out\n\nM   map      C   how you are\nF1   this card      Esc   the menu"
 
 var resolver: AssetResolver
 var place_label: Label
@@ -53,7 +53,9 @@ var police_panel: PanelContainer
 var police_label: Label
 var notice_label: Label
 var help_panel: PanelContainer
-var pause_panel: PanelContainer
+## M012: the game menu on Esc (it replaced the M005 pause screen; the sound
+## levels are its Sound page).
+var game_menu: GameMenu
 ## The sound levels on the pause screen: [name, bar, percent] per bus.
 var sound_rows: Array = []
 var crosshair: TextureRect
@@ -132,27 +134,11 @@ func setup(p_resolver: AssetResolver, district_name: String) -> void:
 	help_panel = _panel(Vector2.ZERO)
 	var help := _label(HELP_TEXT, 15, CREAM)
 	help_panel.add_child(help)
-	pause_panel = _panel(Vector2.ZERO)
-	var pause_box := VBoxContainer.new()
-	pause_box.add_theme_constant_override("separation", 10)
-	pause_panel.add_child(pause_box)
-	var pause := _label("PAUSED", 24, CREAM)
-	pause.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	pause_box.add_child(pause)
-	var sound_grid := GridContainer.new()
-	sound_grid.columns = 3
-	sound_grid.add_theme_constant_override("h_separation", 14)
-	pause_box.add_child(sound_grid)
-	for bus in AudioSettings.BUSES:
-		var row: Array[Label] = [_label(bus, 17, DIM), _label("", 17, DIM), _label("", 17, DIM)]
-		row[2].horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		for l in row:
-			sound_grid.add_child(l)
+	game_menu = GameMenu.new()
+	add_child(game_menu)
+	game_menu.setup(resolver, _font)
+	for row in game_menu.sound_rows:
 		sound_rows.append(row)
-	var keys := _label("Up / Down   choose      Left / Right   quieter, louder\n\nEsc   resume      Q   quit", 15, CREAM)
-	keys.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	pause_box.add_child(keys)
-	pause_panel.visible = false
 	crosshair = TextureRect.new()
 	crosshair.texture = resolver.get_texture("ui/crosshair")
 	crosshair.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -384,10 +370,14 @@ func set_police_status(state: int, armed: bool = false) -> void:
 
 
 func set_paused(on: bool) -> void:
-	pause_panel.visible = on
+	if on:
+		game_menu.layout_for(get_viewport().get_visible_rect().size)
+		game_menu.open()
+	else:
+		game_menu.close()
 
 
-## The volume of each bus on the pause screen, the chosen one highlighted.
+## The volume of each bus on the menu's Sound page, the chosen one highlighted.
 func show_sound(settings: AudioSettings, selected: int) -> void:
 	for i in sound_rows.size():
 		var bus: String = AudioSettings.BUSES[i]
@@ -397,7 +387,7 @@ func show_sound(settings: AudioSettings, selected: int) -> void:
 		(row[1] as Label).text = "|".repeat(steps) + ".".repeat(10 - steps)
 		(row[2] as Label).text = "%d%%" % int(round(v * 100.0))
 		for l in row:
-			(l as Label).add_theme_color_override("font_color", COPPER if i == selected else DIM)
+			(l as Label).add_theme_color_override("font_color", GameMenu.ACCENT if i == selected else GameMenu.INK_DIM)
 
 
 ## Refreshes everything from the current state.
@@ -427,8 +417,8 @@ func refresh(delta: float, place: String, prompt_text: String, driving: Car, mou
 			help_panel.modulate.a = 1.0
 	help_panel.reset_size()
 	help_panel.position = Vector2(screen.x - help_panel.size.x - 18, 16)
-	pause_panel.reset_size()
-	pause_panel.position = (screen - pause_panel.size) * 0.5
+	if game_menu.visible and game_menu.size != screen:
+		game_menu.layout_for(screen)
 	if minimap != null:
 		minimap.position = Vector2(18, screen.y - Minimap.SIZE.y - 18)
 	if city_map != null and city_map.visible:

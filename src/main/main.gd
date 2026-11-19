@@ -15,6 +15,9 @@ const VEHICLES := {
 
 ## M009: an incident began, moved on or ended ("started", "phase", "over").
 signal incident_event(event: String, incident: Dictionary)
+## M012: the game menu asked to go back to the last save (the scene is
+## reloaded when it is the running scene; a test listens instead).
+signal reload_requested
 
 ## Optional command source for tests: func(controller) -> PlayerCommand.
 var command_source: Callable
@@ -34,6 +37,9 @@ var layout: DistrictLayout
 var city: City
 var interiors: Interiors
 var markers: PlaceMarkers
+## M012: the brass plates at the street doors and the ring under what E would act on.
+var plates: EntrancePlates
+var highlight: InteractionHighlight
 var cars: Array[Car] = []
 var walker: Walker
 var player: PlayerController
@@ -210,6 +216,13 @@ func _ready() -> void:
 	markers = PlaceMarkers.new()
 	add_child(markers)
 	markers.setup(layout, resolver)
+	plates = EntrancePlates.new()
+	add_child(plates)
+	plates.setup(resolver)
+	plates.add_district(layout, plates)
+	highlight = InteractionHighlight.new()
+	add_child(highlight)
+	highlight.setup()
 	world = DistrictStreamer.new()
 	add_child(world)
 	world.setup(resolver, CityPlan.layouts(layout))
@@ -336,6 +349,7 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(resolver, layout.name)
 	hud.add_minimap(layout)
+	hud.game_menu.action.connect(menu_action)  # M012: a click in the menu
 	incident_views = IncidentViews.new()
 	add_child(incident_views)
 	incident_views.setup(resolver, incidents, load(Hud.FONT_PATH))
@@ -414,6 +428,48 @@ func _ready() -> void:
 	_update_view(0.0)
 	if opening_enabled and _saved.is_empty():
 		_start_opening()
+
+
+## M012: a person's ring is wider than his figure (drawn under it).
+const PERSON_RING := 24.0
+
+
+## M012: what the ring goes under - the thing E would act on now (the spot
+## the prompt names, or the car he would get into) - or {} for nothing.
+func _highlight_for(spot: Dictionary, c: Car) -> Dictionary:
+	if spot.is_empty():
+		if c != null and not _scenery_truck_near(walker.global_position):
+			return {"kind": "car", "xform": c.global_transform, "size": c.vehicle.size}
+		return {}
+	var id := String(spot.id)
+	match id:
+		"door":
+			var plan: InteriorPlan = spot.plan
+			var i: int = spot.index
+			var side: Vector2 = plan.doors[i].side
+			var centre := plan.door_centre(i) + side * InteriorPlan.WALL * 0.5
+			var along := side.orthogonal() * float(plan.doors[i].width) * 0.5
+			return {"kind": "door", "a": centre - along, "b": centre + along}
+		"locked":
+			return {"kind": "ring", "pos": spot.pos, "radius": 13.0, "cold": String(spot.get("talk", "")) == ""}
+		"lefty":
+			return {"kind": "ring", "pos": rival.body.global_position, "radius": PERSON_RING}
+		"seat":
+			return {"kind": "ring", "pos": spot.seat.pos, "radius": 16.0}
+		"stand":
+			return {}
+		"plant":
+			return {"kind": "ring", "pos": cafe_scene.car_pos, "radius": 30.0}
+	if spot.get("kind", "") == "contact":
+		var w := opportunity_views.contact(id)
+		return {"kind": "ring", "pos": w.global_position, "radius": PERSON_RING} if w != null else {}
+	if interiors.current != null:
+		var person := interiors.person(interiors.current.id, id)
+		if person != null:
+			return {"kind": "ring", "pos": person.global_position, "radius": PERSON_RING}
+	if spot.has("pos"):
+		return {"kind": "ring", "pos": spot.pos, "radius": 12.0}
+	return {}
 
 
 ## M012: a streamed district's rooms were built: whoever may push their doors,
@@ -568,6 +624,7 @@ func _on_district_ready(id: String) -> void:
 			_put_away(c, false)
 	opportunity_views.district_ready(id, l, world.loaded[id].node)  # M009
 	interiors.add_district(l, world.city_of(id), world.loaded[id].node)  # M012: its rooms
+	plates.add_district(l, world.loaded[id].node)  # and the plates at its doors
 	if l.police_beat.is_empty():
 		return
 	var o := PoliceOfficer.new()
@@ -595,6 +652,7 @@ func _on_district_ready(id: String) -> void:
 ## let go of bullets still flying there.
 func _on_district_unloading(id: String) -> void:
 	interiors.remove_district(id)  # M012: its rooms go with it
+	plates.remove_district(id)
 	if not _districts.has(id):
 		return
 	var e: Dictionary = _districts[id]
@@ -810,7 +868,7 @@ func _spot() -> Dictionary:
 	var here := world.layout_at(walker.global_position) if world != null else layout
 	var locked := here.locked_door_at(walker.global_position) if here != null else {}
 	if not locked.is_empty():
-		return {"id": "locked", "prompt": locked.prompt, "text": locked.text, "talk": locked.get("talk", "")}
+		return {"id": "locked", "prompt": locked.prompt, "text": locked.text, "talk": locked.get("talk", ""), "pos": locked.pos}
 	return door
 
 
@@ -1568,6 +1626,8 @@ func end_talk() -> void:
 		stage.release()
 	talking = ""
 	_page = {}
+	if player != null:
+		player.fire_lock = true  # M012: the click on the last answer is not a shot
 	if voice != null:
 		voice.stop()
 	hud.hide_dialogue()
@@ -1878,18 +1938,57 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed(CityInput.MENU) and talking != "":
 		end_talk()
+	elif paused:
+		var what := hud.game_menu.handle_key(event)  # M012: the game menu has the keys
+		if what == "sound":
+			_sound_input(event)
+		else:
+			menu_action(what)
 	elif event.is_action_pressed(CityInput.MENU):
-		paused = not paused
-		get_tree().paused = paused
-		hud.set_paused(paused)
-		hud.show_sound(settings, sound_row)
-	elif paused and _sound_input(event):
-		pass
-	elif event.is_action_pressed(CityInput.QUIT) and paused:
-		save_game()
-		get_tree().quit()
+		open_menu(true)
 	elif event.is_action_pressed(CityInput.HELP):
 		hud.toggle_help()
+
+
+## M012: the game menu open (Esc) or shut: the world waits under it - the
+## clock, the cards, the coppers, every timer - and nothing it does reaches
+## the street (the click that closes it never fires the gun).
+func open_menu(on: bool) -> void:
+	paused = on
+	get_tree().paused = on
+	if on:
+		hud.game_menu.notebook = Notebook.entries(rackets, clock.minute)
+		hud.game_menu.can_load = save_path != "" and FileAccess.file_exists(save_path)
+	hud.set_paused(on)
+	hud.show_sound(settings, sound_row)
+	if not command_source.is_valid():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if on else Input.MOUSE_MODE_HIDDEN
+	if not on:
+		player.fire_lock = true
+
+
+## M012: what the game menu asked for ("resume", "save", "load", "quit"; "" nothing).
+func menu_action(what: String) -> void:
+	match what:
+		"resume":
+			open_menu(false)
+		"save":
+			save_game()
+			var here_l := world.layout_at(player.body().global_position)
+			var at: String = interiors.current.name if interiors.current != null else (here_l.name if here_l != null else layout.name)
+			hud.game_menu.say("Saved - Night %d, %s, %s." % [rackets.night, clock.text(), at] if save_path != ""
+				else "Nothing written: this game is not being saved.")
+			hud.game_menu.can_load = save_path != "" and FileAccess.file_exists(save_path)
+		"load":
+			if save_path == "" or not FileAccess.file_exists(save_path):
+				return
+			reload_requested.emit()
+			if get_tree().current_scene == self:
+				get_tree().paused = false
+				get_tree().reload_current_scene()
+		"quit":
+			save_game()
+			get_tree().quit()
 
 
 ## M006: the map of the whole ward, on (M) or off (M or Esc). The world waits
@@ -2262,12 +2361,15 @@ func _update_view(delta: float) -> void:
 		incident_views.refresh(camera.eye(), player.body().global_position, delta)  # M009
 		opportunity_views.refresh(player.body().global_position)
 	var prompt := ""
+	var target := {}
 	hud.minimap.visible = not hud.poker_view.is_open() and not _at_a_game()  # M010: the card table has the screen
 	if hud.poker_view.is_open() or _at_a_game():
 		pass
 	elif player.on_foot():
 		var spot := _spot()
 		var c := player.enterable_car()
+		if talking == "" and player.seat.is_empty():
+			target = _highlight_for(spot, c)  # M012
 		if not spot.is_empty():
 			prompt = "E   %s" % ("Interrupt the Bird" if spot.id == "bird" and stage.singing() else spot.prompt)
 		elif c == null and _scenery_truck_near(walker.global_position):
@@ -2278,6 +2380,8 @@ func _update_view(delta: float) -> void:
 				else "E   Take the %s (%s)" % [c.vehicle.params.display_name, "taken" if thefts.is_stolen(i) else "not yours"]
 	elif player.car.speed() < 30.0:
 		prompt = "E   Get out"
+	highlight.show_target(target)
+	plates.update(walker.global_position if player.on_foot() else Vector2.INF)
 	var focus := player.body().global_position
 	var door := interiors.door_at(walker.global_position) if player.on_foot() else {}
 	var facing := walker.model.facing if player.on_foot() else player.car.model.heading

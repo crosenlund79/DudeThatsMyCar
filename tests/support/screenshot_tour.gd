@@ -624,13 +624,57 @@ func _run(shots: Array) -> void:
 				# Alderman Doran's office across Marlowe Avenue from the park
 				main.weather.force("clear")
 				var hd: DistrictLayout = main.world.layouts.halloran
-				var spot: Vector2 = {"city_hall": hd.locked_doors[0].pos + Vector2(0, -110),
-					"mayors_house": hd.locked_doors[1].pos + Vector2(-40, -70),
-					"ward_office": hd.locked_doors[2].pos + Vector2(60, 60)}[s]
+				var room_door := func(id: String) -> Vector2:  # M012: their doors are doors now
+					for p in hd.interiors:
+						if p.id == id:
+							return (p as InteriorPlan).outside_door(0, 10.0)
+					return Vector2.ZERO
+				var spot: Vector2 = {"city_hall": room_door.call("city_hall") + Vector2(0, -100),
+					"mayors_house": hd.locked_doors[0].pos + Vector2(-40, -70),
+					"ward_office": room_door.call("doran_office") + Vector2(40, 60)}[s]
 				_teleport_walker(spot, PI / 2)
 				main.world.load_now("halloran")
 				await _frames(40)
 				await _shot(s, false)
+			"m012_city_hall", "m012_doran", "m012_regulars", "m012_quilty", "m012_dispatch", "m012_shed":
+				# M012: the new rooms, Danny standing at the place to talk
+				main.weather.force("clear")
+				var at: Array = {"m012_city_hall": ["halloran", "city_hall", "nightclerk"], "m012_doran": ["halloran", "doran_office", "heeler"],
+					"m012_regulars": ["halloran", "regulars_club", "steward"], "m012_quilty": ["riverside", "quilty_office", "quilty"],
+					"m012_dispatch": ["yards", "dispatch_office", "leon"], "m012_shed": ["yards", "freight_shed", "walt"]}[s]
+				var plan_data: InteriorPlan = null
+				for p in (main.world.layouts[at[0]] as DistrictLayout).interiors:
+					if p.id == at[1]:
+						plan_data = p
+				for sp in plan_data.spots:
+					if sp.id == at[2]:
+						_teleport_walker(sp.pos, -PI / 2)
+				main.world.load_now(at[0])
+				await _frames(50)
+				await _shot(s, false)
+			"m012_highlight":
+				# M012: the ring under Augie, the person E would talk to
+				main.weather.force("clear")
+				await _at_spot("copper_owl", "augie")
+				await _frames(20)
+				await _shot(s, false)
+			"m012_plates":
+				# M012: the brass plates at the doors along Marlowe Avenue (Quilty's, Sal's, the Copper Owl's)
+				main.weather.force("clear")
+				_teleport_walker(Vector2(700, 470), 0.0)
+				await _frames(40)
+				await _shot(s, false)
+			"m012_menu", "m012_menu_controls":
+				# M012: the game menu on Esc (the Notebook with Rourke's offer; the Controls page)
+				main.weather.force("clear")
+				main.rackets.job.stage = RourkeJob.Stage.OFFERED
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
+				await _frames(20)
+				main.open_menu(true)
+				main.hud.game_menu.show_page("notebook" if s == "m012_menu" else "controls")
+				await _frames(10)
+				await _shot(s, false)
+				main.open_menu(false)
 			"city_map_civic":
 				# M011: the city map close over Halloran Park: City Hall, the mayor's house (with its address), the aldermen
 				main.weather.force("clear")

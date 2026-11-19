@@ -72,6 +72,22 @@ func trigger() -> void:
 	_idle = 0.0
 
 
+## M012: drawn on purpose (H): it stays in hand until put away, not back under
+## the coat after a while unfired.
+var kept := false
+
+
+## M012: H - draws the gun and keeps it out, or puts it away if it is out.
+## Returns true when it is now (being) drawn.
+func toggle_kept() -> bool:
+	if state == State.HOLSTERED:
+		draw()
+		kept = true
+		return true
+	holster()
+	return false
+
+
 ## M008: draws the gun without firing (someone who holds his fire until he has a shot).
 func draw() -> void:
 	if state == State.HOLSTERED:
@@ -87,6 +103,7 @@ func holster() -> void:
 	_pull = -1.0
 	_idle = 0.0
 	held = false
+	kept = false
 
 
 func step(dt: float) -> PackedStringArray:
@@ -130,7 +147,7 @@ func step(dt: float) -> PackedStringArray:
 				events.append("reload")
 		else:
 			_idle += dt
-			if _idle >= rules.holster_after and _pull < 0.0:
+			if _idle >= rules.holster_after and _pull < 0.0 and not kept:
 				state = State.HOLSTERED
 				events.append("holstered")
 	return events

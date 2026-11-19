@@ -253,6 +253,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/card_face` | `custom/graphics/ui/card_face.png` | 72x100 | sprite (image, scaled to its display size) | 50x70 | M010 a blank card face (screen px), aged cream with a thin border; the game prints the rank and pips. |
 | `ui/crosshair` | `custom/graphics/ui/crosshair.png` | 64x64 | sprite (image, scaled to its display size) | 30x30 | Mouse aim reticle (screen px). |
 | `ui/dealer_button` | `custom/graphics/ui/dealer_button.png` | 48x48 | sprite (image, scaled to its display size) | 24x24 | M010 the dealer's button. |
+| `ui/door_plate` | `custom/graphics/ui/door_plate.png` | 64x20 | sprite (image, scaled to its display size) | 38x11 | M012 a worn brass threshold plate before a street door, seen from above, drawn light (the game tints it: warm, cold, amber). |
 | `ui/fight_dial` | `custom/graphics/ui/fight_dial.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 fistfight dial (screen px): worn brass ring, copper bevel, cream ticks; the zone is lit by the game on the dark track at 92-104 px from the middle; top = where the needle starts. |
 | `ui/fight_needle` | `custom/graphics/ui/fight_needle.png` | 256x256 | sprite (image, scaled to its display size) | 210x210 | M007 the dial's needle, pointing up from the middle of the same 256 x 256 frame (it turns about the centre). |
 | `ui/item_parcel` | `custom/graphics/ui/item_parcel.png` | 64x64 | sprite (image, scaled to its display size) | 26x26 | M010 the parcel as a HUD badge beside the purse, while Danny carries it. |
@@ -266,6 +267,8 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/marker_morgue` | `custom/graphics/ui/marker_morgue.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 landmark badge: The Morgue (slate grey: a landmark, not a business; ward map only). |
 | `ui/marker_union` | `custom/graphics/ui/marker_union.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M011 place marker: the dock and freight workers' union hall (a cargo hook). |
 | `ui/marker_vet` | `custom/graphics/ui/marker_vet.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 place marker: Pettibone Animal Hospital (a paw print). |
+| `ui/menu_card` | `custom/graphics/ui/menu_card.png` | 400x480 | sprite (image, scaled to its display size) | 540x470 | M012 the menu's page: cream card, soft foxed edges, a ruled Art Deco border (stretched; the game prints on it). |
+| `ui/menu_panel` | `custom/graphics/ui/menu_panel.png` | 640x480 | sprite (image, scaled to its display size) | 900x560 | M012 the game menu's case: worn oxblood leather, a tooled gilt border, brass corner fittings (stretched to the menu). |
 | `ui/panel` | `custom/graphics/ui/panel.png` | 96x96 | sprite (image, scaled to its display size) | 96x96 | Nine-patch panel, 24 px margins. |
 | `ui/poker_chip` | `custom/graphics/ui/poker_chip.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | M010 a clay chip from above, light grey (tinted by the game for its value). |
 | `ui/poker_felt` | `custom/graphics/ui/poker_felt.png` | 960x440 | sprite (image, scaled to its display size) | 880x400 | M010 the card table on screen: green baize in an oval padded rail (screen px). |

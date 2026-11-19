@@ -79,6 +79,10 @@ func _physics_process(_delta: float) -> void:
 		_drive(cmd)
 
 
+## M012: no shot until the mouse button has been let go (set when a menu or
+## a talk closes, so the click that closed it never fires the gun).
+var fire_lock := false
+
 ## M010: sitting on a bench or a chair ({} when not): he does not move or
 ## shoot; E stands him up (through `interaction`), Space held lets time pass.
 var seat := {}
@@ -131,6 +135,12 @@ func _walk(cmd: PlayerCommand) -> void:
 		return
 	if cmd.switch_gun:
 		switch_gun()
+	if fire_lock:
+		fire_lock = cmd.fire
+		cmd.fire = false
+		cmd.fire_pressed = false
+	if cmd.holster:  # M012: H - the gun in hand, kept out; or away under the coat
+		gun_event.emit("drawing" if walker.gun.toggle_kept() else "holstered", walker.global_position)
 	walker.gun.held = cmd.fire  # M010: an automatic keeps firing while the button is down
 	if cmd.fire_pressed:
 		walker.gun.trigger()

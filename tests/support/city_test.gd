@@ -24,6 +24,8 @@ func _source(_c: PlayerController) -> PlayerCommand:
 	out.fire = cmd.fire
 	out.switch_gun = cmd.switch_gun
 	cmd.switch_gun = false  # one press
+	out.holster = cmd.holster  # M012
+	cmd.holster = false  # one press
 	if _choice_pending > 0:
 		out.choice = _choice_pending
 		_choice_pending = 0

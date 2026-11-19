@@ -19,6 +19,8 @@ var sprint := false
 var switch_gun := false
 ## Answer key pressed this tick (1-4; 0 = none), while talking to someone.
 var choice := 0
+## M012: H pressed this tick: draw the gun and keep it out, or put it away.
+var holster := false
 
 
 static func make(p_move: Vector2 = Vector2.ZERO, p_interact: bool = false, p_handbrake: bool = false,
