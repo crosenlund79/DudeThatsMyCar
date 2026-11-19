@@ -27,6 +27,18 @@ func _room() -> InteriorView:
 	return main.interiors.view_of("gaming_room")
 
 
+## M013.6: a minute tonight with at least two regulars at the rail (the room's evening decides who is).
+func _busy_minute() -> float:
+	for m in range(21 * 60 + 30, 26 * 60):
+		var at_rail := 0
+		for id in Patrons.ROSTER:
+			if main.gaming_room.spot_of(id, float(m)).begins_with("rail_"):
+				at_rail += 1
+		if at_rail >= 2:
+			return float(m)
+	return 24 * 60.0
+
+
 func _step_up(money: int) -> void:
 	main.rackets.money = money
 	walker().place(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
@@ -49,9 +61,16 @@ func _until_phase(phase: int, fresh := false) -> void:
 
 
 func test_the_regulars_play_at_the_rail_while_danny_watches() -> void:
+	main.clock.set_time(_busy_minute())
 	await _step_up(700)
-	assert_has(main.wheel.patrons.seated(), "edna")
-	assert_has(main.wheel.patrons.seated(), "stan")
+	var at_rail := []
+	for id in Patrons.ROSTER:
+		if main.gaming_room.spot_of(id, main.clock.minute).begins_with("rail_"):
+			at_rail.append(id)
+	for id in at_rail:
+		assert_has(main.wheel.patrons.seated(), id, "%s at the rail plays" % id)
+	for id in main.wheel.patrons.seated():
+		assert_has(at_rail, id, "only those at the rail")
 	var most := 0
 	var rounds := 0
 	while rounds < 4:
@@ -82,6 +101,10 @@ func test_dannys_money_moves_only_with_his_own_chips() -> void:
 
 
 func test_a_big_win_at_the_rail() -> void:
+	for m in range(21 * 60 + 30, 27 * 60):  # Big Stan at his place at the rail
+		if main.gaming_room.spot_of("stan", float(m)) == "rail_stan":
+			main.clock.set_time(float(m) + 0.5)
+			break
 	walker().place(RiversideInteriors.ROULETTE_SPOT + Vector2(0, 30), -PI / 2)
 	main.camera.snap_to(walker())
 	await wait_physics_frames(3)
@@ -94,12 +117,14 @@ func test_a_big_win_at_the_rail() -> void:
 	assert_string_contains(main.room_lines.line_of(leo), "Well played, Big Stan", "Leo names the winner")
 	assert_lt(leo.aim_point.distance_to(stan.global_position), 1.0, "and turns to him")
 	await wait_physics_frames(200)
+	await wait_physics_frames(2)
 	var home: Dictionary = _room().plan.person("croupier")
 	assert_lt(leo.aim_point.distance_to((home.pos as Vector2) + Vector2.from_angle(float(home.facing)) * 50.0), 1.0,
 		"then back to his wheel")
 
 
 func test_a_regular_struck_down_plays_no_more() -> void:
+	main.clock.set_time(_busy_minute())
 	walker().place(RiversideInteriors.ROULETTE_SPOT + Vector2(0, 30), -PI / 2)
 	await wait_physics_frames(3)
 	main._on_person_down("edna", false, _room())

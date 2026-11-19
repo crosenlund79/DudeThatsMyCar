@@ -10,6 +10,8 @@ const ABOVE := Vector2(0, -34)
 var speaker: Node2D
 var label: Label
 var left := 0.0
+## M013: raised this far above the usual (another line close by).
+var lift := 0.0
 
 
 func setup(font: Font) -> void:
@@ -37,6 +39,7 @@ func setup(font: Font) -> void:
 ## Says `text` over `who` for a few seconds.
 func say(who: Node2D, text: String) -> void:
 	speaker = who
+	lift = 0.0
 	label.text = text
 	label.reset_size()
 	left = SECONDS
@@ -62,5 +65,5 @@ func _process(delta: float) -> void:
 
 func _follow() -> void:
 	if is_instance_valid(speaker):
-		global_position = speaker.global_position + ABOVE
+		global_position = speaker.global_position + ABOVE - Vector2(0, lift)
 		label.position = Vector2(-label.size.x * 0.5, -label.size.y)

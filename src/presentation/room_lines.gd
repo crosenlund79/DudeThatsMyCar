@@ -41,6 +41,21 @@ func say(who: Node2D, text: String) -> void:
 			if l.left < pick.left:
 				pick = l
 	pick.say(who, text)
+	# two people close together: the newer line sits above the other, never over it
+	for k in 3:
+		var clash := false
+		for l in _lines:
+			if l != pick and l.visible and _box(l).intersects(_box(pick)):
+				clash = true
+				break
+		if not clash:
+			break
+		pick.lift += pick.label.size.y + 4.0
+		pick._follow()
+
+
+func _box(l: OverheadLine) -> Rect2:
+	return Rect2(l.global_position + l.label.position, l.label.size)
 
 
 ## What `who` is saying now ("" if nothing).

@@ -42,7 +42,10 @@ func _init(p_rules: RouletteRules, p_seed := -1) -> void:
 
 ## A regular steps up to the rail (their purse for the night if they are new tonight).
 func seat(id: String) -> void:
-	if players.has(id) or not Patrons.ROSTER.has(id):
+	if not Patrons.ROSTER.has(id):
+		return
+	if players.has(id):
+		players[id].seated = true  # back at the rail, with what is left of tonight's purse
 		return
 	var r: Dictionary = Patrons.ROSTER[id]
 	players[id] = {"style": String(r.style), "purse": int(r.purse), "start": int(r.purse), "seated": true}

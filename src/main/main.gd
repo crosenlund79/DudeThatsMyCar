@@ -161,6 +161,11 @@ var _drop_heard := false
 var wheel_patrons: RoulettePatrons
 var room_lines: RoomLines
 var _react_rng := RandomNumberGenerator.new()
+## M013.6: the gaming room's evening (who is in, where) and its life while Danny is in it.
+var gaming_room := GamingRoom.new()
+var room_life: GamingRoomLife
+var _in_gaming_room := false
+var _unseat_later: Array = []
 ## What Danny had in his pocket when he stepped up to the wheel (to tell him how he did).
 var _wheel_start := 0
 ## M011: the gaming room's three nickel machines (one SlotMachine each, its own
@@ -443,14 +448,17 @@ func _ready() -> void:
 	roulette = Roulette.new(roulette_rules)
 	wheel = RouletteTable.new(roulette_rules, roulette)  # M013: an unpredictable draw in play (tests seed their own)
 	wheel_patrons = RoulettePatrons.new(roulette_rules)  # M013.3: their own generator, never the draw's
-	for id in ["edna", "stan"]:
-		wheel_patrons.seat(id)
-	wheel.set_patrons(wheel_patrons)
+	wheel.set_patrons(wheel_patrons)  # (who is at the rail: the room's life, M013.6)
 	_react_rng.randomize()
 	_taunt_rng.randomize()
 	room_lines = RoomLines.new()
 	add_child(room_lines)
 	room_lines.setup(load(Hud.FONT_PATH))
+	gaming_room.begin_night(rackets.night)
+	room_life = GamingRoomLife.new()
+	add_child(room_life)
+	room_life.setup(interiors.view_of("gaming_room"), gaming_room, room_lines, soundscape)
+	room_life.at_wheel.connect(_on_patron_at_wheel)
 	var rv := hud.roulette_view
 	rv.bet_requested.connect(_on_wheel_bet)
 	rv.take_back_requested.connect(_on_wheel_take_back)
@@ -1402,6 +1410,9 @@ func _on_wheel_event(e: Dictionary) -> void:
 				rv.set_money(rackets.money)
 			_show_purse()
 			_wheel_reactions(int(e.number), e.get("others", []))
+			for id in _unseat_later:  # M013.6: regulars who left once their chips were called
+				wheel_patrons.unseat(id)
+			_unseat_later.clear()
 			if bool(e.played):
 				save_game()
 		"round_over":
@@ -1438,7 +1449,9 @@ func _wheel_reactions(number: int, others: Array) -> void:
 		if net > 0:
 			_hop(w)
 		elif net < 0:
-			_turn_away(w, view.plan.person(String(o.id)))
+			var spot: String = room_life.here.get(String(o.id), "")
+			if spot != "":
+				_turn_away(w, {"pos": GamingRoomLife.spot_pos(spot), "facing": GamingRoomLife.spot_facing(spot)})
 		if said < 2 and _react_rng.randf() < chance:
 			room_lines.say(w, Patrons.line(String(o.id), kind, _react_rng))
 			said += 1
@@ -1477,6 +1490,30 @@ func _turn_away(w: Walker, home: Dictionary) -> void:
 	var t := create_tween()  # (dies with the scene, never outliving the people it turns)
 	t.tween_interval(1.6)
 	t.tween_property(w, "aim_point", (home.pos as Vector2) + Vector2.from_angle(float(home.facing)) * 50.0, 0.0)
+
+
+## M013.6: the gaming room's life runs while Danny is in it (and only then:
+## walking in, everyone is where the evening's schedule has them).
+func _room_life_update(delta: float) -> void:
+	var inside := interiors.current != null and interiors.current.id == "gaming_room"
+	if inside and not _in_gaming_room:
+		room_life.enter(clock.minute)
+	_in_gaming_room = inside
+	if inside:
+		room_life.update(delta, clock.minute, walker.global_position, _slot_at if hud.slot_view.is_open() else -1)
+
+
+## M013.6: a regular steps up to the rail (his colour chips with the round) or
+## leaves it (chips already called ride on until the ball rests).
+func _on_patron_at_wheel(id: String, on: bool) -> void:
+	if on:
+		_unseat_later.erase(id)
+		wheel_patrons.seat(id)
+	elif wheel.phase == RouletteTable.Phase.DROP:
+		if not id in _unseat_later:
+			_unseat_later.append(id)
+	else:
+		wheel_patrons.unseat(id)
 
 
 ## A sound of the wheel: on the table's own channel at the rail, from the
@@ -2086,6 +2123,7 @@ func sleep() -> void:
 	poker.begin_night(rackets.night)  # M010: the card players are back with fresh money
 	_sync_card_players()
 	rackets.money += wheel.begin_night()  # M013: the cover off the wheel
+	gaming_room.begin_night(rackets.night)  # M013.6: tonight's regulars
 	moments.clear()
 	emergency.clear()  # the street is cleared by morning
 	_warned = 0
@@ -2937,6 +2975,7 @@ func _process(delta: float) -> void:
 		_sync_card_players()  # M010: busted players go home, the late man pulls up a chair
 	if not paused:
 		_wheel_update(delta)  # M013: Leo's wheel, round after round
+		_room_life_update(delta)  # M013.6: the regulars about the gaming room
 	if not paused and stage.update(delta):
 		soundscape.resume_music()  # the band counts her back in
 		if bird_show != null:

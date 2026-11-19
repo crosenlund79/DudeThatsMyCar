@@ -116,6 +116,13 @@ func dim(scale: float) -> void:
 	_apply()
 
 
+## M013: the lamps a little alive (each its own multiplier, about 1) while
+## the room is open; the house lights and the fade as ever.
+func flicker(mults: Array) -> void:
+	for i in mini(lights.size(), mults.size()):
+		lights[i].energy = _energy[i] * alpha * light_scale * float(mults[i])
+
+
 ## M012: someone not in tonight at this hour (gone home, out for coffee):
 ## hidden and not to be talked to; back in their place when they return.
 var away := {}
@@ -129,8 +136,17 @@ func set_away(id: String, on: bool) -> void:
 		away[id] = true
 		w.visible = false
 		w.set_physics_process(false)
+		# M013: not there means not in the way either (M012 left the body solid where it stood)
+		w.set_meta("away_layers", [w.collision_layer, w.collision_mask])
+		w.collision_layer = 0
+		w.collision_mask = 0
 	else:
 		away.erase(id)
+		if w.has_meta("away_layers"):
+			var l: Array = w.get_meta("away_layers")
+			w.collision_layer = int(l[0])
+			w.collision_mask = int(l[1])
+			w.remove_meta("away_layers")
 		if not out.has(id) and not w.down:
 			w.visible = true
 			w.set_physics_process(true)

@@ -21,6 +21,7 @@ slots/reels               the three reels running (a mechanical whirr with the d
 slots/stop                a reel stopping: a metallic clunk with a little ring
 slots/coin                a coin dropping into the metal cup
 slots/bell                the machine's win bell (a mechanical bell, rung by the payout)
+gaming/murmur             M013: two of the regulars exchanging a few words (voiced murmurs, no words)
 slots/hold                M013: a HOLD latch thrown: a brass catch snapping home over the reel
 slots/release             M013: the latches springing back off the reels (two quick clacks, a spring)
 slots/lamp                M013: the HOLD lamps lighting: a relay's click and a lamp's faint tick
@@ -113,6 +114,24 @@ def laugh():
         at += d + rng.uniform(0.05, 0.08)
     x = band(x, lo=150, hi=2200, circular=False)
     return fade_ends(echo(x, [(0.02, 0.3), (0.05, 0.15)], hi=1500, circular=False), fade_out=0.1)
+
+
+def murmur():
+    """M013: two people exchanging a few words across a little table: two voices, a lower and a
+    higher, taking turns - murmured syllables with breath, no words, softly muffled by the room."""
+    x = np.zeros(int(2.6 * RATE))
+    at = 0.03
+    for turn, f0 in enumerate((rng.uniform(110, 130), rng.uniform(175, 205), rng.uniform(110, 130))):
+        for k in range(rng.integers(3, 6)):
+            d = rng.uniform(0.08, 0.16)
+            syl = syllable(d, f0 * rng.uniform(0.93, 1.07), ((520 + 120 * turn, 1.0), (1250, 0.6)), 0.6)
+            place(x, syl * rng.uniform(0.55, 0.9), at * RATE, wrap=False)
+            at += d + rng.uniform(0.02, 0.07)
+        at += rng.uniform(0.18, 0.3)
+        if at > 2.3:
+            break
+    x = band(x, lo=140, hi=2400, circular=False)
+    return fade_ends(echo(x, [(0.018, 0.25), (0.045, 0.12)], hi=1600, circular=False), fade_out=0.15)
 
 
 def chips_stack():
@@ -358,6 +377,7 @@ MAKERS = {
     "ambience/gaming_room": (gaming_room, 0.4),
     "gaming/laugh": (laugh, 0.5),
     "gaming/chips_stack": (chips_stack, 0.5),
+    "gaming/murmur": (murmur, 0.4),
     "gaming/shuffle": (lambda: riffle(0.7), 0.5),
     "gaming/glass": (glass, 0.45),
     "gaming/chair": (chair, 0.5),

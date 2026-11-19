@@ -401,6 +401,7 @@ const AUDIO := {
 	"ambience/gaming_room": {"loop": true, "bus": "Ambience", "notes": "M011: the back rooms' bed (the card room and the gaming room): smoky room tone, a few quiet voices talking over each other (no words), a chip or a card now and then. A seamless loop, about 24 s; keep it low and even (the game's sounds sit over it)."},
 	"gaming/laugh": {"loop": false, "bus": "Ambience", "notes": "M011: a short laugh across the back room, muffled (about 1 s; no words). Played now and then at a spot in the room."},
 	"gaming/chips_stack": {"loop": false, "bus": "Ambience", "notes": "M011: someone stacking and riffling chips (under 1 s)."},
+	"gaming/murmur": {"loop": false, "bus": "Ambience", "notes": "M013: two of the gaming room's regulars exchanging a few words (voiced murmurs, no words; about 2.5 s), played where they stand."},
 	"gaming/shuffle": {"loop": false, "bus": "Ambience", "notes": "M011: a riffle shuffle somewhere in the room (about 1 s)."},
 	"gaming/glass": {"loop": false, "bus": "Ambience", "notes": "M011: two glasses touching, one set down (about 1 s)."},
 	"gaming/chair": {"loop": false, "bus": "Ambience", "notes": "M011: a chair pushed back on the boards, a creak (about 1 s)."},

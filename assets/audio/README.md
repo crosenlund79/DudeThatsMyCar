@@ -98,6 +98,7 @@ to the template. Loops repeat the whole file (make both ends meet); one-shots sh
 | `ambience/gaming_room` | yes | Ambience | 24 s stereo / 15-60 s | The back rooms' bed (card room and gaming room): room tone, quiet voices (no words), a chip or card now and then. Only heard inside the back rooms. Keep it low and even. |
 | `gaming/laugh` | no | Ambience | 1.2 s / under 2 s | A laugh across the room (no words), now and then at a spot in the room. |
 | `gaming/chips_stack` | no | Ambience | 0.9 s / under 1.5 s | Somebody stacking chips. |
+| `gaming/murmur` | no | Ambience | 2.5 s / under 3 s | M013: two regulars exchanging a few words (voiced murmurs, no words), played where they stand in the gaming room. |
 | `gaming/shuffle` | no | Ambience | 1.2 s / under 2 s | A riffle shuffle somewhere in the room. |
 | `gaming/glass` | no | Ambience | 1.0 s / under 1.5 s | Glasses touching, one set down. |
 | `gaming/chair` | no | Ambience | 1.0 s / under 1.5 s | A chair pushed back on the boards. |

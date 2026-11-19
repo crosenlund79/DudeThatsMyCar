@@ -39,6 +39,19 @@ const ROSTER := {
 }
 
 
+## M013: what two regulars say to each other now and then (opening, answer).
+const CHATTER := [
+	["stan", "edna", "Red again, Mrs. H?", "Always, Stanley. It's a sensible colour."],
+	["edna", "bertie", "Any luck with your system, Mr. Sloane?", "Luck has nothing to do with it, madam."],
+	["stan", "bertie", "Bertie, you ever actually win?", "Tuesday. Twice."],
+	["dolly", "mick", "That Star's paying better than my Owl.", "It ain't. You just play it worse."],
+	["mick", "stan", "Leo's spinning cold tonight.", "Cold for you, maybe."],
+	["dolly", "edna", "Isn't that a darling hat.", "Why, thank you, dear. Marshall Field's."],
+	["bertie", "dolly", "The machines return eighty-five cents on the dollar, you know.", "And the other fifteen buys me fun."],
+	["edna", "stan", "Mind your elbows, Stanley.", "Sorry, sorry. Big man, small room."],
+]
+
+
 static func name_of(id: String) -> String:
 	return String(ROSTER.get(id, {}).get("name", ""))
 

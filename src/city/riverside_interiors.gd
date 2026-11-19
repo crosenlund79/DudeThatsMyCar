@@ -169,9 +169,11 @@ static func gaming_room(d: DistrictLayout) -> InteriorPlan:
 	p.people = [
 		{"id": "croupier", "name": "Leo Varga", "look": "characters/croupier", "pos": CROUPIER, "facing": PI / 2},
 		# M013: the regulars (Patrons.ROSTER): Mrs. Halloway and Big Stan at the rail, Bertie with his drink
-		{"id": "edna", "name": "", "look": "characters/lady", "pos": Vector2(1858, 370), "facing": -PI / 2},
+		{"id": "edna", "name": "", "look": "characters/lady", "pos": Vector2(1858, 372), "facing": -PI / 2},
 		{"id": "stan", "name": "", "look": "characters/patron_man", "pos": Vector2(1914, 278), "facing": PI / 2},
-		{"id": "bertie", "name": "", "look": "characters/clerk", "pos": Vector2(1869, 408), "facing": PI},
+		{"id": "bertie", "name": "", "look": "characters/clerk", "pos": Vector2(1822, 410), "facing": 0.0},
+		{"id": "dolly", "name": "", "look": "characters/patron_woman", "pos": Vector2(1870, 410), "facing": PI},
+		{"id": "mick", "name": "", "look": "characters/worker", "pos": Vector2(1922, 406), "facing": 0.0},
 	]
 	p.spots = [
 		{"id": "roulette", "pos": ROULETTE_SPOT, "radius": 22.0, "prompt": "Play the wheel"},
@@ -190,6 +192,31 @@ const ROULETTE_SPOT := Vector2(1892, 372)
 ## M011: the three machines along the back wall, left to right, and their names.
 const SLOTS: Array[Vector2] = [Vector2(1816, 194), Vector2(1850, 194), Vector2(1884, 194)]
 const SLOT_NAMES: Array[String] = ["Owl", "Bell", "Star"]
+
+
+## M013: where the gaming room's regulars stand, sit and play (each place
+## kept for one of them - Patrons / GamingRoom - so nobody shares, and the
+## Bell is left for Danny): spot -> [where, facing]; and the floor's walking
+## graph (waypoints and the straight, clear legs between them) they cross the
+## room by, in at the door from the card room and out again.
+const ROOM_SPOTS := {
+	"rail_edna": [Vector2(1858, 372), -PI / 2], "sideboard": [Vector2(1830, 366), PI],
+	"rail_stan": [Vector2(1914, 278), PI / 2], "watch_ne": [Vector2(1944, 238), 2.5],
+	"rail_east": [Vector2(1954, 322), PI], "table1_l": [Vector2(1822, 410), 0.0],
+	"slot_0": [Vector2(1816, 228), -PI / 2], "table1_r": [Vector2(1870, 410), PI],
+	"slot_2": [Vector2(1884, 228), -PI / 2], "table2": [Vector2(1922, 406), 0.0],
+}
+const ROOM_NODES := {
+	"door": Vector2(1964, 268), "aisle_n": Vector2(1930, 252), "aisle_nw": Vector2(1868, 250),
+	"aisle_e": Vector2(1962, 320), "aisle_se": Vector2(1960, 380), "aisle_s": Vector2(1903, 392),
+	"aisle_sw": Vector2(1846, 381), "t1_west": Vector2(1822, 388), "t1_east": Vector2(1870, 388),
+}
+## Legs: node - node, and node - spot (a spot is reached from one node).
+const ROOM_LINKS := [["door", "aisle_n"], ["door", "aisle_e"], ["aisle_n", "aisle_nw"], ["aisle_e", "aisle_se"],
+	["aisle_se", "aisle_s"], ["aisle_s", "aisle_sw"], ["aisle_sw", "t1_west"], ["aisle_sw", "t1_east"],
+	["aisle_n", "rail_stan"], ["aisle_n", "watch_ne"], ["aisle_e", "rail_east"], ["aisle_nw", "slot_0"],
+	["aisle_nw", "slot_2"], ["aisle_sw", "rail_edna"], ["t1_west", "sideboard"], ["t1_west", "table1_l"],
+	["t1_east", "table1_r"], ["aisle_s", "table2"]]
 
 
 ## Where the wheel turns in the table (its bowl at the table's left end).

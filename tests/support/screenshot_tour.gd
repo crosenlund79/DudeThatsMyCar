@@ -614,6 +614,16 @@ func _run(shots: Array) -> void:
 				await _shot(s, false)
 				if s == "poker_game":
 					main.leave_poker()
+			"m013_gaming_room":
+				# M013: the gaming room near midnight - the regulars at the rail, at their machines and
+				# tables, Leo at the wheel, two of them passing the time
+				main.weather.force("clear")
+				main.clock.set_time(24 * 60.0 + 5.0)
+				_teleport_walker(Vector2(1958, 300), PI)
+				await _frames(30)
+				main.room_life._chat = 0.0
+				await _frames(150)
+				await _shot(s, false)
 			"m013_poker_stakes", "m013_poker_leave":
 				# M013: the buy-in with the stakes (dime and quarter chosen); then at that table, his turn
 				# in a hand, Esc: the question before he gets up mid-hand
