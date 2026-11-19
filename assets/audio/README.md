@@ -113,6 +113,9 @@ to the template. Loops repeat the whole file (make both ends meet); one-shots sh
 | `slots/stop` | no | Effects | 0.3 s / under 0.4 s | One reel stopping (played for each). |
 | `slots/coin` | no | Effects | 0.35 s / under 0.4 s | One coin into the payout cup (played for each coin). |
 | `slots/bell` | no | Effects | 1.8 s / under 2.5 s | The machine's bell for a good payout (10 coins or more). |
+| `slots/hold` | no | Effects | 0.22 s / under 0.4 s | M013: a HOLD latch thrown over a reel (a brass catch snapping home). |
+| `slots/release` | no | Effects | 0.4 s / under 0.6 s | M013: the latches springing back (a hold let go, or a stake change putting lit lamps out). |
+| `slots/lamp` | no | Effects | 0.7 s / under 1 s | M013: the HOLD lamps lighting after a losing pull (a relay's click, a soft tap on the bell). |
 | `poker/shuffle` | no | Effects | 1.3 s / under 1.5 s | The dealer's riffle before each hand at the card table. |
 | `poker/pot` | no | Effects | 1.0 s / about 1 s | The pot pushed to the winner. |
 | `poker/reveal` | no | Effects | 0.45 s / under 0.6 s | Hole cards turned over at a showdown. |

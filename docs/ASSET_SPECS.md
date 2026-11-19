@@ -353,8 +353,11 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `roulette/win` | `custom/audio/roulette/win.ogg` (or .wav / .mp3) | `template_win.ogg` | no | Effects | M011: winnings pushed across the felt (a run of chips, about 1 s). |
 | `slots/bell` | `custom/audio/slots/bell.ogg` (or .wav / .mp3) | `template_bell.ogg` | no | Effects | M011: the machine's win bell for a good payout (about 2 s; mechanical, no electronics). |
 | `slots/coin` | `custom/audio/slots/coin.ogg` (or .wav / .mp3) | `template_coin.ogg` | no | Effects | M011: one coin dropping into the payout cup (played for each coin paid). |
+| `slots/hold` | `custom/audio/slots/hold.ogg` (or .wav / .mp3) | `template_hold.ogg` | no | Effects | M013: a HOLD latch thrown over a reel (a brass catch snapping home; about 0.2 s). |
+| `slots/lamp` | `custom/audio/slots/lamp.ogg` (or .wav / .mp3) | `template_lamp.ogg` | no | Effects | M013: the HOLD lamps lighting (a relay's click, a soft tap on the bell; about 0.7 s). |
 | `slots/lever` | `custom/audio/slots/lever.ogg` (or .wav / .mp3) | `template_lever.ogg` | no | Effects | M011: a machine's lever pulled: ratchet, spring, a heavy clunk (under 1 s). |
 | `slots/reels` | `custom/audio/slots/reels.ogg` (or .wav / .mp3) | `template_reels.ogg` | yes | Effects | M011: the reels running: a mechanical whirr with the detents' clicks (a seamless loop of about 1 s, stopped when the last reel stops). |
+| `slots/release` | `custom/audio/slots/release.ogg` (or .wav / .mp3) | `template_release.ogg` | no | Effects | M013: the latches springing back off the reels (about 0.4 s). |
 | `slots/stop` | `custom/audio/slots/stop.ogg` (or .wav / .mp3) | `template_stop.ogg` | no | Effects | M011: one reel stopping: a metallic clunk (played for each reel). |
 | `vehicles/door` | `custom/audio/vehicles/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Getting into or out of a car: the handle and a heavy door shutting. |
 | `vehicles/engine_load` | `custom/audio/vehicles/engine_load.ogg` (or .wav / .mp3) | `template_engine_load.wav` | yes | Engine | Engine load layer, louder while accelerating. |

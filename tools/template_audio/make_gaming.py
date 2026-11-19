@@ -21,6 +21,9 @@ slots/reels               the three reels running (a mechanical whirr with the d
 slots/stop                a reel stopping: a metallic clunk with a little ring
 slots/coin                a coin dropping into the metal cup
 slots/bell                the machine's win bell (a mechanical bell, rung by the payout)
+slots/hold                M013: a HOLD latch thrown: a brass catch snapping home over the reel
+slots/release             M013: the latches springing back off the reels (two quick clacks, a spring)
+slots/lamp                M013: the HOLD lamps lighting: a relay's click and a lamp's faint tick
 poker/shuffle             the dealer's riffle at the card table
 poker/pot                 the pot gathered and pushed to the winner
 poker/reveal              hole cards turned over at the showdown"""
@@ -305,6 +308,39 @@ def win_bell():
     return fade_ends(x, fade_out=0.4)
 
 
+def hold_latch():
+    """M013: a HOLD latch thrown: a short slide of the catch and a firm brass snap."""
+    x = np.zeros(int(0.22 * RATE))
+    n = int(0.05 * RATE)
+    slide = band(rng.standard_normal(n), 1200, 4000, circular=False) * np.linspace(0.2, 0.6, n)
+    place(x, slide * 0.4, 0, wrap=False)
+    place(x, partials(0.15, [1850, 3300, 5200], [0.03, 0.02, 0.012], [1.0, 0.45, 0.2], 0.004), 0.045 * RATE, wrap=False)
+    place(x, thump(0.1, 210, 0.015) * 0.5, 0.045 * RATE, wrap=False)
+    return fade_ends(x, fade_out=0.04)
+
+
+def release_latches():
+    """M013: the latches springing back off the reels: two quick clacks and a little spring."""
+    x = np.zeros(int(0.4 * RATE))
+    for k, at in enumerate((0.0, 0.07)):
+        place(x, partials(0.12, [1600 + k * 140, 2900], [0.02, 0.012], [0.9, 0.4], 0.004), at * RATE, wrap=False)
+    n = int(0.2 * RATE)
+    spring = np.sin(2 * np.pi * (900 - 500 * _t(n)) * _t(n)) * np.exp(-_t(n) / 0.06) * 0.12
+    place(x, spring, 0.09 * RATE, wrap=False)
+    return fade_ends(x, fade_out=0.06)
+
+
+def lamp_relay():
+    """M013: the HOLD lamps lighting: a relay's click, a lamp's faint tick and a soft tap on the bell."""
+    x = np.zeros(int(0.7 * RATE))
+    place(x, partials(0.05, [2400, 4100], [0.006, 0.004], [1.0, 0.5], 0.002), 0, wrap=False)
+    n = int(0.25 * RATE)
+    hum = np.sin(2 * np.pi * 120 * _t(n)) * np.exp(-_t(n) / 0.08) * 0.08
+    place(x, hum, 0.02 * RATE, wrap=False)
+    place(x, partials(0.5, [1560, 1560 * 2.4], [0.3, 0.15], [0.35, 0.12], 0.003), 0.09 * RATE, wrap=False)
+    return fade_ends(x, fade_out=0.15)
+
+
 # ---------------------------------------------------------------- the card table
 
 def reveal():
@@ -337,6 +373,9 @@ MAKERS = {
     "slots/stop": (reel_stop, 0.65),
     "slots/coin": (coin, 0.5),
     "slots/bell": (win_bell, 0.5),
+    "slots/hold": (hold_latch, 0.55),
+    "slots/release": (release_latches, 0.5),
+    "slots/lamp": (lamp_relay, 0.45),
     "poker/shuffle": (lambda: riffle(0.8), 0.5),
     "poker/pot": (lambda: pushed_chips(12), 0.55),
     "poker/reveal": (reveal, 0.5),

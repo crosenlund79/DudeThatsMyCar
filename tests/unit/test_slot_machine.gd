@@ -33,21 +33,23 @@ func test_three_machines_one_implementation_period_symbols() -> void:
 	assert_eq(titles, ["The Owl", "The Bell", "The Star"])
 
 
+## M013: the paytables were rebalanced for hold-and-respin (no bar completing
+## a pair any more; see test_slot_holds and tools/slot_odds/analyse.py).
 func test_the_paytable_first_line_that_matches() -> void:
 	var r: SlotRules = load(MACHINES[0])
-	assert_eq(SlotMachine.coins_for(r, ["bar", "bar", "bar"]), 100)
-	assert_eq(SlotMachine.coins_for(r, ["seven", "seven", "seven"]), 50)
-	assert_eq(SlotMachine.coins_for(r, ["bell", "bell", "bell"]), 18)
-	assert_eq(SlotMachine.coins_for(r, ["bell", "bell", "bar"]), 18, "a bar on the third reel completes the bells")
-	assert_eq(SlotMachine.coins_for(r, ["plum", "plum", "bar"]), 14)
-	assert_eq(SlotMachine.coins_for(r, ["orange", "orange", "orange"]), 10)
-	assert_eq(SlotMachine.coins_for(r, ["cherry", "cherry", "cherry"]), 10)
+	assert_eq(SlotMachine.coins_for(r, ["bar", "bar", "bar"]), 40)
+	assert_eq(SlotMachine.coins_for(r, ["seven", "seven", "seven"]), 25)
+	assert_eq(SlotMachine.coins_for(r, ["bell", "bell", "bell"]), 12)
+	assert_eq(SlotMachine.coins_for(r, ["bell", "bell", "bar"]), 0, "M013: a bar no longer completes the bells")
+	assert_eq(SlotMachine.coins_for(r, ["plum", "plum", "plum"]), 10)
+	assert_eq(SlotMachine.coins_for(r, ["orange", "orange", "orange"]), 8)
+	assert_eq(SlotMachine.coins_for(r, ["cherry", "cherry", "cherry"]), 8)
 	assert_eq(SlotMachine.coins_for(r, ["cherry", "cherry", "lemon"]), 5)
-	assert_eq(SlotMachine.coins_for(r, ["cherry", "plum", "bell"]), 2, "a cherry on the first reel")
+	assert_eq(SlotMachine.coins_for(r, ["cherry", "plum", "bell"]), 3, "a cherry on the first reel")
 	assert_eq(SlotMachine.coins_for(r, ["plum", "cherry", "cherry"]), 0, "cherries count from the left")
 	assert_eq(SlotMachine.coins_for(r, ["lemon", "lemon", "lemon"]), 0, "lemons pay nothing")
 	assert_eq(SlotMachine.coins_for(r, ["bar", "bell", "bell"]), 0)
-	assert_eq(SlotMachine.pay_line(r, ["bell", "bell", "bar"]), 3)
+	assert_eq(SlotMachine.pay_line(r, ["bell", "bell", "bell"]), 2)
 	assert_eq(SlotMachine.pay_line(r, ["lemon", "plum", "bar"]), -1)
 
 
@@ -55,7 +57,7 @@ func test_each_machine_returns_a_modest_share() -> void:
 	for i in 3:
 		var m := _machine(i)
 		var rtp := m.expected_return()
-		gut.p("%s (%d cents): returns %.1f%% of what goes in" % [m.rules.title, m.rules.coin, rtp * 100.0])
+		gut.p("%s (%d cents): plain pulls return %.2f%% of what goes in" % [m.rules.title, m.rules.coin, rtp * 100.0])
 		assert_gt(rtp, 0.75, "%s is not a swindle" % m.rules.title)
 		assert_lt(rtp, 0.95, "%s keeps a little for the house, like any machine" % m.rules.title)
 		var odds := m.line_odds()

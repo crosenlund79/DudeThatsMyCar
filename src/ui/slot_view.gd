@@ -8,13 +8,23 @@ extends Control
 ## on the stops the machine drew; a win lights its line on the plate and the
 ## coins drop into the cup. Esc or E steps away (a pull under way is paid at
 ## once). The money and the draw are SlotMachine's, moved by the game.
+## M013: when a full pull pays nothing the HOLD lamps may light: brass latches
+## under the reels (a click on a reel or its latch, or 1-3) hold one or two of
+## them for the next pull - held reels stand still while the others spin; the
+## holds are released after that pull, and the next spins all three. The stake
+## (one, two or five coins: a click on the stakes or S) is shown beside the
+## machine, and the plate prints what each line pays at that stake.
 
 signal pull_requested
+## M013: hold (or let go) reel 0-2; a stake chosen (cents).
+signal hold_requested(reel: int)
+signal stake_requested(cents: int)
 ## The reels have stopped: time to pay.
 signal reels_stopped
 signal leave_requested
 ## A sound for the game to play: "lever", "reels" (they start running), "stop", "stop_last"
-## (the last reel: the running stops), "coin" (each coin into the cup), "win", "lose".
+## (the last reel: the running stops), "coin" (each coin into the cup), "win", "lose";
+## M013 "lamps" (the HOLD lamps light).
 signal sound(kind: String)
 
 const CREAM := Color("f1e4c6")
@@ -31,6 +41,8 @@ const WINDOWS := [Rect2(75, 150, 90, 120), Rect2(175, 150, 90, 120), Rect2(275, 
 const PAY_Y := 210.0
 const PLATE_RECT := Rect2(60, 304, 320, 166)
 const CUP := Vector2(220, 555)
+## M013: the HOLD latches under the windows (front px).
+const LATCH_H := 26.0
 const LEVER_PIVOT := Vector2(452, 300)
 ## Height of one stop on a reel (front px).
 const STOP_H := 78.0
@@ -90,7 +102,9 @@ func open(p_machine: SlotMachine, p_money: int) -> void:
 	title = machine.rules.title
 	money = p_money
 	phase = "ready"
-	message = "%s  -  %s a pull." % [title, _coin_words(machine.rules.coin)]
+	message = "%s  -  %s a pull." % [title, PokerView.money_text(machine.stake)]
+	if machine.hold_offered:
+		message = "The HOLD lamps are still lit - hold one or two reels, or pull for a fresh spin."
 	for r in 3:
 		_positions[r] = float(machine.stops[r])
 	_stopped = [true, true, true]
@@ -126,14 +140,14 @@ static func _coin_words(c: int) -> String:
 func start_reels() -> void:
 	var from: Array[float] = [_positions[0], _positions[1], _positions[2]]
 	reels = SlotReels.new(from, machine.stops, machine.rules.stop_times,
-		[machine.rules.strips[0].size(), machine.rules.strips[1].size(), machine.rules.strips[2].size()])
+		[machine.rules.strips[0].size(), machine.rules.strips[1].size(), machine.rules.strips[2].size()], 0.25, machine.spun_held)
 	t = 0.0
 	_running_said = false
-	_stopped = [false, false, false]
+	_stopped = [machine.spun_held[0], machine.spun_held[1], machine.spun_held[2]]  # a held reel never moves
 	_paid_line = -1
 	_coins = 0
 	phase = "spinning"
-	message = "Round they go..."
+	message = "Round they go..." if not machine.respin else "The held reels stand; round go the others..."
 	sound.emit("lever")
 	queue_redraw()
 
@@ -151,6 +165,11 @@ func show_paid(cents: int) -> void:
 	else:
 		message = "%s.   Nothing." % words
 		sound.emit("lose")
+	if machine.respin:
+		message += "   The holds come off: the next pull spins all three."
+	elif machine.hold_offered:
+		message += "   The HOLD lamps light! Hold one or two reels (1-3), then pull."
+		sound.emit("lamps")
 	queue_redraw()
 
 
@@ -166,7 +185,7 @@ func _process(delta: float) -> void:
 			_positions[r] = reels.position(r, t)
 			if not _stopped[r] and reels.stopped(r, t):
 				_stopped[r] = true
-				sound.emit("stop_last" if r == 2 else "stop")
+				sound.emit("stop_last" if _stopped.count(true) == 3 else "stop")
 		if reels.done(t):
 			for r in 3:
 				_positions[r] = float(reels.on_line(r, t))
@@ -196,6 +215,11 @@ func handle_key(event: InputEvent) -> bool:
 		return true
 	if event.pressed and not event.echo and (k == KEY_ESCAPE or k == KEY_E):
 		leave_requested.emit()
+	elif event.pressed and not event.echo and k >= KEY_1 and k <= KEY_3:
+		hold_requested.emit(k - KEY_1)
+	elif event.pressed and not event.echo and k == KEY_S and machine != null:
+		var choices := machine.stake_choices()
+		stake_requested.emit(choices[(choices.find(machine.stake) + 1) % choices.size()])
 	return true
 
 
@@ -207,6 +231,10 @@ func _gui_input(event: InputEvent) -> void:
 					pull_requested.emit()
 				elif b.id == "leave":
 					leave_requested.emit()
+				elif String(b.id).begins_with("hold"):
+					hold_requested.emit(int(String(b.id).substr(4)))
+				elif String(b.id).begins_with("stake"):
+					stake_requested.emit(int(String(b.id).substr(5)))
 				accept_event()
 				return
 
@@ -249,13 +277,15 @@ func _draw() -> void:
 	var front: Texture2D = _fronts.get(_kind(), _fronts.owl)
 	draw_texture_rect(front, Rect2(_f(Vector2.ZERO), FRONT * ui_scale), false)
 	_draw_paytable()
+	_draw_latches()
+	_draw_stakes()
 	_draw_lever()
 	_draw_coins()
 	# what he has, what happened, the keys
 	var r := Rect2(Vector2(size.x * 0.5 - _s(420), size.y - _s(84)), Vector2(_s(840), _s(34)))
 	_panel(r, Color(GOLD if phase == "paid" and _coins > 0 else COPPER, 0.6), 1.0)
 	_text(r.get_center() + Vector2(0, _s(6)), message, 16, GOLD if phase == "paid" and _coins > 0 else CREAM)
-	_text(Vector2(size.x * 0.5, size.y - _s(16)), "Space  Pull the lever      Esc  Step away      In your pocket %s" % PokerView.money_text(money), 14, DIM)
+	_text(Vector2(size.x * 0.5, size.y - _s(16)), "Space  Pull the lever      1-3  Hold a reel      S  Stake      Esc  Step away      In your pocket %s" % PokerView.money_text(money), 14, DIM)
 	var lb := Rect2(Vector2(size.x - _s(250), size.y - _s(140)), Vector2(_s(230), _s(30)))
 	_panel(lb, Color(COPPER, 0.4), 1.0)
 	_text(lb.get_center() + Vector2(0, _s(6)), "Esc   Step away", 15, DIM)
@@ -270,7 +300,7 @@ func _draw_reels() -> void:
 		var p := _positions[r]
 		var base := floori(p)
 		var strip: PackedStringArray = machine.rules.strips[r]
-		var running: bool = not _stopped[r]
+		var running: bool = not _stopped[r] and not (phase == "spinning" and machine.spun_held[r])
 		for k in range(base - 2, base + 3):
 			var y := PAY_Y + (p - k) * STOP_H  # the next stop comes down from above
 			if y < win.position.y - STOP_H * 0.5 or y > win.end.y + STOP_H * 0.5:
@@ -311,10 +341,57 @@ func _draw_paytable() -> void:
 			else:
 				var sz := Vector2(21, 21) * ui_scale
 				draw_texture_rect(_symbols[sym], Rect2(at - sz * 0.5, sz), false)
-		_text(_f(o + Vector2(col_w - 22, row_h * 0.45 + 5)), "%d" % int(pays[k].coins), 14, RED_INK if int(pays[k].coins) >= 50 else INK,
+		var amount := int(pays[k].coins) * machine.stake  # M013: at the stake in play (coins for each coin in)
+		_text(_f(o + Vector2(col_w - 18, row_h * 0.45 + 5)), _short_money(amount), 13, RED_INK if int(pays[k].coins) >= 25 else INK,
 			HORIZONTAL_ALIGNMENT_RIGHT, false)
-	_text(_f(PLATE_RECT.position + Vector2(PLATE_RECT.size.x * 0.5, PLATE_RECT.size.y - 2)), "coins paid for one in", 9, INK,
-		HORIZONTAL_ALIGNMENT_CENTER, false)
+	_text(_f(PLATE_RECT.position + Vector2(PLATE_RECT.size.x * 0.5, PLATE_RECT.size.y - 2)),
+		"paid for %s in   -   HOLD lamps one losing pull in %d" % [PokerView.money_text(machine.stake), roundi(1.0 / maxf(machine.rules.hold_chance, 0.01))],
+		9, INK, HORIZONTAL_ALIGNMENT_CENTER, false)
+
+
+static func _short_money(c: int) -> String:
+	return "%d¢" % c if c < 100 else ("$%d" % (c / 100) if c % 100 == 0 else "$%d.%02d" % [c / 100, c % 100])
+
+
+## M013: the brass HOLD latches under the reels - dark until the lamps light,
+## glowing while a hold can be chosen, engaged (a bar across the window's foot)
+## on a held reel; a click on a latch or a reel holds or lets it go.
+func _draw_latches() -> void:
+	var lit := machine.hold_offered and phase in ["ready", "paid"]
+	for r in 3:
+		var win: Rect2 = WINDOWS[r]
+		var latch := Rect2(_f(Vector2(win.position.x + 10, win.end.y + 4)), Vector2(win.size.x - 20, LATCH_H) * ui_scale)
+		var on: bool = machine.held[r] or (phase == "spinning" and machine.spun_held[r])
+		var face := Color("6b4a22") if not lit and not on else (Color("e0b25a") if on else Color("b8873e"))
+		draw_rect(latch, face)
+		draw_rect(latch, Color("2a1a0c"), false, _s(2))
+		if lit and not on:
+			draw_rect(latch.grow(_s(2)), Color(GOLD, 0.6), false, _s(2))  # lit (a steady glow: no redraw every frame)
+		_text(latch.get_center() + Vector2(0, _s(5)), "HELD" if on else "HOLD", 12, Color("2a1a0c") if lit or on else Color("3a2a18"), HORIZONTAL_ALIGNMENT_CENTER, false)
+		if on:  # the latch's bar across the foot of the window: this reel stands
+			var bar := Rect2(_f(Vector2(win.position.x, win.end.y - 10)), Vector2(win.size.x, 10) * ui_scale)
+			draw_rect(bar, Color("c99b4a"))
+			draw_rect(bar, Color("2a1a0c"), false, _s(1.5))
+		if lit:
+			_buttons.append({"rect": latch, "id": "hold%d" % r})
+			_buttons.append({"rect": Rect2(_f(win.position), win.size * ui_scale), "id": "hold%d" % r})
+
+
+## M013: the stakes, on brass plates beside the machine.
+func _draw_stakes() -> void:
+	var choices := machine.stake_choices()
+	var x := _f(Vector2.ZERO).x - _s(150)
+	var y := _f(Vector2(0, 160)).y
+	_text(Vector2(x + _s(65), y - _s(10)), "Stake", 15, CREAM)
+	for i in choices.size():
+		var c: int = choices[i]
+		var r := Rect2(Vector2(x, y + i * _s(42)), Vector2(_s(130), _s(34)))
+		var on := c == machine.stake
+		_panel(r, Color(GOLD if on else COPPER, 0.85 if on else 0.4), 2.0 if on else 1.0)
+		var coins := c / machine.rules.coin
+		_text(r.get_center() + Vector2(0, _s(6)), "%d coin%s  %s" % [coins, "" if coins == 1 else "s", PokerView.money_text(c)], 14,
+			GOLD if on else DIM)
+		_buttons.append({"rect": r, "id": "stake%d" % c})
 
 
 ## The lever: upright at rest; pulled, it swings down towards you and springs back.

@@ -9,6 +9,8 @@ extends RefCounted
 ##
 ## A reel's position is in stops along its strip: the symbol on the line is
 ## the strip's at the position rounded; the one above it is the next.
+## M013: a held reel (`held`) does not move at all - not a jerk, not a clunk;
+## the others run and stop in their order as before.
 
 ## Stops a second while running (nominal).
 const SPEED := 14.0
@@ -22,17 +24,26 @@ var times: Array[float] = []
 var lengths: Array[int] = []
 ## When the reels start turning (after the lever comes down).
 var begin := 0.25
+var held: Array[bool] = [false, false, false]
 var _final: Array[float] = []
 var _speed: Array[float] = []
 
 
-func _init(p_start: Array, p_target: Array, p_times: PackedFloat32Array, p_lengths: Array, p_begin: float = 0.25) -> void:
+func _init(p_start: Array, p_target: Array, p_times: PackedFloat32Array, p_lengths: Array, p_begin: float = 0.25,
+		p_held: Array = [false, false, false]) -> void:
 	begin = p_begin
 	for i in 3:
+		held[i] = bool(p_held[i]) if i < p_held.size() else false
 		start.append(float(p_start[i]))
 		target.append(int(p_target[i]))
 		times.append(maxf(float(p_times[i]), begin + 0.3))
 		lengths.append(int(p_lengths[i]))
+		if held[i]:
+			start[i] = float(target[i])  # it stands on its stop the whole time
+			times[i] = 0.0
+			_final.append(start[i])
+			_speed.append(0.0)
+			continue
 		var run := times[i] - begin
 		var fin := float(target[i])
 		while fin < start[i] + SPEED * run:
@@ -42,6 +53,8 @@ func _init(p_start: Array, p_target: Array, p_times: PackedFloat32Array, p_lengt
 
 
 func position(reel: int, t: float) -> float:
+	if held[reel]:
+		return start[reel]
 	if t <= begin:
 		return start[reel]
 	if t < times[reel]:
@@ -57,7 +70,11 @@ func stopped(reel: int, t: float) -> bool:
 
 
 func done(t: float) -> bool:
-	return t >= times[2] + CLUNK_TIME
+	var last := 0.0
+	for i in 3:
+		if not held[i]:
+			last = maxf(last, times[i])
+	return t >= last + CLUNK_TIME
 
 
 ## The stop on the line of a reel at time t.

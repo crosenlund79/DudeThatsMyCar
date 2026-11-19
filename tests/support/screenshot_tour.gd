@@ -845,6 +845,45 @@ func _run(shots: Array) -> void:
 					await _frames(40)
 				await _shot(s, false)
 				main.leave_roulette()
+			"m013_slot_hold", "m013_slot_respin":
+				# M013: at the Owl at two coins: a losing pull lights the HOLD lamps, two latches thrown
+				# (m013_slot_hold); then the respin of the third reel, paid (m013_slot_respin)
+				main.weather.force("clear")
+				main.rackets.money = 800
+				_teleport_walker(RiversideInteriors.SLOTS[0] + Vector2(0, 32), -PI / 2)
+				await _frames(5)
+				main._interact(main.walker.global_position)
+				await _frames(5)
+				var hv: SlotView = main.hud.slot_view
+				var om: SlotMachine = main.slot_machines[0]
+				main._on_slot_stake(10)
+				var lit_seed := 0
+				var probe2 := SlotMachine.new(main.slot_rules[0])
+				for seed in 20000:  # a losing pull that lights the lamps, showing two of a kind to hold
+					probe2.pull(100000, seed)
+					probe2.collect()
+					if probe2.win == 0 and probe2.hold_offered and probe2.line()[0] == probe2.line()[1] and probe2.line()[0] != "lemon":
+						lit_seed = seed
+						break
+				main.rackets.money -= om.pull(main.rackets.money, lit_seed)
+				hv.set_money(main.rackets.money)
+				hv.start_reels()
+				for f in 400:
+					if hv.phase == "paid":
+						break
+					await _frames(1)
+				main._on_slot_hold(0)
+				main._on_slot_hold(1)
+				await _frames(20)
+				if s == "m013_slot_respin":
+					main._on_slot_pull()
+					for f in 400:
+						if hv.phase == "paid":
+							break
+						await _frames(1)
+					await _frames(30)
+				await _shot(s, false)
+				main.leave_slot()
 			"slots", "slots_paid":
 				# M011: at the Bell: the reels running (slots), then stopped and paid (a winning pull found by seed)
 				main.weather.force("clear")

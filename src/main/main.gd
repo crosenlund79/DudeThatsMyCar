@@ -458,6 +458,11 @@ func _ready() -> void:
 	hud.slot_view.reels_stopped.connect(_on_slot_stopped)
 	hud.slot_view.leave_requested.connect(leave_slot)
 	hud.slot_view.sound.connect(_on_slot_sound)
+	hud.slot_view.hold_requested.connect(_on_slot_hold)  # M013
+	hud.slot_view.stake_requested.connect(_on_slot_stake)
+	var saved_slots: Array = _saved.get("slots", [])
+	for i in mini(saved_slots.size(), slot_machines.size()):
+		slot_machines[i].from_dict(saved_slots[i])  # the reels, lamps, holds and stake as they were
 	_show_purse()
 	player.entered_car.connect(_on_entered_car)
 	player.exited_car.connect(_on_exited_car)
@@ -1513,6 +1518,8 @@ func _on_slot_sound(kind: String) -> void:
 		"win":
 			if _slot_at >= 0 and slot_machines[_slot_at].win >= slot_machines[_slot_at].rules.coin * 10:
 				soundscape.play("slots/bell", -6.0)
+		"lamps":
+			soundscape.play("slots/lamp", -6.0)  # M013: the HOLD lamps light
 
 
 ## M011: at the wheel or at one of the machines.
@@ -1554,6 +1561,39 @@ func _on_slot_pull() -> void:
 	hud.slot_view.set_money(rackets.money)
 	_show_purse()
 	hud.slot_view.start_reels()
+
+
+## M013: a reel held for the next pull, or let go (under lit HOLD lamps).
+func _on_slot_hold(reel: int) -> void:
+	if _slot_at < 0 or hud.slot_view.phase in ["spinning", "stopped"]:
+		return
+	var m := slot_machines[_slot_at]
+	var why := m.toggle_hold(reel)
+	if why != "":
+		hud.slot_view.say(why)
+		return
+	soundscape.play("slots/hold" if m.held[reel] else "slots/release", -4.0)
+	var held := []
+	for r in 3:
+		if m.held[r]:
+			held.append("%s on reel %d" % [SlotMachine.WORDS[m.symbol(r, m.stops[r])], r + 1])
+	hud.slot_view.say("Holding " + " and ".join(held) + ". Pull for %s." % PokerView.money_text(m.stake) if not held.is_empty()
+		else "No reels held: the next pull spins all three.")
+
+
+## M013: the stake for the next pull (under lit lamps a change puts them out).
+func _on_slot_stake(cents: int) -> void:
+	if _slot_at < 0 or hud.slot_view.phase in ["spinning", "stopped"]:
+		return
+	var m := slot_machines[_slot_at]
+	var had_lamps := m.hold_offered
+	var why := m.set_stake(cents)
+	if why != "":
+		hud.slot_view.say(why)
+		return
+	soundscape.play("slots/release" if had_lamps and not m.hold_offered else "slots/hold", -9.0)
+	hud.slot_view.say("%s a pull: the plate pays in proportion.%s" % [PokerView.money_text(m.stake),
+		"  (The HOLD lamps go out with the change.)" if had_lamps and not m.hold_offered else ""])
 
 
 ## The reels have stopped: the line is paid, once.
@@ -2086,6 +2126,7 @@ func save_game() -> void:
 		data.rackets.money += roulette.for_save()  # M011: chips on the layout are his; a spin under way counts as settled
 	for m in slot_machines:
 		data.rackets.money += m.for_save()  # M011: a pull under way is decided: its win counts
+	data["slots"] = slot_machines.map(func(m: SlotMachine) -> Dictionary: return m.to_dict())  # M013: reels, lamps, holds, stake
 	if walker != null:
 		data["danny"] = walker.condition.to_dict()
 	if rival != null:
