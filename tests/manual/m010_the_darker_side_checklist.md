@@ -40,6 +40,7 @@ Play `src/main/main.tscn` with keyboard, mouse and headphones, ideally on a real
 - [ ] The card players take a moment to think; the careful one folds a lot, the pushy one raises and bluffs, the loose one calls too much. A hand you win or lose makes sense at the showdown (the winning hand is named).
 - [ ] Busted players leave; Moe takes the free chair (once). At four the game breaks up. Esc gets up (mid-hand you fold); your purse is right to the cent afterwards.
 - [ ] Chip and card sounds; the club's music muffled through the wall.
+- [ ] Workshop (poker pacing): every card player's move stays on show (his plate lit, "Red Gallagher: Raises to $0.60" at the bottom) with a small "Space  Continue" prompt; nothing moves until Space; one press, one move. Holding Space never skips several. Each street of the board turns over on its own press (after an all-in too), and the result waits for Space before the next deal. Space does nothing on your own turn; 1-4 wait while something is on show. It reads at a comfortable pace and is easy to follow.
 
 ## Eddie's Thompson and the parcel
 - [ ] Ask Eddie for "anything heavier": he lends the Thompson for $5. Tab takes it in hand (a longer gun in the sprite); Tab again, the .45.

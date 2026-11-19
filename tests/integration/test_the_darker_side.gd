@@ -83,14 +83,18 @@ func test_two_dark_nights() -> void:
 	await press_e()
 	var pv: PokerView = main.hud.poker_view
 	pv.think = Vector2(0.03, 0.05)
-	pv.between_hands = 0.1
-	pv.after_deal = 0.03
 	await _key(KEY_1)  # $2
 	assert_true(main.poker.seated())
 	for f in 4000:
-		if main.poker.hands >= 3 and not main.poker.table.running():
-			break
-		if main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
+		if main.poker.hands >= 3 and pv.pacing.current.get("kind", "") == "result":
+			break  # the third hand's result on show: get up between hands
+		if pv.pacing.waiting():
+			await _key(KEY_SPACE)  # each card player's move, each street, each result: Space
+			var up := InputEventKey.new()
+			up.physical_keycode = KEY_SPACE
+			up.keycode = KEY_SPACE
+			main._unhandled_input(up)
+		elif main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
 			await _key(KEY_2 if main.poker.table.legal(main.poker.danny).check else KEY_1)
 		await wait_process_frames(1)
 	await _key(KEY_ESCAPE)

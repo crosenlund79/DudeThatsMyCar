@@ -573,18 +573,19 @@ func _run(shots: Array) -> void:
 					var pv: PokerView = main.hud.poker_view
 					pv.choose_buy_in(1)
 					pv.think = Vector2(0.05, 0.1)
-					pv.between_hands = 0.3
-					var dealt := 0
 					for f in 4000:
 						var tb: Holdem = main.poker.table
 						if tb == null:
 							break
-						if tb.running() and tb.to_act == main.poker.danny:
-							if main.poker.hands >= 3 and tb.street >= Holdem.FLOP:
-								break
+						var beat: Dictionary = pv.pacing.current
+						if main.poker.hands >= 3 and tb.street >= Holdem.FLOP and beat.get("kind", "") == "action":
+							break  # a card player's move on show, waiting for Space
+						if pv.pacing.waiting():
+							pv.continue_step()
+						elif tb.running() and tb.to_act == main.poker.danny:
 							pv.act(2 if tb.legal(main.poker.danny).check else (2 if tb.legal(main.poker.danny).call <= 20 else 1))
 						await _frames(1)
-					pv.think = Vector2(0.7, 1.4)
+					pv.think = Vector2(0.4, 0.8)
 					await _frames(10)
 				await _shot(s, false)
 				if s == "poker_game":

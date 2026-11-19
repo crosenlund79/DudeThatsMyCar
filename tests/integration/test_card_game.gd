@@ -23,6 +23,26 @@ func _press(code: Key) -> void:
 	await wait_physics_frames(1)
 
 
+## Space pressed and let go (one beat on: a card player's action, a street, the result).
+func _space() -> void:
+	main._unhandled_input(_key(KEY_SPACE))
+	var up := _key(KEY_SPACE)
+	up.pressed = false
+	main._unhandled_input(up)
+	await wait_physics_frames(1)
+
+
+## Presses Space through whatever is on show until it is Danny's turn (or `frames` run out).
+func _until_dannys_turn(frames: int = 3000) -> void:
+	for f in frames:
+		var t: Holdem = main.poker.table
+		if t != null and t.running() and t.to_act == main.poker.danny and not _view().pacing.waiting():
+			return
+		if _view().pacing.waiting():
+			await _space()
+		await wait_process_frames(1)
+
+
 func _view() -> PokerView:
 	return main.hud.poker_view
 
@@ -33,20 +53,21 @@ func _to_the_table() -> void:
 	main.camera.snap_to(walker())
 	await wait_physics_frames(3)
 	_view().think = Vector2(0.05, 0.08)
-	_view().between_hands = 0.2
-	_view().after_deal = 0.05
 
 
 ## Plays on (Danny checks when he can, otherwise folds: a careful man) until
-## `hands` more hands have been dealt or the table closes.
+## `hands` more hands have been played to their result (it is on show, waiting
+## for Space - the next hand is dealt the moment it is dismissed) or the table closes.
 func _play_hands(hands: int, max_frames: int = 6000) -> void:
 	var target: int = main.poker.hands + hands
 	for f in max_frames:
 		if not main.poker.seated() or _view().phase != "play":
 			return
-		if main.poker.hands >= target and not main.poker.table.running():
+		if main.poker.hands >= target and _view().pacing.current.get("kind", "") == "result":
 			return
-		if main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
+		if _view().pacing.waiting():
+			await _space()  # one beat at a time
+		elif main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
 			await _press(KEY_2 if main.poker.table.legal(main.poker.danny).check else KEY_1)
 		await wait_process_frames(1)
 
@@ -113,10 +134,7 @@ func test_raising_with_the_keys() -> void:
 	await _to_the_table()
 	await press_e()
 	await _press(KEY_1)  # $2
-	for f in 3000:
-		if main.poker.table != null and main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
-			break
-		await wait_process_frames(1)
+	await _until_dannys_turn()
 	var l: Dictionary = main.poker.table.legal(main.poker.danny)
 	assert_true(l.raise or l.bet, "he may raise")
 	await wait_process_frames(2)
@@ -163,7 +181,9 @@ func test_closing_time() -> void:
 	for f in 600:
 		if _view().phase == "over":
 			break
-		if main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
+		if _view().pacing.waiting():
+			await _space()
+		elif main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
 			await _press(KEY_1)
 		await wait_process_frames(1)
 	assert_eq(_view().phase, "over", "the game breaks up after the hand")

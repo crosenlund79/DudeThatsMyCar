@@ -9,11 +9,19 @@ extends Control
 ## player whose turn it is lit in copper; under it Danny's choices:
 ## 1 Fold, 2 Check / Call, 3 Bet / Raise to (the mouse wheel or the arrow keys
 ## change how much), 4 All in. Esc or E gets up from the table (mid-hand he
-## folds). The card players take their time to think. Runs the game's pace;
-## the rules and the money are PokerNight's and Holdem's.
+## folds). Workshop (poker pacing): the game goes one beat at a time
+## (PokerPacing) - each card player's action, each street of the board and the
+## showdown's result stay on show, with a small "Space  Continue" prompt,
+## until Danny presses Space (one press, one beat; holding it does nothing
+## more); the betting keys wait meanwhile. Runs the game's pace; the rules and
+## the money are PokerNight's and Holdem's.
 
 signal bought_in(amount: int)
 signal leave_requested
+## A beat came on show (PokerPacing's {kind, ...}; an action names its player:
+## `player` is the seat's id, `action` what he did) - the hook for anything
+## that reacts to a particular player's play (e.g. recorded taunts later).
+signal beat_shown(beat: Dictionary)
 ## A sound for the game to play: "chips", "cards".
 signal sound(kind: String)
 
@@ -30,10 +38,10 @@ const CHIP_COLOURS := [Color("e8e0cf"), Color("c0392b"), Color("2f5fa8"), Color(
 const SLOTS := [Vector2(0, 228), Vector2(-468, 10), Vector2(0, -214), Vector2(468, 10)]
 ## Where each slot's bet lies on the baize (same base px).
 const BETS := [Vector2(170, 140), Vector2(-290, 84), Vector2(-170, -150), Vector2(290, 84)]
-## The pace (seconds): a card player thinking, the result on show, after the deal.
-var think := Vector2(0.7, 1.4)
-var between_hands := 3.2
-var after_deal := 0.7
+## The pace (seconds): a card player thinking before he acts.
+var think := Vector2(0.4, 0.8)
+## What is on show and what waits for Space.
+var pacing := PokerPacing.new()
 
 var night: PokerNight
 var phase := "closed"  # closed / buyin / play / over
@@ -48,8 +56,6 @@ var log_lines: Array[String] = []
 var centre := Vector2(640, 330)
 var ui_scale := 1.0
 var _wait := 0.0
-var _result_wait := 0.0
-var _was_running := false
 var _buttons: Array = []  # {rect, id}
 var _font: Font
 var _felt: Texture2D
@@ -98,6 +104,7 @@ func open(p_night: PokerNight, p_money: int) -> void:
 	over_text = night.cannot_sit(money)
 	said = {}
 	log_lines.clear()
+	pacing.new_hand()
 	visible = true
 	queue_redraw()
 
@@ -106,8 +113,7 @@ func open(p_night: PokerNight, p_money: int) -> void:
 func begin_play() -> void:
 	phase = "play"
 	_wait = 0.4
-	_result_wait = 0.0
-	_was_running = false
+	pacing.new_hand()
 	_log("Danny sits in with %s." % money_text(night.danny_chips()))
 	queue_redraw()
 
@@ -132,35 +138,57 @@ func _log(line: String) -> void:
 func _process(delta: float) -> void:
 	if phase != "play" or night == null or not night.seated():
 		return
+	queue_redraw()
+	if pacing.waiting():
+		return  # one beat on show: nothing moves until Space
 	var t := night.table
 	if t.running():
-		_was_running = true
 		if night.ai_to_act():
 			_wait -= delta
 			if _wait <= 0.0:
-				var d := night.ai_turn()
-				_note(d.seat, d.kind)
+				night.ai_turn()
+				_show(pacing.read(t, night.danny))
 				_wait = _rng.randf_range(think.x, think.y)
 		elif t.to_act == night.danny and raise_to == 0:
 			_fresh_raise()
+	elif night.next_hand():
+		pacing.new_hand()
+		said = {}
+		banner = ""
+		raise_to = 0
+		_wait = _rng.randf_range(think.x, think.y)
+		sound.emit("cards")
+		_log("Hand %d: %s deals." % [night.hands, t.seats[t.button].name])
+		_show(pacing.read(t, night.danny))  # a hand can be settled at once (all-in blinds)
 	else:
-		if _was_running:
-			_hand_over()
-			_was_running = false
-			_result_wait = between_hands
-		_result_wait -= delta
-		if _result_wait <= 0.0:
-			if night.next_hand():
-				said = {}
-				banner = ""
-				raise_to = 0
-				_wait = after_deal
-				sound.emit("cards")
-				_log("Hand %d: %s deals." % [night.hands, t.seats[t.button].name])
-			else:
-				phase = "over"
-				over_text = _why_over()
+		phase = "over"
+		over_text = _why_over()
+
+
+## A beat has come on show: the player's plate says what he did, the board
+## turns its cards, the result is read out; the sounds; the hook.
+func _show(beat: Dictionary) -> void:
+	if beat.is_empty():
+		return
+	match String(beat.kind):
+		"action":
+			said[beat.seat] = beat.text
+			_log("%s: %s" % [beat.name, String(beat.text).to_lower()])
+			if beat.action != "fold" and beat.action != "check":
+				sound.emit("chips")
+		"deal":
+			_log(beat.text)
+			sound.emit("cards")
+		"result":
+			banner = beat.text
+			_log(beat.text)
+	beat_shown.emit(beat)
 	queue_redraw()
+
+
+## Space (or a click on the prompt): the next beat, or play goes on.
+func continue_step() -> void:
+	_show(pacing.press_continue())
 
 
 func _why_over() -> String:
@@ -172,64 +200,18 @@ func _why_over() -> String:
 	return "Nobody left to play you - you've cleaned out the table."
 
 
-func _note(seat: int, kind: String) -> void:
+## Danny's own action, as his plate shows it (it is not held for Space).
+func _note_danny() -> void:
 	var t := night.table
-	if seat < 0:
-		return
-	var s: Dictionary = t.seats[seat]
-	var text := ""
-	match kind:
-		"fold":
-			text = "Folds"
-		"check":
-			text = "Checks"
-		"call":
-			text = "Calls %s" % money_text(_last_amount(seat))
-		"bet":
-			text = "Bets %s" % money_text(_last_to(seat))
-		"raise":
-			text = "Raises to %s" % money_text(_last_to(seat))
-		"all_in":
-			text = "All in!"
-	if s.all_in and kind != "fold":
-		text = "All in!" if kind != "call" else "Calls - all in!"
-	said[seat] = text
-	_log("%s: %s" % [s.name, text.to_lower() if seat != night.danny else text.to_lower()])
-	if kind in ["call", "bet", "raise", "all_in"]:
-		sound.emit("chips")
-
-
-func _last_amount(seat: int) -> int:
-	for k in range(night.table.events.size() - 1, -1, -1):
-		var e: Dictionary = night.table.events[k]
-		if e.get("seat", -1) == seat and e.has("amount"):
-			return e.amount
-	return 0
-
-
-func _last_to(seat: int) -> int:
-	for k in range(night.table.events.size() - 1, -1, -1):
-		var e: Dictionary = night.table.events[k]
-		if e.get("seat", -1) == seat and e.has("to"):
-			return e.to
-	return 0
-
-
-func _hand_over() -> void:
-	var t := night.table
-	var parts: Array[String] = []
-	for r in t.results:
-		var names := []
-		for w in r.winners:
-			names.append(t.seats[w].name)
-		var who := " and ".join(names)
-		var share := "split " if r.winners.size() > 1 else ""
-		if String(r.hand) == "" or not t.shown:
-			parts.append("%s takes %s%s" % [who, share, money_text(r.amount)])
-		else:
-			parts.append("%s %s %s with %s" % [who, "split" if r.winners.size() > 1 else "wins", money_text(r.amount), r.hand])
-	banner = ";  ".join(parts)
-	_log(banner)
+	for k in range(t.events.size() - 1, -1, -1):
+		var e: Dictionary = t.events[k]
+		if int(e.get("seat", -1)) == night.danny and String(e.what) in ["fold", "check", "call", "bet", "raise"]:
+			var b := PokerPacing.action_beat(t, e)
+			said[night.danny] = b.text
+			_log("Danny: %s" % String(b.text).to_lower())
+			if b.action != "fold" and b.action != "check":
+				sound.emit("chips")
+			return
 
 
 func _fresh_raise() -> void:
@@ -241,7 +223,7 @@ func _fresh_raise() -> void:
 
 ## 1 Fold, 2 Check / Call, 3 Bet / Raise (to raise_to), 4 All in.
 func act(choice: int) -> bool:
-	if phase != "play" or not night.seated() or night.table.to_act != night.danny:
+	if phase != "play" or not night.seated() or night.table.to_act != night.danny or pacing.waiting():
 		return false
 	var l := night.table.legal(night.danny)
 	var kind := ""
@@ -262,16 +244,17 @@ func act(choice: int) -> bool:
 			kind = "all_in"
 	if not night.danny_acts(kind, to):
 		return false
-	_note(night.danny, kind)
+	_note_danny()
 	raise_to = 0
 	_wait = _rng.randf_range(think.x, think.y)
+	_show(pacing.read(night.table, night.danny))  # what follows his action (a street dealt, the result) waits for Space
 	queue_redraw()
 	return true
 
 
 ## The raise a step (a big blind) up or down.
 func adjust(steps: int) -> void:
-	if phase != "play" or not night.seated() or night.table.to_act != night.danny:
+	if phase != "play" or not night.seated() or night.table.to_act != night.danny or pacing.waiting():
 		return
 	var l := night.table.legal(night.danny)
 	if not (l.bet or l.raise):
@@ -299,6 +282,11 @@ func handle_key(event: InputEvent) -> bool:
 			adjust(-1)
 			return true
 		return false
+	if event is InputEventKey and (event.physical_keycode == KEY_SPACE or event.keycode == KEY_SPACE):
+		# one press, one beat: a held Space (its auto-repeat, or a press before it is let go) moves nothing more
+		if phase == "play":
+			_show(pacing.space(event.pressed, event.echo))
+		return true
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return false
 	var k: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
@@ -339,6 +327,8 @@ func _click(id: String) -> void:
 	match id:
 		"leave":
 			leave_requested.emit()
+		"continue":
+			continue_step()
 		"buy0", "buy1", "buy2":
 			choose_buy_in(int(id.substr(3)))
 		"no":
@@ -457,7 +447,8 @@ func _draw_seat(t: Holdem, i: int) -> void:
 		_text(er.get_center() + Vector2(0, _s(6)), "(an empty chair)", 14, DIM)
 		return
 	var folded: bool = s.in_hand and s.folded
-	var turn := t.running() and t.to_act == i
+	var beat := pacing.current
+	var turn: bool = (beat.get("seat", -1) == i) if pacing.waiting() else (t.running() and t.to_act == i)
 	var pr := Rect2(at - Vector2(_s(100), _s(30)), Vector2(_s(200), _s(60)))
 	if turn:
 		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.006)
@@ -483,7 +474,7 @@ func _draw_seat(t: Holdem, i: int) -> void:
 			_text(pr.position + Vector2(_s(10), _s(22)), tag, 12, COPPER, HORIZONTAL_ALIGNMENT_LEFT)
 	# hole cards
 	if s.in_hand and not (folded and not mine):
-		var show: bool = mine or (t.shown and not s.folded)
+		var show: bool = mine or (t.shown and pacing.hands_shown and not s.folded)
 		var cs := Vector2(_s(54), _s(76)) if mine else Vector2(_s(38), _s(53))
 		var side := absf(toward.x) > 0.5
 		var base := at + toward * _s(152 if side else 72) - Vector2(cs.x + _s(2), cs.y * 0.5)
@@ -530,7 +521,7 @@ func _draw_board(t: Holdem) -> void:
 	var start := centre - Vector2((cs.x * 5 + gap * 4) * 0.5, cs.y * 0.5 + _s(6))
 	for k in 5:
 		var r := Rect2(start + Vector2(k * (cs.x + gap), 0), cs)
-		if k < t.board.size():
+		if k < mini(t.board.size(), pacing.revealed):
 			_card(r, t.board[k])
 		else:
 			draw_rect(r, Color(0, 0, 0, 0.18))
@@ -546,11 +537,14 @@ func _draw_board(t: Holdem) -> void:
 			for k in range(1, pots.size()):
 				parts.append(money_text(pots[k].amount))
 			_text(centre + Vector2(0, _s(64)), "main %s  ·  side %s" % [money_text(pots[0].amount), ", ".join(parts)], 14, CREAM)
-	if t.running():
+	if t.running() and not pacing.waiting():
 		_text(centre + Vector2(0, _s(84)), "to call  %s" % money_text(t.current_bet) if t.current_bet > 0 else Holdem.STREET_NAMES[t.street], 13, DIM)
 
 
 func _draw_controls(t: Holdem) -> void:
+	if phase == "play" and pacing.waiting():
+		_draw_continue()
+		return
 	if phase != "play" or not t.running() or t.to_act != night.danny:
 		if phase == "play" and t.running():
 			var who: String = t.seats[t.to_act].name if t.to_act >= 0 else ""
@@ -577,6 +571,21 @@ func _draw_controls(t: Holdem) -> void:
 			_buttons.append({"rect": r, "id": "act%d" % (k + 1)})
 	if l.bet or l.raise:
 		_text(Vector2(x + 2 * (w + gap) + w * 0.5, y - _s(10)), "wheel or arrows: more / less", 12, DIM)
+
+
+## The beat on show in a word at the bottom, and the small prompt (also a button).
+func _draw_continue() -> void:
+	var beat := pacing.current
+	var what: String = ("%s: %s" % [beat.name, beat.text]) if beat.kind == "action" else ("" if beat.kind == "result" else String(beat.text))
+	var y := size.y - _s(30)
+	if what != "":
+		_text(Vector2(size.x * 0.5, y - _s(26)), what, 17, CREAM)
+	var label := "Space   Continue"
+	var w := _font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, int(round(14 * ui_scale))).x + _s(28)
+	var r := Rect2(Vector2(size.x * 0.5 - w * 0.5, y - _s(16)), Vector2(w, _s(26)))
+	_panel(r, Color(COPPER, 0.45), 1.0)
+	_text(r.get_center() + Vector2(0, _s(5)), label, 14, DIM)
+	_buttons.append({"rect": r, "id": "continue"})
 
 
 func _draw_log() -> void:
