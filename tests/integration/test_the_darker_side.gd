@@ -111,7 +111,7 @@ func test_two_dark_nights() -> void:
 	await wait_physics_frames(4)
 	await press_e()
 	assert_eq(main.rackets.cafe.stage, CafeJob.Stage.PLANTED)
-	var seats: Array = main._seats_near().filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(h.cafe_point("bench").pos) < 4.0)
+	var seats: Array = main.districts.seats_near().filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(h.cafe_point("bench").pos) < 4.0)
 	walker().place(seats[0].stand, PI)
 	await wait_physics_frames(2)
 	await press_e()

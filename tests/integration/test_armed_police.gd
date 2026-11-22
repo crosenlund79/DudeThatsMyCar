@@ -75,8 +75,8 @@ func test_shooting_somebody_in_his_sight_brings_his_revolver() -> void:
 	assert_true(await _until(func() -> bool: return shots > 0, 60 * 6), "he fires")
 	assert_true(cop().body.gun.is_drawn(), "the revolver is out")
 	assert_string_contains(main.hud.police_label.text, "SHOOTING")
-	await _until(func() -> bool: return walker().condition.is_hurt() or main.collapses > 0, 60 * 12)
-	assert_true(walker().condition.is_hurt() or main.collapses > 0, "his rounds find Danny standing in the open")
+	await _until(func() -> bool: return walker().condition.is_hurt() or main.casualties.collapses > 0, 60 * 12)
+	assert_true(walker().condition.is_hurt() or main.casualties.collapses > 0, "his rounds find Danny standing in the open")
 	await wait_physics_frames(60 * 6)
 	for i in range(1, shot_frames.size()):
 		assert_gte((shot_frames[i] - shot_frames[i - 1]) / 60.0, main.police_rules.fire_gap - 0.05, "one shot every couple of seconds at most")
@@ -130,7 +130,7 @@ func test_lost_as_before_and_the_revolver_goes_away() -> void:
 func test_shot_down_by_the_police_danny_comes_to_at_the_doc_s() -> void:
 	await _shoot_somebody_in_front_of_him()
 	main.rackets.money = 2000
-	assert_true(await _until(func() -> bool: return main.collapses > 0, 60 * 60), "standing in the open, he goes down in the end")
+	assert_true(await _until(func() -> bool: return main.casualties.collapses > 0, 60 * 60), "standing in the open, he goes down in the end")
 	assert_false(cop().brain.is_hunting(), "the copper stands down")
 	assert_false(walker().down, "Danny is never killed")
 	var vet: InteriorPlan = main._plan("vet")
@@ -143,7 +143,7 @@ func test_shot_at_the_wheel() -> void:
 	var beat_cop := cop().body.global_position
 	for i in 40:
 		main.police.bullet_struck(c, c.global_position, Vector2.RIGHT, cop().body)
-	assert_true(walker().condition.is_hurt() or main.collapses > 0, "some rounds go through the door")
+	assert_true(walker().condition.is_hurt() or main.casualties.collapses > 0, "some rounds go through the door")
 	assert_true(beat_cop != Vector2.INF)
 
 

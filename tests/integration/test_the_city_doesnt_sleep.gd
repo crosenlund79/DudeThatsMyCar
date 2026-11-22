@@ -113,7 +113,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 	await press_e()
 	await answer_with("cut")
 	await press_e()
-	assert_eq(main.rackets.money - money, main.HUSH_MONEY)
+	assert_eq(main.rackets.money - money, IncidentDirector.HUSH_MONEY)
 	# meanwhile, outside Sal's, the argument ran its course
 	assert_false(_history("p1").is_empty(), "it ended without him")
 	assert_eq(_history("p1").mercer, "")

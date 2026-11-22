@@ -41,7 +41,7 @@ func test_in_by_the_gate_not_over_the_railing() -> void:
 func test_sitting_and_letting_the_night_pass() -> void:
 	_park()
 	await wait_physics_frames(3)
-	var seats: Array = main._seats_near()
+	var seats: Array = main.districts.seats_near()
 	var seat: Dictionary = seats.filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(_park_mid()) < 200.0)[0]
 	_go(seat.stand)
 	await wait_physics_frames(2)
@@ -78,7 +78,7 @@ func test_sitting_and_letting_the_night_pass() -> void:
 
 
 func test_never_past_a_moment_that_must_not_be_missed() -> void:
-	var seats: Array = main._seats_near()
+	var seats: Array = main.districts.seats_near()
 	assert_gt(seats.size(), 0, "the ward's benches")
 	_go(seats[0].stand)
 	await wait_physics_frames(2)
@@ -94,7 +94,7 @@ func test_never_past_a_moment_that_must_not_be_missed() -> void:
 
 
 func test_hit_while_sitting_stands_him_up() -> void:
-	var seats: Array = main._seats_near()
+	var seats: Array = main.districts.seats_near()
 	_go(seats[0].stand)
 	await wait_physics_frames(2)
 	await press_e()

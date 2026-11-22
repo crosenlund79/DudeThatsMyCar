@@ -50,6 +50,8 @@ var soundscape: Soundscape
 var voice: VoicePlayer
 var bird_show: BirdPerformance
 var hud: Hud
+var incident_views: IncidentViews
+var opportunity_views: OpportunityViews
 
 # ---- the directors (each owns its own part of the game)
 var back_rooms: BackRooms
@@ -58,6 +60,9 @@ var police: PoliceForce
 var dialogue: Dialogue
 var fights: Fights
 var people: People
+var casualties: Casualties
+var districts: Districts
+var incident_director: IncidentDirector
 
 
 ## The game is saved (after a deal, a hand, a film...).
@@ -76,3 +81,11 @@ func show_purse() -> void:
 func mouse(visible: bool) -> void:
 	if not (root.get("command_source") as Callable).is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if visible else Input.MOUSE_MODE_HIDDEN
+
+
+## One of the ward's rooms by id (null if there is none).
+func ward_plan(id: String) -> InteriorPlan:
+	for p in layout.interiors:
+		if (p as InteriorPlan).id == id:
+			return p
+	return null

@@ -59,7 +59,7 @@ func test_the_whole_job() -> void:
 	assert_true(main.moments.has(due), "a moment the night must not skip")
 	# across the avenue to the bench, and let the time pass
 	var bench: Vector2 = _halloran().cafe_point("bench").pos
-	var seats: Array = main._seats_near().filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(bench) < 4.0)
+	var seats: Array = main.districts.seats_near().filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(bench) < 4.0)
 	assert_eq(seats.size(), 1, "the bench across the avenue")
 	_go(seats[0].stand)
 	await wait_physics_frames(2)

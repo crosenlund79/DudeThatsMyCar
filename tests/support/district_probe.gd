@@ -132,7 +132,7 @@ func _run() -> void:
 	if not main.player.on_foot():
 		main.player.exit_car()
 	await _fps("the Riverfront Yards, on foot")
-	for s in main.streets():
+	for s in main.districts.streets():
 		if s != main.street:
 			s.clear()
 	await _fps("  the same, its street life cleared")
@@ -167,7 +167,7 @@ func _run() -> void:
 	if not main.player.on_foot():
 		main.player.exit_car()
 	await _fps("Halloran Square, on foot")
-	for s in main.streets():
+	for s in main.districts.streets():
 		if s != main.street:
 			s.clear()
 	await _fps("  the same, its street life cleared")

@@ -563,9 +563,9 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(1000, 1500), 0.0)
 				main.incidents.plan = [{"id": "shot_p", "kind": "argument", "spot": "owl_kerb", "at": main.clock.minute + 0.5, "tries": 0}]
 				main.clock.set_time(main.clock.minute + 1.0)
-				main._advance_incidents()
+				main.incident_director.advance()
 				main.clock.set_time(main.clock.minute + 13.0)
-				main._advance_incidents()
+				main.incident_director.advance()
 				_teleport_walker(Vector2(1760, 900), -0.9)
 				await _frames(40)
 				_teleport_walker(Vector2(1700, 980), -0.9)
@@ -1064,7 +1064,7 @@ func _run(shots: Array) -> void:
 				main.world.load_now("halloran")
 				await _frames(20)
 				if s == "sitting":
-					var near: Array = main._seats_near().filter(func(x: Dictionary) -> bool: return (x.pos as Vector2).distance_to(pm) < 200.0)
+					var near: Array = main.districts.seats_near().filter(func(x: Dictionary) -> bool: return (x.pos as Vector2).distance_to(pm) < 200.0)
 					near.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a.pos as Vector2).y < (b.pos as Vector2).y)
 					_teleport_walker(near[0].stand, 0.0)
 					await _frames(2)
@@ -1104,15 +1104,15 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(1000, 1500), 0.0)
 				main.incidents.plan = [{"id": "shot_a", "kind": "argument", "spot": "owl_kerb", "at": main.clock.minute + 0.5, "tries": 0}]
 				main.clock.set_time(main.clock.minute + 1.0)
-				main._advance_incidents()
+				main.incident_director.advance()
 				main.clock.set_time(main.clock.minute + 13.0)  # into the heated part
-				main._advance_incidents()
+				main.incident_director.advance()
 				_teleport_walker(Vector2(2190, 560), PI + 0.6)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2120, 462))
 				await _frames(150)
 				if s == "incident_broken_up":
 					main.dialogue.incident_talking = "shot_a"
-					main._step_in("calm")
+					main.incident_director.step_in("calm")
 					await _frames(70)
 				await _shot(s, false)
 				cmd = PlayerCommand.new()
@@ -1122,7 +1122,7 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(1000, 1500), 0.0)
 				main.incidents.plan = [{"id": "shot_s", "kind": "stop", "spot": "marlowe_stop", "at": main.clock.minute + 0.5, "tries": 0}]
 				main.clock.set_time(main.clock.minute + 1.0)
-				main._advance_incidents()
+				main.incident_director.advance()
 				_teleport_walker(Vector2(2010, 590), -0.4)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2070, 462))
 				await _frames(60 * 9)

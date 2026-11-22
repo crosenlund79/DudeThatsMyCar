@@ -23,7 +23,7 @@ func _skip(minutes: float) -> void:
 	var end: float = main.clock.minute + minutes
 	while main.clock.minute < end:
 		main.clock.set_time(minf(main.clock.minute + 2.0, end))
-		main._advance_incidents()
+		main.incident_director.advance()
 		await wait_physics_frames(1)
 
 
@@ -117,7 +117,7 @@ func test_a_cut_of_somebody_s_business() -> void:
 	var money: int = main.rackets.money
 	await press_e()
 	await answer_with("cut")
-	assert_eq(main.rackets.money - money, main.HUSH_MONEY, "two bucks to forget it")
+	assert_eq(main.rackets.money - money, IncidentDirector.HUSH_MONEY, "two bucks to forget it")
 	assert_eq(main.incidents.get_incident("t1").outcome, "hushed")
 
 
@@ -218,7 +218,7 @@ func test_sticking_up_a_handoff() -> void:
 	await press_e()
 	await answer_with("rob")
 	assert_eq(main.incidents.get_incident("t1").outcome, "robbed")
-	assert_eq(main.rackets.money - money, main.HANDOFF_TAKE)
+	assert_eq(main.rackets.money - money, IncidentDirector.HANDOFF_TAKE)
 	await press_e()
 	await _skip(8.0)
 	assert_eq(_history("t1").mercer, "rob")

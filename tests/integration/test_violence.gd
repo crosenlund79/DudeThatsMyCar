@@ -113,10 +113,10 @@ func test_danny_is_wounded_and_goes_down_but_does_not_die() -> void:
 	assert_lt(walker().global_position.distance_to(start), walker().model.walk_speed * 0.9, "limping")
 	var minute: float = main.clock.minute
 	for i in 8:
-		if main.collapses > 0:
+		if main.casualties.collapses > 0:
 			break
 		await hit(walker(), 1, r.body)
-	assert_eq(main.collapses, 1, "Danny went down")
+	assert_eq(main.casualties.collapses, 1, "Danny went down")
 	assert_false(walker().down, "and came to")
 	assert_true(main.interiors.view_of("vet").plan.contains(walker().global_position), "at the Doc's (M006.7)")
 	assert_lt(walker().condition.worst(), BodyCondition.Level.WOUNDED, "patched up in a hurry")
@@ -131,7 +131,7 @@ func test_the_wards_own_people_are_carried_off_not_killed() -> void:
 			break
 		await hit(augie, 1)
 	assert_true(augie.down)
-	assert_true(main.ward_out.has("augie"), "out for the night")
+	assert_true(main.casualties.ward_out.has("augie"), "out for the night")
 	assert_lt(main.rackets.boss.trust, trust - 15, "Rourke takes it badly: one of his own")
 	assert_eq(main.rackets.memory.recent("augie", "shot", main.rackets.night), 1, "Augie won't forget")
 	await wait_physics_frames(int(InteriorView.CARRIED_OFF_AFTER * 60.0) + 30)

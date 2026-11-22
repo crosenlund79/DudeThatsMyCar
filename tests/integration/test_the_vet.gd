@@ -59,13 +59,13 @@ func test_walk_in_and_get_patched_up() -> void:
 func test_going_down_he_comes_to_at_the_docs() -> void:
 	main.rackets.money = 1200
 	for i in 8:
-		if main.collapses > 0:
+		if main.casualties.collapses > 0:
 			break
 		walker().hit_by_bullet(walker().global_position + Vector2(0, 6), Vector2.UP, main.rival.body)
 		await wait_physics_frames(1)
-	assert_eq(main.collapses, 1)
+	assert_eq(main.casualties.collapses, 1)
 	assert_true(vet().contains(walker().global_position), "on the Doc's premises")
-	assert_eq(main.rackets.money, 1200 - main.COLLAPSE_FEE, "his fee")
+	assert_eq(main.rackets.money, 1200 - Casualties.COLLAPSE_FEE, "his fee")
 	assert_string_contains(main.hud.wake_label.text, "Pettibone")
 
 

@@ -145,7 +145,7 @@ func _snapshot() -> Dictionary:
 			"thompson": main.thompson != null},
 		"cars": cars,
 		"thefts": [main.fleet.theft_incidents, main.fleet.thefts_witnessed],
-		"ward_out": main.ward_out,
+		"ward_out": main.casualties.ward_out,
 		"rival": main.rival.to_dict(),
 		"night": main.rackets.night,
 		"minute": _r(main.clock.minute, 2),
@@ -160,7 +160,7 @@ func _snapshot() -> Dictionary:
 			"bird_scene": main.bird_scene},
 		"hud_visible": main.hud.visible,
 		"camera": camera,
-		"collapses": main.collapses,
+		"collapses": main.casualties.collapses,
 		"moments": main.moments,
 		"fighting": main.fights.fighting,
 		"paused": main.paused,
@@ -487,7 +487,7 @@ func test_films_played_and_skipped() -> void:
 	await wait_physics_frames(4)
 	await press_e()
 	var bench: Vector2 = h.cafe_point("bench").pos
-	var seats: Array = main._seats_near().filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(bench) < 4.0)
+	var seats: Array = main.districts.seats_near().filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(bench) < 4.0)
 	walker().place(seats[0].stand, 0.0)
 	main.camera.snap_to(walker())
 	await wait_physics_frames(2)

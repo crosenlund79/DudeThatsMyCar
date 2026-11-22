@@ -44,7 +44,7 @@ func _m009_cost(label: String, frames: int = 240) -> void:
 	for i in frames:
 		await process_frame
 		var t0 := Time.get_ticks_usec()
-		main._advance_incidents()
+		main.incident_director.advance()
 		for e in main.rackets.opportunities.advance(main.clock.minute):
 			main._opportunity_over(e)
 		main.incident_views.refresh(main.camera.eye(), main.player.body().global_position, 1.0 / 60.0)
@@ -92,7 +92,7 @@ func _run() -> void:
 		{"id": "b", "kind": "exchange", "spot": "owl_alley", "at": main.clock.minute + 0.5, "tries": 0}]
 	_go(Vector2(1000, 1500))
 	main.clock.set_time(main.clock.minute + 1.0)
-	main._advance_incidents()
+	main.incident_director.advance()
 	_go(Vector2(2300, 420))
 	for i in 10:
 		await process_frame

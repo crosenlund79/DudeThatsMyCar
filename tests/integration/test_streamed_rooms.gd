@@ -128,7 +128,7 @@ func test_let_go_and_built_again_once_with_who_went_down() -> void:
 			break
 		heeler.hit_by_bullet(heeler.global_position + Vector2(0, 4), Vector2.RIGHT, walker())
 	assert_true(heeler.down, "the precinct captain is struck down")
-	assert_true(main.ward_out.has("doran_office/heeler"), "remembered for tonight")
+	assert_true(main.casualties.ward_out.has("doran_office/heeler"), "remembered for tonight")
 	# Danny goes home; the square is let go, rooms and all
 	walker().place(main.layout.spawn, 0.0)
 	main.camera.snap_to(walker())

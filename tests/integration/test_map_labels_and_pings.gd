@@ -18,7 +18,7 @@ func _skip(minutes: float) -> void:
 	var end: float = main.clock.minute + minutes
 	while main.clock.minute < end:
 		main.clock.set_time(minf(main.clock.minute + 2.0, end))
-		main._advance_incidents()
+		main.incident_director.advance()
 		await wait_physics_frames(1)
 
 
@@ -86,4 +86,4 @@ func test_no_ping_for_a_handoff_out_of_sight_or_another_district() -> void:
 	main.incidents.plan = [{"id": "y", "kind": "argument", "spot": "depot_kerb", "at": main.clock.minute + 1.0, "tries": 0}]
 	await _skip(16.0)
 	await wait_physics_frames(3)
-	assert_false(main._noticed.has("y"), "the yards' trouble is not shown from the ward")
+	assert_false(main.incident_director.noticed.has("y"), "the yards' trouble is not shown from the ward")

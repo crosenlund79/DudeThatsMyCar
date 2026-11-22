@@ -127,7 +127,7 @@ func test_a_regular_struck_down_plays_no_more() -> void:
 	main.clock.set_time(_busy_minute())
 	walker().place(RiversideInteriors.ROULETTE_SPOT + Vector2(0, 30), -PI / 2)
 	await wait_physics_frames(3)
-	main._on_person_down("edna", false, _room())
+	main.casualties.person_down("edna", false, _room())
 	assert_false("edna" in main.back_rooms.wheel.patrons.seated())
 	for i in 600:
 		await wait_physics_frames(1)

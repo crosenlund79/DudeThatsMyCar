@@ -4,8 +4,6 @@ extends Node2D
 ## and signals. No Autoloads. Tests run this scene with a scripted command
 ## source instead of the keyboard and mouse.
 
-## M009: an incident began, moved on or ended ("started", "phase", "over").
-signal incident_event(event: String, incident: Dictionary)
 ## M012: the game menu asked to go back to the last save (the scene is
 ## reloaded when it is the running scene; a test listens instead).
 signal reload_requested
@@ -122,12 +120,6 @@ var incidents: StreetIncidents:
 var incident_views: IncidentViews
 ## M009: the people Danny can take his own work from, and their errands.
 var opportunity_views: OpportunityViews
-## M009: what stepping in brings or costs (cents).
-const HUSH_MONEY := 200
-const HANDOFF_TAKE := 600
-## M008: what belongs to each neighbouring district while it is loaded:
-## id -> {street: StreetLife, officer: PoliceOfficer (or null), cars_made: bool}.
-var _districts := {}
 ## Tests: no passers-by or traffic in the neighbouring districts either.
 var quiet_streets := false
 var officer: PoliceOfficer
@@ -135,10 +127,12 @@ var officer: PoliceOfficer
 var rival: Rival:
 	get: return game.rival
 	set(v): game.rival = v
-## Named people carried off to the Doc's: id -> the night it happened.
-var ward_out := {}
-## Times Danny went down (for tests).
-var collapses := 0
+## M014: who is hurt or out tonight (src/health/casualties.gd), what each district
+## holds while it is built (src/world/districts.gd), the city's incidents in
+## the game (src/incidents/incident_director.gd).
+var casualties: Casualties
+var districts: Districts
+var incident_director: IncidentDirector
 const RIVAL_POST: Array[Vector2] = [Vector2(1180, 1392), Vector2(1330, 1392)]
 var street: StreetLife
 @export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
@@ -188,8 +182,6 @@ const BIRD_SEAT := Vector2(2334, 262)
 ## M010: the police car, the fire engine and the ambulance that come to it.
 var emergency := EmergencyResponse.new()
 var emergency_views: EmergencyViews
-## Doc Pettibone's fee for patching Danny up after he went down (cents, at most).
-const COLLAPSE_FEE := 500
 ## M007: the fistfight's rules (the fights themselves: `fights`).
 @export var fight_rules: FightRules = preload("res://src/fight/default_fight.tres")
 ## M010: the night's weather (Weather), and how it is shown; a state here
@@ -202,10 +194,8 @@ var weather: Weather:
 var weather_view: WeatherView
 ## M010: Danny's eyes growing heavy towards dawn.
 var drowsy: DrowsyView
-## M010: sitting down - the seats of each built district, and how fast time
-## passes while he sits with Space held (game minutes per game minute).
+## M010: how fast time passes while he sits with Space held (game minutes per game minute).
 const FAST_TIME := 20.0
-var _seats := {}
 const FIGHT_TIP_BONUS := 14.0
 const FIGHT_HURT_PACE := 0.85
 ## The sound level chosen on the pause screen (index into AudioSettings.BUSES).
@@ -248,9 +238,16 @@ func _ready() -> void:
 	dialogue.on_sleep = sleep
 	people = People.new(game)  # M014: call-outs and routines
 	game.people = people
-	people.is_out = func(id: String) -> bool: return ward_out.has(id)
 	fights = Fights.new(game)  # M014: fistfights
 	game.fights = fights
+	casualties = Casualties.new(game)  # M014: who is hurt or out tonight
+	game.casualties = casualties
+	people.is_out = casualties.is_out
+	districts = Districts.new(game)  # M014: what each district holds while it is built
+	game.districts = districts
+	districts.quiet_streets = quiet_streets
+	incident_director = IncidentDirector.new(game)  # M014: the city's incidents in the game
+	game.incident_director = incident_director
 	_load_game()
 	layout = RiversideWard.create()
 	city = City.new()
@@ -277,11 +274,11 @@ func _ready() -> void:
 	add_child(world)
 	world.setup(resolver, CityPlan.layouts(layout))
 	world.clearance = Walker.RADIUS + 3.0
-	world.extra_steps = _district_steps
-	world.district_ready.connect(_on_district_ready)
-	world.district_unloading.connect(_on_district_unloading)
-	world.district_entered.connect(_on_district_entered)
-	_load_districts()
+	world.extra_steps = districts.steps
+	world.district_ready.connect(districts.ready)
+	world.district_unloading.connect(districts.unloading)
+	world.district_entered.connect(districts.entered)
+	districts.load_saved(_saved.get("districts", {}))
 	var all_layouts := world.order.map(func(id: String) -> DistrictLayout: return world.layouts[id])
 	incidents = StreetIncidents.new(StreetIncidents.spots_of(all_layouts))
 	incidents.begin_night(rackets.night, float(night_rules.start_minute), float(night_rules.dawn_minute),
@@ -301,8 +298,8 @@ func _ready() -> void:
 	walker.place(layout.spawn, layout.spawn_facing)
 	walker.falls = false  # M006: Danny goes down, but the game decides what that means
 	walker.rng.seed = 1932001
-	walker.hurt.connect(_on_danny_hurt)
-	walker.struck_down.connect(_danny_down)
+	walker.hurt.connect(casualties.danny_hurt)
+	walker.struck_down.connect(casualties.danny_down)
 	_load_gun()
 	interiors.update_player(walker.global_position)
 	interiors.snap()
@@ -352,13 +349,14 @@ func _ready() -> void:
 	officer = PoliceOfficer.new()
 	add_child(officer)
 	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body, bullets)
-	police = PoliceForce.new(game, streets)  # M014: the beat cops of every built district
+	police = PoliceForce.new(game, districts.streets)  # M014: the beat cops of every built district
 	game.police = police
 	police.add_ward_officer(officer)
 	bullets.struck.connect(police.bullet_struck)
 	player.fired.connect(_on_player_fired)
 	street = StreetLife.new()
 	add_child(street)
+	districts.add_ward_street(street)
 	street.setup(layout, resolver, clock, Fleet.CAR_SCENE, Fleet.VEHICLES, fleet.cars, [walker, officer.body] as Array[Walker])
 	street.view = camera.view_rect()
 	rival = Rival.new()
@@ -368,7 +366,7 @@ func _ready() -> void:
 	rival.fired.connect(gunfire.on_fired)
 	rival.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
 		police.hear_gunshot(muzzle, gun_rules.noise_radius)
-		for s in streets():
+		for s in districts.streets():
 			s.hear_gunshot(muzzle))
 	rival.provoked.connect(func() -> void: hud.show_notice("Lefty Moran goes for his gun!"))
 	rival.struck_down.connect(func() -> void: hud.show_notice("Lefty Moran goes down and stays down."))
@@ -383,7 +381,7 @@ func _ready() -> void:
 		if not rival.is_down() and rival.near_miss(muzzle, dir):
 			rival.provoke())
 	for v in interiors.views:
-		v.person_down.connect(_on_person_down.bind(v))
+		v.person_down.connect(casualties.person_down.bind(v))
 	interiors.rooms_added.connect(_wire_rooms)  # M012: rooms in the streamed districts
 	vehicle_audio = VehicleAudio.new()
 	add_child(vehicle_audio)
@@ -412,7 +410,8 @@ func _ready() -> void:
 	incident_views.setup(resolver, incidents, load(Hud.FONT_PATH))
 	incident_views.is_shown = world.is_ready
 	incident_views.officer_for = police.officer_of
-	incident_views.person_struck.connect(func(id: String) -> void: _end_incident(incidents.break_off(id, "shooting")))
+	game.incident_views = incident_views
+	incident_views.person_struck.connect(func(id: String) -> void: incident_director.end(incidents.break_off(id, "shooting")))
 	incident_views.process_mode = Node.PROCESS_MODE_PAUSABLE
 	drowsy = DrowsyView.new()  # M010
 	add_child(drowsy)
@@ -429,13 +428,10 @@ func _ready() -> void:
 	emergency_views.fire_out.connect(cafe_scene.extinguish)
 	opportunity_views = OpportunityViews.new()
 	opportunity_views.setup(resolver, rackets)
-	opportunity_views.is_out = func(id: String) -> bool: return ward_out.has(id)
+	game.opportunity_views = opportunity_views
+	opportunity_views.is_out = casualties.is_out
 	opportunity_views.contact_hurt.connect(_on_contact_hurt)
-	opportunity_views.contact_down.connect(func(id: String, _w: Walker) -> void:
-		ward_out[id] = rackets.night
-		if dialogue.talking == id:
-			dialogue.end()
-		hud.show_notice("%s goes down, badly hurt. Somebody runs for the Doc." % talk.speaker(id)))
+	opportunity_views.contact_down.connect(func(id: String, _w: Walker) -> void: casualties.contact_down(id))
 	var morgue := layout.building_named("The Morgue")
 	if morgue >= 0:
 		hud.city_map.add_landmark(layout.buildings[morgue].rect.get_center(), "The Morgue", resolver.get_texture("ui/marker_morgue"))
@@ -488,7 +484,7 @@ func _busy() -> Dictionary:
 ## the order M003-M012 applied them), and what happens as a talk ends.
 func _wire_dialogue() -> void:
 	dialogue.on_context(func() -> Dictionary: return {"crate_outside": fleet.crate_car_at(_novak_door()) != null})
-	dialogue.on_effect("incident", func(v: Variant, _e: Dictionary) -> void: _step_in(String(v)))
+	dialogue.on_effect("incident", func(v: Variant, _e: Dictionary) -> void: incident_director.step_in(String(v)))
 	dialogue.on_effect("opportunity", func(v: Variant, _e: Dictionary) -> void: _opportunity(String(v)))
 	dialogue.on_effect("fight", func(v: Variant, _e: Dictionary) -> void: _request_fight(String(v)))  # starts when Danny raises his fists
 	dialogue.on_effect("bird_scene", func(v: Variant, _e: Dictionary) -> void: _bird_said(String(v)))  # M012: what he told the Bird
@@ -555,7 +551,7 @@ const PERSON_RING := 24.0
 ## the prompt names, or the car he would get into) - or {} for nothing.
 func _highlight_for(spot: Dictionary, c: Car) -> Dictionary:
 	if spot.is_empty():
-		if c != null and not _scenery_truck_near(walker.global_position):
+		if c != null and not districts.scenery_truck_near(walker.global_position):
 			return {"kind": "car", "xform": c.global_transform, "size": c.vehicle.size}
 		return {}
 	var id := String(spot.id)
@@ -596,23 +592,10 @@ func _wire_rooms(new_views: Array) -> void:
 		var v: InteriorView = nv
 		if walker != null:
 			v.visitors = [walker]
-		v.person_down.connect(_on_person_down.bind(v))
-		var still := _still_out(v.plan)
-		if not still.is_empty():
-			v.reset_people(still)
+		casualties.wire_room(v)  # who goes down in it; who is out tonight
 	interiors.update_player(player.body().global_position if player != null and player.on_foot() else Vector2.INF)
 	interiors.snap()
 	_sync_freight()  # the shed as the job left it
-
-
-## M012: who in a room is out tonight: the named people carried off (by id)
-## and anybody else struck down there (by room and id).
-func _still_out(plan: InteriorPlan) -> Array:
-	var out := []
-	for p in plan.people:
-		if ward_out.has(p.id) or ward_out.has(plan.id + "/" + String(p.id)):
-			out.append(p.id)
-	return out
 
 
 ## M012: where and when the game was saved, if it was this same night: the
@@ -662,124 +645,10 @@ func _crate_without_a_car() -> void:
 ## personally), passers-by scatter.
 func _on_player_fired(muzzle: Vector2, dir: Vector2) -> void:
 	police.player_fired(muzzle, dir)
-	for s in streets():
+	for s in districts.streets():
 		s.hear_gunshot(muzzle)
 	if incident_views != null:
-		for e in incident_views.hear_gunshot(muzzle):  # M009: they break off and run
-			_end_incident(e)
-
-
-## The street life of the loaded districts (M008).
-func streets() -> Array[StreetLife]:
-	var out: Array[StreetLife] = []
-	if street != null:
-		out.append(street)
-	for id in _districts:
-		var s: StreetLife = _districts[id].get("street")
-		if s != null and is_instance_valid(s):
-			out.append(s)
-	return out
-
-
-# ------------------------------------------------------------------ M008: the neighbouring districts
-
-## What the streamer builds for a district besides its city, a slice at a
-## time: its passers-by and traffic, and (the first time) its parked cars.
-func _district_steps(l: DistrictLayout, node: Node2D) -> Array[Callable]:
-	return [_district_street.bind(l, node), fleet.district_cars.bind(l)]
-
-
-func _district(id: String) -> Dictionary:
-	if not _districts.has(id):
-		_districts[id] = {"street": null, "officer": null, "cars_made": false}
-	return _districts[id]
-
-
-func _district_street(l: DistrictLayout, node: Node2D) -> void:
-	var s := StreetLife.new()
-	node.add_child(s)
-	var others: Array[Walker] = [walker]
-	for o in police.officers():
-		others.append(o.body)
-	s.setup(l, resolver, clock, Fleet.CAR_SCENE, Fleet.VEHICLES, fleet.cars, others)
-	s.name = "StreetLife"
-	if quiet_streets:
-		s.clear()
-	s.view = camera.view_rect()
-	soundscape.track_traffic(s.traffic)
-	_district(l.id).street = s
-
-
-## A district is complete: the camera may show it, the cars parked in it come
-## back out, and its beat cop takes up his round (or lies where he fell
-## tonight, if Danny shot him).
-func _on_district_ready(id: String) -> void:
-	camera.set_bounds(world.bounds())
-	if id == layout.id:
-		return
-	var l: DistrictLayout = world.layouts[id]
-	fleet.district_ready(l)
-	opportunity_views.district_ready(id, l, world.loaded[id].node)  # M009
-	interiors.add_district(l, world.city_of(id), world.loaded[id].node)  # M012: its rooms
-	plates.add_district(l, world.loaded[id].node)  # and the plates at its doors
-	if l.police_beat.is_empty():
-		return
-	var o := PoliceOfficer.new()
-	world.loaded[id].node.add_child(o)
-	o.setup(resolver, police_rules, l.police_beat, world.navigator_of(id), player.body, bullets)
-	o.home_area = l.play_area
-	police.wire(o)
-	police.wire_hud(o)
-	var st: Dictionary = world.state.get(id, {})
-	var past: Dictionary = st.get("officer", {})
-	if past.get("down", false) and int(past.get("night", -1)) == rackets.night:
-		o.body.place(past.pos, 0.0)
-		o.body.condition.damage["torso"] = BodyCondition.MAX
-		o.body.down = true
-		o.body.lie_down()
-		o.torch.visible = false
-	_district(id)
-	police.set_district_officer(id, o)
-	for s in streets():
-		if not s.others.has(o.body):
-			s.others.append(o.body)
-
-
-## A district is about to be freed: remember whether its beat cop is down
-## tonight, put away the cars parked in it (not the one Danny drives) and
-## let go of bullets still flying there.
-func _on_district_unloading(id: String) -> void:
-	interiors.remove_district(id)  # M012: its rooms go with it
-	people.district_unloading(id)  # M012: Leon at Dutch's goes with the yards, a call-out with its room
-	plates.remove_district(id)
-	if not _districts.has(id):
-		return
-	var e: Dictionary = _districts[id]
-	var o: PoliceOfficer = police.district_officer(id)
-	if o != null and is_instance_valid(o):
-		if not world.state.has(id):
-			world.state[id] = {}
-		world.state[id]["officer"] = {"down": o.is_down(), "pos": o.body.global_position, "night": rackets.night}
-		for s in streets():
-			s.others.erase(o.body)
-	police.set_district_officer(id, null)
-	e.street = null
-	var b: Rect2 = world.layouts[id].bounds
-	fleet.district_unloading(b)
-	if incident_views != null:
-		incident_views.drop_district(b)  # its incidents go on as state
-	if opportunity_views != null:
-		opportunity_views.district_gone(id)
-	bullets.drop_in(b)
-	camera.set_bounds.call_deferred(world.bounds())
-
-
-func _on_district_entered(id: String) -> void:
-	var l: DistrictLayout = world.layouts[id]
-	if hud != null:
-		hud.set_district(l.name)
-	if soundscape != null:
-		soundscape.layout = l
+		incident_director.hear_gunshot(muzzle)  # M009: they break off and run
 
 
 ## A new game: Danny tells you who he is while the camera drifts over the ward
@@ -855,7 +724,7 @@ func _spot() -> Dictionary:
 	# M010: sitting: up again, or a seat to sit on
 	if not player.seat.is_empty():
 		return {"id": "stand", "prompt": "Stand up      Space (hold)   Let the time pass"}
-	var seat := Seats.near(_seats_near(), walker.global_position)
+	var seat := Seats.near(districts.seats_near(), walker.global_position)
 	if not seat.is_empty():
 		return {"id": "seat", "seat": seat, "prompt": "Sit down"}
 	# M010: Duggan's Packard, with the parcel in Danny's coat
@@ -893,7 +762,7 @@ func _spot() -> Dictionary:
 func _interact(_at: Vector2) -> bool:
 	var spot := _spot()
 	if spot.is_empty():
-		if player.enterable_car() == null and _scenery_truck_near(walker.global_position):
+		if player.enterable_car() == null and districts.scenery_truck_near(walker.global_position):
 			# M010: the yards' works trucks are scenery; say so, and where a truck can be had
 			hud.show_notice("The cab's chained and padlocked for the night. Brennan's coal truck on Wharf Street is another story.")
 			return true
@@ -1078,7 +947,7 @@ func _cafe_goes_off() -> void:
 	var at := cafe_scene.car_pos
 	cafe_scene.play_blast()
 	_dispatch_emergency(at)
-	for s in streets():
+	for s in districts.streets():
 		s.hear_gunshot(at)
 	for o in police.officers():
 		if o.is_down() or o.body.global_position.distance_to(at) > 1600.0:
@@ -1105,62 +974,6 @@ func _dispatch_emergency(at: Vector2) -> void:
 	emergency.dispatch(rackets.night, clock.minute, at, EmergencyResponse.routes_for(h.cafe_point("approach").pos, stops))
 
 
-## M006: Danny is hit. Where, and how bad, on screen.
-func _on_danny_hurt(region: String, level: int) -> void:
-	player.stand()  # M010: nobody stays sitting when he is hit
-	back_rooms.danny_hurt()  # M011: nor at the wheel, nor at a machine
-	hud.show_notice("Hit in the %s - %s." % [BodyCondition.NAMES[region], BodyCondition.label(level)])
-
-
-## M006: Danny goes down. He is not killed: somebody drags him to Doc
-## Pettibone's, and he comes to on the examining table an hour later, patched
-## up in a hurry (his wounds are grazes now), the Doc's fee taken from his
-## pocket (as far as it goes). The night goes on.
-func _danny_down() -> void:
-	collapses += 1
-	dialogue.end()
-	if not player.on_foot():
-		player.eject()  # M008: shot at the wheel
-	police.stand_down()  # he thinks he got you
-	walker.condition.patch_up()
-	walker.down = false
-	if walker.gun != null:
-		walker.gun.holster()
-	clock.set_time(minf(clock.minute + 60.0, float(night_rules.dawn_minute)))
-	rival.brain.state = RivalBrain.State.IDLE if not rival.is_down() else rival.brain.state  # he thinks he got you
-	var fee := rackets.pay_doctor(COLLAPSE_FEE)
-	var vet := _plan("vet")
-	var spot: Vector2 = vet.spots[0].pos if vet != null else layout.spawn
-	walker.place(spot, -PI / 2)
-	interiors.update_player(walker.global_position)
-	interiors.snap()
-	camera.snap_to(walker)
-	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
-	hud.wake_up(rackets.night, clock.text(), "You came to on Doc Pettibone's table.\nSomebody dragged you in. He took %s for his trouble." % Rackets.dollars(fee))
-	save_game()
-
-
-## M006: someone in a room was struck down. One of the ward's own people (named)
-## is carried off to the Doc's for the night - and if Danny did it, the ward
-## and Rourke will remember. The Bird down means no more music tonight.
-func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
-	var w: Walker = view.people.get(id)
-	back_rooms.person_down(view.plan.id, id, named)  # M010-M013: the tables
-	if not named:
-		ward_out[view.plan.id + "/" + id] = rackets.night  # M012: stays down tonight, whatever is unloaded or loaded
-		return
-	ward_out[id] = rackets.night
-	if w != null and w.last_shooter == walker:
-		rackets.shot_person(id)
-	if id == "bird":
-		stage.knock_out()
-		soundscape.stop_music()
-	if dialogue.talking == id:
-		dialogue.end()
-	hud.show_notice("%s goes down, badly hurt. Somebody runs for the Doc." % talk.speaker(id))
-	save_game()
-
-
 ## Sleeps through the day: the next evening begins at home with everything
 ## you carry (money, bottles, rounds); the streets, the cars and the copper
 ## are back as they are at the start of every night, and tonight's deals reset.
@@ -1173,7 +986,7 @@ func sleep() -> void:
 	var owl := interiors.view_of("copper_owl")
 	if owl != null:
 		owl.dim(1.0)  # the house lights up for a new night
-	ward_out.clear()  # back from the Doc's, patched up (and they remember)
+	casualties.new_night()  # back from the Doc's, patched up (and they remember)
 	fleet.new_night()  # the cars are back with their owners, nothing in a boot (M009)
 	for v in interiors.views:
 		v.reset_people()
@@ -1191,10 +1004,7 @@ func sleep() -> void:
 	police.cancel_report()
 	fleet.back_to_places()
 	police.new_night()
-	for s in streets():
-		s.reset()
-	for id in world.state:
-		world.state[id].erase("officer")  # a new man on every beat
+	districts.new_night()  # the street life as every evening; a new man on every beat
 	if walker.gun != null:
 		walker.gun.holster()
 	walker.place(layout.spawn, layout.spawn_facing)
@@ -1214,7 +1024,7 @@ func _update_clock(delta: float) -> void:
 		var before := clock.minute
 		clock.advance(delta * _time_scale())
 		rackets.town.advance(clock.minute - before)  # the club serves its customers as the night goes on
-		_advance_incidents()
+		incident_director.advance()
 		weather.advance(clock.minute)  # M010
 		var claps := weather.thunder_between(before, clock.minute)  # M012: thunder in a downpour
 		if not claps.is_empty():  # one at a time, however fast the night runs
@@ -1248,14 +1058,14 @@ func save_game() -> void:
 	if walker != null:
 		data["danny"] = walker.condition.to_dict()
 	if rival != null:
-		data["ward"] = {"out": ward_out.duplicate(), "rival": rival.to_dict()}
+		data["ward"] = {"out": casualties.ward_out.duplicate(), "rival": rival.to_dict()}
 	if pistol != null:
 		data["gun"] = {"ammo": pistol.ammo, "spare": pistol.spare}
 	if thompson != null:  # M010: the Thompson's rounds go with the loan
 		data.rackets.loan.ammo = thompson.ammo
 		data.rackets.loan.spare = thompson.spare
 	if world != null:
-		data["districts"] = _districts_to_save()
+		data["districts"] = districts.to_save()
 	if fleet != null and fleet.thefts != null:
 		data["cars"] = fleet.to_save()  # M013: where the cars stand, which are taken, the one he sits in
 	if walker != null and clock != null:  # M012: where and when (in the street or in a room, any district)
@@ -1264,108 +1074,6 @@ func save_game() -> void:
 	if incidents != null:
 		data["incidents"] = incidents.to_dict()
 	SaveGame.write(save_path, data)
-
-
-## M009: the city's incidents move on with the clock; one that ends is
-## talked about by whoever saw it. A stop breaks off if its copper is called
-## away (gunfire) or down.
-## M010: the incidents Danny has noticed (by noise or sight), so the minimap
-## can point them out: a ping when he first notices one in its range, an arrow
-## on its rim while one in this district goes on out of it.
-var _noticed := {}
-
-
-func _notice_incidents() -> void:
-	if hud == null or hud.minimap == null:
-		return
-	var danny := player.body().global_position
-	var arrows: Array[Vector2] = []
-	for inc in incidents.active:
-		if String(inc.spot.district) != world.current:
-			continue
-		if not _noticed.has(inc.id) and IncidentNotice.noticed(inc, incidents.phase_name(inc), danny):
-			_noticed[inc.id] = true
-			if hud.minimap.place_on_map(inc.spot.pos).on_map:
-				hud.minimap.ping(inc.spot.pos)
-		if _noticed.has(inc.id) and not hud.minimap.place_on_map(inc.spot.pos).on_map:
-			arrows.append(inc.spot.pos)
-	hud.minimap.set_arrows(arrows)
-	for id in _noticed.keys():
-		if incidents.get_incident(id).is_empty():
-			_noticed.erase(id)
-
-
-func _advance_incidents() -> void:
-	var danny := player.body().global_position if player != null else Vector2.INF
-	for inc in incidents.active.duplicate():
-		if inc.kind == "stop" and inc.mercer == "" and incidents.phase_name(inc) != "leaving" \
-				and world.is_ready(inc.spot.district):
-			var cop := police.officer_of(inc.spot.district)
-			if cop == null or cop.brain.is_hunting():
-				if cop != null:
-					cop.duty = {}
-				_end_incident(incidents.break_off(inc.id, "broken_off"))
-	for e in incidents.advance(clock.minute, danny, police.can_stop):
-		if e.event == "over":
-			rackets.street_incident_over(e.incident)
-		incident_event.emit(e.event, e.incident)
-
-
-## An incident ended early (broken off): talked about like any other.
-func _end_incident(e: Dictionary) -> void:
-	if e.is_empty():
-		return
-	rackets.street_incident_over(e.incident)
-	incident_event.emit("over", e.incident)
-
-
-## Danny steps into the incident he is talking his way into (see Conversations).
-func _step_in(choice: String) -> void:
-	var inc := incidents.get_incident(dialogue.incident_talking)
-	if inc.is_empty():
-		return
-	var out := incidents.intervene(inc.id, choice, dialogue.context())
-	if not out.ok:
-		return
-	match out.outcome:
-		"hushed":
-			rackets.money += HUSH_MONEY
-		"robbed":
-			rackets.money += HANDOFF_TAKE
-			police.witness_violence(walker.global_position, walker.global_position)  # a hold-up at gunpoint, if a copper saw it
-		"bribed":
-			rackets.money -= mini(Conversations.STOP_BRIBE, rackets.money)
-		"vouched":
-			var cop := police.officer_of(inc.spot.district)
-			if cop != null:
-				cop.duty = {}
-				cop.brain.suspect(walker.global_position)
-	incident_event.emit("phase", inc)
-
-
-## M008: what each neighbouring district keeps for tonight - whether its beat
-## cop is down, and where - from the live district if it is loaded.
-func _districts_to_save() -> Dictionary:
-	var out := {}
-	for id in world.order:
-		if id == layout.id:
-			continue
-		var o: PoliceOfficer = police.district_officer(id)
-		var past: Dictionary = world.state.get(id, {}).get("officer", {})
-		if o != null and is_instance_valid(o):
-			past = {"down": o.is_down(), "pos": o.body.global_position, "night": rackets.night}
-		if past.get("down", false):
-			out[id] = {"officer": {"down": true, "x": past.pos.x, "y": past.pos.y, "night": int(past.night)}}
-	return out
-
-
-## M008: tonight's district state from the save (an earlier night's is forgotten).
-func _load_districts() -> void:
-	var ds: Dictionary = _saved.get("districts", {})
-	for id in ds:
-		var o: Dictionary = ds[id].get("officer", {})
-		if world.layouts.has(id) and int(o.get("night", -1)) == rackets.night and o.get("down", false):
-			world.state[id] = {"officer": {"down": true, "pos": Vector2(float(o.x), float(o.y)), "night": rackets.night}}
 
 
 func _load_game() -> void:
@@ -1384,15 +1092,12 @@ func _load_ward() -> void:
 		walker.condition.from_dict(_saved.danny)
 	var ward: Dictionary = _saved.get("ward", {})
 	rival.from_dict(ward.get("rival", {}))
-	ward_out = {}
-	for id in ward.get("out", {}):
-		if int(ward.out[id]) == rackets.night:
-			ward_out[id] = rackets.night
+	casualties.load_out(ward.get("out", {}), rackets.night)
 	for v in interiors.views:
-		var still := _still_out(v.plan)
+		var still := casualties.still_out(v.plan)
 		if not still.is_empty():
 			v.reset_people(still)
-	if ward_out.has("bird"):
+	if casualties.is_out("bird"):
 		stage.knock_out()
 		soundscape.stop_music()
 
@@ -1581,34 +1286,6 @@ func _on_contact_hurt(id: String, w: Walker) -> void:
 		rackets.shot_person(id)
 
 
-## M010: the parked works trucks (scenery, not drivable) of every district, gathered once.
-var _scenery_trucks: Array[Vector2] = []
-
-
-## M010: one of the parked works trucks within reach of p (in a built district).
-func _scenery_truck_near(p: Vector2) -> bool:
-	if _scenery_trucks.is_empty() and world != null:
-		for id in world.order:
-			for pr in (world.layouts[id] as DistrictLayout).props:
-				if String(pr.kind).begins_with("props/truck"):
-					_scenery_trucks.append(pr.pos)
-		_scenery_trucks.append(Vector2.INF)  # gathered (even if there are none)
-	for t in _scenery_trucks:
-		if t.distance_to(p) < 72.0 and world.is_ready(world.district_at(t)):
-			return true
-	return false
-
-
-## M010: the seats of the built districts (benches in the street and the park, in the rooms).
-func _seats_near() -> Array:
-	var out := []
-	for id in world.ready_ids():
-		if not _seats.has(id):
-			_seats[id] = Seats.of(world.layouts[id])
-		out.append_array(_seats[id])
-	return out
-
-
 ## M010: sitting with Space held, the night passes FAST_TIME times as fast -
 ## but never past the next moment that must not be missed (it slows to normal
 ## a couple of minutes before).
@@ -1674,7 +1351,7 @@ func _bird_after_last_song(delta: float) -> void:
 		return
 	if bird_scene != "" or not callouts_enabled or rackets.bird_scene != "" or clock.minute < BIRD_LAST_SONG:
 		return
-	if not stage.singing() or ward_out.has("bird") or bird_show == null:
+	if not stage.singing() or casualties.is_out("bird") or bird_show == null:
 		return
 	if interiors.current == null or interiors.current.id != "copper_owl" or not player.on_foot():
 		return
@@ -1928,7 +1605,7 @@ func _update_view(delta: float) -> void:
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	world.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
 	interiors.update_player(walker.global_position if player.on_foot() else Vector2.INF)
-	for s in streets():
+	for s in districts.streets():
 		s.view = camera.view_rect()
 	# M010: the weather over the built districts
 	var cities := [city]
@@ -1954,7 +1631,7 @@ func _update_view(delta: float) -> void:
 			target = _highlight_for(spot, c)  # M012
 		if not spot.is_empty():
 			prompt = "E   %s" % ("Interrupt the Bird" if spot.id == "bird" and stage.singing() else spot.prompt)
-		elif c == null and _scenery_truck_near(walker.global_position):
+		elif c == null and districts.scenery_truck_near(walker.global_position):
 			prompt = "A works truck - chained up for the night"
 		elif c != null:
 			prompt = fleet.prompt_for(c)
@@ -1974,7 +1651,7 @@ func _update_view(delta: float) -> void:
 	hud.minimap.set_view(focus, facing, speed, officer.body.global_position if not officer.is_down() else Vector2.INF,
 		officer.brain.is_hunting(), delta)
 	if not get_tree().paused:
-		_notice_incidents()  # M010: after the minimap knows where Danny is
+		incident_director.notice()  # M010: after the minimap knows where Danny is
 	var in_room: InteriorPlan = null
 	if player.on_foot() and interiors.current != null and interiors.current.contains(walker.global_position):
 		in_room = interiors.current

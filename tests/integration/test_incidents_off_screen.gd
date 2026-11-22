@@ -24,7 +24,7 @@ func _skip(minutes: float) -> void:
 	var end: float = main.clock.minute + minutes
 	while main.clock.minute < end:
 		main.clock.set_time(minf(main.clock.minute + 2.0, end))
-		main._advance_incidents()
+		main.incident_director.advance()
 		await wait_physics_frames(1)
 
 
