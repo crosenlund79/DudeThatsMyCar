@@ -53,7 +53,9 @@ func add_district(l: DistrictLayout) -> void:
 
 
 func _put(id: String, pos: Vector2, facing: float = 0.0) -> void:
-	assert(not _at.has(id), "two places with the id " + id)
+	if _at.has(id):
+		push_warning("CityLocations: two places with the id " + id)
+		return  # the first one stands
 	_at[id] = pos
 	_facing[id] = facing
 

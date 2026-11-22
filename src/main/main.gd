@@ -287,6 +287,7 @@ func _ready() -> void:
 	world = DistrictStreamer.new()
 	add_child(world)
 	world.setup(resolver, CityPlan.layouts(layout))
+	game.locations = CityLocations.of(world.order.map(func(id: String) -> DistrictLayout: return world.layouts[id]))
 	world.clearance = Walker.RADIUS + 3.0
 	world.extra_steps = districts.steps
 	world.district_ready.connect(districts.ready)

@@ -22,7 +22,7 @@ func id() -> String:
 
 ## Where she sits after it: the end of the bar.
 func seat() -> Vector2:
-	return game.layout.place("bird_seat")
+	return game.locations.at("riverside/place/bird_seat")
 
 
 func effects() -> Dictionary:

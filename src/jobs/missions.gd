@@ -18,16 +18,20 @@ func _init(p_game: Game) -> void:
 
 
 ## Adds a job: its effects and fights are registered at once (an effect or a
-## fight another job already has is refused).
+## fight another job already has is refused, and so is the same job twice).
 func add(job: JobDirector) -> JobDirector:
-	assert(not jobs.has(job), "a job added twice")
+	if jobs.has(job):
+		push_warning("Missions: the job '%s' added twice" % job.id())
+		return job
 	jobs.append(job)
 	var fx := job.effects()
 	for key in fx:
 		game.dialogue.on_effect(key, fx[key])
 	var f := job.fights()
 	for who in f:
-		assert(not _starters.has(who), "two jobs start a fight with " + who)
+		if _starters.has(who):
+			push_warning("Missions: two jobs start a fight with " + who)
+			continue
 		_starters[who] = f[who]
 	return job
 

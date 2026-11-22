@@ -44,12 +44,11 @@ func _init(p_game: Game) -> void:
 	game = p_game
 
 
-## The ward's parked cars (at start-up), then the owners' book.
+## The owners' book, and the first district's parked cars (the ward's, at
+## start-up) - made like any other district's.
 func park(layout: DistrictLayout) -> void:
-	for j in layout.cars.size():
-		make_car(layout.cars[j], "%s/%d" % [layout.id, j])
-	_made[layout.id] = true
-	thefts = CarThefts.new(layout.cars)
+	thefts = CarThefts.new()
+	district_cars(layout)
 
 
 ## A district's parked cars join `cars` the first time it is built (later

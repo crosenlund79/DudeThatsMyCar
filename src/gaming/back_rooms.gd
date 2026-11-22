@@ -97,6 +97,12 @@ func setup(saved_slots: Array) -> void:
 		slot_machines[i].from_dict(saved_slots[i])  # the reels, lamps, holds and stake as they were
 
 
+## M014: the back rooms' furniture is written in the ward's own coordinates
+## (RiversideInteriors); in the world it is wherever the ward is placed.
+func _ward(local: Vector2) -> Vector2:
+	return game.layout.to_world(local)
+
+
 ## At one of the tables (the card table, the wheel or a machine): their keys only.
 func at_a_table() -> bool:
 	return game.hud.poker_view.is_open() or at_a_game()
@@ -192,7 +198,7 @@ func open_poker() -> void:
 	var interiors := game.interiors
 	if game.hud.poker_view.is_open() or interiors.current == null or interiors.current.id != "back_room":
 		return
-	var chair: Vector2 = RiversideInteriors.TABLE + Vector2(0, 44)
+	var chair: Vector2 = _ward(RiversideInteriors.TABLE) + Vector2(0, 44)
 	game.player.sit({"pos": chair, "facing": -PI / 2, "stand": chair + Vector2(0, 16), "kind": "chair"})
 	game.hud.poker_view.layout_for(get_viewport().get_visible_rect().size)
 	game.hud.poker_view.open(poker, game.rackets.money)
@@ -305,7 +311,7 @@ func open_roulette() -> void:
 		hud.show_notice("Leo's thrown the cover over the wheel. \"That's all for tonight, Mr. Mercer.\"")
 		return
 	view.face("croupier", game.walker.global_position)
-	game.walker.aim_point = RiversideInteriors.WHEEL_TABLE
+	game.walker.aim_point = _ward(RiversideInteriors.WHEEL_TABLE)
 	_wheel_start = game.rackets.money + roulette.for_save()
 	hud.roulette_view.layout_for(get_viewport().get_visible_rect().size)
 	hud.roulette_view.open(wheel, game.rackets.money)  # M013: the round as it stands - bet now, or watch
@@ -432,7 +438,7 @@ func _on_wheel_event(e: Dictionary) -> void:
 			_leo_says(["\"No more bets.\"", "\"Rien ne va plus.\""])
 			var leo_w: Walker = game.interiors.view_of("gaming_room").people.get("croupier")
 			if leo_w != null:
-				leo_w.aim_point = RiversideInteriors.wheel_centre()  # his hand over the wheel as he calls it
+				leo_w.aim_point = _ward(RiversideInteriors.wheel_centre())  # his hand over the wheel as he calls it
 		"rest":
 			var paid := int(e.paid)
 			game.rackets.money += paid  # once: the table settles each round once
@@ -559,7 +565,7 @@ func _wheel_sound(id: String, db: float) -> void:
 	if game.hud.roulette_view.is_open():
 		game.soundscape.play(id, db)
 	else:
-		game.soundscape.play_at(id, RiversideInteriors.wheel_centre(), db - 7.0)
+		game.soundscape.play_at(id, _ward(RiversideInteriors.wheel_centre()), db - 7.0)
 
 
 ## Danny walks away from the wheel: chips not yet called come back; a number
@@ -617,7 +623,7 @@ func open_slot(i: int) -> void:
 		return
 	slot_at = i
 	_slot_start = game.rackets.money
-	game.walker.aim_point = RiversideInteriors.SLOTS[i]
+	game.walker.aim_point = _ward(RiversideInteriors.SLOTS[i])
 	game.hud.slot_view.layout_for(get_viewport().get_visible_rect().size)
 	game.hud.slot_view.open(slot_machines[i], game.rackets.money)
 	game.mouse(true)

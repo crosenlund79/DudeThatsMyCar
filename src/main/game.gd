@@ -36,6 +36,8 @@ var plates: EntrancePlates
 var highlight: InteractionHighlight
 var overhead: OverheadLine
 var world: DistrictStreamer
+## M014: every district's named places, doors, rooms and spots by a stable id.
+var locations: CityLocations
 var incidents: StreetIncidents
 var weather: Weather
 var walker: Walker

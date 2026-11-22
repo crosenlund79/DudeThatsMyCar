@@ -16,8 +16,8 @@ func id() -> String:
 
 ## Where Lefty stands: his corner outside Doyle's Garage, and the other end of his beat.
 func post() -> Array[Vector2]:
-	var l := game.layout
-	return [l.place("lefty_post"), l.place("lefty_post_east")] as Array[Vector2]
+	var at := game.locations
+	return [at.at("riverside/place/lefty_post"), at.at("riverside/place/lefty_post_east")] as Array[Vector2]
 
 
 func effects() -> Dictionary:

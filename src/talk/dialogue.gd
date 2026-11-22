@@ -29,11 +29,14 @@ func _init(p_game: Game) -> void:
 	game = p_game
 
 
-## `key` (one of EFFECTS) is handled by `handler(value, effects)`. One handler a key.
-func on_effect(key: String, handler: Callable) -> void:
-	assert(EFFECTS.has(key), "an effect nobody applies: " + key)
-	assert(not _effects.has(key), "two handlers for one effect: " + key)
+## `key` (one of EFFECTS) is handled by `handler(value, effects)`. One handler
+## a key: a second, or a key Dialogue does not apply, is refused (false).
+func on_effect(key: String, handler: Callable) -> bool:
+	if not EFFECTS.has(key) or _effects.has(key):
+		push_warning("Dialogue: effect '%s' %s" % [key, "already has a handler" if _effects.has(key) else "is not applied"])
+		return false
 	_effects[key] = handler
+	return true
 
 
 ## `part()` returns more of a talk's context (keys a page may read), merged in
@@ -44,9 +47,12 @@ func on_context(part: Callable) -> void:
 
 ## `hook(who)` is called as a talk with `who` ends (before it is cleared), in
 ## the order hooks were added.
-func on_end(hook: Callable) -> void:
-	assert(not _end_hooks.has(hook), "the same end hook twice")
+func on_end(hook: Callable) -> bool:
+	if _end_hooks.has(hook):
+		push_warning("Dialogue: the same end hook twice")
+		return false
 	_end_hooks.append(hook)
+	return true
 
 
 func context() -> Dictionary:
