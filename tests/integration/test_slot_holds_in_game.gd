@@ -57,7 +57,7 @@ func _until_paid() -> void:
 
 ## Sets the game's draw so that the next full pull at machine `i` loses and lights the lamps.
 func _next_pull_lights(i: int) -> void:
-	var m: SlotMachine = main.slot_machines[i]
+	var m: SlotMachine = main.back_rooms.slot_machines[i]
 	for s in 200000:
 		var r := RandomNumberGenerator.new()
 		r.seed = s
@@ -66,14 +66,14 @@ func _next_pull_lights(i: int) -> void:
 		probe.pull(100000, r.randi())
 		probe.collect()
 		if probe.win == 0 and probe.hold_offered:
-			main._slot_rng.seed = s
+			main.back_rooms.slot_rng.seed = s
 			return
 	fail_test("no seed found")
 
 
 func test_hold_two_reels_and_respin_the_third() -> void:
 	await _step_up(0)
-	var m: SlotMachine = main.slot_machines[0]
+	var m: SlotMachine = main.back_rooms.slot_machines[0]
 	_next_pull_lights(0)
 	await _pull()
 	await _until_paid()
@@ -119,7 +119,7 @@ func test_hold_two_reels_and_respin_the_third() -> void:
 
 func test_the_stake_and_the_lamps() -> void:
 	await _step_up(2, 1000)
-	var m: SlotMachine = main.slot_machines[2]
+	var m: SlotMachine = main.back_rooms.slot_machines[2]
 	assert_eq(m.stake, 10, "the Star: a dime")
 	await _key(KEY_S)
 	assert_eq(m.stake, 20, "S: two dimes")
@@ -140,7 +140,7 @@ func test_the_stake_and_the_lamps() -> void:
 
 func test_the_lamps_wait_while_he_steps_away() -> void:
 	await _step_up(1)
-	var m: SlotMachine = main.slot_machines[1]
+	var m: SlotMachine = main.back_rooms.slot_machines[1]
 	_next_pull_lights(1)
 	await _pull()
 	await _until_paid()
@@ -157,7 +157,7 @@ func test_the_lamps_wait_while_he_steps_away() -> void:
 func test_saved_mid_respin_and_loaded() -> void:
 	main.save_path = _save
 	await _step_up(0)
-	var m: SlotMachine = main.slot_machines[0]
+	var m: SlotMachine = main.back_rooms.slot_machines[0]
 	_next_pull_lights(0)
 	await _pull()
 	await _until_paid()
@@ -178,7 +178,7 @@ func test_saved_mid_respin_and_loaded() -> void:
 	add_child_autofree(main)
 	await wait_physics_frames(3)
 	assert_eq(main.rackets.money, expect, "once")
-	var again: SlotMachine = main.slot_machines[0]
+	var again: SlotMachine = main.back_rooms.slot_machines[0]
 	assert_eq(again.stops, stops, "the reels as they stood")
 	assert_false(again.hold_offered, "a respin lights no lamps")
 	assert_false(again.pending)
@@ -187,7 +187,7 @@ func test_saved_mid_respin_and_loaded() -> void:
 
 func test_not_enough_for_the_respin() -> void:
 	await _step_up(0, 500)
-	var m: SlotMachine = main.slot_machines[0]
+	var m: SlotMachine = main.back_rooms.slot_machines[0]
 	_next_pull_lights(0)
 	await _pull()
 	await _until_paid()

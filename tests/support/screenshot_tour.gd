@@ -65,11 +65,11 @@ func _shot(name: String, settle: bool = true) -> void:
 ## M013: until Leo's wheel reaches `phase` (the next time it does).
 func _until_wheel(phase: int) -> void:
 	for i in 3000:
-		if main.wheel.phase != phase:
+		if main.back_rooms.wheel.phase != phase:
 			break
 		await _frames(1)
 	for i in 3000:
-		if main.wheel.phase == phase:
+		if main.back_rooms.wheel.phase == phase:
 			return
 		await _frames(1)
 
@@ -598,22 +598,22 @@ func _run(shots: Array) -> void:
 					pv.choose_buy_in(1)
 					pv.think = Vector2(0.05, 0.1)
 					for f in 4000:
-						var tb: Holdem = main.poker.table
+						var tb: Holdem = main.back_rooms.poker.table
 						if tb == null:
 							break
 						var beat: Dictionary = pv.pacing.current
-						if main.poker.hands >= 3 and tb.street >= Holdem.FLOP and beat.get("kind", "") == "action":
+						if main.back_rooms.poker.hands >= 3 and tb.street >= Holdem.FLOP and beat.get("kind", "") == "action":
 							break  # a card player's move on show, waiting for Space
 						if pv.pacing.waiting():
 							pv.continue_step()
-						elif tb.running() and tb.to_act == main.poker.danny:
-							pv.act(2 if tb.legal(main.poker.danny).check else (2 if tb.legal(main.poker.danny).call <= 20 else 1))
+						elif tb.running() and tb.to_act == main.back_rooms.poker.danny:
+							pv.act(2 if tb.legal(main.back_rooms.poker.danny).check else (2 if tb.legal(main.back_rooms.poker.danny).call <= 20 else 1))
 						await _frames(1)
 					pv.think = Vector2(0.4, 0.8)
 					await _frames(10)
 				await _shot(s, false)
 				if s == "poker_game":
-					main.leave_poker()
+					main.back_rooms.leave_poker()
 			"m013_gaming_room":
 				# M013: the gaming room near midnight - the regulars at the rail, at their machines and
 				# tables, Leo at the wheel, two of them passing the time
@@ -621,7 +621,7 @@ func _run(shots: Array) -> void:
 				main.clock.set_time(24 * 60.0 + 5.0)
 				_teleport_walker(Vector2(1958, 300), PI)
 				await _frames(30)
-				main.room_life._chat = 0.0
+				main.back_rooms.room_life._chat = 0.0
 				await _frames(150)
 				await _shot(s, false)
 			"m013_poker_stakes", "m013_poker_leave":
@@ -641,14 +641,14 @@ func _run(shots: Array) -> void:
 					pv2.choose_buy_in(1)
 					pv2.think = Vector2(0.05, 0.1)
 					for f in 4000:
-						var tb2: Holdem = main.poker.table
+						var tb2: Holdem = main.back_rooms.poker.table
 						if tb2 == null:
 							break
 						if pv2.pacing.waiting():
 							pv2.continue_step()
-						elif tb2.running() and tb2.to_act == main.poker.danny and tb2.street >= Holdem.FLOP:
+						elif tb2.running() and tb2.to_act == main.back_rooms.poker.danny and tb2.street >= Holdem.FLOP:
 							break
-						elif tb2.running() and tb2.to_act == main.poker.danny:
+						elif tb2.running() and tb2.to_act == main.back_rooms.poker.danny:
 							pv2.act(2)
 						await _frames(1)
 					pv2.request_leave()
@@ -877,7 +877,7 @@ func _run(shots: Array) -> void:
 				var rv: RouletteView = main.hud.roulette_view
 				for b in [["straight:17", 2], ["split:20-23", 1], ["red", 3], ["corner:25-26-28-29", 0], ["dozen:3", 2], ["straight:32", 1]]:
 					rv.pick_chip(b[1])
-					main._on_wheel_bet(b[0], rv.chip())
+					main.back_rooms.bet(b[0], rv.chip())
 				rv.hover_key = "corner:25-26-28-29"
 				await _frames(3)
 				rv.hover_key = ""
@@ -888,7 +888,7 @@ func _run(shots: Array) -> void:
 					await _until_wheel(RouletteTable.Phase.RESULT)
 					await _frames(40)
 				await _shot(s, false)
-				main.leave_roulette()
+				main.back_rooms.leave_roulette()
 			"m013_slot_hold", "m013_slot_respin":
 				# M013: at the Owl at two coins: a losing pull lights the HOLD lamps, two latches thrown
 				# (m013_slot_hold); then the respin of the third reel, paid (m013_slot_respin)
@@ -899,8 +899,8 @@ func _run(shots: Array) -> void:
 				main._interact(main.walker.global_position)
 				await _frames(5)
 				var hv: SlotView = main.hud.slot_view
-				var om: SlotMachine = main.slot_machines[0]
-				main._on_slot_stake(10)
+				var om: SlotMachine = main.back_rooms.slot_machines[0]
+				main.back_rooms.set_stake(10)
 				var lit_seed := 0
 				var probe2 := SlotMachine.new(main.slot_rules[0])
 				for seed in 20000:  # a losing pull that lights the lamps, showing two of a kind to hold
@@ -916,18 +916,18 @@ func _run(shots: Array) -> void:
 					if hv.phase == "paid":
 						break
 					await _frames(1)
-				main._on_slot_hold(0)
-				main._on_slot_hold(1)
+				main.back_rooms.hold(0)
+				main.back_rooms.hold(1)
 				await _frames(20)
 				if s == "m013_slot_respin":
-					main._on_slot_pull()
+					main.back_rooms.pull()
 					for f in 400:
 						if hv.phase == "paid":
 							break
 						await _frames(1)
 					await _frames(30)
 				await _shot(s, false)
-				main.leave_slot()
+				main.back_rooms.leave_slot()
 			"slots", "slots_paid":
 				# M011: at the Bell: the reels running (slots), then stopped and paid (a winning pull found by seed)
 				main.weather.force("clear")
@@ -947,12 +947,12 @@ func _run(shots: Array) -> void:
 						if probe.win >= 50:
 							lucky = seed
 							break
-					var m: SlotMachine = main.slot_machines[1]
+					var m: SlotMachine = main.back_rooms.slot_machines[1]
 					main.rackets.money -= m.pull(main.rackets.money, lucky)
 					sv.set_money(main.rackets.money)
 					sv.start_reels()
 				else:
-					main._on_slot_pull()
+					main.back_rooms.pull()
 				if s == "slots":
 					await _frames(50)
 				else:
@@ -962,7 +962,7 @@ func _run(shots: Array) -> void:
 						await _frames(1)
 					await _frames(40)
 				await _shot(s, false)
-				main.leave_slot()
+				main.back_rooms.leave_slot()
 			"thompson":
 				# M010: Eddie's Thompson, borrowed, in a burst down the alley behind the Copper Owl
 				main.weather.force("clear")

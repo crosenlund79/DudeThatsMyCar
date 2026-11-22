@@ -78,7 +78,7 @@ func _run() -> void:
 	main.hud.poker_view.choose_buy_in(1)
 	main.hud.poker_view.think = Vector2(0.4, 0.6)
 	await _fps("the back room, the card table open, a hand being played")
-	main.leave_poker()
+	main.back_rooms.leave_poker()
 	# a Thompson burst on Marlowe Avenue
 	main.rackets.borrow_thompson()
 	main._arm_thompson(true)

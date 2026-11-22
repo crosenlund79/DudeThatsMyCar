@@ -84,7 +84,7 @@ func test_nobody_calls_at_the_cards_or_after_a_shot() -> void:
 	assert_true(main.hud.poker_view.is_open())
 	main.rackets.callouts.begin_night(main.rackets.night)
 	assert_eq(await _calls_within(60), "", "at the card table: nobody")
-	main.leave_poker()
+	main.back_rooms.leave_poker()
 	await wait_physics_frames(3)
 	# a shot in the street, then straight into Quilty's office
 	walker().place(STREETCAR_STOP, 0.0)

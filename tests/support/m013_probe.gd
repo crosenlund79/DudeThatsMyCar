@@ -79,40 +79,40 @@ func _run() -> void:
 	print(" the gaming room near midnight:")
 	main.clock.set_time(24 * 60.0)
 	await _place(Vector2(1958, 300), PI)
-	print("  (regulars in: %s)" % [main.gaming_room.present(main.clock.minute)])
+	print("  (regulars in: %s)" % [main.back_rooms.gaming_room.present(main.clock.minute)])
 	await _fps("in the gaming room, the regulars about")
 	await _cost("the regulars' life (GamingRoomLife.update)", func() -> void:
-		main.room_life.update(1.0 / 60.0, main.clock.minute, main.walker.global_position, -1))
+		main.back_rooms.room_life.update(1.0 / 60.0, main.clock.minute, main.walker.global_position, -1))
 	await _cost("Leo's wheel run for the room (RouletteTable.advance)", func() -> void:
-		main.wheel.advance(1.0 / 60.0))
+		main.back_rooms.wheel.advance(1.0 / 60.0))
 	main.weather.force("rain_fog")
 	await _fps("in the gaming room, rain and fog outside")
 	main.weather.force("clear")
 	await _place(RiversideInteriors.ROULETTE_SPOT)
 	main.rackets.money = 5000
-	main.open_roulette()
+	main.back_rooms.open_roulette()
 	for i in 3000:
-		if main.wheel.phase == RouletteTable.Phase.OPEN:
+		if main.back_rooms.wheel.phase == RouletteTable.Phase.OPEN:
 			break
 		await process_frame
 	for b in [["straight:17", 25], ["red", 100], ["dozen:2", 25]]:
-		main._on_wheel_bet(b[0], b[1])
+		main.back_rooms.bet(b[0], b[1])
 	await _fps("at the wheel, bets open, the regulars' chips going down", 4.0)
 	await _fps("at the wheel, the ball dropping and paid", 4.0)
-	main.leave_roulette()
+	main.back_rooms.leave_roulette()
 	await _place(RiversideInteriors.SLOTS[0] + Vector2(0, 32))
-	main.open_slot(0)
-	main._on_slot_pull()
+	main.back_rooms.open_slot(0)
+	main.back_rooms.pull()
 	await _fps("at the Owl, its reels running", 2.0)
-	main.leave_slot()
+	main.back_rooms.leave_slot()
 	var back: InteriorPlan = main.interiors.view_of("back_room").plan
 	await _place(back.spots[0].pos)
-	main.open_poker()
+	main.back_rooms.open_poker()
 	main.hud.poker_view.level_requested.emit(1)
 	main.hud.poker_view.choose_buy_in(1)
 	main.hud.poker_view.think = Vector2(0.2, 0.3)
 	await _fps("at the card table (dime and quarter), a hand under way", 3.0)
-	main.leave_poker()
+	main.back_rooms.leave_poker()
 	print(" loading a game saved at the wheel in Halloran Square:")
 	var path := OS.get_user_data_dir().path_join("m013_probe_save.json")
 	main.save_path = path

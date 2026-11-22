@@ -56,7 +56,7 @@ func test_each_machine_is_its_own_place() -> void:
 	for i in 3:
 		await _step_up(i)
 		assert_eq(_view().title, main.slot_rules[i].title)
-		assert_eq(_view().machine, main.slot_machines[i], "its own machine")
+		assert_eq(_view().machine, main.back_rooms.slot_machines[i], "its own machine")
 		var at := walker().global_position
 		cmd = PlayerCommand.make(Vector2(0, 1), false, false, at + Vector2(0, 100), true)
 		await wait_physics_frames(15)
@@ -70,7 +70,7 @@ func test_each_machine_is_its_own_place() -> void:
 
 func test_a_pull_pays_what_the_line_shows_once() -> void:
 	await _step_up(0, 100)
-	var m: SlotMachine = main.slot_machines[0]
+	var m: SlotMachine = main.back_rooms.slot_machines[0]
 	await _key(KEY_SPACE)
 	assert_eq(main.rackets.money, 95, "the nickel goes in at once")
 	assert_eq(_view().phase, "spinning")
@@ -102,7 +102,7 @@ func test_a_pull_pays_what_the_line_shows_once() -> void:
 func test_walking_away_mid_pull_pays_at_once_and_leaves_the_others() -> void:
 	await _step_up(1, 100)
 	await _pull()
-	var bell: SlotMachine = main.slot_machines[1]
+	var bell: SlotMachine = main.back_rooms.slot_machines[1]
 	var w := bell.win
 	await wait_physics_frames(20)
 	await _key(KEY_ESCAPE)
@@ -110,15 +110,15 @@ func test_walking_away_mid_pull_pays_at_once_and_leaves_the_others() -> void:
 	assert_false(bell.pending)
 	await wait_physics_frames(200)
 	assert_eq(main.rackets.money, 95 + w, "never twice")
-	assert_eq(main.slot_machines[0].pulls, 0, "the Owl untouched")
-	assert_eq(main.slot_machines[2].pulls, 0, "the Star untouched")
+	assert_eq(main.back_rooms.slot_machines[0].pulls, 0, "the Owl untouched")
+	assert_eq(main.back_rooms.slot_machines[2].pulls, 0, "the Star untouched")
 
 
 func test_a_save_during_and_after_a_pull() -> void:
 	main.save_path = SAVE
 	await _step_up(2, 100)
 	await _pull()
-	var star: SlotMachine = main.slot_machines[2]
+	var star: SlotMachine = main.back_rooms.slot_machines[2]
 	main.save_game()
 	assert_eq(int(SaveGame.read(SAVE).rackets.money), 90 + star.win, "a pull under way is decided: counted")
 	await _until_paid()
@@ -132,7 +132,7 @@ func test_a_save_during_and_after_a_pull() -> void:
 func test_no_coin_no_pull() -> void:
 	await _step_up(0, 3)
 	await _pull()
-	assert_eq(main.slot_machines[0].pulls, 0)
+	assert_eq(main.back_rooms.slot_machines[0].pulls, 0)
 	assert_string_contains(_view().message, "a nickel")
 	assert_eq(main.rackets.money, 3)
 	await _key(KEY_ESCAPE)

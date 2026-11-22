@@ -77,7 +77,7 @@ func test_two_dark_nights() -> void:
 	await press_e()
 	assert_eq(main.rackets.parcels, 1)
 	# a few hands in the back room
-	var books: int = main.rackets.money + main.poker.players_money()
+	var books: int = main.rackets.money + main.back_rooms.poker.players_money()
 	var back: InteriorPlan = main.interiors.view_of("back_room").plan
 	walker().place(back.spots[0].pos, -PI / 2)
 	await wait_physics_frames(3)
@@ -85,9 +85,9 @@ func test_two_dark_nights() -> void:
 	var pv: PokerView = main.hud.poker_view
 	pv.think = Vector2(0.03, 0.05)
 	await _key(KEY_1)  # $2
-	assert_true(main.poker.seated())
+	assert_true(main.back_rooms.poker.seated())
 	for f in 4000:
-		if main.poker.hands >= 3 and pv.pacing.current.get("kind", "") == "result":
+		if main.back_rooms.poker.hands >= 3 and pv.pacing.current.get("kind", "") == "result":
 			break  # the third hand's result on show: get up between hands
 		if pv.pacing.waiting():
 			await _key(KEY_SPACE)  # each card player's move, each street, each result: Space
@@ -95,12 +95,12 @@ func test_two_dark_nights() -> void:
 			up.physical_keycode = KEY_SPACE
 			up.keycode = KEY_SPACE
 			main._unhandled_input(up)
-		elif main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
-			await _key(KEY_2 if main.poker.table.legal(main.poker.danny).check else KEY_1)
+		elif main.back_rooms.poker.table.running() and main.back_rooms.poker.table.to_act == main.back_rooms.poker.danny:
+			await _key(KEY_2 if main.back_rooms.poker.table.legal(main.back_rooms.poker.danny).check else KEY_1)
 		await wait_process_frames(1)
 	await _key(KEY_ESCAPE)
-	assert_false(main.poker.seated())
-	assert_eq(main.rackets.money + main.poker.players_money(), books, "every cent accounted for at the cards")
+	assert_false(main.back_rooms.poker.seated())
+	assert_eq(main.rackets.money + main.back_rooms.poker.players_money(), books, "every cent accounted for at the cards")
 	# Rosie's Café
 	var h: DistrictLayout = main.world.layouts.halloran
 	var car: Vector2 = h.cafe_point("car").pos

@@ -210,13 +210,13 @@ func test_two_nights_behind_closed_doors() -> void:
 	await press_e()
 	assert_true(main.hud.slot_view.is_open(), "the Owl")
 	var before_pull: int = main.rackets.money
-	main._on_slot_pull()
+	main.back_rooms.pull()
 	for i in 400:
 		await wait_physics_frames(1)
 		if main.hud.slot_view.phase == "paid":
 			break
 	assert_eq(main.hud.slot_view.phase, "paid", "the reels stop and the line is paid")
-	main.leave_slot()
+	main.back_rooms.leave_slot()
 	assert_gte(main.rackets.money - before_pull, -5, "a nickel in, what the window shows out")
 	# 16. rain and fog outside, none in the room
 	main.weather.force("rain_fog")

@@ -28,7 +28,7 @@ func before_each() -> void:
 	quick.grace_seconds = 1.5
 	quick.max_extension = 3.0
 	quick.last_call_seconds = 1.0
-	main.wheel.rules = quick
+	main.back_rooms.wheel.rules = quick
 
 
 func after_each() -> void:
@@ -42,7 +42,7 @@ func _view() -> RouletteView:
 
 
 func _wheel() -> RouletteTable:
-	return main.wheel
+	return main.back_rooms.wheel
 
 
 func _key(code: Key) -> void:
@@ -125,7 +125,7 @@ func test_leo_calls_the_bets_and_settles_once() -> void:
 	await _key(KEY_1)  # a nickel
 	await _click("line:16-17-18-19-20-21")
 	await _click("column:3")
-	var r: Roulette = main.roulette
+	var r: Roulette = main.back_rooms.roulette
 	assert_eq(r.bets, {"straight:17": 25, "split:17-20": 25, "corner:0-1-2-3": 25, "red": 100, "dozen:2": 100,
 		"line:16-17-18-19-20-21": 5, "column:3": 5}, "each chip on the bet clicked")
 	assert_eq(main.rackets.money, 2000 - 285, "the chips taken at once")
@@ -172,12 +172,12 @@ func test_leo_calls_the_bets_and_settles_once() -> void:
 
 func test_watching_without_a_chip_down() -> void:
 	await _step_up(500)
-	var board: int = main.roulette.history.size()
+	var board: int = main.back_rooms.roulette.history.size()
 	var turned: float = _wheel().motion.rotor
 	for i in 2:
 		assert_true(await _until_phase(RouletteTable.Phase.RESULT, true))
 		await wait_physics_frames(2)
-	assert_eq(main.roulette.history.size(), board + 2, "two numbers on the board")
+	assert_eq(main.back_rooms.roulette.history.size(), board + 2, "two numbers on the board")
 	assert_gt(_wheel().motion.rotor, turned, "the wheel never stops")
 	assert_eq(main.rackets.money, 500, "watching costs nothing")
 	await _key(KEY_ESCAPE)
@@ -189,12 +189,12 @@ func test_joining_after_the_call() -> void:
 	await _step_up(500)
 	assert_string_contains(_view().message, "No more bets")
 	await _click("red")
-	assert_true(main.roulette.bets.is_empty(), "too late for this one")
+	assert_true(main.back_rooms.roulette.bets.is_empty(), "too late for this one")
 	assert_eq(main.rackets.money, 500)
 	assert_true(await _until_phase(RouletteTable.Phase.OPEN))
 	await _key(KEY_3)
 	await _click("red")
-	assert_eq(main.roulette.bets.get("red", 0), 25, "the next round takes it")
+	assert_eq(main.back_rooms.roulette.bets.get("red", 0), 25, "the next round takes it")
 	await _key(KEY_ESCAPE)
 	assert_eq(main.rackets.money, 500, "walking off before the call: the chip back")
 
@@ -216,8 +216,8 @@ func test_the_call_waits_while_he_is_still_betting() -> void:
 			break
 	assert_gt(_wheel().round_time, usual + 0.5, "Leo waited on him past the usual call")
 	assert_lte(_wheel().close_time(), usual + _wheel().rules.max_extension + 0.001, "but not past the limit")
-	assert_eq(main.roulette.phase, Roulette.Phase.SPINNING)
-	assert_eq(main.rackets.money + main.roulette.total_staked(), 2000, "every chip accounted for")
+	assert_eq(main.back_rooms.roulette.phase, Roulette.Phase.SPINNING)
+	assert_eq(main.rackets.money + main.back_rooms.roulette.total_staked(), 2000, "every chip accounted for")
 	await _until_settled()
 	await _key(KEY_ESCAPE)
 
@@ -237,12 +237,12 @@ func test_walking_away_after_the_call_settles_once() -> void:
 	assert_false(_view().is_open())
 	var expect := 1000 - 110 + Roulette.returns("even", 100, n) + Roulette.returns("straight:0", 10, n)
 	assert_eq(main.rackets.money, expect, "settled when he walked away")
-	assert_eq(main.roulette.history[0], n, "the number on the board")
-	var board: int = main.roulette.history.size()
+	assert_eq(main.back_rooms.roulette.history[0], n, "the number on the board")
+	var board: int = main.back_rooms.roulette.history.size()
 	await _until_phase(RouletteTable.Phase.OPEN)
 	assert_eq(main.rackets.money, expect, "never paid twice")
-	assert_eq(main.roulette.history.size(), board, "nor put on the board twice when the ball came to rest")
-	assert_eq(main.roulette.phase, Roulette.Phase.BETTING, "a fresh layout for next time")
+	assert_eq(main.back_rooms.roulette.history.size(), board, "nor put on the board twice when the ball came to rest")
+	assert_eq(main.back_rooms.roulette.phase, Roulette.Phase.BETTING, "a fresh layout for next time")
 
 
 func test_a_save_in_every_phase() -> void:
@@ -278,8 +278,8 @@ func test_a_save_in_every_phase() -> void:
 	add_child_autofree(main)
 	await wait_physics_frames(3)
 	assert_eq(main.rackets.money, expect)
-	assert_true(main.roulette.bets.is_empty())
-	assert_true(main.wheel.betting_open(), "Leo opens a fresh round")
+	assert_true(main.back_rooms.roulette.bets.is_empty())
+	assert_true(main.back_rooms.wheel.betting_open(), "Leo opens a fresh round")
 	main.save_path = ""
 
 
@@ -289,12 +289,12 @@ func test_no_money_no_chip() -> void:
 	await _step_up(30)
 	await _key(KEY_4)
 	await _click("red")
-	assert_true(main.roulette.bets.is_empty(), "a dollar chip with thirty cents: refused")
+	assert_true(main.back_rooms.roulette.bets.is_empty(), "a dollar chip with thirty cents: refused")
 	assert_string_contains(_view().message, "haven't the money")
 	await _key(KEY_3)
 	await _click("red")
 	await _click("red")
-	assert_eq(main.roulette.bets.get("red", 0), 25)
+	assert_eq(main.back_rooms.roulette.bets.get("red", 0), 25)
 	assert_eq(main.rackets.money, 5)
 	await _until_settled()
 	assert_gte(main.rackets.money, 0)
@@ -309,7 +309,7 @@ func test_no_croupier_or_closing_time_no_game() -> void:
 	assert_false(_view().is_open())
 	assert_string_contains(main.hud.notice_label.text, "Nobody at the wheel")
 	view.out.erase("croupier")
-	main.wheel.begin_night()
+	main.back_rooms.wheel.begin_night()
 	# four o'clock while he plays: the round under way is played out, then the cover goes on
 	assert_true(await _until_phase(RouletteTable.Phase.OPEN, true))
 	await _step_up(1000)
@@ -317,10 +317,10 @@ func test_no_croupier_or_closing_time_no_game() -> void:
 	await _click("odd")
 	main.clock.set_time(float(main.night_rules.home_minute) + 1.0)
 	assert_true(await _until_phase(RouletteTable.Phase.CLOSED), "the last spin of the night")
-	assert_eq(main.roulette.history.size() > 0, true)
-	assert_eq(main.rackets.money + main.roulette.for_save(), 975 + Roulette.returns("odd", 25, main.roulette.history[0]), "his chip resolved")
+	assert_eq(main.back_rooms.roulette.history.size() > 0, true)
+	assert_eq(main.rackets.money + main.back_rooms.roulette.for_save(), 975 + Roulette.returns("odd", 25, main.back_rooms.roulette.history[0]), "his chip resolved")
 	await _click("red")
-	assert_true(main.roulette.bets.is_empty(), "nothing goes down after closing")
+	assert_true(main.back_rooms.roulette.bets.is_empty(), "nothing goes down after closing")
 	await _key(KEY_ESCAPE)
 	await press_e()
 	assert_false(_view().is_open())

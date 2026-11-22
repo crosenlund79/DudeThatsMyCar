@@ -35,8 +35,8 @@ func _space() -> void:
 ## Presses Space through whatever is on show until it is Danny's turn (or `frames` run out).
 func _until_dannys_turn(frames: int = 3000) -> void:
 	for f in frames:
-		var t: Holdem = main.poker.table
-		if t != null and t.running() and t.to_act == main.poker.danny and not _view().pacing.waiting():
+		var t: Holdem = main.back_rooms.poker.table
+		if t != null and t.running() and t.to_act == main.back_rooms.poker.danny and not _view().pacing.waiting():
 			return
 		if _view().pacing.waiting():
 			await _space()
@@ -59,16 +59,16 @@ func _to_the_table() -> void:
 ## `hands` more hands have been played to their result (it is on show, waiting
 ## for Space - the next hand is dealt the moment it is dismissed) or the table closes.
 func _play_hands(hands: int, max_frames: int = 6000) -> void:
-	var target: int = main.poker.hands + hands
+	var target: int = main.back_rooms.poker.hands + hands
 	for f in max_frames:
-		if not main.poker.seated() or _view().phase != "play":
+		if not main.back_rooms.poker.seated() or _view().phase != "play":
 			return
-		if main.poker.hands >= target and _view().pacing.current.get("kind", "") == "result":
+		if main.back_rooms.poker.hands >= target and _view().pacing.current.get("kind", "") == "result":
 			return
 		if _view().pacing.waiting():
 			await _space()  # one beat at a time
-		elif main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
-			await _press(KEY_2 if main.poker.table.legal(main.poker.danny).check else KEY_1)
+		elif main.back_rooms.poker.table.running() and main.back_rooms.poker.table.to_act == main.back_rooms.poker.danny:
+			await _press(KEY_2 if main.back_rooms.poker.table.legal(main.back_rooms.poker.danny).check else KEY_1)
 		await wait_process_frames(1)
 
 
@@ -98,7 +98,7 @@ func test_through_the_door_to_the_back_room() -> void:
 
 func test_sitting_in_playing_and_getting_up() -> void:
 	main.rackets.money = 1200
-	var books: int = main.rackets.money + main.poker.players_money()
+	var books: int = main.rackets.money + main.back_rooms.poker.players_money()
 	await _to_the_table()
 	assert_string_contains(main.hud.prompt_label.text, "Sit in at the card game")
 	await press_e()
@@ -108,7 +108,7 @@ func test_sitting_in_playing_and_getting_up() -> void:
 	assert_false(player().seat.is_empty(), "sitting at the table")
 	await _press(KEY_2)  # $5
 	assert_eq(main.rackets.money, 700, "five dollars on the table")
-	assert_true(main.poker.seated())
+	assert_true(main.back_rooms.poker.seated())
 	assert_eq(_view().phase, "play")
 	# he cannot walk off or shoot while he plays
 	var at := walker().global_position
@@ -119,13 +119,13 @@ func test_sitting_in_playing_and_getting_up() -> void:
 	assert_false(walker().gun.is_drawn(), "no gun at the table")
 	assert_true(main._drowsy_held(), "no drowsy sway at the cards")
 	await _play_hands(4)
-	assert_gte(main.poker.hands, 4, "hands dealt and played")
-	assert_eq(main.rackets.money + main.poker.danny_chips() + main.poker.players_money(), books, "the books balance at the table")
+	assert_gte(main.back_rooms.poker.hands, 4, "hands dealt and played")
+	assert_eq(main.rackets.money + main.back_rooms.poker.danny_chips() + main.back_rooms.poker.players_money(), books, "the books balance at the table")
 	await _press(KEY_ESCAPE)
 	assert_false(_view().is_open())
-	assert_false(main.poker.seated())
+	assert_false(main.back_rooms.poker.seated())
 	assert_true(player().seat.is_empty(), "up from the table")
-	assert_eq(main.rackets.money + main.poker.players_money(), books, "every cent accounted for")
+	assert_eq(main.rackets.money + main.back_rooms.poker.players_money(), books, "every cent accounted for")
 	assert_string_contains(main.hud.notice_label.text, "You get up from the table")
 
 
@@ -135,7 +135,7 @@ func test_raising_with_the_keys() -> void:
 	await press_e()
 	await _press(KEY_1)  # $2
 	await _until_dannys_turn()
-	var l: Dictionary = main.poker.table.legal(main.poker.danny)
+	var l: Dictionary = main.back_rooms.poker.table.legal(main.back_rooms.poker.danny)
 	assert_true(l.raise or l.bet, "he may raise")
 	await wait_process_frames(2)
 	assert_eq(_view().raise_to, l.min_to, "the raise starts at the least allowed")
@@ -145,7 +145,7 @@ func test_raising_with_the_keys() -> void:
 	await _press(KEY_DOWN)
 	var to: int = _view().raise_to
 	await _press(KEY_3)
-	var last: Dictionary = main.poker.table.events.filter(func(e: Dictionary) -> bool: return e.get("seat", -1) == main.poker.danny).back()
+	var last: Dictionary = main.back_rooms.poker.table.events.filter(func(e: Dictionary) -> bool: return e.get("seat", -1) == main.back_rooms.poker.danny).back()
 	assert_true(last.what == "raise" or last.what == "bet")
 	assert_eq(last.to, to, "raised to what the table showed")
 
@@ -159,11 +159,11 @@ func test_a_save_mid_hand_counts_the_hand_as_folded() -> void:
 	await press_e()
 	await _press(KEY_2)  # $5
 	for f in 2000:
-		if main.poker.table.running() and main.poker.danny_chips() < 500 and main.poker.table.seats[main.poker.danny].total > 0:
+		if main.back_rooms.poker.table.running() and main.back_rooms.poker.danny_chips() < 500 and main.back_rooms.poker.table.seats[main.back_rooms.poker.danny].total > 0:
 			break
 		await wait_process_frames(1)
-	assert_true(main.poker.table.running())
-	var in_pot: int = main.poker.table.seats[main.poker.danny].total
+	assert_true(main.back_rooms.poker.table.running())
+	var in_pot: int = main.back_rooms.poker.table.seats[main.back_rooms.poker.danny].total
 	main.save_game()
 	var saved := SaveGame.read(SAVE)
 	assert_eq(int(saved.rackets.money), 500 + 500 - in_pot, "what he has in the pot is gone, as if he had folded")
@@ -188,7 +188,7 @@ func test_closing_time() -> void:
 			break
 		if _view().pacing.waiting():
 			await _space()
-		elif main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
+		elif main.back_rooms.poker.table.running() and main.back_rooms.poker.table.to_act == main.back_rooms.poker.danny:
 			await _press(KEY_1)
 		await wait_process_frames(1)
 	assert_eq(_view().phase, "over", "the game breaks up after the hand")

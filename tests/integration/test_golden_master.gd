@@ -31,12 +31,12 @@ func after_each() -> void:
 
 ## The generators the game randomizes in play, fixed.
 func _seed() -> void:
-	main.wheel.rng.seed = 1301
-	main.wheel_patrons.rng.seed = 1302
-	main.room_life.rng.seed = 1303
-	main._slot_rng.seed = 1304
-	main._react_rng.seed = 1305
-	main._taunt_rng.seed = 1306
+	main.back_rooms.wheel.rng.seed = 1301
+	main.back_rooms.wheel_patrons.rng.seed = 1302
+	main.back_rooms.room_life.rng.seed = 1303
+	main.back_rooms.slot_rng.seed = 1304
+	main.back_rooms.react_rng.seed = 1305
+	main.back_rooms.taunt_rng.seed = 1306
 
 
 ## A new scene (optionally loading SAVE, optionally with the opening).
@@ -132,12 +132,12 @@ func _snapshot() -> Dictionary:
 		"save": _save_now(),
 		"rackets": main.rackets.to_dict(),
 		"voices": main.voice_lines.to_dict(),
-		"poker": main.poker.to_dict(),
-		"poker_seated": main.poker.seated(),
-		"poker_purses": main.poker.players_money(),
-		"slots": main.slot_machines.map(func(m: SlotMachine) -> Dictionary: return m.to_dict()),
-		"roulette": {"for_save": main.roulette.for_save(), "bets": main.roulette.bets, "phase": main.wheel.phase,
-			"number": main.wheel.number},
+		"poker": main.back_rooms.poker.to_dict(),
+		"poker_seated": main.back_rooms.poker.seated(),
+		"poker_purses": main.back_rooms.poker.players_money(),
+		"slots": main.back_rooms.slot_machines.map(func(m: SlotMachine) -> Dictionary: return m.to_dict()),
+		"roulette": {"for_save": main.back_rooms.roulette.for_save(), "bets": main.back_rooms.roulette.bets, "phase": main.back_rooms.wheel.phase,
+			"number": main.back_rooms.wheel.number},
 		"danny": {"condition": w.condition.to_dict(), "pos": _v(w.global_position), "facing": _r(w.model.facing, 3),
 			"on_foot": p.on_foot(), "car": main.car_ids[main.cars.find(p.car)] if p.car != null else "",
 			"sitting": not p.seat.is_empty(), "down": w.down},
@@ -259,11 +259,11 @@ func _street(l: DistrictLayout, street_name: String) -> Rect2:
 func _until_wheel(phase: int, fresh := true) -> void:
 	if fresh:
 		for i in 3000:
-			if main.wheel.phase != phase:
+			if main.back_rooms.wheel.phase != phase:
 				break
 			await wait_physics_frames(1)
 	for i in 3000:
-		if main.wheel.phase == phase:
+		if main.back_rooms.wheel.phase == phase:
 			return
 		await wait_physics_frames(1)
 
@@ -416,10 +416,10 @@ func test_the_house_books() -> void:
 	await wait_physics_frames(3)
 	await press_e()
 	main.hud.roulette_view.pick_chip(3)
-	main._on_wheel_bet("black", 100)
+	main.back_rooms.bet("black", 100)
 	main.hud.roulette_view.pick_chip(1)
-	main._on_wheel_bet("straight:23", 10)
-	main._on_wheel_bet("dozen:2", 25)
+	main.back_rooms.bet("straight:23", 10)
+	main.back_rooms.bet("dozen:2", 25)
 	await _until_wheel(RouletteTable.Phase.RESULT, false)
 	await wait_physics_frames(10)
 	_check("wheel_paid")
@@ -432,7 +432,7 @@ func test_the_house_books() -> void:
 			await _key(KEY_SPACE)
 			await _key(KEY_SPACE, false)
 			await _until_paid()
-			var m: SlotMachine = main.slot_machines[i]
+			var m: SlotMachine = main.back_rooms.slot_machines[i]
 			if m.hold_offered:
 				await _key(KEY_1)
 				await _key(KEY_SPACE)
@@ -450,14 +450,14 @@ func test_the_house_books() -> void:
 	pv._rng.seed = 1307  # the card players' thinking time (a random seed in play)
 	await _key(KEY_1)
 	for f in 9000:
-		var t: Holdem = main.poker.table
+		var t: Holdem = main.back_rooms.poker.table
 		if pv.pacing.waiting():
 			await _key(KEY_SPACE)
 			await _key(KEY_SPACE, false)
-		elif t.running() and t.to_act == main.poker.danny:
+		elif t.running() and t.to_act == main.back_rooms.poker.danny:
 			await _key(KEY_2)  # check or call
 		await wait_process_frames(1)
-		if main.poker.hands >= 3:
+		if main.back_rooms.poker.hands >= 3:
 			break
 	_check("poker_three_hands")
 	await _key(KEY_ESCAPE)

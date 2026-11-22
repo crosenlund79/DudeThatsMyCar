@@ -97,19 +97,19 @@ func test_the_wheels_sounds_in_order() -> void:
 	await press_e()
 	# M013: Leo runs the wheel - wait for a fresh round, put a chip down, let it run
 	for i in 3000:
-		if main.wheel.phase != RouletteTable.Phase.OPEN:
+		if main.back_rooms.wheel.phase != RouletteTable.Phase.OPEN:
 			break
 		await wait_physics_frames(1)
 	for i in 3000:
-		if main.wheel.phase == RouletteTable.Phase.OPEN:
+		if main.back_rooms.wheel.phase == RouletteTable.Phase.OPEN:
 			break
 		await wait_physics_frames(1)
 	var heard := []
 	sound().sound_played.connect(func(l: String) -> void: heard.append(l))
-	main._on_wheel_bet("red", 25)
+	main.back_rooms.bet("red", 25)
 	for i in 3000:
 		await wait_physics_frames(1)
-		if main.wheel.phase == RouletteTable.Phase.RESULT:
+		if main.back_rooms.wheel.phase == RouletteTable.Phase.RESULT:
 			break
 	await wait_physics_frames(2)
 	var order := heard.filter(func(l: String) -> bool: return l.begins_with("roulette/"))
@@ -119,7 +119,7 @@ func test_the_wheels_sounds_in_order() -> void:
 	assert_lt(order.rfind("roulette/cue"), order.find("roulette/ball_drop"), "before the ball drops")
 	assert_true(("roulette/win" in order) != ("roulette/lose" in order), "won or lost, not both")
 	assert_eq(order.count("roulette/ball_rest"), 1, "the ball comes to rest once")
-	main.leave_roulette()
+	main.back_rooms.leave_roulette()
 
 
 func test_the_machines_sounds_and_one_reels_loop() -> void:
@@ -131,7 +131,7 @@ func test_the_machines_sounds_and_one_reels_loop() -> void:
 	var heard := []
 	sound().sound_played.connect(func(l: String) -> void: heard.append(l))
 	assert_true(main.hud.slot_view.is_open(), "at the Owl")
-	main._on_slot_pull()
+	main.back_rooms.pull()
 	await wait_physics_frames(30)
 	assert_true(sound().loop_playing("reels"), "the reels running")
 	assert_false(sound().start_loop("reels", "slots/reels"), "started again it is not doubled or restarted")
@@ -144,11 +144,11 @@ func test_the_machines_sounds_and_one_reels_loop() -> void:
 	assert_eq(heard.count("slots/lever"), 1)
 	assert_eq(heard.count("slots/reels"), 1, "one loop")
 	assert_eq(heard.count("slots/stop"), 3, "a clunk for each reel")
-	var m: SlotMachine = main.slot_machines[0]
+	var m: SlotMachine = main.back_rooms.slot_machines[0]
 	await wait_physics_frames(150)
 	assert_eq(heard.count("slots/coin"), mini(m.win / m.rules.coin, 24), "a coin a coin")
 	# stepping away mid-pull stops the reels' sound too
-	main._on_slot_pull()
+	main.back_rooms.pull()
 	await wait_physics_frames(30)
-	main.leave_slot()
+	main.back_rooms.leave_slot()
 	assert_false(sound().loop_playing("reels"))

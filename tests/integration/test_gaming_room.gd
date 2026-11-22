@@ -70,7 +70,7 @@ func test_through_the_card_room_to_the_gaming_room_and_back() -> void:
 	assert_false(view.host.visible, "the house's roof gone while you are inside")
 	assert_almost_eq(main.interiors.view_of("back_room").alpha, 0.0, 0.01, "the card room shut behind")
 	assert_true((view.people.croupier as Walker).visible, "the croupier at the wheel")
-	var tonight: Array = main.gaming_room.present(main.clock.minute)  # M013: the regulars in at this hour
+	var tonight: Array = main.back_rooms.gaming_room.present(main.clock.minute)  # M013: the regulars in at this hour
 	assert_gte(tonight.size(), 3, "a full room at midnight")
 	for id in Patrons.ROSTER:
 		assert_eq((view.people[id] as Walker).visible, id in tonight, "%s about the room as the evening has it" % id)

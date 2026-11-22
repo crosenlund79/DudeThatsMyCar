@@ -57,8 +57,8 @@ func _to_the_table(cents: int) -> void:
 ## Until Danny is to act in a hand under way (pressing Space through the beats).
 func _until_his_turn(frames: int = 3000) -> bool:
 	for f in frames:
-		var t: Holdem = main.poker.table
-		if t != null and t.running() and t.to_act == main.poker.danny and not _view().pacing.waiting():
+		var t: Holdem = main.back_rooms.poker.table
+		if t != null and t.running() and t.to_act == main.back_rooms.poker.danny and not _view().pacing.waiting():
 			return true
 		if _view().pacing.waiting():
 			await _space()
@@ -68,50 +68,50 @@ func _until_his_turn(frames: int = 3000) -> bool:
 
 func test_the_stakes_chosen_before_sitting_down() -> void:
 	await _to_the_table(6000)
-	assert_eq(main.poker.level, 0)
+	assert_eq(main.back_rooms.poker.level, 0)
 	await _send(_key(KEY_RIGHT))
-	assert_eq(main.poker.level, 1, "right: dime and quarter")
+	assert_eq(main.back_rooms.poker.level, 1, "right: dime and quarter")
 	assert_eq(_view().choices, [500, 1000, 2500] as Array[int], "the buy-ins to match")
 	await _send(_key(KEY_RIGHT))
 	await _send(_key(KEY_RIGHT))
-	assert_eq(main.poker.level, 2, "no further than quarter and half")
+	assert_eq(main.back_rooms.poker.level, 2, "no further than quarter and half")
 	await _send(_key(KEY_LEFT))
 	await _send(_key(KEY_2))  # $10 at dime and quarter
 	assert_eq(_view().phase, "play")
 	assert_eq(main.rackets.money, 5000)
-	assert_eq([main.poker.table.small_blind, main.poker.table.big_blind], [10, 25], "the table plays them")
+	assert_eq([main.back_rooms.poker.table.small_blind, main.back_rooms.poker.table.big_blind], [10, 25], "the table plays them")
 	await _send(_key(KEY_RIGHT))
-	assert_eq(main.poker.level, 1, "never changed while he sits")
-	assert_false(main.poker.set_level(0))
+	assert_eq(main.back_rooms.poker.level, 1, "never changed while he sits")
+	assert_false(main.back_rooms.poker.set_level(0))
 
 
 func test_getting_up_mid_hand_asks_first() -> void:
 	await _to_the_table(1000)
-	var books: int = main.rackets.money + main.poker.players_money()
+	var books: int = main.rackets.money + main.back_rooms.poker.players_money()
 	await _send(_key(KEY_2))  # $5
 	assert_true(await _until_his_turn(), "his turn in a hand")
-	var in_pot: int = main.poker.table.seats[main.poker.danny].total
+	var in_pot: int = main.back_rooms.poker.table.seats[main.back_rooms.poker.danny].total
 	await _send(_key(KEY_ESCAPE))
 	assert_false(_view().confirm.is_empty(), "the question first")
 	assert_eq(int(_view().confirm.in_pot), in_pot)
-	assert_true(main.poker.seated(), "still at the table")
-	var acted: int = main.poker.table.events.size()
+	assert_true(main.back_rooms.poker.seated(), "still at the table")
+	var acted: int = main.back_rooms.poker.table.events.size()
 	await wait_physics_frames(60)
-	assert_eq(main.poker.table.events.size(), acted, "nothing moves while he makes up his mind")
+	assert_eq(main.back_rooms.poker.table.events.size(), acted, "nothing moves while he makes up his mind")
 	await _send(_key(KEY_SPACE))
 	await _send(_key(KEY_1))
-	assert_eq(main.poker.table.events.size(), acted, "Space and the betting keys wait for the answer")
+	assert_eq(main.back_rooms.poker.table.events.size(), acted, "Space and the betting keys wait for the answer")
 	await _send(_key(KEY_ESCAPE))
 	assert_true(_view().confirm.is_empty(), "Esc: he stays")
-	assert_true(main.poker.seated())
+	assert_true(main.back_rooms.poker.seated())
 	await _send(_key(KEY_ESCAPE))
 	var takes := int(_view().confirm.takes)
 	var pocket: int = main.rackets.money
 	await _send(_key(KEY_ENTER))
 	assert_false(_view().is_open(), "Enter: he folds and goes")
-	assert_false(main.poker.seated())
+	assert_false(main.back_rooms.poker.seated())
 	assert_eq(main.rackets.money, pocket + takes, "he takes home what the question said")
-	assert_eq(main.rackets.money + main.poker.players_money(), books, "every cent accounted for")
+	assert_eq(main.rackets.money + main.back_rooms.poker.players_money(), books, "every cent accounted for")
 
 
 func test_between_hands_he_just_goes() -> void:
@@ -119,7 +119,7 @@ func test_between_hands_he_just_goes() -> void:
 	await _send(_key(KEY_2))
 	assert_true(await _until_his_turn())
 	await _send(_key(KEY_1))  # he folds
-	assert_false(main.poker.leave_terms().in_hand)
+	assert_false(main.back_rooms.poker.leave_terms().in_hand)
 	await _send(_key(KEY_ESCAPE))
 	assert_true(_view().confirm.is_empty(), "nothing at stake: no question")
 	assert_false(_view().is_open())
@@ -134,15 +134,15 @@ func test_saved_after_every_hand() -> void:
 	for f in 6000:
 		if results[0] >= 2:
 			break
-		var t: Holdem = main.poker.table
+		var t: Holdem = main.back_rooms.poker.table
 		if _view().pacing.waiting():
 			await _space()
-		elif t.running() and t.to_act == main.poker.danny:
-			await _send(_key(KEY_2 if t.legal(main.poker.danny).check else KEY_1))
+		elif t.running() and t.to_act == main.back_rooms.poker.danny:
+			await _send(_key(KEY_2 if t.legal(main.back_rooms.poker.danny).check else KEY_1))
 		await wait_process_frames(1)
 	assert_gte(results[0], 2, "two hands played")
 	var saved := SaveGame.read(_save)
-	assert_eq(int(saved.rackets.money), main.rackets.money + main.poker.stake_for_save(), "the last hand's result in the save")
+	assert_eq(int(saved.rackets.money), main.rackets.money + main.back_rooms.poker.stake_for_save(), "the last hand's result in the save")
 	main.save_path = ""
 	await _send(_key(KEY_ESCAPE))
 	if not _view().confirm.is_empty():
@@ -162,28 +162,28 @@ func test_chips_slide_and_the_taunt_hook() -> void:
 			slid = true
 		if slid and hooked.size() > 0:
 			break
-		var t: Holdem = main.poker.table
+		var t: Holdem = main.back_rooms.poker.table
 		if _view().pacing.waiting():
 			await _space()
-		elif t.running() and t.to_act == main.poker.danny:
-			await _send(_key(KEY_2 if t.legal(main.poker.danny).check else KEY_1))
+		elif t.running() and t.to_act == main.back_rooms.poker.danny:
+			await _send(_key(KEY_2 if t.legal(main.back_rooms.poker.danny).check else KEY_1))
 		await wait_process_frames(1)
 	assert_true(slid, "chips slide across the baize")
 	# the hook: a raise by Red picks one of his lines, recorded or not; nothing plays without a recording
 	var red := -1
-	for i in main.poker.table.seats.size():
-		if main.poker.table.seats[i].id == "red":
+	for i in main.back_rooms.poker.table.seats.size():
+		if main.back_rooms.poker.table.seats[i].id == "red":
 			red = i
-	main._taunt_rng.seed = 1
+	main.back_rooms.taunt_rng.seed = 1
 	for k in 40:
-		main.last_taunt = {}
-		main._poker_taunt({"kind": "action", "seat": red, "player": "red", "action": "raise", "amount": 50})
-		if not main.last_taunt.is_empty():
+		main.back_rooms.last_taunt = {}
+		main.back_rooms.poker_taunt({"kind": "action", "seat": red, "player": "red", "action": "raise", "amount": 50})
+		if not main.back_rooms.last_taunt.is_empty():
 			break
-	assert_eq(main.last_taunt.player, "red")
-	assert_true(main.last_taunt.situation in ["raise", "bluff"])
-	assert_has(PokerTaunts.LINES.red[main.last_taunt.situation], main.last_taunt.line)
-	assert_false(main.last_taunt.recorded, "no recording ships: nothing said")
+	assert_eq(main.back_rooms.last_taunt.player, "red")
+	assert_true(main.back_rooms.last_taunt.situation in ["raise", "bluff"])
+	assert_has(PokerTaunts.LINES.red[main.back_rooms.last_taunt.situation], main.back_rooms.last_taunt.line)
+	assert_false(main.back_rooms.last_taunt.recorded, "no recording ships: nothing said")
 	await _send(_key(KEY_ESCAPE))
 	if not _view().confirm.is_empty():
 		await _send(_key(KEY_ENTER))

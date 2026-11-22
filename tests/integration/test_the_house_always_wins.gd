@@ -59,11 +59,11 @@ func _street(l: DistrictLayout, street_name: String) -> Rect2:
 func _until_wheel(phase: int, fresh := true) -> void:
 	if fresh:
 		for i in 3000:
-			if main.wheel.phase != phase:
+			if main.back_rooms.wheel.phase != phase:
 				break
 			await wait_physics_frames(1)
 	for i in 3000:
-		if main.wheel.phase == phase:
+		if main.back_rooms.wheel.phase == phase:
 			return
 		await wait_physics_frames(1)
 
@@ -138,7 +138,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	for m in range(23 * 60, 26 * 60):
 		var at_rail := 0
 		for p in Patrons.ROSTER:
-			if main.gaming_room.spot_of(p, float(m)).begins_with("rail_"):
+			if main.back_rooms.gaming_room.spot_of(p, float(m)).begins_with("rail_"):
 				at_rail += 1
 		if at_rail >= 2:
 			busy = float(m)
@@ -148,7 +148,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	main.camera.snap_to(walker())
 	await wait_physics_frames(5)
 	assert_eq(main.interiors.current.id, "gaming_room")
-	var tonight: Array = main.gaming_room.present(main.clock.minute)
+	var tonight: Array = main.back_rooms.gaming_room.present(main.clock.minute)
 	assert_gte(tonight.size(), 3, "a lively room")
 	# 8. joining after the call: too late for that round
 	await _until_wheel(RouletteTable.Phase.DROP)
@@ -156,25 +156,25 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	await wait_physics_frames(3)
 	await press_e()
 	assert_true(main.hud.roulette_view.is_open())
-	main._on_wheel_bet("red", 25)
-	assert_true(main.roulette.bets.is_empty(), "no more bets on that one")
+	main.back_rooms.bet("red", 25)
+	assert_true(main.back_rooms.roulette.bets.is_empty(), "no more bets on that one")
 	# 9-12. the next round: chips down with the regulars'; Leo calls it; paid to the cent
 	await _until_wheel(RouletteTable.Phase.OPEN, false)
 	for r in 4:  # a round with regulars at the rail (they come and go between rounds)
-		if not main.wheel_patrons.seated().is_empty():
+		if not main.back_rooms.wheel_patrons.seated().is_empty():
 			break
 		await _until_wheel(RouletteTable.Phase.OPEN)
 	var before: int = main.rackets.money
 	main.hud.roulette_view.pick_chip(3)
-	main._on_wheel_bet("black", 100)
+	main.back_rooms.bet("black", 100)
 	main.hud.roulette_view.pick_chip(1)
-	main._on_wheel_bet("straight:23", 10)
+	main.back_rooms.bet("straight:23", 10)
 	assert_eq(main.rackets.money, before - 110)
 	var others := 0
-	while main.wheel.betting_open():
-		others = maxi(others, main.wheel_patrons.total_down())
+	while main.back_rooms.wheel.betting_open():
+		others = maxi(others, main.back_rooms.wheel_patrons.total_down())
 		await wait_physics_frames(1)
-	var n: int = main.wheel.number
+	var n: int = main.back_rooms.wheel.number
 	await _until_wheel(RouletteTable.Phase.RESULT, false)
 	assert_eq(main.rackets.money, before - 110 + Roulette.returns("black", 100, n) + Roulette.returns("straight:23", 10, n),
 		"paid to the cent")
@@ -182,8 +182,8 @@ func test_two_nights_of_the_house_always_wins() -> void:
 		if others > 0:
 			break
 		await _until_wheel(RouletteTable.Phase.BALL)
-		while main.wheel.betting_open():
-			others = maxi(others, main.wheel_patrons.total_down())
+		while main.back_rooms.wheel.betting_open():
+			others = maxi(others, main.back_rooms.wheel_patrons.total_down())
 			await wait_physics_frames(1)
 	assert_gt(others, 0, "the regulars' chips on the layout too")
 	await _key(KEY_ESCAPE)
@@ -193,7 +193,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 		await wait_physics_frames(3)
 		await press_e()
 		assert_true(main.hud.slot_view.is_open(), "at the %s" % RiversideInteriors.SLOT_NAMES[i])
-		var m: SlotMachine = main.slot_machines[i]
+		var m: SlotMachine = main.back_rooms.slot_machines[i]
 		var pocket: int = main.rackets.money
 		await _key(KEY_SPACE)
 		await _key(KEY_SPACE, false)
@@ -203,7 +203,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	walker().place(RiversideInteriors.SLOTS[0] + Vector2(0, 32), -PI / 2)
 	await wait_physics_frames(3)
 	await press_e()
-	var owl: SlotMachine = main.slot_machines[0]
+	var owl: SlotMachine = main.back_rooms.slot_machines[0]
 	for s in 200000:
 		var r := RandomNumberGenerator.new()
 		r.seed = s
@@ -211,7 +211,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 		probe.pull(100000, r.randi())
 		probe.collect()
 		if probe.win == 0 and probe.hold_offered:
-			main._slot_rng.seed = s
+			main.back_rooms.slot_rng.seed = s
 			break
 	await _key(KEY_SPACE)
 	await _key(KEY_SPACE, false)
@@ -239,13 +239,13 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	var pv: PokerView = main.hud.poker_view
 	pv.think = Vector2(0.05, 0.08)
 	await _key(KEY_RIGHT)
-	assert_eq(main.poker.level, 1)
-	var books: int = main.rackets.money + main.poker.players_money()
+	assert_eq(main.back_rooms.poker.level, 1)
+	var books: int = main.rackets.money + main.back_rooms.poker.players_money()
 	await _key(KEY_1)  # $5 at dime and quarter
-	assert_eq(main.poker.table.big_blind, 25)
+	assert_eq(main.back_rooms.poker.table.big_blind, 25)
 	for f in 3000:
-		var t: Holdem = main.poker.table
-		if t.running() and t.to_act == main.poker.danny and not pv.pacing.waiting():
+		var t: Holdem = main.back_rooms.poker.table
+		if t.running() and t.to_act == main.back_rooms.poker.danny and not pv.pacing.waiting():
 			break
 		if pv.pacing.waiting():
 			await _key(KEY_SPACE)
@@ -254,23 +254,23 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	await _key(KEY_ESCAPE)
 	assert_false(pv.confirm.is_empty(), "asked first")
 	await _key(KEY_ESCAPE)
-	assert_true(main.poker.seated(), "he stays")
+	assert_true(main.back_rooms.poker.seated(), "he stays")
 	await _key(KEY_ESCAPE)
 	await _key(KEY_ENTER)
-	assert_false(main.poker.seated(), "and then goes")
-	assert_eq(main.rackets.money + main.poker.players_money(), books, "every cent accounted for")
+	assert_false(main.back_rooms.poker.seated(), "and then goes")
+	assert_eq(main.rackets.money + main.back_rooms.poker.players_money(), books, "every cent accounted for")
 	# 17. the room's sound and its people
 	walker().place(RiversideInteriors.ROULETTE_SPOT + Vector2(0, 30), -PI / 2)
 	await wait_physics_frames(60)
 	assert_true(main.soundscape.gaming_bed.playing, "the gaming room's bed")
-	assert_gte(main.room_life.standing().size() + 1, tonight.size(), "the regulars in their places")
+	assert_gte(main.back_rooms.room_life.standing().size() + 1, tonight.size(), "the regulars in their places")
 	# 18-19. saved and loaded in the gaming room
 	var money: int = main.rackets.money
 	await _reload()
 	assert_eq(main.rackets.money, money, "his money as it was")
-	assert_eq(main.slot_machines[0].stake, stake, "the Owl's stake remembered")
-	assert_eq(main.poker.level, 1, "his stakes at the cards remembered")
-	assert_true(main.wheel.betting_open(), "a fresh round at the wheel")
+	assert_eq(main.back_rooms.slot_machines[0].stake, stake, "the Owl's stake remembered")
+	assert_eq(main.back_rooms.poker.level, 1, "his stakes at the cards remembered")
+	assert_true(main.back_rooms.wheel.betting_open(), "a fresh round at the wheel")
 	assert_eq(main.interiors.current.id, "gaming_room")
 	# 20. business as usual; home to bed; the next night
 	await talk_to("copper_owl", "augie")
@@ -280,8 +280,8 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	await answer_with("sleep")
 	await wait_physics_frames(3)
 	assert_eq(main.rackets.night, 2)
-	assert_true(main.wheel.betting_open(), "the wheel turns again tonight")
-	assert_eq(main.slot_machines[0].stake, stake, "the machines remember")
+	assert_true(main.back_rooms.wheel.betting_open(), "the wheel turns again tonight")
+	assert_eq(main.back_rooms.slot_machines[0].stake, stake, "the machines remember")
 	var spec: Dictionary = main.car_specs[main.car_ids.find(id)]
 	assert_lt(main.cars[main.car_ids.find(id)].global_position.distance_to(spec.pos), 1.0, "the roadster back with its owner")
 	await _reload()

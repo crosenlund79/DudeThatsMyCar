@@ -59,11 +59,11 @@ func _reload() -> void:
 ## M013: until Leo's wheel reaches `phase` (the next time it does).
 func _until_wheel(phase: int) -> void:
 	for i in 3000:
-		if main.wheel.phase != phase:
+		if main.back_rooms.wheel.phase != phase:
 			break
 		await wait_physics_frames(1)
 	for i in 3000:
-		if main.wheel.phase == phase:
+		if main.back_rooms.wheel.phase == phase:
 			return
 		await wait_physics_frames(1)
 
@@ -87,7 +87,7 @@ func test_two_nights_of_power_and_vice() -> void:
 	assert_lt(main.soundscape.level.music_db, main.soundscape.level.gaming_db, "the band through the wall, the room's own sound over it")
 	# a few hands of Hold'em, a beat at a time
 	var back: InteriorPlan = main.interiors.current
-	var card_books: int = main.rackets.money + main.poker.players_money()
+	var card_books: int = main.rackets.money + main.back_rooms.poker.players_money()
 	walker().place(back.spots[0].pos, -PI / 2)
 	await wait_physics_frames(3)
 	await press_e()
@@ -97,18 +97,18 @@ func test_two_nights_of_power_and_vice() -> void:
 	var shown := []
 	pv.beat_shown.connect(func(b: Dictionary) -> void: shown.append(b))
 	for f in 4000:
-		if main.poker.hands >= 3 and pv.pacing.current.get("kind", "") == "result":
+		if main.back_rooms.poker.hands >= 3 and pv.pacing.current.get("kind", "") == "result":
 			break
 		if pv.pacing.waiting():
 			await _key(KEY_SPACE)
 			await _key(KEY_SPACE, false)
-		elif main.poker.table.running() and main.poker.table.to_act == main.poker.danny:
-			await _key(KEY_2 if main.poker.table.legal(main.poker.danny).check else KEY_1)
+		elif main.back_rooms.poker.table.running() and main.back_rooms.poker.table.to_act == main.back_rooms.poker.danny:
+			await _key(KEY_2 if main.back_rooms.poker.table.legal(main.back_rooms.poker.danny).check else KEY_1)
 		await wait_process_frames(1)
 	assert_gt(shown.size(), 5, "the card players' moves shown one at a time")
 	await _key(KEY_ESCAPE)
-	assert_false(main.poker.seated())
-	assert_eq(main.rackets.money + main.poker.players_money(), card_books, "every cent accounted for at the cards")
+	assert_false(main.back_rooms.poker.seated())
+	assert_eq(main.rackets.money + main.back_rooms.poker.players_money(), card_books, "every cent accounted for at the cards")
 	var after_cards: int = main.rackets.money
 	# through to the gaming room: the wheel
 	var west := -1
@@ -133,9 +133,9 @@ func test_two_nights_of_power_and_vice() -> void:
 	await _click(rv, "straight:0")
 	assert_eq(main.rackets.money, after_cards - 150)
 	await _until_wheel(RouletteTable.Phase.DROP)  # M013: no more bets - Leo's call
-	var n: int = main.wheel.number
+	var n: int = main.back_rooms.wheel.number
 	await _until_wheel(RouletteTable.Phase.RESULT)
-	assert_eq(main.wheel.motion.pocket_under(), n, "the ball in the number's pocket")
+	assert_eq(main.back_rooms.wheel.motion.pocket_under(), n, "the ball in the number's pocket")
 	var won := Roulette.returns("black", 100, n) + Roulette.returns("corner:13-14-16-17", 25, n) + Roulette.returns("straight:0", 25, n)
 	assert_eq(main.rackets.money, after_cards - 150 + won, "paid what the rules say")
 	await _key(KEY_ESCAPE)
@@ -147,7 +147,7 @@ func test_two_nights_of_power_and_vice() -> void:
 	assert_true(main.hud.slot_view.is_open())
 	await _key(KEY_SPACE)
 	await _key(KEY_SPACE, false)
-	var owl_m: SlotMachine = main.slot_machines[0]
+	var owl_m: SlotMachine = main.back_rooms.slot_machines[0]
 	for f in 400:
 		if main.hud.slot_view.phase == "paid":
 			break
@@ -162,7 +162,7 @@ func test_two_nights_of_power_and_vice() -> void:
 	await _key(KEY_4)
 	await _click(rv, "red")
 	await _until_wheel(RouletteTable.Phase.DROP)
-	var n2: int = main.wheel.number
+	var n2: int = main.back_rooms.wheel.number
 	var expect: int = main.rackets.money + Roulette.returns("red", 100, n2)
 	await _reload()
 	assert_eq(main.rackets.money, expect, "the spin under way counted as settled, once")
@@ -198,10 +198,10 @@ func test_two_nights_of_power_and_vice() -> void:
 	await answer_with("sleep")
 	await wait_physics_frames(3)
 	assert_eq(main.rackets.night, 2)
-	assert_eq(main.roulette.phase, Roulette.Phase.BETTING, "a fresh layout")
+	assert_eq(main.back_rooms.roulette.phase, Roulette.Phase.BETTING, "a fresh layout")
 	assert_true(main.interiors.view_of("gaming_room").person_ok("croupier"), "Leo at the wheel")
 	for p in PokerNight.REGULARS:
-		assert_gt(int(main.poker.purses.get(p.id, 0)), 0, "%s back with his purse" % p.id)
+		assert_gt(int(main.back_rooms.poker.purses.get(p.id, 0)), 0, "%s back with his purse" % p.id)
 	walker().place(RiversideInteriors.SLOTS[2] + Vector2(0, 32), -PI / 2)
 	main.camera.snap_to(walker())
 	await wait_physics_frames(3)

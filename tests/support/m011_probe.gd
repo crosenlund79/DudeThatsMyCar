@@ -87,39 +87,39 @@ func _run() -> void:
 	await _sound_cost("the soundscape's update a frame (in the gaming room)")
 	# the wheel
 	await _place(RiversideInteriors.ROULETTE_SPOT)
-	main.open_roulette()
+	main.back_rooms.open_roulette()
 	await _fps("at the wheel, between spins (the table on screen)")
 	for i in 3000:  # M013: Leo's next round
-		if main.wheel.phase == RouletteTable.Phase.OPEN:
+		if main.back_rooms.wheel.phase == RouletteTable.Phase.OPEN:
 			break
 		await process_frame
 	for b in [["straight:17", 25], ["red", 100], ["dozen:2", 25]]:
-		main._on_wheel_bet(b[0], b[1])
+		main.back_rooms.bet(b[0], b[1])
 	await _fps("at the wheel, bets open, the wheel turning", 4.0)
 	await _view_cost("the wheel's view", main.hud.roulette_view)
-	main.leave_roulette()
+	main.back_rooms.leave_roulette()
 	# a machine
 	await _place(RiversideInteriors.SLOTS[1] + Vector2(0, 32))
-	main.open_slot(1)
+	main.back_rooms.open_slot(1)
 	var sv: SlotView = main.hud.slot_view
 	await _fps("at a machine, idle (its front on screen)")
 	for k in 2:
-		main._on_slot_pull()
+		main.back_rooms.pull()
 		var t0 := Time.get_ticks_usec()
 		while sv.phase != "paid" and Time.get_ticks_usec() - t0 < 4000000:
 			await process_frame
-	main._on_slot_pull()
+	main.back_rooms.pull()
 	await _fps("at a machine, the reels running", 2.0)
 	await _view_cost("a machine's view", sv)
-	main.leave_slot()
+	main.back_rooms.leave_slot()
 	# the card table
 	await _place(gaming.inside_door(0, 14.0))
 	await _place(RiversideInteriors.TABLE + Vector2(0, 54))
-	main.open_poker()
+	main.back_rooms.open_poker()
 	main.hud.poker_view.choose_buy_in(1)
 	main.hud.poker_view.think = Vector2(0.05, 0.1)
 	await _fps("at the card table (a hand under way)")
-	main.leave_poker()
+	main.back_rooms.leave_poker()
 	print(" the union hall and City Hall:")
 	var hall: InteriorPlan = main.interiors.view_of("union_hall").plan
 	await _place(hall.inside_door(0, 30.0), PI)

@@ -48,9 +48,9 @@ func _until_waiting(frames: int = 600) -> void:
 	for f in frames:
 		if _view().pacing.waiting():
 			return
-		var t: Holdem = main.poker.table
-		if t.running() and t.to_act == main.poker.danny:
-			await _send(_key(KEY_2 if t.legal(main.poker.danny).check else KEY_1))  # Danny plays on
+		var t: Holdem = main.back_rooms.poker.table
+		if t.running() and t.to_act == main.back_rooms.poker.danny:
+			await _send(_key(KEY_2 if t.legal(main.back_rooms.poker.danny).check else KEY_1))  # Danny plays on
 		await wait_process_frames(1)
 
 
@@ -66,19 +66,19 @@ func test_each_action_waits_for_space() -> void:
 		assert_eq(_view().said.get(beat.seat, ""), beat.text, "his plate says what he did")
 	assert_true(_view()._buttons.any(func(b: Dictionary) -> bool: return b.id == "continue"), "the Space prompt")
 	# nothing moves while it waits
-	var events: int = main.poker.table.events.size()
-	var hand: int = main.poker.hands
+	var events: int = main.back_rooms.poker.table.events.size()
+	var hand: int = main.back_rooms.poker.hands
 	for i in 120:
 		await wait_process_frames(1)
-	assert_eq(main.poker.table.events.size(), events, "no card player acts while it waits")
-	assert_eq(main.poker.hands, hand)
+	assert_eq(main.back_rooms.poker.table.events.size(), events, "no card player acts while it waits")
+	assert_eq(main.back_rooms.poker.hands, hand)
 	assert_eq(shown.back(), beat, "the hook names the beat on show")
 	# one press: exactly one beat on
 	var before := shown.size()
 	await _space()
 	for i in 60:
 		await wait_process_frames(1)
-		if shown.size() > before or (main.poker.table.running() and main.poker.table.to_act == main.poker.danny):
+		if shown.size() > before or (main.back_rooms.poker.table.running() and main.back_rooms.poker.table.to_act == main.back_rooms.poker.danny):
 			break
 	assert_lte(shown.size(), before + 1, "one press, at most one more beat")
 
@@ -99,7 +99,7 @@ func test_a_held_space_moves_one_beat_only() -> void:
 	await _send(_key(KEY_SPACE, false))
 	# while something is on show the betting keys wait
 	await _until_waiting()
-	var t: Holdem = main.poker.table
+	var t: Holdem = main.back_rooms.poker.table
 	var events := t.events.size()
 	await _send(_key(KEY_1))
 	await _send(_key(KEY_4))
@@ -109,58 +109,58 @@ func test_a_held_space_moves_one_beat_only() -> void:
 func test_space_on_dannys_turn_does_nothing() -> void:
 	await _sit_in()
 	for f in 3000:
-		var t: Holdem = main.poker.table
-		if t.running() and t.to_act == main.poker.danny and not _view().pacing.waiting():
+		var t: Holdem = main.back_rooms.poker.table
+		if t.running() and t.to_act == main.back_rooms.poker.danny and not _view().pacing.waiting():
 			break
 		if _view().pacing.waiting():
 			await _space()
 		await wait_process_frames(1)
-	var t: Holdem = main.poker.table
-	assert_eq(t.to_act, main.poker.danny, "Danny's turn, nothing on show")
+	var t: Holdem = main.back_rooms.poker.table
+	assert_eq(t.to_act, main.back_rooms.poker.danny, "Danny's turn, nothing on show")
 	var events := t.events.size()
-	var chips: int = main.poker.danny_chips()
+	var chips: int = main.back_rooms.poker.danny_chips()
 	await _space()
 	await _space()
 	assert_eq(t.events.size(), events, "Space does not act for him")
-	assert_eq(t.to_act, main.poker.danny)
-	assert_eq(main.poker.danny_chips(), chips)
+	assert_eq(t.to_act, main.back_rooms.poker.danny)
+	assert_eq(main.back_rooms.poker.danny_chips(), chips)
 	assert_true(_view()._buttons.any(func(b: Dictionary) -> bool: return b.id == "act1"), "his betting buttons are there")
 
 
 func test_board_and_showdown_a_step_at_a_time() -> void:
 	var books := 0
 	await _sit_in(2000)
-	books = main.rackets.money + main.poker.danny_chips() + main.poker.players_money()
+	books = main.rackets.money + main.back_rooms.poker.danny_chips() + main.back_rooms.poker.players_money()
 	var revealed_seen := []
 	var results := 0
-	var hands_before: int = main.poker.hands
+	var hands_before: int = main.back_rooms.poker.hands
 	for f in 8000:
 		var p: PokerPacing = _view().pacing
 		if p.waiting():
 			var beat: Dictionary = p.current
 			if beat.kind == "deal":
 				revealed_seen.append(p.revealed)
-				assert_lte(p.revealed, main.poker.table.board.size())
+				assert_lte(p.revealed, main.back_rooms.poker.table.board.size())
 			if beat.kind == "result":
 				results += 1
 				assert_eq(_view().banner, beat.text, "the result read out")
-				var hand: int = main.poker.hands
+				var hand: int = main.back_rooms.poker.hands
 				for i in 30:
 					await wait_process_frames(1)
-				assert_eq(main.poker.hands, hand, "the next hand waits for Space")
+				assert_eq(main.back_rooms.poker.hands, hand, "the next hand waits for Space")
 				if results >= 3:
 					break
 			await _space()
 		else:
-			var t: Holdem = main.poker.table
-			if t.running() and t.to_act == main.poker.danny:
+			var t: Holdem = main.back_rooms.poker.table
+			if t.running() and t.to_act == main.back_rooms.poker.danny:
 				# Danny sees every hand through: checks or calls
 				await _send(_key(KEY_2))
 		await wait_process_frames(1)
 	assert_gte(results, 3, "three hands played through to their results")
 	assert_true(revealed_seen.has(3), "the flop shown on its own")
-	assert_eq(main.rackets.money + main.poker.danny_chips() + main.poker.players_money(), books, "every cent accounted for")
-	assert_gt(main.poker.hands, hands_before)
+	assert_eq(main.rackets.money + main.back_rooms.poker.danny_chips() + main.back_rooms.poker.players_money(), books, "every cent accounted for")
+	assert_gt(main.back_rooms.poker.hands, hands_before)
 
 
 func test_holding_space_at_the_table_never_speeds_the_night() -> void:
@@ -177,7 +177,7 @@ func test_holding_space_at_the_table_never_speeds_the_night() -> void:
 ## hand he is still in, he is asked first (Enter: yes).
 func test_getting_up_while_a_move_is_on_show() -> void:
 	main.rackets.money = 1000
-	var books: int = main.rackets.money + main.poker.players_money()
+	var books: int = main.rackets.money + main.back_rooms.poker.players_money()
 	await _sit_in(1000)
 	await _until_waiting()
 	assert_true(_view().pacing.waiting(), "a move on show")
@@ -185,9 +185,9 @@ func test_getting_up_while_a_move_is_on_show() -> void:
 	if not _view().confirm.is_empty():
 		await _send(_key(KEY_ENTER))  # M013: fold and leave
 	assert_false(_view().is_open(), "up from the table")
-	assert_false(main.poker.seated())
+	assert_false(main.back_rooms.poker.seated())
 	assert_true(player().seat.is_empty())
-	assert_eq(main.rackets.money + main.poker.players_money(), books, "every cent accounted for")
+	assert_eq(main.rackets.money + main.back_rooms.poker.players_money(), books, "every cent accounted for")
 
 
 ## M011.2: a save while a move is on show loads without the table. M013: the
@@ -197,8 +197,8 @@ func test_saving_while_a_move_is_on_show() -> void:
 	main.save_path = path
 	await _sit_in(1000)
 	await _until_waiting()
-	assert_true(main.poker.table.running() or _view().pacing.waiting())
-	var expect: int = main.rackets.money + main.poker.stake_for_save()
+	assert_true(main.back_rooms.poker.table.running() or _view().pacing.waiting())
+	var expect: int = main.rackets.money + main.back_rooms.poker.stake_for_save()
 	main.save_game()
 	var saved := SaveGame.read(path)
 	assert_eq(int(saved.rackets.money), expect, "the hand under way counts as folded")
