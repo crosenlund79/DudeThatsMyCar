@@ -84,11 +84,11 @@ func test_walked_into_with_the_normal_controls() -> void:
 	assert_gt(walker().global_position.x, p.room.position.x + InteriorPlan.WALL, "the west wall holds")
 	# the captain talks; the photographs and the desk are there to look at
 	await talk_to("doran_office", "heeler")
-	assert_eq(main.talking, "heeler")
+	assert_eq(main.dialogue.talking, "heeler")
 	assert_string_contains(main.hud.line_label.text, "alderman")
 	await answer_with("bye")
 	await talk_to("doran_office", "doran_photos")
-	assert_eq(main.talking, "doran_photos")
+	assert_eq(main.dialogue.talking, "doran_photos")
 	assert_string_contains(main.hud.line_label.text, "Doran")
 	await answer_with("bye")
 	await talk_to("doran_office", "doran_desk")

@@ -190,7 +190,7 @@ func answer(n: int) -> void:
 
 ## Answers with the option whose id is `id` on the page on screen (fails the test if absent).
 func answer_with(id: String) -> void:
-	var opts: Array = main._page.get("options", [])
+	var opts: Array = main.dialogue.page.get("options", [])
 	for i in opts.size():
 		if opts[i].id == id:
 			await answer(i + 1)

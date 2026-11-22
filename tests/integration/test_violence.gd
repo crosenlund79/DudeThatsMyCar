@@ -44,9 +44,9 @@ func test_lefty_minds_his_own_business() -> void:
 	await wait_physics_frames(3)
 	assert_string_contains(main.hud.prompt_label.text, "Lefty")
 	await press_e()
-	assert_eq(main.talking, "lefty")
+	assert_eq(main.dialogue.talking, "lefty")
 	await answer_with("who")
-	assert_string_contains(main._page.text, "North Side")
+	assert_string_contains(main.dialogue.page.text, "North Side")
 
 
 func test_shoot_him_and_he_fights_back_until_he_goes_down() -> void:
@@ -139,14 +139,14 @@ func test_the_wards_own_people_are_carried_off_not_killed() -> void:
 	walker().place(Vector2(2240, 252), 0.0)
 	await wait_physics_frames(3)
 	await press_e()
-	assert_eq(main.talking, "", "nobody behind the bar to talk to")
+	assert_eq(main.dialogue.talking, "", "nobody behind the bar to talk to")
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(3)
 	assert_true(augie.visible and not augie.down, "back behind his bar the next evening")
 	assert_true(main.interiors.view_of("copper_owl").person_ok("augie"))
 	await talk_to("copper_owl", "augie")
-	assert_eq(main.talking, "augie")
+	assert_eq(main.dialogue.talking, "augie")
 
 
 func test_the_bird_shot_means_no_music_tonight() -> void:

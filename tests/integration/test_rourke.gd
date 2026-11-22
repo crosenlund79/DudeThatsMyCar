@@ -14,8 +14,8 @@ func test_he_sits_at_his_table_in_the_copper_owl() -> void:
 	assert_true(await walk_in_to(_club(), "rourke"))
 	assert_string_contains(main.hud.prompt_label.text, "Talk to Rourke")
 	await press_e()
-	assert_eq(main.talking, "rourke")
-	assert_string_contains(main._page.text, Rackets.dollars(main.rackets.boss.expected))
+	assert_eq(main.dialogue.talking, "rourke")
+	assert_string_contains(main.dialogue.page.text, Rackets.dollars(main.rackets.boss.expected))
 
 
 func test_collect_then_settle_up() -> void:
@@ -39,7 +39,7 @@ func test_owing_him_stops_the_rye_trade_at_the_club() -> void:
 	main.rackets.boss.ban = true
 	main.rackets.bottles = 4
 	await talk_to("copper_owl", "augie")
-	assert_string_contains(main._page.text, "Rourke")
+	assert_string_contains(main.dialogue.page.text, "Rourke")
 	await answer_with("sell")
 	assert_eq(main.rackets.bottles, 4, "Augie won't buy")
 

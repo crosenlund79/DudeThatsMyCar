@@ -151,9 +151,9 @@ func _snapshot() -> Dictionary:
 		"minute": _r(main.clock.minute, 2),
 		"world": {"current": main.world.current, "ready": ready},
 		"room": main.interiors.current.id if main.interiors.current != null else "",
-		"talking": main.talking,
-		"page": {"text": String(main._page.get("text", "")),
-			"options": (main._page.get("options", []) as Array).map(func(o: Dictionary) -> String: return String(o.id))},
+		"talking": main.dialogue.talking,
+		"page": {"text": String(main.dialogue.page.get("text", "")),
+			"options": (main.dialogue.page.get("options", []) as Array).map(func(o: Dictionary) -> String: return String(o.id))},
 		"incidents": main.incidents.to_dict(),
 		"weather": {"state": main.weather.state_name(), "rain": _r(main.weather.rain_strength(), 3), "fog": _r(main.weather.fog, 3)},
 		"films": {"opening": main.opening != null, "cafe": main.cafe_film != null, "bird": main.bird_film != null,
@@ -162,7 +162,7 @@ func _snapshot() -> Dictionary:
 		"camera": camera,
 		"collapses": main.collapses,
 		"moments": main.moments,
-		"fighting": main.fighting,
+		"fighting": main.fights.fighting,
 		"paused": main.paused,
 		"views": {"poker": main.hud.poker_view.is_open(), "roulette": main.hud.roulette_view.is_open(),
 			"slot": main.hud.slot_view.is_open()},
@@ -530,7 +530,7 @@ func test_films_played_and_skipped() -> void:
 	await _key(KEY_ESCAPE)
 	for i in 1200:
 		await wait_physics_frames(1)
-		if main.talking == "bird_scene":
+		if main.dialogue.talking == "bird_scene":
 			break
 	await press_e()
 	for i in 600:

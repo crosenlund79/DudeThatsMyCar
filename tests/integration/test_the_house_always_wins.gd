@@ -274,7 +274,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	assert_eq(main.interiors.current.id, "gaming_room")
 	# 20. business as usual; home to bed; the next night
 	await talk_to("copper_owl", "augie")
-	assert_eq(main.talking, "augie")
+	assert_eq(main.dialogue.talking, "augie")
 	await answer_with("bye")
 	await talk_to("home", "bed")
 	await answer_with("sleep")

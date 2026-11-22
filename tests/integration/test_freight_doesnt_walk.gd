@@ -35,7 +35,7 @@ func _take_it() -> void:
 	var office: InteriorPlan = main.interiors.plan_named("dispatch_office")
 	assert_true(await walk_in_to(office, "leon"), "in at the dispatch office door, up to Leon's desk")
 	await press_e()
-	assert_eq(main.talking, "leon")
+	assert_eq(main.dialogue.talking, "leon")
 	await answer_with("freight_hear")
 	assert_string_contains(main.hud.line_label.text, "Hartmann's")
 	assert_eq(f().stage, FreightJob.Stage.OFFERED)
@@ -48,7 +48,7 @@ func _talk_to_walt() -> void:
 	var shed: InteriorPlan = main.interiors.plan_named("freight_shed")
 	assert_true(await walk_in_to(shed, "walt"), "in at the loading door, over to Walt by his stove")
 	await press_e()
-	assert_eq(main.talking, "walt")
+	assert_eq(main.dialogue.talking, "walt")
 
 
 func _crates_there() -> bool:
@@ -67,10 +67,10 @@ func _collect_fee() -> int:
 
 func _fight(plan: Array) -> void:
 	for i in 60:
-		if main.fighting:
+		if main.fights.fighting:
 			break
 		await wait_physics_frames(1)
-	assert_true(main.fighting, "the fight is on")
+	assert_true(main.fights.fighting, "the fight is on")
 	var dial: FightDial = main.hud.fight_dial
 	for want in plan:
 		while dial.fight.phase != FistFight.Phase.RUNNING and not dial.fight.is_over():
@@ -82,7 +82,7 @@ func _fight(plan: Array) -> void:
 		while dial.fight.phase == FistFight.Phase.RUNNING:
 			await wait_physics_frames(1)
 	for i in 120:
-		if not main.fighting:
+		if not main.fights.fighting:
 			break
 		await wait_physics_frames(1)
 
@@ -108,7 +108,7 @@ func test_talked_round_dutch_tells_and_leon_squares_it() -> void:
 	main.camera.snap_to(walker())
 	await wait_physics_frames(3)
 	await press_e()
-	assert_eq(main.talking, "dutch")
+	assert_eq(main.dialogue.talking, "dutch")
 	await answer_with("freight_ask")
 	assert_true(f().learned.has("docked"), "the shed gang's docked six dollars")
 	assert_string_contains(main.hud.line_label.text, "six bucks")
@@ -159,7 +159,7 @@ func test_a_gun_in_hand_or_fists() -> void:
 	await answer_with("walt_fight")
 	await answer_with("bye")
 	await _fight([false, false, false, true, false])
-	assert_false(main.fighting)
+	assert_false(main.fights.fighting)
 	assert_eq(f().fight_lost_night, main.rackets.night, "beaten")
 	assert_gt(walker().condition.worst(), BodyCondition.Level.FINE, "bruised")
 	assert_eq(f().stage, FreightJob.Stage.ACCEPTED, "not stuck")

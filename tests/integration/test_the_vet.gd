@@ -46,7 +46,7 @@ func test_walk_in_and_get_patched_up() -> void:
 	assert_true(ok, "walked into the animal hospital off Pruitt Street")
 	assert_string_contains(main.hud.prompt_label.text, "Doc Pettibone")
 	await press_e()
-	assert_eq(main.talking, "pettibone")
+	assert_eq(main.dialogue.talking, "pettibone")
 	await answer_with("patch")
 	assert_false(walker().condition.is_hurt(), "patched up")
 	assert_eq(main.rackets.money, 3000 - price)

@@ -26,8 +26,8 @@ func after_each() -> void:
 func _calls_within(ticks: int) -> String:
 	for i in ticks:
 		await wait_physics_frames(1)
-		if not main._callout.is_empty():
-			return String(main._callout.id)
+		if not main.people.callout.is_empty():
+			return String(main.people.callout.id)
 	return ""
 
 
@@ -45,10 +45,10 @@ func test_rourke_calls_danny_over_and_answering_opens_on_it() -> void:
 	assert_lt(angle_difference(rourke.model.facing, (walker().global_position - rourke.global_position).angle()), 0.6,
 		"and turns to him")
 	await talk_to("copper_owl", "rourke")
-	assert_eq(main.talking, "rourke")
+	assert_eq(main.dialogue.talking, "rourke")
 	assert_string_contains(main.hud.line_label.text, Callouts.LINES.rourke_business.follow, "the talk opens on what he called him for")
 	assert_false(main.hud.line_label.text.contains("["), "no stage direction on screen")
-	assert_true(main._page.options.size() > 1, "with his usual choices")
+	assert_true(main.dialogue.page.options.size() > 1, "with his usual choices")
 	await answer_with("bye")
 	# not twice tonight
 	await wait_physics_frames(120)
@@ -73,9 +73,9 @@ func test_quilty_comes_over_and_goes_back_when_ignored() -> void:
 	main.camera.snap_to(walker())
 	for i in 400:
 		await wait_physics_frames(1)
-		if main._callout.is_empty():
+		if main.people.callout.is_empty():
 			break
-	assert_true(main._callout.is_empty(), "the call lapses")
+	assert_true(main.people.callout.is_empty(), "the call lapses")
 	assert_lt(quilty.global_position.distance_to(home), 1.0, "back in his chair")
 
 
@@ -100,7 +100,7 @@ func test_augie_remembers_a_threat() -> void:
 	await talk_to("copper_owl", "augie")
 	await answer_with("bye")
 	main.rackets.callouts.begin_night(main.rackets.night)
-	main._callout = {}
+	main.people.callout = {}
 	assert_eq(await _calls_within(120), "augie_wary")
 	assert_string_contains(main.overhead.label.text, "Hands")
 
@@ -150,12 +150,12 @@ func test_quilty_goes_home_and_leon_takes_his_coffee_at_dutchs() -> void:
 	main.camera.snap_to(walker())
 	await wait_physics_frames(5)
 	assert_false(main.interiors.view_of("dispatch_office").person_ok("leon"), "not at his desk")
-	assert_true(main._leon_at_dutch.visible, "at Dutch's counter")
+	assert_true(main.people.leon_at_dutch.visible, "at Dutch's counter")
 	assert_string_contains(main.hud.prompt_label.text, "Leon Sobczak")
 	await press_e()
-	assert_eq(main.talking, "leon", "and Danny can talk to him there")
+	assert_eq(main.dialogue.talking, "leon", "and Danny can talk to him there")
 	await answer_with("bye")
 	main.clock.set_time(24 * 60.0 + 40.0)
 	await wait_physics_frames(3)
-	assert_false(main._leon_at_dutch.visible, "back to his desk")
+	assert_false(main.people.leon_at_dutch.visible, "back to his desk")
 	assert_true(main.interiors.view_of("dispatch_office").person_ok("leon"))

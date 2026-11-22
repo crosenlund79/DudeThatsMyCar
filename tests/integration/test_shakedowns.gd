@@ -30,7 +30,7 @@ func test_leaning_on_novak_brings_the_copper() -> void:
 	assert_true(main.officer.brain.is_hunting(), "Novak ran out shouting for him")
 	assert_string_contains(main.hud.notice_label.text, "Novak")
 	await talk_to("grocery", "novak")
-	var ids: Array = main._page.options.map(func(o: Dictionary) -> String: return o.id)
+	var ids: Array = main.dialogue.page.options.map(func(o: Dictionary) -> String: return o.id)
 	assert_false(ids.has("protection"), "and he won't pay twice")
 
 
@@ -45,7 +45,7 @@ func test_through_the_hardware_store_to_eddie_for_rounds() -> void:
 	var spare: int = walker().gun.spare
 	var start: int = main.rackets.money
 	await press_e()
-	assert_eq(main.talking, "eddie")
+	assert_eq(main.dialogue.talking, "eddie")
 	await answer_with("wares")
 	await answer_with("ammo")
 	assert_eq(walker().gun.spare, spare + main.economy_rules.ammo_box)

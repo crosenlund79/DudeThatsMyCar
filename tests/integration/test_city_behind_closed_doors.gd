@@ -76,7 +76,7 @@ func test_two_nights_behind_closed_doors() -> void:
 	var hall: InteriorPlan = main.interiors.plan_named("city_hall")
 	assert_true(await walk_in_to(hall, "nightclerk"), "up the steps and in at the night door")
 	await press_e()
-	assert_eq(main.talking, "nightclerk")
+	assert_eq(main.dialogue.talking, "nightclerk")
 	await answer_with("upstairs")
 	assert_string_contains(main.hud.line_label.text, "Mayor's office")
 	await answer_with("bye")
@@ -88,7 +88,7 @@ func test_two_nights_behind_closed_doors() -> void:
 	var club: InteriorPlan = main.interiors.plan_named("regulars_club")
 	assert_true(await walk_in_to(club, "steward"))
 	await press_e()
-	assert_eq(main.talking, "steward")
+	assert_eq(main.dialogue.talking, "steward")
 	await answer_with("bye")
 	# 5-6. saved in the club; loaded in the club; out with E
 	var minute: float = main.clock.minute
@@ -130,8 +130,8 @@ func test_two_nights_behind_closed_doors() -> void:
 	var called := ""
 	for i in 200:
 		await wait_physics_frames(1)
-		if not main._callout.is_empty():
-			called = main._callout.id
+		if not main.people.callout.is_empty():
+			called = main.people.callout.id
 			break
 	assert_eq(called, "leon_job", "Leon calls out")
 	var leon_spot: Vector2 = office.spots.filter(func(sp: Dictionary) -> bool: return sp.id == "leon")[0].pos
@@ -176,7 +176,7 @@ func test_two_nights_behind_closed_doors() -> void:
 	main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
 	walker().place(Vector2(2290, 380), -PI / 2)
 	main.camera.snap_to(walker())
-	main._callout = {}
+	main.people.callout = {}
 	for i in 60:
 		await wait_physics_frames(1)
 		if main.bird_scene == "asking":
@@ -192,7 +192,7 @@ func test_two_nights_behind_closed_doors() -> void:
 	await press_e()
 	for i in 1200:
 		await wait_physics_frames(1)
-		if main.talking == "bird_scene":
+		if main.dialogue.talking == "bird_scene":
 			break
 	await answer_with("kind")
 	await answer_with("bye")

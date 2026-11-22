@@ -93,7 +93,7 @@ func test_breaking_up_an_argument() -> void:
 	await wait_physics_frames(2)
 	assert_string_contains(main.hud.prompt_label.text, "Step in")
 	await press_e()
-	assert_eq(main.talking, "incident")
+	assert_eq(main.dialogue.talking, "incident")
 	await answer_with("calm")
 	assert_eq(main.incidents.get_incident("t1").outcome, "broken_up")
 	await press_e()

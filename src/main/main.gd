@@ -52,24 +52,14 @@ var plates: EntrancePlates:
 var highlight: InteractionHighlight:
 	get: return game.highlight
 	set(v): game.highlight = v
-## M012: who may call out to Danny, and the room they are in.
-const CALLERS := {"rourke": "copper_owl", "augie": "copper_owl", "bird": "copper_owl", "eddie": "hardware",
-	"quilty": "quilty_office", "leon": "dispatch_office"}
-## Those who come over a few steps when they call, and where to (from their
-## place: round the desk or the counter, clear of the furniture); the rest
-## call from where they are.
-const COME_OVER := {"eddie": Vector2(30, 0), "quilty": Vector2(-50, 8), "leon": Vector2(-58, 0)}
-## M012: a call-out waiting for an answer: {id, who, walker, home, facing,
-## left (s), answered, returning}; {} for none.
-var _callout := {}
-var _callout_tick := 0.0
-## When a gun last went off within earshot (s, engine time).
-var _last_gunfire := -1000.0
 var overhead: OverheadLine:
 	get: return game.overhead
 	set(v): game.overhead = v
-## M012: Leon at Dutch's counter after midnight (made with the yards, freed with them).
-var _leon_at_dutch: Walker
+## M014: talking (src/talk/dialogue.gd), fistfights (src/fight/fights.gd) and the
+## people who call out to Danny or keep their own hours (src/people/people.gd).
+var dialogue: Dialogue
+var fights: Fights
+var people: People
 ## M014: every parked car and what is known about it (src/driving/fleet.gd),
 ## and the beat cops of every built district (src/police/police_force.gd).
 var fleet: Fleet
@@ -132,8 +122,6 @@ var incidents: StreetIncidents:
 var incident_views: IncidentViews
 ## M009: the people Danny can take his own work from, and their errands.
 var opportunity_views: OpportunityViews
-## The incident Danny is stepping into ("" for none).
-var _incident_talking := ""
 ## M009: what stepping in brings or costs (cents).
 const HUSH_MONEY := 200
 const HANDOFF_TAKE := 600
@@ -202,8 +190,7 @@ var emergency := EmergencyResponse.new()
 var emergency_views: EmergencyViews
 ## Doc Pettibone's fee for patching Danny up after he went down (cents, at most).
 const COLLAPSE_FEE := 500
-## M007: a fistfight under way (the dial is up; nothing else moves Danny), its
-## rules, the man he is fighting and what to do when it is over.
+## M007: the fistfight's rules (the fights themselves: `fights`).
 @export var fight_rules: FightRules = preload("res://src/fight/default_fight.tres")
 ## M010: the night's weather (Weather), and how it is shown; a state here
 ## ("clear", "rain", "fog", "rain_fog") holds all night instead of the course
@@ -219,11 +206,6 @@ var drowsy: DrowsyView
 ## passes while he sits with Space held (game minutes per game minute).
 const FAST_TIME := 20.0
 var _seats := {}
-var fighting := false
-var fight_opponent: Walker
-var _fight_done: Callable
-## M007: a fight agreed in a talk, started when the talk ends ("lefty" or "").
-var _fight_pending := ""
 const FIGHT_TIP_BONUS := 14.0
 const FIGHT_HURT_PACE := 0.85
 ## The sound level chosen on the pause screen (index into AudioSettings.BUSES).
@@ -234,9 +216,6 @@ var rackets: Rackets:
 var talk: Conversations:
 	get: return game.talk
 	set(v): game.talk = v
-## Who the player is talking to ("" = nobody) and the page on screen.
-var talking := ""
-var _page := {}
 var _saved := {}
 
 
@@ -264,6 +243,14 @@ func _ready() -> void:
 	clock = NightClock.new(night_rules)
 	rackets.town.night_minutes = float(night_rules.dawn_minute - night_rules.start_minute)
 	talk = Conversations.new(rackets)
+	dialogue = Dialogue.new(game)  # M014: talking in the game
+	game.dialogue = dialogue
+	dialogue.on_sleep = sleep
+	people = People.new(game)  # M014: call-outs and routines
+	game.people = people
+	people.is_out = func(id: String) -> bool: return ward_out.has(id)
+	fights = Fights.new(game)  # M014: fistfights
+	game.fights = fights
 	_load_game()
 	layout = RiversideWard.create()
 	city = City.new()
@@ -358,8 +345,8 @@ func _ready() -> void:
 			hud.show_notice("The Thompson in your hands." if walker.gun == thompson else "Your .45 in your hand."))
 	bullets.impact.connect(gunfire.on_impact)
 	bullets.impact.connect(func(_p: Vector2, _n: Vector2, _c: Object, _d: Vector2) -> void:
-		_last_gunfire = Time.get_ticks_msec() / 1000.0)  # M012: nobody calls out with guns going off
-	player.fired.connect(func(_m: Vector2, _d: Vector2) -> void: _last_gunfire = Time.get_ticks_msec() / 1000.0)
+		people.gunfire())  # M012: nobody calls out with guns going off
+	player.fired.connect(func(_m: Vector2, _d: Vector2) -> void: people.gunfire())
 	navigator = CityNavigator.new(layout, Walker.RADIUS + 3.0)
 	world.adopt(layout.id, city, navigator)
 	officer = PoliceOfficer.new()
@@ -446,8 +433,8 @@ func _ready() -> void:
 	opportunity_views.contact_hurt.connect(_on_contact_hurt)
 	opportunity_views.contact_down.connect(func(id: String, _w: Walker) -> void:
 		ward_out[id] = rackets.night
-		if talking == id:
-			end_talk()
+		if dialogue.talking == id:
+			dialogue.end()
 		hud.show_notice("%s goes down, badly hurt. Somebody runs for the Doc." % talk.speaker(id)))
 	var morgue := layout.building_named("The Morgue")
 	if morgue >= 0:
@@ -458,8 +445,9 @@ func _ready() -> void:
 			hud.minimap.add_district(world.layouts[id])
 	hud.city_map.refresh_districts()
 	player.interaction = _interact
-	player.conversation = _converse
-	hud.dialogue_choice.connect(_answer)
+	player.conversation = dialogue.converse
+	hud.dialogue_choice.connect(dialogue.answer)
+	_wire_dialogue()
 	add_child(back_rooms)  # M014: the tables, the room and their screens (where the room's lines were)
 	back_rooms.setup(_saved.get("slots", []))
 	_show_purse()
@@ -481,115 +469,82 @@ func _ready() -> void:
 
 
 ## M012: the people of the city, a little more alive: who is where at this
-## hour (Routines), and who calls out to Danny (Callouts) - checked a few
-## times a second, never every person every frame.
+## hour (Routines), the Bird's last song, and who calls out to Danny
+## (Callouts) - checked a few times a second, never every person every frame.
 func _people_update(delta: float) -> void:
-	_apply_routines()
+	people.apply_routines()
 	_bird_after_last_song(delta)
-	if not _callout.is_empty():
-		_callout_follow(delta)
-		return
-	_callout_tick -= delta
-	if _callout_tick > 0.0 or not callouts_enabled:
-		return
-	_callout_tick = 0.25
-	if not player.on_foot() or interiors.current == null:
-		return
-	var room := interiors.current.id
-	var v := interiors.view_of(room)
-	var ctx := {"minute": clock.minute, "driving": not player.on_foot(), "talking": talking != "",
-		"busy": back_rooms.at_a_table() or not player.seat.is_empty(),
-		"film": cafe_film != null or opening != null or bird_film != null or bird_scene != "", "fighting": fighting,
-		"menu": paused or map_open or status_open,
-		"since_gunfire": Time.get_ticks_msec() / 1000.0 - _last_gunfire,
-		"rourke_business": rackets.job.rourke_has_business(rackets.night), "singing": stage.singing()}
-	for who in CALLERS:
-		if CALLERS[who] != room or v == null or not v.person_ok(who):
-			continue
-		var w: Walker = v.people.get(who)
-		ctx["near"] = walker.global_position.distance_to(w.global_position)
-		var id := rackets.callouts.pick(who, ctx, rackets)
-		if id != "":
-			_call_out(id, who, w)
-			return
+	people.update_callouts(delta, callouts_enabled, _busy)
 
 
-## M012: `who` calls out to Danny: the line over his head, a turn towards
-## him, and (some of them) a few steps his way. E answers; walking on ignores it.
-func _call_out(id: String, who: String, w: Walker) -> void:
-	rackets.callouts.mark(id, clock.minute)
-	overhead.say(w, String(Callouts.LINES[id].call))
-	var home := w.global_position
-	var facing := w.model.facing
-	for v in interiors.views:
-		for p in v.plan.people:
-			if v.people.get(p.id) == w:
-				home = p.pos
-				facing = p.facing
-	_callout = {"id": id, "who": who, "walker": w, "home": home, "facing": facing,
-		"left": Callouts.ANSWER_SECONDS, "answered": false, "returning": false}
-	save_game()  # what was said stays said
+## What Danny is in the middle of, for whoever might call out to him (M012).
+func _busy() -> Dictionary:
+	return {"talking": dialogue.talking != "", "busy": back_rooms.at_a_table() or not player.seat.is_empty(),
+		"film": cafe_film != null or opening != null or bird_film != null or bird_scene != "", "fighting": fights.fighting,
+		"menu": paused or map_open or status_open}
 
 
-func _callout_follow(delta: float) -> void:
-	var w: Walker = _callout.walker
-	if not is_instance_valid(w) or w.down:
-		_callout = {}
-		return
-	if not w.is_visible_in_tree():  # out of sight (he left the room): back in their place at once
-		w.move = Vector2.ZERO
-		w.place(_callout.home, _callout.facing)
-		w.aim_point = (_callout.home as Vector2) + Vector2.from_angle(_callout.facing) * 50.0
-		overhead.hush()
-		_callout = {}
-		return
-	var home: Vector2 = _callout.home
-	if _callout.returning:
-		var back := home - w.global_position
-		_callout.left = float(_callout.left) - delta
-		if back.length() < 4.0 or not COME_OVER.has(_callout.who) or _callout.left <= 0.0:
-			w.move = Vector2.ZERO
-			w.place(home, _callout.facing)
-			w.aim_point = home + Vector2.from_angle(_callout.facing) * 50.0
-			_callout = {}
-		else:
-			w.move = back.normalized() * 0.6
-			w.aim_point = home
-		return
-	_callout.left = float(_callout.left) - delta
-	var to := walker.global_position - w.global_position
-	w.aim_point = walker.global_position
-	w.move = Vector2.ZERO
-	if COME_OVER.has(_callout.who) and talking != _callout.who:  # a few steps his way, round the furniture
-		var step: Vector2 = home + COME_OVER[_callout.who] - w.global_position
-		if step.length() > 3.0 and to.length() > 40.0:
-			w.move = step.normalized() * 0.6
-	var over: bool = _callout.answered and talking != _callout.who
-	if over or _callout.left <= 0.0 or to.length() > Callouts.RANGE * 1.6 or not player.on_foot():
-		overhead.hush()
-		_callout.returning = true  # back to their place
-		_callout.left = 6.0  # however they get there (a chair in the way: they are back in it all the same)
+## M014: what a talk's pages do, each to the part of the game that owns it (in
+## the order M003-M012 applied them), and what happens as a talk ends.
+func _wire_dialogue() -> void:
+	dialogue.on_context(func() -> Dictionary: return {"crate_outside": fleet.crate_car_at(_novak_door()) != null})
+	dialogue.on_effect("incident", func(v: Variant, _e: Dictionary) -> void: _step_in(String(v)))
+	dialogue.on_effect("opportunity", func(v: Variant, _e: Dictionary) -> void: _opportunity(String(v)))
+	dialogue.on_effect("fight", func(v: Variant, _e: Dictionary) -> void: _request_fight(String(v)))  # starts when Danny raises his fists
+	dialogue.on_effect("bird_scene", func(v: Variant, _e: Dictionary) -> void: _bird_said(String(v)))  # M012: what he told the Bird
+	dialogue.on_effect("freight", func(v: Variant, _e: Dictionary) -> void: _freight_effect(String(v)))  # M012: Freight Doesn't Walk
+	dialogue.on_effect("job", func(_v: Variant, _e: Dictionary) -> void: _job_step())
+	dialogue.on_effect("heal", func(v: Variant, _e: Dictionary) -> void: _healed(v))
+	dialogue.on_effect("rounds", func(v: Variant, _e: Dictionary) -> void:
+		if pistol != null:
+			pistol.add_spare(int(v)))
+	dialogue.on_effect("thompson", func(v: Variant, _e: Dictionary) -> void: _thompson_effect(String(v)))  # M010
+	dialogue.on_effect("parcel", func(_v: Variant, _e: Dictionary) -> void: _show_purse())
+	dialogue.on_effect("cafe", func(v: Variant, _e: Dictionary) -> void:
+		if String(v) == "reported":
+			_show_purse())
+	dialogue.on_effect("police", func(v: Variant, _e: Dictionary) -> void:
+		if v and interiors.current != null:
+			# the shopkeeper waits until you have gone, then runs out for the copper
+			police.report_after(interiors.current, talk.speaker(dialogue.talking)))
+	dialogue.on_end(fights.talk_ended)  # M007: a fight agreed in the talk starts
+	dialogue.on_end(_bird_talk_ended)  # the band counts her back in; M012: her question walked away from
 
 
-## M012: Quilty goes home at one; Leon has his coffee at Dutch's after midnight.
-func _apply_routines() -> void:
-	var qv := interiors.view_of("quilty_office")
-	if qv != null:
-		qv.set_away("quilty", not Routines.in_room("quilty", clock.minute))
-	var lv := interiors.view_of("dispatch_office")
-	if lv != null:
-		lv.set_away("leon", not Routines.in_room("leon", clock.minute))
-	var at_dutch := Routines.where("leon", clock.minute) == "dutch" and world.is_ready("yards") \
-		and not ward_out.has("leon")
-	if at_dutch and _leon_at_dutch == null:
-		_leon_at_dutch = Walker.create(resolver, "characters/dispatcher", {"glow": false})
-		_leon_at_dutch.name = "LeonAtDutch"
-		world.loaded["yards"].node.add_child(_leon_at_dutch)
-		var at := Routines.LEON_AT_DUTCH + RiverfrontYards.ORIGIN
-		_leon_at_dutch.place(at, PI / 2)
-		_leon_at_dutch.aim_point = at + Vector2(0, 50)
-	if _leon_at_dutch != null and is_instance_valid(_leon_at_dutch):
-		_leon_at_dutch.visible = at_dutch
+func _job_step() -> void:
+	var step := rackets.job.objective()
+	if not step.is_empty():
+		hud.show_notice(step.text)
+
+
+func _healed(v: Variant) -> void:
+	if v:
+		walker.condition.heal_all()
+		hud.show_notice("Patched up. Good as new, near enough.")
+
+
+func _thompson_effect(what: String) -> void:
+	match what:
+		"lent":
+			_arm_thompson(true)
+			hud.show_notice("Eddie's Thompson is under your coat. Tab takes it in hand.")
+		"returned":
+			_arm_thompson(false)
+
+
+## M007, M012: a fight agreed in a talk (Lefty, Walt), started when the talk ends.
+func _request_fight(who: String) -> void:
+	var start_it: Callable = {"lefty": _fight_lefty, "walt": _fight_walt}.get(who, Callable())
+	fights.request(who, start_it)
+
+
+func _bird_talk_ended(who: String) -> void:
+	if who == "bird":
+		stage.release()
+	if who == "bird_scene" and bird_film != null:
+		if rackets.bird_scene == "":
+			_bird_said("silent")  # walked away from her question: that is an answer too
+		bird_film.release()  # the bars slide away, the camera comes back
 
 
 ## M012: a person's ring is wider than his figure (drawn under it).
@@ -795,10 +750,7 @@ func _on_district_ready(id: String) -> void:
 ## let go of bullets still flying there.
 func _on_district_unloading(id: String) -> void:
 	interiors.remove_district(id)  # M012: its rooms go with it
-	if id == "yards":
-		_leon_at_dutch = null  # freed with the yards
-	if not _callout.is_empty() and not is_instance_valid(_callout.walker):
-		_callout = {}
+	people.district_unloading(id)  # M012: Leon at Dutch's goes with the yards, a call-out with its room
 	plates.remove_district(id)
 	if not _districts.has(id):
 		return
@@ -911,8 +863,9 @@ func _spot() -> Dictionary:
 			and cafe_scene.near_car(walker.global_position):
 		return {"id": "plant", "prompt": "Slip the parcel under the Packard"}
 	# M012: Leon at Dutch's counter, his coffee after midnight
-	if _leon_at_dutch != null and _leon_at_dutch.visible and walker.global_position.distance_to(_leon_at_dutch.global_position) < 40.0:
-		return {"id": "leon", "prompt": "Talk to Leon Sobczak", "routine": true, "pos": _leon_at_dutch.global_position}
+	var leon := people.leon_spot(walker.global_position)
+	if not leon.is_empty():
+		return leon
 	# M009: Dutch, Mr. Feeney and their errands
 	var op := opportunity_views.near(walker.global_position) if opportunity_views != null else {}
 	if not op.is_empty():
@@ -951,9 +904,8 @@ func _interact(_at: Vector2) -> bool:
 	elif spot.id == "bird":
 		talk_to_bird()
 	elif spot.id == "lefty":
-		talking = "lefty"
 		rival.body.aim_point = walker.global_position
-		_show(talk.open("lefty", _talk_context()))
+		dialogue.open("lefty")
 	elif spot.id == "seat":
 		player.sit(spot.seat)
 	elif spot.id == "poker":
@@ -965,41 +917,29 @@ func _interact(_at: Vector2) -> bool:
 	elif spot.id == "plant":
 		_plant_parcel()
 	elif spot.id == "locked" and spot.talk != "":
-		start_talk(spot.talk)  # M012: the bell at the Mayor's gate brings someone down the path
+		dialogue.start(spot.talk)  # M012: the bell at the Mayor's gate brings someone down the path
 	elif spot.id == "locked":
 		soundscape.play("places/door", -10.0)  # the handle rattles; nobody comes
 		hud.show_notice(spot.text)
 	elif spot.id == "stand":
 		player.stand()
 	elif spot.get("routine", false):
-		start_talk(spot.id)  # M012: Leon at Dutch's
+		dialogue.start(spot.id)  # M012: Leon at Dutch's
 	elif spot.id == "bird_scene":
 		_start_bird_film()
 	elif spot.get("kind", "") == "contact":
-		talking = spot.id
 		var w := opportunity_views.contact(spot.id)
 		if w != null:
 			w.aim_point = walker.global_position
-		_show(talk.open(spot.id, _talk_context()))
+		dialogue.open(spot.id)
 	elif spot.get("kind", "") == "errand":
 		_take_errand(spot.id, spot.pos)
 	elif spot.id == "incident":
-		talking = "incident"
-		_incident_talking = spot.incident
-		_show(talk.open("incident", _talk_context()))
+		dialogue.incident_talking = spot.incident
+		dialogue.open("incident")
 	elif spot.id == "bed" or Conversations.is_readable(spot.id) or not interiors.current.person(spot.id).is_empty():
-		start_talk(spot.id)
+		dialogue.start(spot.id)
 	return true
-
-
-func start_talk(who: String, extra: Dictionary = {}) -> void:
-	if not _callout.is_empty() and _callout.who == who and not _callout.answered:
-		extra = extra.merged({"callout": _callout.id})  # M012: answering a call-out
-		_callout.answered = true
-	talking = who
-	if interiors.current != null:
-		interiors.view_of(interiors.current.id).face(who, walker.global_position)
-	_show(talk.open(who, _talk_context().merged(extra, true)))
 
 
 ## E at the Bird's microphone: if she is singing, the needle scratches off the
@@ -1013,7 +953,7 @@ func talk_to_bird() -> void:
 		rackets.memory.remember("bird", "interrupted", rackets.night)  # M012: she remembers who stopped her song
 	else:
 		stage.hold()
-	start_talk("bird", {"interrupted": interrupted})
+	dialogue.start("bird", {"interrupted": interrupted})
 
 
 ## M010: Eddie's Thompson goes under Danny's coat (on loan, with its own
@@ -1058,7 +998,7 @@ func _cafe_due() -> void:
 	if not rackets.cafe_blasted(clock.minute):
 		return
 	moments.erase(rackets.cafe.blast_minute)
-	var watching := me.distance_to(at) <= CafeJob.WATCH and opening == null and not fighting \
+	var watching := me.distance_to(at) <= CafeJob.WATCH and opening == null and not fights.fighting \
 		and not hud.poker_view.is_open() and (interiors.current == null or not player.on_foot())
 	if watching:
 		_start_cafe_film(at)
@@ -1072,7 +1012,7 @@ func _cafe_due() -> void:
 ## leaves Danny for the café across the avenue, a hush, the flash, the street
 ## shaking, the people spilling out, and back to Danny as a siren starts up.
 func _start_cafe_film(at: Vector2) -> void:
-	end_talk()
+	dialogue.end()
 	player.passing_time = false  # the night goes at its own pace while it plays
 	var me := player.body().global_position
 	var z := camera.zoom.x
@@ -1178,7 +1118,7 @@ func _on_danny_hurt(region: String, level: int) -> void:
 ## pocket (as far as it goes). The night goes on.
 func _danny_down() -> void:
 	collapses += 1
-	end_talk()
+	dialogue.end()
 	if not player.on_foot():
 		player.eject()  # M008: shot at the wheel
 	police.stand_down()  # he thinks he got you
@@ -1215,126 +1155,17 @@ func _on_person_down(id: String, named: bool, view: InteriorView) -> void:
 	if id == "bird":
 		stage.knock_out()
 		soundscape.stop_music()
-	if talking == id:
-		end_talk()
+	if dialogue.talking == id:
+		dialogue.end()
 	hud.show_notice("%s goes down, badly hurt. Somebody runs for the Doc." % talk.speaker(id))
 	save_game()
-
-
-func _talk_context() -> Dictionary:
-	return {"gun_drawn": walker.gun != null and walker.gun.is_drawn(), "spare": walker.gun.spare if walker.gun != null else 0,
-		"time": clock.text(), "minute": clock.minute, "late": clock.is_late(), "done": stage.done, "first_meeting": voice_lines.due(Conversations.greeting_line(talking)),
-		"treatment": walker.condition.treatment_price(), "lefty_dead": rival != null and rival.is_down(),
-		"lefty_hurt": rival != null and rival.body.condition.worst() >= BodyCondition.Level.WOUNDED,
-		"danny_worst": walker.condition.worst(), "night": rackets.night, "money": rackets.money,
-		"incident_kind": incidents.get_incident(_incident_talking).get("kind", "") if _incident_talking != "" else "",
-		"crate_outside": fleet.crate_car_at(_novak_door()) != null}
-
-
-func _show(page: Dictionary) -> void:
-	if page.is_empty():
-		end_talk()
-		return
-	_page = page
-	hud.show_dialogue(page)
-	if page.has("voice") and not voice.say(page.voice).is_empty():
-		save_game()  # a first meeting is remembered even if the game is quit at once
-
-
-## While talking, the player's keys answer (1-4) or walk away (E).
-func _converse(cmd: PlayerCommand) -> bool:
-	if back_rooms.at_a_table():
-		return true  # M010: sitting in at the card table; M011: at the wheel or a machine
-	if talking == "":
-		return false
-	if cmd.choice > 0:
-		_answer(cmd.choice - 1)
-	elif cmd.interact:
-		end_talk()
-	return true
-
-
-## Picks answer i (0-based) on the page on screen.
-func _answer(i: int) -> void:
-	if talking == "" or i < 0 or i >= (_page.options as Array).size():
-		return
-	var money := rackets.money
-	var bottles := rackets.bottles
-	var next := talk.choose(talking, _page.options[i].id, _talk_context())
-	if next.get("effects", {}).get("sleep", false):
-		sleep()
-		return
-	soundscape.play_deal(talking, rackets.money - money, rackets.bottles - bottles)
-	_apply(next.get("effects", {}))
-	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
-	save_game()
-	_show(next)
-
-
-## Effects of a conversation outside the money (police, rounds).
-func _apply(effects: Dictionary) -> void:
-	if effects.has("incident"):
-		_step_in(String(effects.incident))
-	if effects.has("opportunity"):
-		_opportunity(String(effects.opportunity))
-	if effects.has("fight"):
-		_fight_pending = String(effects.fight)  # starts when Danny raises his fists
-	if effects.has("bird_scene"):  # M012: what he told the Bird
-		_bird_said(String(effects.bird_scene))
-	if effects.has("freight"):  # M012: Freight Doesn't Walk
-		_freight_effect(String(effects.freight))
-	if effects.has("job"):
-		var step := rackets.job.objective()
-		if not step.is_empty():
-			hud.show_notice(step.text)
-	if effects.get("heal", false):
-		walker.condition.heal_all()
-		hud.show_notice("Patched up. Good as new, near enough.")
-	if effects.has("rounds") and pistol != null:
-		pistol.add_spare(int(effects.rounds))
-	match String(effects.get("thompson", "")):  # M010
-		"lent":
-			_arm_thompson(true)
-			hud.show_notice("Eddie's Thompson is under your coat. Tab takes it in hand.")
-		"returned":
-			_arm_thompson(false)
-	if effects.has("parcel"):
-		_show_purse()
-	if effects.get("cafe", "") == "reported":
-		_show_purse()
-	if effects.get("police", false) and interiors.current != null:
-		# the shopkeeper waits until you have gone, then runs out for the copper
-		police.report_after(interiors.current, talk.speaker(talking))
-
-
-func end_talk() -> void:
-	_incident_talking = ""
-	if _fight_pending == "lefty":
-		call_deferred("_fight_lefty")
-	elif _fight_pending == "walt":
-		call_deferred("_fight_walt")  # M012
-	if talking == "bird":
-		stage.release()
-	if talking == "bird_scene" and bird_film != null:
-		if rackets.bird_scene == "":
-			_bird_said("silent")  # walked away from her question: that is an answer too
-		bird_film.release()  # the bars slide away, the camera comes back
-	talking = ""
-	_page = {}
-	if player != null:
-		player.fire_lock = true  # M012: the click on the last answer is not a shot
-	if voice != null:
-		voice.stop()
-	hud.hide_dialogue()
-	for v in interiors.views:
-		v.face_home()
 
 
 ## Sleeps through the day: the next evening begins at home with everything
 ## you carry (money, bottles, rounds); the streets, the cars and the copper
 ## are back as they are at the start of every night, and tonight's deals reset.
 func sleep() -> void:
-	end_talk()
+	dialogue.end()
 	stage.reset()  # the Bird is singing when the club opens
 	if bird_show != null:
 		bird_show.off_stage = false  # M012: back at her microphone
@@ -1490,10 +1321,10 @@ func _end_incident(e: Dictionary) -> void:
 
 ## Danny steps into the incident he is talking his way into (see Conversations).
 func _step_in(choice: String) -> void:
-	var inc := incidents.get_incident(_incident_talking)
+	var inc := incidents.get_incident(dialogue.incident_talking)
 	if inc.is_empty():
 		return
-	var out := incidents.intervene(inc.id, choice, _talk_context())
+	var out := incidents.intervene(inc.id, choice, dialogue.context())
 	if not out.ok:
 		return
 	match out.outcome:
@@ -1575,10 +1406,10 @@ func _load_gun() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if fighting:
+	if fights.fighting:
 		# only Space, for the dial; no walking, shooting, maps or menus mid-fight
 		if event.is_action_pressed(CityInput.HANDBRAKE):
-			hud.fight_dial.press()
+			fights.press()
 		return
 	if back_rooms.handle_key(event):
 		return  # M010, M011: at a table only the table's keys
@@ -1587,7 +1418,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				or event.is_action_pressed(CityInput.HANDBRAKE) or (event is InputEventMouseButton and event.pressed):
 			cafe_film.skip()
 		return
-	if bird_film != null and talking == "":  # M012: E, Esc, Space or a click skips to her question
+	if bird_film != null and dialogue.talking == "":  # M012: E, Esc, Space or a click skips to her question
 		if event.is_action_pressed(CityInput.MENU) or event.is_action_pressed(CityInput.INTERACT) \
 				or event.is_action_pressed(CityInput.HANDBRAKE) or (event is InputEventMouseButton and event.pressed):
 			bird_film.skip()
@@ -1609,14 +1440,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if map_open or status_open:
 		return  # nothing else while one is open
-	if event.is_action_pressed(CityInput.MAP) and not paused and talking == "":
+	if event.is_action_pressed(CityInput.MAP) and not paused and dialogue.talking == "":
 		show_map(true)
 		return
-	if event.is_action_pressed(CityInput.STATUS) and not paused and talking == "":
+	if event.is_action_pressed(CityInput.STATUS) and not paused and dialogue.talking == "":
 		show_status(true)
 		return
-	if event.is_action_pressed(CityInput.MENU) and talking != "":
-		end_talk()
+	if event.is_action_pressed(CityInput.MENU) and dialogue.talking != "":
+		dialogue.end()
 	elif paused:
 		var what := hud.game_menu.handle_key(event)  # M012: the game menu has the keys
 		if what == "sound":
@@ -1804,51 +1635,20 @@ func next_moment() -> float:
 
 ## M010: while the drowsiness must keep out of the way (talk, a scene, the maps, a fight).
 func _drowsy_held() -> bool:
-	return talking != "" or opening != null or map_open or status_open or fighting or back_rooms.at_a_table() \
+	return dialogue.talking != "" or opening != null or map_open or status_open or fights.fighting or back_rooms.at_a_table() \
 		or cafe_film != null
-
-
-## M007: a fistfight with `opponent` (a Walker) - the dial over the street,
-## five checks; `done` is called with (won, results) once it is over, after the
-## bruises are dealt out. False (and nothing happens) when a fight is already
-## on, Danny is not on foot or either man is down. Reusable for any opponent.
-func start_fight(opponent: Walker, opponent_name: String, done: Callable, zone_bonus: float = 0.0,
-		speed_scale: float = 1.0) -> bool:
-	if fighting or not player.on_foot() or walker.down or opponent == null or opponent.down:
-		return false
-	end_talk()
-	fighting = true
-	fight_opponent = opponent
-	_fight_done = done
-	player.set_physics_process(false)
-	walker.move = Vector2.ZERO
-	walker.velocity = Vector2.ZERO
-	if walker.gun != null:
-		walker.gun.holster()
-	walker.aim_point = opponent.global_position
-	opponent.aim_point = walker.global_position
-	opponent.move = Vector2.ZERO
-	if rival != null and opponent == rival.body:
-		rival.held = true
-	var seed_value := rackets.night * 1000 + int(walker.global_position.x) % 997
-	var f := FistFight.new(fight_rules, seed_value, zone_bonus - walker.condition.aim_spread() * 2.0, speed_scale)
-	hud.fight_dial.start(f, opponent_name)
-	if not hud.fight_dial.check_done.is_connected(_on_fight_check):
-		hud.fight_dial.check_done.connect(_on_fight_check)
-		hud.fight_dial.finished.connect(_on_fight_over)
-	return true
 
 
 ## M007: Lefty put up his fists ("Raise your fists" or walking away from the
 ## line starts it). Knowing how he fights (Eddie's tip) widens the zone; a
 ## wounded Lefty is slower.
 func _fight_lefty() -> void:
-	_fight_pending = ""
+	fights.clear_pending()
 	if rival == null or rival.is_down() or walker.global_position.distance_to(rival.body.global_position) > 90.0:
 		return
 	var bonus := FIGHT_TIP_BONUS if rackets.job.learned.has("tip") else 0.0
 	var pace := FIGHT_HURT_PACE if rival.body.condition.worst() >= BodyCondition.Level.WOUNDED else 1.0
-	start_fight(rival.body, Rival.NAME, _on_lefty_fight, bonus, pace)
+	fights.start(rival.body, Rival.NAME, _on_lefty_fight, bonus, pace)
 
 
 ## M012 "After the Last Song": once, on a night Danny is in the Copper Owl
@@ -1878,8 +1678,8 @@ func _bird_after_last_song(delta: float) -> void:
 		return
 	if interiors.current == null or interiors.current.id != "copper_owl" or not player.on_foot():
 		return
-	if voice_lines.due("bird_greeting") or talking != "" or fighting or back_rooms.at_a_table() \
-			or Time.get_ticks_msec() / 1000.0 - _last_gunfire < 30.0 or not player.seat.is_empty():
+	if voice_lines.due("bird_greeting") or dialogue.talking != "" or fights.fighting or back_rooms.at_a_table() \
+			or people.since_gunfire() < 30.0 or not player.seat.is_empty():
 		return  # they have not met yet, or Danny is busy
 	stage.finish()
 	soundscape.stop_music()
@@ -1894,7 +1694,7 @@ func _bird_after_last_song(delta: float) -> void:
 ## camera leaving Danny for the end of the bar, the club's lamps low and the
 ## room hushed, a few lines - then her question, and his answer.
 func _start_bird_film() -> void:
-	end_talk()
+	dialogue.end()
 	bird_scene = "film"
 	overhead.hush()
 	var me := walker.global_position
@@ -1950,7 +1750,7 @@ func _on_bird_question() -> void:
 	bird_film.hint.visible = false
 	hud.visible = true
 	player.set_physics_process(true)
-	start_talk("bird_scene")
+	dialogue.start("bird_scene")
 
 
 func _bird_said(what: String) -> void:
@@ -1983,17 +1783,17 @@ func _end_bird_film() -> void:
 
 ## M012: the fistfight with Walt Haney in the freight shed (the M007 dial).
 func _fight_walt() -> void:
-	_fight_pending = ""
+	fights.clear_pending()
 	var walt := interiors.person("freight_shed", "walt")
 	if walt == null or walt.down or walker.global_position.distance_to(walt.global_position) > 120.0:
 		return
-	start_fight(walt, "Walt Haney", _on_walt_fight)
+	fights.start(walt, "Walt Haney", _on_walt_fight)
 
 
 func _on_walt_fight(won: bool, _results: Array) -> void:
 	rackets.freight.fought(rackets, won)
-	start_talk("walt")
-	_show(talk.choose("walt", "fight_won" if won else "fight_lost", _talk_context()))
+	dialogue.start("walt")
+	dialogue.show(talk.choose("walt", "fight_won" if won else "fight_lost", dialogue.context()))
 	_freight_effect("settled" if won else "")
 	save_game()
 
@@ -2020,9 +1820,9 @@ func _sync_freight() -> void:
 
 
 func _on_lefty_fight(won: bool, _results: Array) -> void:
-	talking = "lefty"
+	dialogue.talking = "lefty"
 	rival.body.aim_point = walker.global_position
-	_show(talk.choose("lefty", "job_fight_won" if won else "job_fight_lost", _talk_context()))
+	dialogue.show(talk.choose("lefty", "job_fight_won" if won else "job_fight_lost", dialogue.context()))
 	if won:
 		soundscape.play_deal("lefty", rackets.job.recovered, 0)
 	hud.set_purse(rackets.money, rackets.bottles, rackets.held)
@@ -2035,33 +1835,6 @@ func _lefty_shot(dead: bool) -> void:
 	rackets.job.shot_lefty(rackets, dead)
 	if was == "" and rackets.job.outcome == "killed":
 		hud.show_notice("Lefty Moran won't be collecting at Lindqvist's again. " + rackets.job.objective().get("text", ""))
-	save_game()
-
-
-func _on_fight_check(hit: bool, _index: int) -> void:
-	soundscape.play("fight/punch_landed" if hit else "fight/punch_taken", -2.0)
-	var who: Walker = fight_opponent if hit else walker
-	var other: Walker = walker if hit else fight_opponent
-	if who != null and other != null:
-		var away := (who.global_position - other.global_position).normalized()
-		who.sprite.position = away * 4.0
-		var t := create_tween()
-		t.tween_property(who.sprite, "position", Vector2.ZERO, 0.18)
-
-
-func _on_fight_over(won: bool, results: Array) -> void:
-	fighting = false
-	if rival != null:
-		rival.held = false
-	player.set_physics_process(true)
-	FightInjuries.apply_to_danny(walker.condition, results, won)
-	if fight_opponent != null:
-		FightInjuries.apply_to_opponent(fight_opponent.condition, results, won)
-	hud.show_notice("You won the fight." if won else "You lost the fight. C shows the damage.")
-	var done := _fight_done
-	_fight_done = Callable()
-	if done.is_valid():
-		done.call(won, results)
 	save_game()
 
 
@@ -2177,7 +1950,7 @@ func _update_view(delta: float) -> void:
 	elif player.on_foot():
 		var spot := _spot()
 		var c := player.enterable_car()
-		if talking == "" and player.seat.is_empty():
+		if dialogue.talking == "" and player.seat.is_empty():
 			target = _highlight_for(spot, c)  # M012
 		if not spot.is_empty():
 			prompt = "E   %s" % ("Interrupt the Bird" if spot.id == "bird" and stage.singing() else spot.prompt)

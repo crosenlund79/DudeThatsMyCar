@@ -33,8 +33,8 @@ func test_late_at_night_he_is_told_to_go_home_but_not_forced() -> void:
 
 func test_the_bed_offers_sleep_and_he_can_say_not_yet() -> void:
 	await talk_to("home", "bed")
-	assert_eq(main.talking, "bed")
-	assert_string_contains(main._page.text, "young", "it's early yet")
+	assert_eq(main.dialogue.talking, "bed")
+	assert_string_contains(main.dialogue.page.text, "young", "it's early yet")
 	await answer_with("bye")
 	assert_eq(main.rackets.night, 1)
 
@@ -54,9 +54,9 @@ func test_sleeping_brings_the_next_evening_and_keeps_what_he_carries() -> void:
 	await wait_physics_frames(2)
 	assert_true(main.officer.brain.is_hunting())
 	await talk_to("home", "bed")
-	assert_string_contains(main._page.text, "turn in")
+	assert_string_contains(main.dialogue.page.text, "turn in")
 	await answer_with("sleep")
-	assert_eq(main.talking, "")
+	assert_eq(main.dialogue.talking, "")
 	assert_eq(main.rackets.night, 2, "the next night")
 	assert_eq(main.clock.text(), "7:30 PM", "in the evening")
 	assert_eq(main.rackets.money, money, "money kept")

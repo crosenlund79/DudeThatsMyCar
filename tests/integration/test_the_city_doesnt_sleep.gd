@@ -76,7 +76,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 	assert_not_null(dutch)
 	await walk_to(dutch.global_position + Vector2(0, 26), 6.0, 600)
 	await press_e()
-	assert_eq(main.talking, "dutch")
+	assert_eq(main.dialogue.talking, "dutch")
 	await answer_with("take")
 	await press_e()
 	await walk_to(crate_at + Vector2(0, 20), 6.0, 400)
@@ -143,7 +143,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 	assert_eq(main.rackets.night, 3)
 	assert_true(main.rackets.boss.heard.any(func(h: Dictionary) -> bool: return String(h.text).contains("hauling crates")),
 		"two nights on, through Novak and Augie")
-	var news: Dictionary = main.talk.choose("rourke", "news", main._talk_context())
+	var news: Dictionary = main.talk.choose("rourke", "news", main.dialogue.context())
 	assert_string_contains(news.text, "Your own time's your own business")
 	assert_eq(main.rackets.job.to_dict(), job_before, "Rourke's own job for Danny untouched, still his to take")
 	assert_true(main.rackets.job.rourke_has_business(main.rackets.night) or main.rackets.job.stage == RourkeJob.Stage.NOT_OFFERED,

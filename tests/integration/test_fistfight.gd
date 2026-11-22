@@ -25,7 +25,7 @@ func lefty() -> Walker:
 func _begin() -> bool:
 	walker().place(lefty().global_position + Vector2(-40, 0), 0.0)
 	await wait_physics_frames(3)
-	return main.start_fight(lefty(), "Lefty Moran", _done)
+	return main.fights.start(lefty(), "Lefty Moran", _done)
 
 
 ## Plays the fight: press in the zone for each check in `plan` (true) or let it pass (false).
@@ -41,7 +41,7 @@ func _play(plan: Array) -> void:
 		while dial.fight.phase == FistFight.Phase.RUNNING:
 			await wait_physics_frames(1)
 	for i in 120:
-		if not main.fighting:
+		if not main.fights.fighting:
 			break
 		await wait_physics_frames(1)
 
@@ -49,7 +49,7 @@ func _play(plan: Array) -> void:
 func test_the_dial_over_the_street_and_nothing_else_moves() -> void:
 	var zoom: Vector2 = main.camera.zoom
 	assert_true(await _begin())
-	assert_true(main.fighting)
+	assert_true(main.fights.fighting)
 	assert_true(main.hud.fight_dial.visible, "the dial over the street")
 	assert_eq(main.camera.zoom, zoom, "no zoom, no other screen")
 	assert_false(get_tree().paused, "the night goes on round them")
@@ -65,13 +65,13 @@ func test_the_dial_over_the_street_and_nothing_else_moves() -> void:
 	main._unhandled_input(_key(CityInput.MAP))
 	main._unhandled_input(_key(CityInput.STATUS))
 	assert_false(main.map_open or main.status_open, "no maps mid-fight")
-	assert_false(main.start_fight(lefty(), "Lefty Moran", _done), "one fight at a time")
+	assert_false(main.fights.start(lefty(), "Lefty Moran", _done), "one fight at a time")
 
 
 func test_three_landed_wins() -> void:
 	assert_true(await _begin())
 	await _play([true, true, false, true, false])
-	assert_false(main.fighting, "over")
+	assert_false(main.fights.fighting, "over")
 	assert_true(_outcome.won)
 	assert_eq(_outcome.results.count(true), 3)
 	assert_lt(walker().condition.worst(), BodyCondition.Level.WOUNDED, "a bruise or two")

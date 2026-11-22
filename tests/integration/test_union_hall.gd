@@ -41,9 +41,9 @@ func test_walk_in_look_round_and_out() -> void:
 	assert_string_contains(main.hud.prompt_label.text, "Read the noticeboard")
 	await press_e()
 	assert_string_contains(main.hud.line_label.text, "GENERAL MEETING")
-	assert_eq(main.talking, "union_board")
+	assert_eq(main.dialogue.talking, "union_board")
 	await press_e()  # walk away
-	assert_eq(main.talking, "", "done reading")
+	assert_eq(main.dialogue.talking, "", "done reading")
 	assert_eq(main.rackets.money, money, "no money moves")
 	# through the doorway into the agent's office, round the desk
 	var office := Vector2(2960, 2600)

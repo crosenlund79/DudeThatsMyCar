@@ -46,13 +46,13 @@ func test_it_covers_none_of_the_hud() -> void:
 	var hud: Hud = main.hud
 	main.rackets.bottles = 2
 	await at_the_streetcar_stop()
-	main.start_talk("augie")
+	main.dialogue.start("augie")
 	await wait_process_frames(3)
 	var map_rect := Rect2(mm().position, Minimap.SIZE)
 	for panel in [hud.clock_panel, hud.place_label.get_parent().get_parent(), hud.dialogue_panel, hud.prompt, hud.police_panel]:
 		var r := Rect2((panel as Control).position, (panel as Control).size)
 		assert_false(map_rect.intersects(r), "clear of %s" % (panel as Control).name)
-	main.end_talk()
+	main.dialogue.end()
 	var c := car_of_type("sedan")
 	await seat_in(c)
 	await wait_process_frames(3)

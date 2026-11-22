@@ -83,7 +83,7 @@ func test_the_ring_goes_under_what_e_would_do() -> void:
 	assert_false(main.highlight.target.get("cold", false))
 	# talking: nothing
 	await press_e()
-	assert_eq(main.talking, "augie")
+	assert_eq(main.dialogue.talking, "augie")
 	await wait_physics_frames(2)
 	assert_true(main.highlight.target.is_empty(), "nothing picked out while he talks")
 	await answer_with("bye")
@@ -144,14 +144,14 @@ func test_h_draws_the_gun_and_keeps_it_out() -> void:
 
 func test_the_click_that_ends_a_talk_is_not_a_shot() -> void:
 	await talk_to("copper_owl", "augie")
-	assert_eq(main.talking, "augie")
+	assert_eq(main.dialogue.talking, "augie")
 	# the mouse button goes down on the last answer and is held a moment
 	cmd = PlayerCommand.new()
 	cmd.fire = true
 	_fire_pending = true
-	main._answer(main._page.options.size() - 1)
+	main.dialogue.answer(main.dialogue.page.options.size() - 1)
 	await wait_physics_frames(10)
-	assert_eq(main.talking, "")
+	assert_eq(main.dialogue.talking, "")
 	assert_eq(_shots, 0, "no shot from the click that ended it")
 	cmd = PlayerCommand.new()
 	await wait_physics_frames(3)

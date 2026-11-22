@@ -163,20 +163,20 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(990, 368), -PI / 2)
 				await _frames(40)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(990, 334))
-				main.start_talk("sal")
+				main.dialogue.start("sal")
 				await _frames(20)
 				await _shot("barber")
-				main.end_talk()
+				main.dialogue.end()
 			"augie":
 				_teleport_walker(Vector2(2240, 256), -PI / 2)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2240, 202))
 				await _frames(40)
 				main.rackets.bottles = 6
 				main.hud.set_purse(main.rackets.money, main.rackets.bottles)
-				main.start_talk("augie")
+				main.dialogue.start("augie")
 				await _frames(10)
 				await _shot("augie")
-				main.end_talk()
+				main.dialogue.end()
 				main.rackets.bottles = 0
 				main.hud.set_purse(main.rackets.money, main.rackets.bottles)
 			"rourke":
@@ -187,12 +187,12 @@ func _run(shots: Array) -> void:
 				main.rackets.collect("copper_owl", false)
 				main.rackets.collect("grocery", false)
 				main.hud.set_purse(main.rackets.money, main.rackets.bottles, main.rackets.held)
-				main.start_talk("rourke")
+				main.dialogue.start("rourke")
 				await _frames(10)
-				main._answer(0)  # "the envelope"
+				main.dialogue.answer(0)  # "the envelope"
 				await _frames(10)
 				await _shot("rourke")
-				main.end_talk()
+				main.dialogue.end()
 			"bird":
 				# M006: the Bird singing on the bandstand, Danny at a table
 				_teleport_walker(Vector2(2300, 340), 0.0)
@@ -207,7 +207,7 @@ func _run(shots: Array) -> void:
 				main.talk_to_bird()
 				await _frames(30)
 				await _shot("bird_talk")
-				main.end_talk()
+				main.dialogue.end()
 			"lefty":
 				# M006: Lefty Moran outside Doyle's Garage, Danny walking up
 				_teleport_walker(main.rival.body.global_position + Vector2(-80, 0), 0.0)
@@ -243,10 +243,10 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(2150, 1300), 0.0)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2200, 1262))
 				await _frames(40)
-				main.start_talk("pettibone")
+				main.dialogue.start("pettibone")
 				await _frames(10)
 				await _shot("vet")
-				main.end_talk()
+				main.dialogue.end()
 				main.walker.condition.heal_all()
 			"status":
 				# M006: how Danny is (C), after a bad night
@@ -268,7 +268,7 @@ func _run(shots: Array) -> void:
 				_teleport_walker(main.rival.body.global_position + Vector2(-42, 0), 0.0)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, main.rival.body.global_position)
 				await _frames(20)
-				main.start_fight(main.rival.body, "Lefty Moran", func(_w, _r): pass)
+				main.fights.start(main.rival.body, "Lefty Moran", func(_w, _r): pass)
 				var dial: FightDial = main.hud.fight_dial
 				# land the first punch, then catch the second check mid-sweep
 				while dial.fight.phase != FistFight.Phase.RUNNING:
@@ -283,26 +283,26 @@ func _run(shots: Array) -> void:
 				while dial.fight.needle < dial.fight.zone_start * 0.7:
 					await process_frame
 				await _shot("fight", false)
-				while main.fighting:
+				while main.fights.fighting:
 					await process_frame
 			"job_offer":
 				# M007: Rourke offers the job at his corner table (the line's performance tag beside his name)
 				await _at_spot("copper_owl", "rourke")
 				main.voice_lines.mark("rourke_greeting")  # met him already: straight to business
-				main.start_talk("rourke")
-				main._answer(_option("job_offer"))
+				main.dialogue.start("rourke")
+				main.dialogue.answer(_option("job_offer"))
 				await _frames(10)
 				await _shot("job_offer")
-				main.end_talk()
+				main.dialogue.end()
 			"lindqvist_tells":
 				# M007: the Swede names the man
 				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
 				await _at_spot("hardware", "lindqvist")
-				main.start_talk("lindqvist")
-				main._answer(_option("job_ask"))
+				main.dialogue.start("lindqvist")
+				main.dialogue.answer(_option("job_ask"))
 				await _frames(10)
 				await _shot("lindqvist_tells")
-				main.end_talk()
+				main.dialogue.end()
 			"job_map":
 				# M007: the job on the ward map - a few words under the key, a ring round Lefty's corner
 				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
@@ -321,11 +321,11 @@ func _run(shots: Array) -> void:
 				_teleport_walker(lefty_at + Vector2(-34, 6), 0.0)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, lefty_at)
 				await _frames(25)
-				main.talking = "lefty"
-				main._show(main.talk.open("lefty", main._talk_context()))
+				main.dialogue.talking = "lefty"
+				main.dialogue.show(main.talk.open("lefty", main.dialogue.context()))
 				await _frames(10)
 				await _shot("confront")
-				main.end_talk()
+				main.dialogue.end()
 			"report":
 				# M007: telling Rourke how it went
 				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
@@ -333,12 +333,12 @@ func _run(shots: Array) -> void:
 				main.rackets.job.resolve("beaten", main.rackets)
 				main.rackets.boss.purse = 3000
 				await _at_spot("copper_owl", "rourke")
-				main.start_talk("rourke")
-				main._answer(_option("job_report"))
-				main._answer(_option("job_truth_hand"))
+				main.dialogue.start("rourke")
+				main.dialogue.answer(_option("job_report"))
+				main.dialogue.answer(_option("job_truth_hand"))
 				await _frames(10)
 				await _shot("report")
-				main.end_talk()
+				main.dialogue.end()
 			"yards", "yards_dock", "yards_sidings", "border_south":
 				# M008: the Riverfront Yards (streamed in as Danny comes near, here at once)
 				main.world.load_now("yards")
@@ -419,19 +419,19 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(1921, 838), 0.0)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(1976, 838))
 				await _frames(40)
-				main.start_talk("novak")
-				main._answer(0)
+				main.dialogue.start("novak")
+				main.dialogue.answer(0)
 				await _frames(10)
 				await _shot("grocery")
-				main.end_talk()
+				main.dialogue.end()
 			"eddie":
 				_teleport_walker(Vector2(1032, 952), PI)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(982, 955))
 				await _frames(40)
-				main.start_talk("eddie")
+				main.dialogue.start("eddie")
 				await _frames(10)
 				await _shot("eddie")
-				main.end_talk()
+				main.dialogue.end()
 			"opening":
 				# M005: the opening narration over the ward, at moments through the monologue
 				main.walker.place(main.layout.spawn, main.layout.spawn_facing)
@@ -803,7 +803,7 @@ func _run(shots: Array) -> void:
 				await _shot("m012_bird_film", false)
 				for i in 600:
 					await _frames(1)
-					if main.talking == "bird_scene":
+					if main.dialogue.talking == "bird_scene":
 						break
 				await _frames(10)
 				await _shot("m012_bird_question", false)
@@ -816,22 +816,22 @@ func _run(shots: Array) -> void:
 					if sp.id == "leon":
 						_teleport_walker(sp.pos, PI / 2)
 				await _frames(40)
-				main.start_talk("leon")
-				main._answer(0)  # "Go on."
+				main.dialogue.start("leon")
+				main.dialogue.answer(0)  # "Go on."
 				await _frames(10)
 				await _shot("m012_freight_offer", false)
-				main._answer(0)  # "I'll see to it."
-				main.end_talk()
+				main.dialogue.answer(0)  # "I'll see to it."
+				main.dialogue.end()
 				main.rackets.freight.learn("docked")
 				var shed: InteriorPlan = main.interiors.plan_named("freight_shed")
 				for sp in shed.spots:
 					if sp.id == "walt":
 						_teleport_walker(sp.pos, PI)
 				await _frames(40)
-				main.start_talk("walt")
+				main.dialogue.start("walt")
 				await _frames(10)
 				await _shot("m012_freight_walt", false)
-				main.end_talk()
+				main.dialogue.end()
 				main.rackets.money = 1500
 				main.rackets.freight.settle(main.rackets, "paid")
 				main._sync_freight()
@@ -1111,7 +1111,7 @@ func _run(shots: Array) -> void:
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2120, 462))
 				await _frames(150)
 				if s == "incident_broken_up":
-					main._incident_talking = "shot_a"
+					main.dialogue.incident_talking = "shot_a"
 					main._step_in("calm")
 					await _frames(70)
 				await _shot(s, false)
@@ -1145,7 +1145,7 @@ func _run(shots: Array) -> void:
 					main._interact(main.walker.global_position)
 					await _frames(30)
 					await _shot("dutch", false)
-					main.end_talk()
+					main.dialogue.end()
 				else:
 					main.rackets.opportunities.take_crate()
 					main.walker.place(cp + Vector2(0, 20), -PI / 2)
@@ -1170,7 +1170,7 @@ func _run(shots: Array) -> void:
 					main._interact(main.walker.global_position)
 					await _frames(30)
 					await _shot("feeney", false)
-					main.end_talk()
+					main.dialogue.end()
 				else:
 					var fc: Vector2 = hl.errands[0].pos
 					_teleport_walker(fc + Vector2(-40, 50), -0.9)
@@ -1307,7 +1307,7 @@ func _at_spot(plan_id: String, person: String) -> void:
 
 ## The index of the answer `id` on the page on screen (-1: none).
 func _option(id: String) -> int:
-	var opts: Array = main._page.get("options", [])
+	var opts: Array = main.dialogue.page.get("options", [])
 	for i in opts.size():
 		if opts[i].id == id:
 			return i

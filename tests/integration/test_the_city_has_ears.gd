@@ -113,7 +113,7 @@ func test_three_nights_in_the_ward() -> void:
 	assert_gt(r.boss.expected, r.boss.believed_due(r.club()), "tonight he wants what he is owed on top")
 	assert_ne(r.boss.mood(), "warm")
 	await talk_to("copper_owl", "rourke")
-	assert_string_contains(main._page.text, Rackets.dollars(r.boss.expected), "and says so")
+	assert_string_contains(main.dialogue.page.text, Rackets.dollars(r.boss.expected), "and says so")
 	await press_e()
 	assert_same(main.soundscape.music, music, "one player")
 	assert_true(music.playing)

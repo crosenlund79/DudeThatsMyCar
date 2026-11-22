@@ -101,7 +101,7 @@ func test_the_whole_job() -> void:
 	assert_eq(main.rackets.money, before + CafeJob.REWARD)
 	await press_e()
 	await talk_to("copper_owl", "rourke")
-	assert_false(main._page.options.any(func(o: Dictionary) -> bool: return String(o.id).begins_with("cafe")), "paid once")
+	assert_false(main.dialogue.page.options.any(func(o: Dictionary) -> bool: return String(o.id).begins_with("cafe")), "paid once")
 	await press_e()
 	# the next night: the wreck still at the kerb, no new Packard, no new job
 	await talk_to("home", "bed")

@@ -71,14 +71,14 @@ func test_one_night_one_problem() -> void:
 	await wait_physics_frames(2)
 	assert_string_contains(main.hud.prompt_label.text, "Lefty Moran")
 	await press_e()
-	assert_eq(main.talking, "lefty")
+	assert_eq(main.dialogue.talking, "lefty")
 	await answer_with("job_fight")
 	await answer_with("bye")  # (Raise your fists.)
 	for i in 30:
-		if main.fighting:
+		if main.fights.fighting:
 			break
 		await wait_physics_frames(1)
-	assert_true(main.fighting)
+	assert_true(main.fights.fighting)
 	var dial: FightDial = main.hud.fight_dial
 	for check in 5:
 		while dial.fight.phase != FistFight.Phase.RUNNING and not dial.fight.is_over():
@@ -89,7 +89,7 @@ func test_one_night_one_problem() -> void:
 		while dial.fight.phase == FistFight.Phase.RUNNING:
 			await wait_physics_frames(1)
 	for i in 120:
-		if not main.fighting:
+		if not main.fights.fighting:
 			break
 		await wait_physics_frames(1)
 	assert_eq(job().outcome, "beaten")

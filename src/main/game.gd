@@ -55,6 +55,9 @@ var hud: Hud
 var back_rooms: BackRooms
 var fleet: Fleet
 var police: PoliceForce
+var dialogue: Dialogue
+var fights: Fights
+var people: People
 
 
 ## The game is saved (after a deal, a hand, a film...).

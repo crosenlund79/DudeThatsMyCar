@@ -30,7 +30,7 @@ func _taken(knows: bool = true) -> void:
 
 
 func _ids() -> Array:
-	return main._page.get("options", []).map(func(o: Dictionary) -> String: return o.id)
+	return main.dialogue.page.get("options", []).map(func(o: Dictionary) -> String: return o.id)
 
 
 ## Walks up to Lefty at his corner and presses E.
@@ -38,16 +38,16 @@ func _meet_lefty() -> void:
 	walker().place(lefty().body.global_position + Vector2(-32, 0), 0.0)
 	await wait_physics_frames(3)
 	await press_e()
-	assert_eq(main.talking, "lefty")
+	assert_eq(main.dialogue.talking, "lefty")
 
 
 ## Plays the dial: Space in the zone for each check in `plan` that is true.
 func _fight(plan: Array) -> void:
 	for i in 60:
-		if main.fighting:
+		if main.fights.fighting:
 			break
 		await wait_physics_frames(1)
-	assert_true(main.fighting, "the fight is on")
+	assert_true(main.fights.fighting, "the fight is on")
 	var dial: FightDial = main.hud.fight_dial
 	for want in plan:
 		while dial.fight.phase != FistFight.Phase.RUNNING and not dial.fight.is_over():
@@ -59,7 +59,7 @@ func _fight(plan: Array) -> void:
 		while dial.fight.phase == FistFight.Phase.RUNNING:
 			await wait_physics_frames(1)
 	for i in 120:
-		if not main.fighting:
+		if not main.fights.fighting:
 			break
 		await wait_physics_frames(1)
 
@@ -134,13 +134,13 @@ func test_won_with_his_fists() -> void:
 	await _fight([true, true, true, true, true])
 	assert_eq(job().outcome, "beaten")
 	assert_eq(main.rackets.money, money + RourkeJob.RECOVERABLE)
-	assert_eq(main.talking, "lefty", "Lefty has something to say from the ground")
+	assert_eq(main.dialogue.talking, "lefty", "Lefty has something to say from the ground")
 	assert_string_contains(main.hud.line_label.text, "off my list")
 	assert_false(lefty().is_down(), "beaten, not dead")
 	assert_false(lefty().is_hostile())
 	await press_e()
 	await wait_physics_frames(3)
-	assert_false(main.fighting)
+	assert_false(main.fights.fighting)
 
 
 func test_lost_and_then_another_way() -> void:

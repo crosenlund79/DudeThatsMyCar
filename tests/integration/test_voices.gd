@@ -25,22 +25,22 @@ class SilentResolver extends AssetResolver:
 
 func test_augie_greets_danny_the_first_time_only() -> void:
 	await talk_to("copper_owl", "augie")
-	assert_eq(main._page.voice, ["augie_greeting"])
-	assert_eq(main._page.text, VoiceLines.text("augie_greeting"), "his words on the page")
+	assert_eq(main.dialogue.page.voice, ["augie_greeting"])
+	assert_eq(main.dialogue.page.text, VoiceLines.text("augie_greeting"), "his words on the page")
 	assert_eq(main.voice.current, "augie_greeting", "and in his voice")
 	assert_false(main.voice_lines.due("augie_greeting"))
 	await wait_physics_frames(60)
 	assert_gt(main.soundscape.duck, 0.9, "the band steps back while he talks")
 	await answer_with("hello")
-	assert_true((main._page.options as Array).any(func(o: Dictionary) -> bool: return o.id == "protection"), "then his usual page")
+	assert_true((main.dialogue.page.options as Array).any(func(o: Dictionary) -> bool: return o.id == "protection"), "then his usual page")
 	await press_e()
-	assert_eq(main.talking, "")
+	assert_eq(main.dialogue.talking, "")
 	await wait_physics_frames(30)
 	assert_eq(main.voice.current, "", "walking away ends it")
 	await wait_physics_frames(60)
 	assert_lt(main.soundscape.duck, 0.1, "the band comes back up")
 	await talk_to("copper_owl", "augie")
-	assert_false(main._page.has("voice"), "never twice")
+	assert_false(main.dialogue.page.has("voice"), "never twice")
 	assert_eq(main.voice.current, "")
 
 
@@ -49,7 +49,7 @@ func test_eddie_greeting_then_his_sales_line_one_after_the_other() -> void:
 	assert_eq(main.voice.current, "eddie_greeting")
 	await answer_with("hello")
 	await answer_with("wares")
-	assert_eq(main._page.text, VoiceLines.text("eddie_sales"))
+	assert_eq(main.dialogue.page.text, VoiceLines.text("eddie_sales"))
 	assert_eq(main.voice.current, "eddie_greeting", "he finishes his greeting first")
 	assert_eq(main.voice.queue, ["eddie_sales"] as Array[String], "the sales line waits its turn")
 	var length: float = main.resolver.get_audio("voice/eddie_greeting").get_length()
@@ -60,7 +60,7 @@ func test_eddie_greeting_then_his_sales_line_one_after_the_other() -> void:
 			break
 	assert_eq(main.voice.current, "eddie_sales", "then the sales line")
 	await answer_with("bye")
-	assert_eq(main.talking, "")
+	assert_eq(main.dialogue.talking, "")
 	await talk_to("hardware", "eddie")
 	await answer_with("wares")
 	assert_eq(main.voice.current, "", "the sales line was said once")
@@ -71,7 +71,7 @@ func test_rourke_remembers_meeting_him_across_saves() -> void:
 	main.save_path = _save
 	await talk_to("copper_owl", "rourke")
 	assert_eq(main.voice.current, "rourke_greeting", "back after years away")
-	assert_string_contains(main._page.text, "Look what the wind dragged back into Chicago.")
+	assert_string_contains(main.dialogue.page.text, "Look what the wind dragged back into Chicago.")
 	await press_e()
 	remove_child(main)
 	main.free()
@@ -85,16 +85,16 @@ func test_rourke_remembers_meeting_him_across_saves() -> void:
 	await wait_physics_frames(3)
 	assert_null(main.opening)
 	await talk_to("copper_owl", "rourke")
-	assert_false(main._page.has("voice"), "a loaded game remembers they have met")
-	assert_string_contains(main._page.text, Rackets.dollars(main.rackets.boss.expected), "straight to business")
+	assert_false(main.dialogue.page.has("voice"), "a loaded game remembers they have met")
+	assert_string_contains(main.dialogue.page.text, Rackets.dollars(main.rackets.boss.expected), "straight to business")
 	main.save_path = ""
 
 
 func test_a_missing_recording_never_stops_the_talk() -> void:
 	main.voice.setup(SilentResolver.new(""), main.voice_lines)
 	await talk_to("copper_owl", "augie")
-	assert_eq(main._page.text, VoiceLines.text("augie_greeting"), "the greeting is still on the page")
+	assert_eq(main.dialogue.page.text, VoiceLines.text("augie_greeting"), "the greeting is still on the page")
 	assert_eq(main.voice.current, "", "silently")
 	await answer_with("hello")
-	assert_eq(main.talking, "augie")
+	assert_eq(main.dialogue.talking, "augie")
 	assert_false(main.voice_lines.due("augie_greeting"), "and the meeting still counts")

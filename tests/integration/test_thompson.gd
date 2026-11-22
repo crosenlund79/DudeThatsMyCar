@@ -114,7 +114,7 @@ func test_the_parcel() -> void:
 	main.rackets.money = 1000
 	await talk_to("hardware", "eddie")
 	await answer_with("wares")
-	var ids: Array = main._page.options.map(func(o: Dictionary) -> String: return o.id)
+	var ids: Array = main.dialogue.page.options.map(func(o: Dictionary) -> String: return o.id)
 	assert_false(ids.has("parcel"), "not without the job")
 	await press_e()
 	main.rackets.parcel_wanted = true

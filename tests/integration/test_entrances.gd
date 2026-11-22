@@ -13,9 +13,9 @@ func _check(plan_id: String, spot_id: String, prompt: String) -> void:
 	assert_eq(main.interiors.view_of(plan_id).alpha, 1.0, "%s: the roof is open" % plan_id)
 	assert_string_contains(main.hud.prompt_label.text, prompt)
 	await press_e()
-	assert_eq(main.talking, spot_id, "%s: E works" % plan_id)
+	assert_eq(main.dialogue.talking, spot_id, "%s: E works" % plan_id)
 	await press_e()
-	assert_eq(main.talking, "", "and E walks away")
+	assert_eq(main.dialogue.talking, "", "and E walks away")
 	var back := path_in_room(plan, walker().global_position, plan.inside_door(0, 14.0), 8.0)
 	for p in back:
 		await walk_to(p, 4.0, 120)
@@ -56,7 +56,7 @@ func test_novak_protection_through_the_front_door() -> void:
 	assert_eq(main.rackets.money, start + main.rackets.town.get_business("grocery").protection)
 	await press_e()
 	await press_e()
-	var ids: Array = main._page.options.map(func(o: Dictionary) -> String: return o.id)
+	var ids: Array = main.dialogue.page.options.map(func(o: Dictionary) -> String: return o.id)
 	assert_false(ids.has("protection"), "once a night")
 
 

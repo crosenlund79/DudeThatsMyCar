@@ -47,7 +47,7 @@ func _to_her() -> void:
 func _until_question() -> void:
 	for i in 1200:
 		await wait_physics_frames(1)
-		if main.talking == "bird_scene":
+		if main.dialogue.talking == "bird_scene":
 			break
 
 
@@ -70,8 +70,8 @@ func test_her_last_song_her_question_and_his_answer() -> void:
 	assert_lt(main.interiors.view_of("copper_owl").light_scale, 0.6, "the house lights down")
 	assert_gt(main.soundscape.duck, 0.0, "the room hushed")
 	await _until_question()
-	assert_eq(main.talking, "bird_scene", "her question")
-	var ids: Array = main._page.options.map(func(o: Dictionary) -> String: return o.id)
+	assert_eq(main.dialogue.talking, "bird_scene", "her question")
+	var ids: Array = main.dialogue.page.options.map(func(o: Dictionary) -> String: return o.id)
 	for want in ["truth", "kind", "guard", "bye"]:
 		assert_has(ids, want, "three ways to answer, or none")
 	assert_true(main.hud.visible, "the words on screen")
@@ -112,7 +112,7 @@ func test_skipped_to_her_question_and_walking_away_from_it() -> void:
 	e.pressed = true
 	main._unhandled_input(e)
 	await wait_physics_frames(5)
-	assert_eq(main.talking, "bird_scene", "skipped straight to her question")
+	assert_eq(main.dialogue.talking, "bird_scene", "skipped straight to her question")
 	var esc := InputEventAction.new()
 	esc.action = CityInput.MENU
 	esc.pressed = true

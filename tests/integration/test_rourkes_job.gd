@@ -50,7 +50,7 @@ func test_taken_and_remembered_across_sleep_and_saves() -> void:
 	await _reload()
 	assert_eq(job().stage, RourkeJob.Stage.ACCEPTED, "and in the saved game")
 	await talk_to("copper_owl", "rourke")
-	var ids: Array = main._page.options.map(func(o: Dictionary) -> String: return o.id)
+	var ids: Array = main.dialogue.page.options.map(func(o: Dictionary) -> String: return o.id)
 	assert_has(ids, "job_report", "Rourke asks how it's going")
 	main.save_path = ""
 

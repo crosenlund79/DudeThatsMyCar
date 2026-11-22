@@ -46,7 +46,7 @@ func test_dutch_and_his_crate() -> void:
 	await wait_physics_frames(2)
 	assert_string_contains(main.hud.prompt_label.text, "Talk to Dutch")
 	await press_e()
-	assert_eq(main.talking, "dutch")
+	assert_eq(main.dialogue.talking, "dutch")
 	assert_string_contains(main.hud.line_label.text, "Novak")
 	await answer_with("take")
 	assert_eq(main.rackets.opportunities.crate, "taken")
@@ -93,7 +93,7 @@ func test_novak_wants_it_out_front_not_across_town() -> void:
 	main.fleet.set_cargo(sedan, true)
 	await park(sedan, Vector2(1000, 600), 0.0)  # down the avenue
 	await talk_to("grocery", "novak")
-	assert_false(main._page.options.any(func(o: Dictionary) -> bool: return o.id == "crate"), "he sees no crate")
+	assert_false(main.dialogue.page.options.any(func(o: Dictionary) -> bool: return o.id == "crate"), "he sees no crate")
 
 
 func test_left_alone_dutch_finds_another_way() -> void:
