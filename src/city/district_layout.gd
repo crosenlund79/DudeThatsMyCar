@@ -44,6 +44,16 @@ var cafe: Array = []
 ## M011: doors that are shut for the night but can be tried (City Hall, the
 ## mayor's gate, the aldermen's offices): {pos, prompt, text}.
 var locked_doors: Array = []
+## M014: named points the game refers to by name rather than by number - where
+## Lefty keeps his corner, where the Bird sits after her last song, where Leon
+## stands at Dutch's counter: name -> position (written in the district's own
+## coordinates, moved with the rest by shift(), so in the world's once placed).
+var places := {}
+
+
+## M014: one of the district's named places (Vector2.INF when it has none by that name).
+func place(place_name: String) -> Vector2:
+	return places.get(place_name, Vector2.INF)
 
 
 ## M010: one of the café job's places ({} when the district has none).
@@ -276,6 +286,8 @@ func shift(offset: Vector2) -> DistrictLayout:
 			item.pos += offset
 	for e in exits:
 		e.rect = _moved(e.rect, offset)
+	for k in places:  # M014
+		places[k] += offset
 	for plan in interiors:  # M012: rooms in the neighbouring districts
 		(plan as InteriorPlan).shift(offset)
 	for i in lamps.size():

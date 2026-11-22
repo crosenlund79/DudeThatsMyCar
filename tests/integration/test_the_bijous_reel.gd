@@ -26,9 +26,9 @@ func _set_minute(m: float) -> void:
 func test_feeney_s_reel_found_and_returned() -> void:
 	var l := _square()
 	await wait_physics_frames(2)
-	var feeney: Walker = main.opportunity_views.contact("feeney")
+	var feeney: Walker = main.errands.views.contact("feeney")
 	assert_not_null(feeney, "Mr. Feeney outside the Bijou")
-	var can: Sprite2D = main.opportunity_views.errand("film_can")
+	var can: Sprite2D = main.errands.views.errand("film_can")
 	assert_true(can.visible)
 	assert_true(main.world.is_open_ground(can.global_position, 12.0), "the can lies where Danny can walk")
 	_go(feeney.global_position + Vector2(0, 30), -PI / 2)
@@ -68,7 +68,7 @@ func test_ignored_the_show_is_cancelled() -> void:
 	_set_minute(Opportunities.REEL_SHOW)
 	assert_eq(main.rackets.opportunities.reel, "cancelled", "eleven o'clock, no reel")
 	await wait_physics_frames(2)
-	assert_false(main.opportunity_views.errand("film_can").visible, "the boy found it in the morning")
+	assert_false(main.errands.views.errand("film_can").visible, "the boy found it in the morning")
 	assert_true(main.rackets.rumours.items.any(func(r: Dictionary) -> bool: return r.kind == "reel_cancelled" and r.origin == "feeney"))
 	assert_eq(main.rackets.memory.recent("feeney", "broken_promise", main.rackets.night), 0)
 	_go(l.contacts[0].pos + Vector2(0, 30), -PI / 2)
@@ -77,7 +77,7 @@ func test_ignored_the_show_is_cancelled() -> void:
 	assert_string_contains(main.hud.line_label.text, "No reel, no late show")
 	# Sal shaves Mr. Feeney: by the next night the ward has heard
 	await press_e()
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(3)
 	assert_true(main.rackets.rumours.known_to("sal", "reel_cancelled").size() > 0, "Sal heard it in the chair")
 
@@ -92,12 +92,12 @@ func test_a_promise_not_kept() -> void:
 
 
 func test_no_reel_trouble_on_other_nights() -> void:
-	main.sleep()  # night 2
+	main.night.sleep()  # night 2
 	await wait_physics_frames(3)
 	assert_eq(main.rackets.opportunities.reel, "none")
 	var l := _square()
 	await wait_physics_frames(2)
-	assert_false(main.opportunity_views.errand("film_can").visible, "no can behind the church")
+	assert_false(main.errands.views.errand("film_can").visible, "no can behind the church")
 	_go(l.contacts[0].pos + Vector2(0, 30), -PI / 2)
 	await wait_physics_frames(2)
 	await press_e()

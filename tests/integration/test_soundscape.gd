@@ -58,7 +58,7 @@ func test_the_band_plays_on_one_player_that_never_restarts() -> void:
 	await wait_physics_frames(60)
 	await press_e()
 	await wait_physics_frames(60)
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(30)
 	assert_same(sound().music, music, "one player")
 	assert_true(music.playing, "still playing")

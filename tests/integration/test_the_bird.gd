@@ -113,7 +113,7 @@ func test_a_new_night_she_is_singing() -> void:
 	await wait_physics_frames(3)
 	await press_e()
 	assert_true(sound().music_stopped)
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(5)
 	assert_true(main.stage.singing())
 	assert_true(sound().music.playing, "the club opens with her song")

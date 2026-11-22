@@ -46,10 +46,10 @@ func _m009_cost(label: String, frames: int = 240) -> void:
 		var t0 := Time.get_ticks_usec()
 		main.incident_director.advance()
 		for e in main.rackets.opportunities.advance(main.clock.minute):
-			main._opportunity_over(e)
+			main.errands.opportunity_over(e)
 		main.incident_views.refresh(main.camera.eye(), main.player.body().global_position, 1.0 / 60.0)
-		main.opportunity_views.refresh(main.player.body().global_position)
-		main._spot()
+		main.errands.views.refresh(main.player.body().global_position)
+		main.interactions.spot()
 		var dt := Time.get_ticks_usec() - t0
 		total += dt
 		worst = maxi(worst, dt)

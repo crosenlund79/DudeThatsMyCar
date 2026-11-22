@@ -114,6 +114,13 @@ func contact_down(id: String) -> void:
 	game.hud.show_notice("%s goes down, badly hurt. Somebody runs for the Doc." % game.talk.speaker(id))
 
 
+## Doc Pettibone's treatment paid for (a talk's "heal"): good as new.
+func heal(v: Variant) -> void:
+	if v:
+		game.walker.condition.heal_all()
+		game.hud.show_notice("Patched up. Good as new, near enough.")
+
+
 ## Tonight's casualties from the save (an earlier night's are back on their feet).
 func load_out(saved: Dictionary, night: int) -> void:
 	ward_out = {}

@@ -25,12 +25,12 @@ func after_each() -> void:
 
 
 func _in_the_club_late() -> void:
-	main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
+	main.clock.set_time(LastSong.LAST_SONG + 1.0)
 	walker().place(Vector2(2290, 380), -PI / 2)
 	main.camera.snap_to(walker())
 	for i in 30:
 		await wait_physics_frames(1)
-		if main.bird_scene != "":
+		if main.last_song.scene != "":
 			break
 
 
@@ -38,9 +38,9 @@ func _to_her() -> void:
 	var bird: Walker = main.bird_show.bird
 	for i in 240:
 		await wait_physics_frames(1)
-		if bird.global_position.distance_to(main.BIRD_SEAT) < 5.0:
+		if bird.global_position.distance_to(main.last_song.seat()) < 5.0:
 			break
-	walker().place(main.BIRD_SEAT + Vector2(0, 34), -PI / 2)
+	walker().place(main.last_song.seat() + Vector2(0, 34), -PI / 2)
 	await wait_physics_frames(3)
 
 
@@ -55,7 +55,7 @@ func test_her_last_song_her_question_and_his_answer() -> void:
 	var voices := VoiceLines.LINES.size()
 	assert_true(main.stage.singing())
 	await _in_the_club_late()
-	assert_eq(main.bird_scene, "asking", "the last song of the night")
+	assert_eq(main.last_song.scene, "asking", "the last song of the night")
 	assert_true(main.stage.done)
 	assert_false(main.stage.singing())
 	assert_true(main.soundscape.music_stopped, "the song is over")
@@ -63,9 +63,9 @@ func test_her_last_song_her_question_and_his_answer() -> void:
 	await _to_her()
 	assert_string_contains(main.hud.prompt_label.text, "Stay a minute with the Bird")
 	await press_e()
-	assert_not_null(main.bird_film, "the film")
+	assert_not_null(main.films.of("bird"), "the film")
 	await wait_physics_frames(60)
-	assert_eq(main.camera.target, main.bird_film.rig, "the camera leaves Danny")
+	assert_eq(main.camera.target, main.films.of("bird").rig, "the camera leaves Danny")
 	assert_false(main.hud.visible, "the HUD out of the way")
 	assert_lt(main.interiors.view_of("copper_owl").light_scale, 0.6, "the house lights down")
 	assert_gt(main.soundscape.duck, 0.0, "the room hushed")
@@ -81,14 +81,14 @@ func test_her_last_song_her_question_and_his_answer() -> void:
 	await answer_with("bye")
 	for i in 120:
 		await wait_physics_frames(1)
-		if main.bird_film == null:
+		if main.films.of("bird") == null:
 			break
-	assert_null(main.bird_film, "the bars slide away")
+	assert_null(main.films.of("bird"), "the bars slide away")
 	assert_eq(main.camera.target, walker(), "the camera back on Danny")
 	assert_true(main.hud.visible)
 	await wait_physics_frames(60)
 	assert_lt(main.soundscape.duck, 0.1, "nothing ducked")
-	assert_eq(main.bird_scene, "")
+	assert_eq(main.last_song.scene, "")
 	assert_eq(VoiceLines.LINES.size(), voices, "no recorded voice added")
 	# she remembers it, and it never happens again
 	await talk_to("copper_owl", "bird")
@@ -99,7 +99,7 @@ func test_her_last_song_her_question_and_his_answer() -> void:
 	await wait_physics_frames(3)
 	assert_true(main.stage.singing(), "a new night, a new set")
 	await _in_the_club_late()
-	assert_eq(main.bird_scene, "", "once only")
+	assert_eq(main.last_song.scene, "", "once only")
 
 
 func test_skipped_to_her_question_and_walking_away_from_it() -> void:
@@ -121,30 +121,30 @@ func test_skipped_to_her_question_and_walking_away_from_it() -> void:
 	assert_eq(main.rackets.bird_scene, "silent", "walking away is an answer too")
 	for i in 120:
 		await wait_physics_frames(1)
-		if main.bird_film == null:
+		if main.films.of("bird") == null:
 			break
-	assert_null(main.bird_film)
+	assert_null(main.films.of("bird"))
 	assert_eq(main.camera.target, walker())
 
 
 func test_let_be_she_asks_another_night() -> void:
 	await _in_the_club_late()
-	assert_eq(main.bird_scene, "asking")
+	assert_eq(main.last_song.scene, "asking")
 	walker().place(main.interiors.plan_named("copper_owl").outside_door(0, 60.0), PI / 2)
 	await wait_physics_frames(10)
-	assert_eq(main.bird_scene, "", "he walked out: she lets it be")
+	assert_eq(main.last_song.scene, "", "he walked out: she lets it be")
 	assert_eq(main.rackets.bird_scene, "", "nothing said")
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(3)
 	await _in_the_club_late()
-	assert_eq(main.bird_scene, "asking", "another night, she asks again")
+	assert_eq(main.last_song.scene, "asking", "another night, she asks again")
 
 
 func test_not_before_they_have_met() -> void:
 	main.voice_lines.heard.erase("bird_greeting")
 	await _in_the_club_late()
-	assert_eq(main.bird_scene, "", "a stranger at the bar: she just sings")
+	assert_eq(main.last_song.scene, "", "a stranger at the bar: she just sings")
 
 
 func test_kept_through_saving_and_loading() -> void:
@@ -174,6 +174,6 @@ func test_kept_through_saving_and_loading() -> void:
 	await talk_to("copper_owl", "bird")
 	assert_string_contains(main.hud.line_label.text, "Know me any better")
 	await answer_with("bye")
-	main.clock.set_time(main.BIRD_LAST_SONG + 5.0)
+	main.clock.set_time(LastSong.LAST_SONG + 5.0)
 	await wait_physics_frames(30)
-	assert_eq(main.bird_scene, "", "not again after loading")
+	assert_eq(main.last_song.scene, "", "not again after loading")

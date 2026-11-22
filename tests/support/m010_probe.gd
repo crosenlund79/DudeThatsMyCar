@@ -74,14 +74,14 @@ func _run() -> void:
 	main.rackets.money = 2000
 	for i in 5:
 		await process_frame
-	main._interact(main.walker.global_position)
+	main.interactions.use(main.walker.global_position)
 	main.hud.poker_view.choose_buy_in(1)
 	main.hud.poker_view.think = Vector2(0.4, 0.6)
 	await _fps("the back room, the card table open, a hand being played")
 	main.back_rooms.leave_poker()
 	# a Thompson burst on Marlowe Avenue
 	main.rackets.borrow_thompson()
-	main._arm_thompson(true)
+	main.armoury.arm_thompson(true)
 	main.walker.place(Vector2(2250, 560), -PI / 2)
 	main.camera.snap_to(main.walker)
 	main.player.switch_gun()
@@ -106,15 +106,15 @@ func _run() -> void:
 	await _fps("the burning wreck, the emergency driving in", 6.0)
 	for i in 600:
 		await process_frame
-		if main.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"):
+		if main.cafe.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"):
 			break
 	await _fps("the emergency at the kerb, its crews, the fire")
 	var total := 0
 	for i in 240:
 		await process_frame
 		var t0 := Time.get_ticks_usec()
-		main.cafe_scene.refresh(main.rackets.night, main.clock.minute)
-		main.emergency_views.update(main.rackets.night, main.clock.minute, 0.0)
+		main.cafe.scene.refresh(main.rackets.night, main.clock.minute)
+		main.cafe.emergency_views.update(main.rackets.night, main.clock.minute, 0.0)
 		total += Time.get_ticks_usec() - t0
 	print("  %-58s mean %6.3f ms" % ["the scene's and the emergency's own updates a frame", total / 1000.0 / 240])
 	quit()

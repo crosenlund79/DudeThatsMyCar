@@ -11,9 +11,7 @@ extends RefCounted
 const QUILTY_HOME := 25 * 60.0
 ## Leon's coffee at Dutch's (12:00 to 12:25 AM).
 const LEON_COFFEE := [24 * 60.0, 24 * 60.0 + 25.0]
-## Where Leon stands at Dutch's counter (the yards' own coordinates; moved
-## with the district), beside Dutch.
-const LEON_AT_DUTCH := Vector2(3052, 1300 - 85.0 - 26.0)
+## (Where Leon stands at Dutch's counter: the yards' named place "leon_at_dutch".)
 
 
 ## Where `who` is at `minute`: "room" (in their own room), "dutch" (Leon at

@@ -122,9 +122,9 @@ func _snapshot() -> Dictionary:
 		camera = "walker"
 	elif main.camera.target is Car:
 		camera = "car"
-	elif main.cafe_film != null and main.camera.target == main.cafe_film.rig:
+	elif main.films.of("cafe") != null and main.camera.target == main.films.of("cafe").rig:
 		camera = "cafe_film"
-	elif main.bird_film != null and main.camera.target == main.bird_film.rig:
+	elif main.films.of("bird") != null and main.camera.target == main.films.of("bird").rig:
 		camera = "bird_film"
 	var ready: Array = main.world.ready_ids()
 	ready.sort()
@@ -141,8 +141,8 @@ func _snapshot() -> Dictionary:
 		"danny": {"condition": w.condition.to_dict(), "pos": _v(w.global_position), "facing": _r(w.model.facing, 3),
 			"on_foot": p.on_foot(), "car": main.fleet.ids[main.fleet.cars.find(p.car)] if p.car != null else "",
 			"sitting": not p.seat.is_empty(), "down": w.down},
-		"gun": {"ammo": main.pistol.ammo, "spare": main.pistol.spare, "drawn": main.pistol.is_drawn(),
-			"thompson": main.thompson != null},
+		"gun": {"ammo": main.armoury.pistol.ammo, "spare": main.armoury.pistol.spare, "drawn": main.armoury.pistol.is_drawn(),
+			"thompson": main.armoury.thompson != null},
 		"cars": cars,
 		"thefts": [main.fleet.theft_incidents, main.fleet.thefts_witnessed],
 		"ward_out": main.casualties.ward_out,
@@ -156,12 +156,12 @@ func _snapshot() -> Dictionary:
 			"options": (main.dialogue.page.get("options", []) as Array).map(func(o: Dictionary) -> String: return String(o.id))},
 		"incidents": main.incidents.to_dict(),
 		"weather": {"state": main.weather.state_name(), "rain": _r(main.weather.rain_strength(), 3), "fog": _r(main.weather.fog, 3)},
-		"films": {"opening": main.opening != null, "cafe": main.cafe_film != null, "bird": main.bird_film != null,
-			"bird_scene": main.bird_scene},
+		"films": {"opening": main.films.of("opening") != null, "cafe": main.films.of("cafe") != null, "bird": main.films.of("bird") != null,
+			"bird_scene": main.last_song.scene},
 		"hud_visible": main.hud.visible,
 		"camera": camera,
 		"collapses": main.casualties.collapses,
-		"moments": main.moments,
+		"moments": main.night.moments,
 		"fighting": main.fights.fighting,
 		"paused": main.paused,
 		"views": {"poker": main.hud.poker_view.is_open(), "roulette": main.hud.roulette_view.is_open(),
@@ -288,7 +288,7 @@ func test_new_game_and_the_opening() -> void:
 	await _key(KEY_ESCAPE)
 	for i in 600:
 		await wait_physics_frames(1)
-		if main.opening == null:
+		if main.films.of("opening") == null:
 			break
 	await wait_physics_frames(5)
 	_check("opening_skipped")
@@ -495,14 +495,14 @@ func test_films_played_and_skipped() -> void:
 	cmd = PlayerCommand.make(Vector2.ZERO, false, true)
 	for i in 600:
 		await wait_physics_frames(1)
-		if main.cafe_film != null:
+		if main.films.of("cafe") != null:
 			break
 	cmd = PlayerCommand.new()
 	await wait_physics_frames(60 * 6)
 	_check("cafe_film_running")
 	for i in 60 * 10:
 		await wait_physics_frames(1)
-		if main.cafe_film == null:
+		if main.films.of("cafe") == null:
 			break
 	await wait_physics_frames(5)
 	_check("cafe_film_done")
@@ -510,19 +510,19 @@ func test_films_played_and_skipped() -> void:
 		await press_e()  # up from the bench
 	# the Bird
 	main.callouts_enabled = true
-	main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
+	main.clock.set_time(LastSong.LAST_SONG + 1.0)
 	walker().place(Vector2(2290, 380), -PI / 2)
 	main.camera.snap_to(walker())
 	for i in 30:
 		await wait_physics_frames(1)
-		if main.bird_scene != "":
+		if main.last_song.scene != "":
 			break
 	var bird: Walker = main.bird_show.bird
 	for i in 240:
 		await wait_physics_frames(1)
-		if bird.global_position.distance_to(main.BIRD_SEAT) < 5.0:
+		if bird.global_position.distance_to(main.last_song.seat()) < 5.0:
 			break
-	walker().place(main.BIRD_SEAT + Vector2(0, 34), -PI / 2)
+	walker().place(main.last_song.seat() + Vector2(0, 34), -PI / 2)
 	await wait_physics_frames(3)
 	await press_e()
 	await wait_physics_frames(30)
@@ -535,7 +535,7 @@ func test_films_played_and_skipped() -> void:
 	await press_e()
 	for i in 600:
 		await wait_physics_frames(1)
-		if main.bird_film == null:
+		if main.films.of("bird") == null:
 			break
 	await wait_physics_frames(5)
 	_check("bird_film_skipped")

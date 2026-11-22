@@ -127,7 +127,7 @@ func test_a_night_of_dangerous_company() -> void:
 	add_child_autofree(main)
 	main.street.clear()
 	await wait_physics_frames(3)
-	assert_null(main.opening)
+	assert_null(main.films.of("opening"))
 	assert_eq(main.rackets.night, 2)
 	assert_eq(main.rackets.doctor_fees, fees)
 	assert_true(main.rival.is_down())

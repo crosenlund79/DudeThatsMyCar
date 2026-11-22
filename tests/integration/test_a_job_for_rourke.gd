@@ -55,7 +55,7 @@ func test_one_night_one_problem() -> void:
 	await press_e()
 	# the map: where to go now
 	main._unhandled_input(_key(CityInput.MAP))
-	assert_eq(main.hud.city_map.job_at, main.RIVAL_POST[0])
+	assert_eq(main.hud.city_map.job_at, main.rourke_job.post()[0])
 	main._unhandled_input(_key(CityInput.MAP))
 	# Lefty Moran: walk up to him and press E
 	var lefty: Rival = main.rival

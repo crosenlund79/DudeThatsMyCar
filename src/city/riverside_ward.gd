@@ -34,10 +34,15 @@ const QUILTY := "Ald. Quilty's Ward Office"
 
 
 
+## M014: where the ward lies in the world: at its origin (its own coordinates
+## are the world's). Placed like every other district (DistrictLayout.shift).
+const ORIGIN := Vector2.ZERO
+
+
 static func create() -> DistrictLayout:
 	var w := RiversideWard.new()
 	w._build()
-	return w.d
+	return w.d.shift(ORIGIN)
 
 
 func _build() -> void:
@@ -63,6 +68,14 @@ func _build() -> void:
 	_cars_and_spawn()
 	_street_life()
 	_incident_spots()
+	_places()
+
+
+## M014: the ward's named places (moved here from main, where they were numbers).
+func _places() -> void:
+	d.places["lefty_post"] = Vector2(1180, 1392)  # M006: Lefty Moran's corner outside Doyle's Garage
+	d.places["lefty_post_east"] = Vector2(1330, 1392)  # the other end of his few steps
+	d.places["bird_seat"] = Vector2(2334, 262)  # M012: the end of the Copper Owl's bar, after her last song
 
 
 ## M009: where the ward's own small troubles happen (out at the kerb edge, clear of the

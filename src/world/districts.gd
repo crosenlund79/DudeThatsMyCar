@@ -71,7 +71,7 @@ func ready(id: String) -> void:
 	var l: DistrictLayout = world.layouts[id]
 	var node: Node2D = world.loaded[id].node
 	game.fleet.district_ready(l)
-	game.opportunity_views.district_ready(id, l, node)  # M009
+	game.missions.district_ready(id, l, node)  # M009: the contacts and errands made with it
 	game.interiors.add_district(l, world.city_of(id), node)  # M012: its rooms
 	game.plates.add_district(l, node)  # and the plates at its doors
 	if l.police_beat.is_empty():
@@ -121,8 +121,8 @@ func unloading(id: String) -> void:
 	game.fleet.district_unloading(b)
 	if game.incident_views != null:
 		game.incident_views.drop_district(b)  # its incidents go on as state
-	if game.opportunity_views != null:
-		game.opportunity_views.district_gone(id)
+	if game.missions != null:
+		game.missions.district_unloading(id)  # M009: and they go with it
 	game.bullets.drop_in(b)
 	game.camera.set_bounds.call_deferred(world.bounds())
 

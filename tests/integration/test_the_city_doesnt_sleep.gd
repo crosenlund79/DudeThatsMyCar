@@ -53,7 +53,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 	var job_before: Dictionary = main.rackets.job.to_dict()
 	var start_money: int = main.rackets.money
 	# --- night 1, at home: the city starts without him
-	var home: InteriorPlan = main._plan("home")
+	var home: InteriorPlan = main.game.ward_plan("home")
 	walker().place(home.outside_door(0, 20.0), PI / 2)
 	main.camera.snap_to(walker())
 	main.incidents.plan = [{"id": "p1", "kind": "argument", "spot": "sal_kerb", "at": main.clock.minute + 1.0, "tries": 0}]
@@ -72,7 +72,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 	await drive_route(sedan, [Vector2(1660, 3972), Vector2(crate_at.x + 20.0, 3965)], 160.0, 900)
 	await _out_of_the_car()
 	# Dutch, and his crate into the boot
-	var dutch: Walker = main.opportunity_views.contact("dutch")
+	var dutch: Walker = main.errands.views.contact("dutch")
 	assert_not_null(dutch)
 	await walk_to(dutch.global_position + Vector2(0, 26), 6.0, 600)
 	await press_e()
@@ -89,7 +89,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 		Vector2(1712, 760), Vector2(1980, 690)], 240.0, 2400)
 	assert_eq(main.world.current, "riverside")
 	await _out_of_the_car()
-	assert_not_null(main.fleet.crate_car_at(main._novak_door()), "out front of Novak's")
+	assert_not_null(main.fleet.crate_car_at(main.errands.novak_door()), "out front of Novak's")
 	var money: int = main.rackets.money
 	await talk_to("grocery", "novak")
 	await answer_with("crate")

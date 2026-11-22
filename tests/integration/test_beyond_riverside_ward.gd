@@ -37,7 +37,7 @@ func test_a_night_beyond_the_ward() -> void:
 	main.save_path = _save
 	var world: DistrictStreamer = main.world
 	# out of the flat and into the sedan at the kerb
-	var home: InteriorPlan = main._plan("home")
+	var home: InteriorPlan = main.game.ward_plan("home")
 	walker().place(home.outside_door(0, 20.0), PI / 2)
 	await wait_physics_frames(3)
 	var sedan: Car = main.fleet.my_car()

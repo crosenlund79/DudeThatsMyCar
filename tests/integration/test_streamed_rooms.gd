@@ -147,7 +147,7 @@ func test_let_go_and_built_again_once_with_who_went_down() -> void:
 	assert_false(again.person_ok("heeler"), "the captain is not back tonight")
 	assert_eq(main.interiors.views.filter(func(x: InteriorView) -> bool: return x.plan.id == "doran_office").size(), 1)
 	# a new night: everybody back
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(2)
 	await _to_the_square()
 	assert_true(main.interiors.view_of("doran_office").person_ok("heeler"), "back at his desk the next evening")
@@ -205,7 +205,7 @@ func test_a_new_night_begins_at_home() -> void:
 	walker().place(_doran().inside_door(0, 30.0), 0.0)
 	await wait_physics_frames(3)
 	main.save_game()
-	main.sleep()
+	main.night.sleep()
 	await _reload()
 	assert_eq(walker().global_position, main.layout.spawn, "the next evening starts at home")
 	assert_eq(main.world.ready_ids(), ["riverside"] as Array[String])

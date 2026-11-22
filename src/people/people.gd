@@ -159,7 +159,7 @@ func apply_routines() -> void:
 		leon_at_dutch = Walker.create(game.resolver, "characters/dispatcher", {"glow": false})
 		leon_at_dutch.name = "LeonAtDutch"
 		world.loaded["yards"].node.add_child(leon_at_dutch)
-		var at := Routines.LEON_AT_DUTCH + RiverfrontYards.ORIGIN
+		var at: Vector2 = world.layouts["yards"].place("leon_at_dutch")
 		leon_at_dutch.place(at, PI / 2)
 		leon_at_dutch.aim_point = at + Vector2(0, 50)
 	if leon_at_dutch != null and is_instance_valid(leon_at_dutch):

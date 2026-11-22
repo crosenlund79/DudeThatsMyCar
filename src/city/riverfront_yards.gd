@@ -58,6 +58,8 @@ func _build() -> void:
 	_incident_spots()
 	_contacts()
 	YardsInteriors.add_to(d)  # M012: the depot's dispatch office and freight shed
+	# M014 (from Routines): where Leon Sobczak stands at Dutch's counter after midnight, beside Dutch
+	d.places["leon_at_dutch"] = Vector2(3052, 1300 - 85.0 - 26.0)
 	# the ways north into the Riverside Ward (Dorsey Street is closed by the ward's own barricade)
 	for x in [DORSEY, KESSLER, WHARF]:
 		d.exits.append({"to": "riverside", "rect": Rect2(x - HALF - 46.0, 0, HALF * 2.0 + 92.0, 6)})

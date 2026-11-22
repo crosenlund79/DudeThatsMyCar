@@ -125,13 +125,13 @@ func _run() -> void:
 	print("  %-58s mean %6.3f ms" % ["call-outs and routines a frame, in the Copper Owl", total / 1000.0 / 240.0])
 	for id in VoiceLines.LINES:
 		main.voice_lines.mark(id)
-	main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
+	main.clock.set_time(LastSong.LAST_SONG + 1.0)
 	for i in 120:
 		await process_frame
-		if main.bird_scene == "asking":
+		if main.last_song.scene == "asking":
 			break
-	await _place(main.BIRD_SEAT + Vector2(0, 34))
-	main._start_bird_film()
+	await _place(main.last_song.seat() + Vector2(0, 34))
+	main.last_song.start_film()
 	await _fps("the Bird's film (lights down, the room hushed)", 4.0)
 	main.weather.force("clear")
 	main.open_menu(true)

@@ -173,21 +173,21 @@ func test_two_nights_behind_closed_doors() -> void:
 	await answer_with("bye")
 	assert_eq(main.rackets.money, money - FreightJob.DOCKED + FreightJob.FEE, "once")
 	# 13-14. the Copper Owl after half past one: the Bird's last song
-	main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
+	main.clock.set_time(LastSong.LAST_SONG + 1.0)
 	walker().place(Vector2(2290, 380), -PI / 2)
 	main.camera.snap_to(walker())
 	main.people.callout = {}
 	for i in 60:
 		await wait_physics_frames(1)
-		if main.bird_scene == "asking":
+		if main.last_song.scene == "asking":
 			break
-	assert_eq(main.bird_scene, "asking", "her last song")
+	assert_eq(main.last_song.scene, "asking", "her last song")
 	var bird: Walker = main.bird_show.bird
 	for i in 240:
 		await wait_physics_frames(1)
-		if bird.global_position.distance_to(main.BIRD_SEAT) < 5.0:
+		if bird.global_position.distance_to(main.last_song.seat()) < 5.0:
 			break
-	walker().place(main.BIRD_SEAT + Vector2(0, 34), -PI / 2)
+	walker().place(main.last_song.seat() + Vector2(0, 34), -PI / 2)
 	await wait_physics_frames(3)
 	await press_e()
 	for i in 1200:
@@ -198,7 +198,7 @@ func test_two_nights_behind_closed_doors() -> void:
 	await answer_with("bye")
 	for i in 120:
 		await wait_physics_frames(1)
-		if main.bird_film == null:
+		if main.films.of("bird") == null:
 			break
 	assert_eq(main.rackets.bird_scene, "kind")
 	assert_eq(main.camera.target, walker())

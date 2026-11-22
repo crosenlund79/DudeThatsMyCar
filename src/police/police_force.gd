@@ -141,6 +141,13 @@ func witness_violence(victim: Vector2, culprit: Vector2) -> void:
 		o.witness_violence(victim, culprit)
 
 
+## A talk's "police": the shopkeeper Danny leaned on waits until he has gone,
+## then runs out for the copper (only from inside a room).
+func report_effect(v: Variant) -> void:
+	if v and game.interiors.current != null:
+		report_after(game.interiors.current, game.talk.speaker(game.dialogue.talking))
+
+
 ## M003: the shopkeeper waits until Danny has gone, then runs out for the copper.
 func report_after(room: InteriorPlan, who: String) -> void:
 	_report_from = room

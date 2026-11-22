@@ -133,7 +133,7 @@ func test_shot_down_by_the_police_danny_comes_to_at_the_doc_s() -> void:
 	assert_true(await _until(func() -> bool: return main.casualties.collapses > 0, 60 * 60), "standing in the open, he goes down in the end")
 	assert_false(cop().brain.is_hunting(), "the copper stands down")
 	assert_false(walker().down, "Danny is never killed")
-	var vet: InteriorPlan = main._plan("vet")
+	var vet: InteriorPlan = main.game.ward_plan("vet")
 	assert_true(vet.contains(walker().global_position), "on the Doc's table")
 
 

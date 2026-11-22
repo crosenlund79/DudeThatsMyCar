@@ -58,7 +58,7 @@ func _key(action: String) -> InputEventAction:
 
 func test_a_new_game_opens_with_dannys_monologue_over_the_living_ward() -> void:
 	await _start()
-	var o: Opening = main.opening
+	var o: Opening = main.films.of("opening")
 	assert_not_null(o, "a new game begins with the opening")
 	assert_true(o.running)
 	assert_true(o.voice.playing, "his voice")
@@ -101,10 +101,10 @@ func test_any_key_skips_it_and_hands_over() -> void:
 	await _start()
 	await wait_physics_frames(30)
 	main._unhandled_input(_key(CityInput.INTERACT))
-	assert_true(main.opening.is_handing_over())
+	assert_true(main.films.of("opening").is_handing_over())
 	assert_false(main.paused)
 	await wait_physics_frames(80)
-	assert_null(main.opening, "over")
+	assert_null(main.films.of("opening"), "over")
 	assert_true(main.hud.visible)
 	assert_true(main.markers.visible)
 	assert_true(main.player.is_physics_processing(), "Danny is yours")
@@ -121,17 +121,17 @@ func test_esc_skips_rather_than_pausing() -> void:
 	await _start()
 	main._unhandled_input(_key(CityInput.MENU))
 	assert_false(main.paused)
-	assert_true(main.opening.is_handing_over())
+	assert_true(main.films.of("opening").is_handing_over())
 
 
 func test_played_through_it_ends_on_its_own() -> void:
 	await _start()
-	var o: Opening = main.opening
+	var o: Opening = main.films.of("opening")
 	o.time = o.length - 1.0
 	await wait_physics_frames(3)
 	assert_eq(o.subtitle.text, "Well... better get to work.")
 	await wait_physics_frames(180)
-	assert_null(main.opening, "handed over after the last line")
+	assert_null(main.films.of("opening"), "handed over after the last line")
 	assert_true(main.player.is_physics_processing())
 	assert_lt(main.camera.global_position.distance_to(main.walker.global_position), 80.0, "the camera is on Danny")
 
@@ -140,12 +140,12 @@ func test_a_saved_game_and_the_next_evening_start_without_it() -> void:
 	await _start()
 	main._unhandled_input(_key(CityInput.INTERACT))
 	await wait_physics_frames(80)
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(5)
-	assert_null(main.opening, "sleeping never replays it")
+	assert_null(main.films.of("opening"), "sleeping never replays it")
 	main.free()
 	await _start()
-	assert_null(main.opening, "loading a saved game never replays it")
+	assert_null(main.films.of("opening"), "loading a saved game never replays it")
 	assert_true(main.hud.visible)
 	assert_true(main.player.is_physics_processing())
 
@@ -164,6 +164,6 @@ func test_the_users_own_voice_plays_without_the_shipped_subtitles() -> void:
 	f.store_buffer(FileAccess.get_file_as_bytes("res://assets/audio/voice/danny_opening.mp3"))
 	f.close()
 	await _start(_root)
-	assert_not_null(main.opening)
-	assert_false(main.opening.subtitles, "the subtitles belong to the shipped recording")
-	assert_eq(main.opening.subtitle.text, "")
+	assert_not_null(main.films.of("opening"))
+	assert_false(main.films.of("opening").subtitles, "the subtitles belong to the shipped recording")
+	assert_eq(main.films.of("opening").subtitle.text, "")

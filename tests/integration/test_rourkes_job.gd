@@ -90,8 +90,8 @@ func test_the_map_says_what_next_and_rourke_hears_how_it_went() -> void:
 	main._unhandled_input(_key(CityInput.MAP))
 	job().learn("culprit")
 	main._unhandled_input(_key(CityInput.MAP))
-	assert_eq(map.job_at, main.RIVAL_POST[0], "his corner outside Doyle's Garage")
-	assert_eq(map.lefty_at, main.RIVAL_POST[0])
+	assert_eq(map.job_at, main.rourke_job.post()[0], "his corner outside Doyle's Garage")
+	assert_eq(map.lefty_at, main.rourke_job.post()[0])
 	main._unhandled_input(_key(CityInput.MAP))
 	job().resolve("backed_down", main.rackets)
 	main.rackets.boss.purse = 3000
@@ -124,11 +124,11 @@ func test_a_lie_comes_home_a_few_nights_later() -> void:
 	assert_eq(job().stage, RourkeJob.Stage.REPORTED)
 	await press_e()
 	for i in 2:
-		main.sleep()
+		main.night.sleep()
 		await wait_physics_frames(2)
 	await _reload()  # the lie keeps in a saved game
 	for i in 2:
-		main.sleep()
+		main.night.sleep()
 		await wait_physics_frames(2)
 	await talk_to("copper_owl", "rourke")
 	assert_string_contains(main.hud.line_label.text, "still paying Lefty Moran", "Rourke knows")

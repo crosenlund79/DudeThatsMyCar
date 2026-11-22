@@ -96,12 +96,12 @@ func test_the_ring_goes_under_what_e_would_do() -> void:
 	var c: Car = roadster()
 	walker().place(c.global_position + c.global_transform.y * -34.0, 0.0)
 	await wait_physics_frames(3)
-	if main.player.enterable_car() == c and main._spot().is_empty():
+	if main.player.enterable_car() == c and main.interactions.spot().is_empty():
 		assert_eq(main.highlight.target.kind, "car")
 	# nothing in reach: nothing
 	walker().place(STREETCAR_STOP + Vector2(0, 30), 0.0)
 	await wait_physics_frames(3)
-	if main._spot().is_empty() and main.player.enterable_car() == null:
+	if main.interactions.spot().is_empty() and main.player.enterable_car() == null:
 		assert_true(main.highlight.target.is_empty())
 	# the mayor's bell: warm, not the cold of a shut door
 	main.world.load_now("halloran")
@@ -130,16 +130,16 @@ func test_h_draws_the_gun_and_keeps_it_out() -> void:
 	# with the Thompson on loan: H draws the gun he has chosen
 	main.rackets.money = 2000
 	main.rackets.borrow_thompson()
-	main._arm_thompson(true)
+	main.armoury.arm_thompson(true)
 	cmd = PlayerCommand.new()
 	cmd.switch_gun = true
 	await wait_physics_frames(3)
-	assert_eq(walker().gun, main.thompson, "the Thompson chosen")
+	assert_eq(walker().gun, main.armoury.thompson, "the Thompson chosen")
 	await _press_h()
 	await wait_physics_frames(30)
-	assert_eq(walker().gun, main.thompson, "and drawn")
-	assert_true(main.thompson.is_drawn())
-	assert_eq(main.pistol.ammo, rounds, "the .45's rounds untouched")
+	assert_eq(walker().gun, main.armoury.thompson, "and drawn")
+	assert_true(main.armoury.thompson.is_drawn())
+	assert_eq(main.armoury.pistol.ammo, rounds, "the .45's rounds untouched")
 
 
 func test_the_click_that_ends_a_talk_is_not_a_shot() -> void:

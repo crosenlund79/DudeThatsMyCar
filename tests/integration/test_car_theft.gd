@@ -85,6 +85,6 @@ func test_a_dead_cop_sees_nothing() -> void:
 func test_a_new_night_the_cars_are_back_with_their_owners() -> void:
 	var c: Car = main.fleet.cars[0]
 	await _get_in(c)
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(3)
 	assert_false(main.fleet.thefts.is_stolen(0))

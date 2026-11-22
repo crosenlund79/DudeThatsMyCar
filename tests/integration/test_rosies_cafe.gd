@@ -49,14 +49,14 @@ func _at_the_car(offset: Vector2 = Vector2(0, -34)) -> void:
 func test_the_whole_job() -> void:
 	await _take_the_job()
 	await _at_the_car()
-	assert_true(main.cafe_scene.near_car(walker().global_position), "the Packard at the kerb at half past ten")
+	assert_true(main.cafe.scene.near_car(walker().global_position), "the Packard at the kerb at half past ten")
 	assert_string_contains(main.hud.prompt_label.text, "Slip the parcel under the Packard")
 	await press_e()
 	assert_eq(main.rackets.cafe.stage, CafeJob.Stage.PLANTED)
 	assert_eq(main.rackets.parcels, 0)
 	assert_false(main.rackets.cafe.seen, "no copper in sight")
 	var due: float = main.rackets.cafe.due(main.rackets.night)
-	assert_true(main.moments.has(due), "a moment the night must not skip")
+	assert_true(main.night.moments.has(due), "a moment the night must not skip")
 	# across the avenue to the bench, and let the time pass
 	var bench: Vector2 = _halloran().cafe_point("bench").pos
 	var seats: Array = main.districts.seats_near().filter(func(s: Dictionary) -> bool: return (s.pos as Vector2).distance_to(bench) < 4.0)
@@ -68,27 +68,27 @@ func test_the_whole_job() -> void:
 	cmd = PlayerCommand.make(Vector2.ZERO, false, true)  # Space held
 	for i in 600:
 		await wait_physics_frames(1)
-		if main.cafe_film != null:
+		if main.films.of("cafe") != null:
 			break
 	cmd = PlayerCommand.new()
-	assert_not_null(main.cafe_film, "the film begins when it is due")
+	assert_not_null(main.films.of("cafe"), "the film begins when it is due")
 	assert_lt(main.clock.minute, due + 1.0, "the night slowed for it: nothing skipped")
 	assert_false(main.hud.visible, "the bars and the captions, no HUD")
-	assert_eq(main.camera.target, main.cafe_film.rig, "the camera leaves Danny")
+	assert_eq(main.camera.target, main.films.of("cafe").rig, "the camera leaves Danny")
 	for i in 60 * 6:
 		await wait_physics_frames(1)
 	assert_eq(main.rackets.cafe.stage, CafeJob.Stage.DONE, "it went off")
-	assert_true(main.cafe_scene.burning)
-	assert_true(main.cafe_scene._wreck.visible)
-	assert_false(main.cafe_scene._packard.visible)
-	assert_true(main.cafe_scene._scorch.visible)
-	main.cafe_film.skip()
+	assert_true(main.cafe.scene.burning)
+	assert_true(main.cafe.scene._wreck.visible)
+	assert_false(main.cafe.scene._packard.visible)
+	assert_true(main.cafe.scene._scorch.visible)
+	main.films.of("cafe").skip()
 	for i in 90:
 		await wait_physics_frames(1)
-	assert_null(main.cafe_film, "and back to Danny")
+	assert_null(main.films.of("cafe"), "and back to Danny")
 	assert_true(main.hud.visible)
 	assert_eq(main.camera.target, player().body())
-	assert_eq(main.cafe_scene.people.size(), 4, "the café's people out on the pavement")
+	assert_eq(main.cafe.scene.people.size(), 4, "the café's people out on the pavement")
 	assert_eq(walker().condition.total(), 0, "watched from a safe distance")
 	var cop: PoliceOfficer = main.police.officers().filter(func(o: PoliceOfficer) -> bool: return main.world.district_at(o.body.global_position) == "halloran")[0]
 	assert_false(cop.duty.is_empty(), "the square's copper comes to look at it")
@@ -109,9 +109,9 @@ func test_the_whole_job() -> void:
 	await wait_physics_frames(3)
 	main.clock.set_time(23 * 60.0)
 	main._update_clock(0.0)
-	assert_true(main.cafe_scene._wreck.visible, "the wreck stays")
-	assert_false(main.cafe_scene._packard.visible)
-	assert_false(main.cafe_scene.burning, "burnt out")
+	assert_true(main.cafe.scene._wreck.visible, "the wreck stays")
+	assert_false(main.cafe.scene._packard.visible)
+	assert_false(main.cafe.scene.burning, "burnt out")
 
 
 func test_too_close_is_hurt() -> void:
@@ -121,10 +121,10 @@ func test_too_close_is_hurt() -> void:
 	main.clock.set_time(main.rackets.cafe.due(main.rackets.night) - 0.05)
 	for i in 30:
 		await wait_physics_frames(1)
-		if main.cafe_film != null:
+		if main.films.of("cafe") != null:
 			break
-	assert_not_null(main.cafe_film)
-	main.cafe_film.skip()
+	assert_not_null(main.films.of("cafe"))
+	main.films.of("cafe").skip()
 	await wait_physics_frames(3)
 	assert_true(main.rackets.cafe.caught_in_it, "standing at the car when it went")
 	assert_gt(walker().condition.total(), 0, "hurt")
@@ -141,7 +141,7 @@ func test_seen_at_the_car_by_a_copper() -> void:
 	_go(walker().global_position + Vector2(0, -2000))
 	main.clock.set_time(main.rackets.cafe.due(main.rackets.night) + 0.1)
 	await wait_physics_frames(3)
-	assert_null(main.cafe_film, "too far off to watch it")
+	assert_null(main.films.of("cafe"), "too far off to watch it")
 	assert_eq(main.rackets.cafe.stage, CafeJob.Stage.DONE, "it went off all the same")
 	assert_true(main.rackets.rumours.items.any(func(x: Dictionary) -> bool: return x.kind == "cafe_seen"), "and the copper talks")
 	assert_true(cop.brain.is_hunting(), "and he is after Danny")

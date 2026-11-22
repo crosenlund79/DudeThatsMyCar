@@ -44,8 +44,8 @@ func after_each() -> void:
 func test_borrow_switch_and_fire_a_burst() -> void:
 	await _borrow()
 	assert_eq(main.rackets.money, 1500, "five dollars down")
-	assert_not_null(main.thompson, "on loan")
-	assert_eq(walker().gun, main.pistol, "the .45 still in hand")
+	assert_not_null(main.armoury.thompson, "on loan")
+	assert_eq(walker().gun, main.armoury.pistol, "the .45 still in hand")
 	assert_string_contains(main.hud.notice_label.text, "Tab")
 	# out into the street, Tab, and a burst
 	walker().place(STREETCAR_STOP, 0.0)
@@ -53,7 +53,7 @@ func test_borrow_switch_and_fire_a_burst() -> void:
 	await wait_physics_frames(3)
 	cmd.switch_gun = true
 	await wait_physics_frames(2)
-	assert_eq(walker().gun, main.thompson, "Tab: the Thompson in his hands")
+	assert_eq(walker().gun, main.armoury.thompson, "Tab: the Thompson in his hands")
 	var shots := [0]
 	main.player.fired.connect(func(_m: Vector2, _d: Vector2) -> void: shots[0] += 1)
 	cmd = PlayerCommand.make(Vector2.ZERO, false, false, STREETCAR_STOP + Vector2(0, 200))
@@ -65,12 +65,12 @@ func test_borrow_switch_and_fire_a_burst() -> void:
 	cmd.fire = false
 	await wait_physics_frames(10)
 	assert_between(shots[0], 9, 12, "a held burst: about ten rounds a second (%d)" % shots[0])
-	assert_eq(main.thompson.ammo + main.thompson.spare, 60 - shots[0], "its own rounds")
-	assert_eq(main.pistol.ammo, 7, "the .45 untouched")
+	assert_eq(main.armoury.thompson.ammo + main.armoury.thompson.spare, 60 - shots[0], "its own rounds")
+	assert_eq(main.armoury.pistol.ammo, 7, "the .45 untouched")
 	assert_string_contains(main.hud.gun_label.text, "Thompson")
 	cmd.switch_gun = true
 	await wait_physics_frames(2)
-	assert_eq(walker().gun, main.pistol, "Tab again: back to the .45")
+	assert_eq(walker().gun, main.armoury.pistol, "Tab again: back to the .45")
 
 
 func test_heard_further_off_than_the_pistol() -> void:
@@ -78,34 +78,34 @@ func test_heard_further_off_than_the_pistol() -> void:
 	var o: PoliceOfficer = main.officer
 	var off := o.body.global_position + Vector2(0, 0)
 	var far := Vector2(820, 0)  # beyond a .45's 720 px, inside the Thompson's 950
-	assert_false(o.hear_gunshot(off + far, main.pistol.rules.noise_radius), "a .45 that far off goes unheard")
+	assert_false(o.hear_gunshot(off + far, main.armoury.pistol.rules.noise_radius), "a .45 that far off goes unheard")
 	o.reset()
-	assert_true(o.hear_gunshot(off + far, main.thompson.rules.noise_radius), "the Thompson does not")
+	assert_true(o.hear_gunshot(off + far, main.armoury.thompson.rules.noise_radius), "the Thompson does not")
 
 
 func test_on_loan_through_a_save_and_a_night() -> void:
 	main.save_path = SAVE
 	await _borrow()
-	main.thompson.ammo = 13
-	main.thompson.spare = 20
+	main.armoury.thompson.ammo = 13
+	main.armoury.thompson.spare = 20
 	await _reload_game()
-	assert_not_null(main.thompson, "still on loan after loading")
-	assert_eq(main.thompson.ammo, 13)
-	assert_eq(main.thompson.spare, 20)
+	assert_not_null(main.armoury.thompson, "still on loan after loading")
+	assert_eq(main.armoury.thompson.ammo, 13)
+	assert_eq(main.armoury.thompson.spare, 20)
 	assert_eq(main.player.arsenal.size(), 2)
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(3)
-	assert_not_null(main.thompson, "and after a night's sleep")
+	assert_not_null(main.armoury.thompson, "and after a night's sleep")
 	# back to Eddie
 	var before: int = main.rackets.money
 	await talk_to("hardware", "eddie")
 	await answer_with("give_back")
 	await press_e()
 	await wait_physics_frames(2)
-	assert_null(main.thompson, "back with Eddie")
+	assert_null(main.armoury.thompson, "back with Eddie")
 	assert_eq(main.player.arsenal.size(), 1)
-	assert_eq(walker().gun, main.pistol)
+	assert_eq(walker().gun, main.armoury.pistol)
 	assert_eq(main.rackets.money, before + 400, "the deposit less his dollar")
 
 

@@ -61,7 +61,7 @@ func test_sitting_and_letting_the_night_pass() -> void:
 	await wait_physics_frames(60 * 3)
 	var passed: float = main.clock.minute - before
 	assert_gt(passed, 30.0, "the night passes fast (%.0f game minutes in 3 s)" % passed)
-	assert_lt(passed, 3.0 * main.FAST_TIME + 2.0)
+	assert_lt(passed, 3.0 * NightCycle.FAST_TIME + 2.0)
 	assert_true(main.incidents.history.any(func(x: Dictionary) -> bool: return x.id == "s1"), "the argument began and ended in its order")
 	cmd = PlayerCommand.new()
 	before = main.clock.minute
@@ -84,12 +84,12 @@ func test_never_past_a_moment_that_must_not_be_missed() -> void:
 	await wait_physics_frames(2)
 	await press_e()
 	assert_false(player().seat.is_empty())
-	main.moments.assign([main.clock.minute + 10.0])
+	main.night.moments.assign([main.clock.minute + 10.0])
 	cmd = PlayerCommand.make(Vector2.ZERO, false, true)
 	await wait_physics_frames(90)  # 1.5 s: fast for the first 8 minutes, then a minute a second
-	assert_lt(main.clock.minute, main.moments[0], "slowed to normal before it")
-	assert_gt(main.clock.minute, main.moments[0] - 2.5, "after coming up to it fast")
-	main.moments.clear()
+	assert_lt(main.clock.minute, main.night.moments[0], "slowed to normal before it")
+	assert_gt(main.clock.minute, main.night.moments[0] - 2.5, "after coming up to it fast")
+	main.night.moments.clear()
 	cmd = PlayerCommand.new()
 
 

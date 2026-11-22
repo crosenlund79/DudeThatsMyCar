@@ -64,7 +64,7 @@ func test_two_dark_nights() -> void:
 	await answer_with("heavy")
 	await answer_with("borrow")
 	await press_e()
-	assert_not_null(main.thompson)
+	assert_not_null(main.armoury.thompson)
 	# Rourke: the café job
 	await talk_to("copper_owl", "rourke")
 	await answer_with("cafe")
@@ -118,21 +118,21 @@ func test_two_dark_nights() -> void:
 	cmd = PlayerCommand.make(Vector2.ZERO, false, true)
 	for i in 600:
 		await wait_physics_frames(1)
-		if main.cafe_film != null:
+		if main.films.of("cafe") != null:
 			break
 	cmd = PlayerCommand.new()
-	assert_not_null(main.cafe_film, "the film")
+	assert_not_null(main.films.of("cafe"), "the film")
 	for i in 60 * 5:
 		await wait_physics_frames(1)
-	main.cafe_film.skip()
+	main.films.of("cafe").skip()
 	await wait_physics_frames(60)
 	assert_eq(main.rackets.cafe.stage, CafeJob.Stage.DONE)
 	var f0 := Engine.get_physics_frames()
 	while Engine.get_physics_frames() - f0 < 60 * 30:
 		await wait_physics_frames(1)
-		if main.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"):
+		if main.cafe.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"):
 			break
-	assert_true(main.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"), "the emergency came")
+	assert_true(main.cafe.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"), "the emergency came")
 	await press_e()  # up from the bench
 	# the city map names the café
 	var m := InputEventAction.new()
@@ -152,20 +152,20 @@ func test_two_dark_nights() -> void:
 	await answer_with("sleep")
 	await wait_physics_frames(3)
 	assert_eq(main.rackets.night, 2)
-	main.thompson.ammo = 11
+	main.armoury.thompson.ammo = 11
 	await _reload()
 	assert_eq(main.rackets.night, 2)
-	assert_not_null(main.thompson, "still on loan")
-	assert_eq(main.thompson.ammo, 11)
+	assert_not_null(main.armoury.thompson, "still on loan")
+	assert_eq(main.armoury.thompson.ammo, 11)
 	assert_eq(main.rackets.cafe.stage, CafeJob.Stage.REPORTED, "paid, remembered")
 	main.clock.set_time(23 * 60.0)
 	main._update_clock(0.0)
-	assert_true(main.cafe_scene._wreck.visible, "the wreck at the kerb the next night")
-	assert_false(main.emergency.active(2), "the emergency has gone")
+	assert_true(main.cafe.scene._wreck.visible, "the wreck at the kerb the next night")
+	assert_false(main.cafe.emergency.active(2), "the emergency has gone")
 	# the Thompson goes home
 	var back_money: int = main.rackets.money
 	await talk_to("hardware", "eddie")
 	await answer_with("give_back")
 	await press_e()
-	assert_null(main.thompson)
+	assert_null(main.armoury.thompson)
 	assert_eq(main.rackets.money, back_money + 400)

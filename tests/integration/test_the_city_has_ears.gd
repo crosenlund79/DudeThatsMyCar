@@ -98,7 +98,7 @@ func test_three_nights_in_the_ward() -> void:
 	main.street.clear()
 	await wait_physics_frames(3)
 	r = main.rackets
-	assert_null(main.opening, "a loaded game goes straight on")
+	assert_null(main.films.of("opening"), "a loaded game goes straight on")
 	assert_eq(r.money, kept.money)
 	assert_eq(r.night, kept.night)
 	assert_eq(r.boss.arrears, kept.arrears)

@@ -36,10 +36,10 @@ func _set_minute(m: float) -> void:
 func test_dutch_and_his_crate() -> void:
 	var l := _yards()
 	await wait_physics_frames(2)
-	var dutch: Walker = main.opportunity_views.contact("dutch")
+	var dutch: Walker = main.errands.views.contact("dutch")
 	assert_not_null(dutch, "Dutch is out front of his lunch counter")
 	assert_lt(dutch.global_position.distance_to(_contact_pos(l)), 2.0)
-	var crate: Sprite2D = main.opportunity_views.errand("crate")
+	var crate: Sprite2D = main.errands.views.errand("crate")
 	assert_true(crate.visible, "his crate by the door")
 	# talk: he offers it; Danny takes it on
 	_go(_contact_pos(l) + Vector2(0, 30), -PI / 2)
@@ -69,7 +69,7 @@ func test_dutch_and_his_crate() -> void:
 	await wait_physics_frames(2)
 	assert_false(crate.visible, "gone from Dutch's door")
 	# up to Novak's: the sedan at the kerb out front, Danny inside
-	var door: Vector2 = main._novak_door()
+	var door: Vector2 = main.errands.novak_door()
 	await park(sedan, Vector2(door.x, door.y - 70.0), 0.0)
 	var money: int = main.rackets.money
 	var held: int = main.rackets.held
@@ -102,7 +102,7 @@ func test_left_alone_dutch_finds_another_way() -> void:
 	_set_minute(Opportunities.CRATE_UNTIL)
 	assert_eq(main.rackets.opportunities.crate, "gone")
 	await wait_physics_frames(2)
-	assert_false(main.opportunity_views.errand("crate").visible, "his nephew took it")
+	assert_false(main.errands.views.errand("crate").visible, "his nephew took it")
 	_go(_contact_pos(l) + Vector2(0, 30), -PI / 2)
 	await wait_physics_frames(2)
 	await press_e()
@@ -125,12 +125,12 @@ func test_taken_and_not_delivered_by_two() -> void:
 func test_dutch_is_freed_with_the_yards() -> void:
 	_yards()
 	await wait_physics_frames(2)
-	assert_not_null(main.opportunity_views.contact("dutch"))
+	assert_not_null(main.errands.views.contact("dutch"))
 	_go(main.layout.spawn)
 	main.world.unload("yards")
 	await wait_physics_frames(3)
-	assert_null(main.opportunity_views.contact("dutch"), "gone with the district")
+	assert_null(main.errands.views.contact("dutch"), "gone with the district")
 	_yards()
 	await wait_physics_frames(2)
-	assert_not_null(main.opportunity_views.contact("dutch"), "and back with it")
+	assert_not_null(main.errands.views.contact("dutch"), "and back with it")
 	assert_eq(get_tree().root.find_children("Contact_dutch", "", true, false).size(), 1, "one Dutch, never two")

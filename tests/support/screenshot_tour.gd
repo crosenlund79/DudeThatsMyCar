@@ -204,7 +204,7 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(2343, 336), 0.0)
 				cmd = PlayerCommand.make(Vector2.ZERO, false, false, Vector2(2384, 333))
 				await _frames(20)
-				main.talk_to_bird()
+				main.club.talk_to_bird()
 				await _frames(30)
 				await _shot("bird_talk")
 				main.dialogue.end()
@@ -435,14 +435,14 @@ func _run(shots: Array) -> void:
 			"opening":
 				# M005: the opening narration over the ward, at moments through the monologue
 				main.walker.place(main.layout.spawn, main.layout.spawn_facing)
-				main._start_opening()
+				main.films.start_opening(main.game.ward_plan("copper_owl"))
 				var marks := [[1.2, "opening_fade"], [4.0, "opening_river"], [8.6, "opening_club"], [15.0, "opening_junction"],
 					[20.5, "opening_street"], [22.6, "opening_home"]]
 				for m in marks:
-					while main.opening != null and main.opening.time < m[0]:
+					while main.films.of("opening") != null and main.films.of("opening").time < m[0]:
 						await process_frame
 					await _shot(m[1], false)
-				while main.opening != null:
+				while main.films.of("opening") != null:
 					await process_frame
 				await _frames(30)
 				await _shot("opening_handover")
@@ -453,7 +453,7 @@ func _run(shots: Array) -> void:
 				await _frames(40)
 				await _shot("home")
 			"wake":
-				main.sleep()
+				main.night.sleep()
 				await _frames(135)
 				await _shot("wake")
 			"traffic":
@@ -592,7 +592,7 @@ func _run(shots: Array) -> void:
 					main.rackets.money = 1500
 					_teleport_walker(bplan.spots[0].pos, -PI / 2)
 					await _frames(3)
-					main._interact(main.walker.global_position)
+					main.interactions.use(main.walker.global_position)
 					await _frames(5)
 					var pv: PokerView = main.hud.poker_view
 					pv.choose_buy_in(1)
@@ -632,7 +632,7 @@ func _run(shots: Array) -> void:
 				var bp2: InteriorPlan = main.interiors.view_of("back_room").plan
 				_teleport_walker(bp2.spots[0].pos, -PI / 2)
 				await _frames(3)
-				main._interact(main.walker.global_position)
+				main.interactions.use(main.walker.global_position)
 				await _frames(5)
 				var pv2: PokerView = main.hud.poker_view
 				pv2.level_requested.emit(1)
@@ -790,15 +790,15 @@ func _run(shots: Array) -> void:
 				main.weather.force("clear")
 				for id in VoiceLines.LINES:
 					main.voice_lines.mark(id)
-				main.clock.set_time(main.BIRD_LAST_SONG + 1.0)
+				main.clock.set_time(LastSong.LAST_SONG + 1.0)
 				_teleport_walker(Vector2(2290, 380), -PI / 2)
 				for i in 300:
 					await _frames(1)
-					if main.bird_scene == "asking" and main.bird_show.bird.global_position.distance_to(main.BIRD_SEAT) < 5.0:
+					if main.last_song.scene == "asking" and main.bird_show.bird.global_position.distance_to(main.last_song.seat()) < 5.0:
 						break
-				_teleport_walker(main.BIRD_SEAT + Vector2(0, 34), -PI / 2)
+				_teleport_walker(main.last_song.seat() + Vector2(0, 34), -PI / 2)
 				await _frames(5)
-				main._start_bird_film()
+				main.last_song.start_film()
 				await _frames(500)
 				await _shot("m012_bird_film", false)
 				for i in 600:
@@ -834,7 +834,7 @@ func _run(shots: Array) -> void:
 				main.dialogue.end()
 				main.rackets.money = 1500
 				main.rackets.freight.settle(main.rackets, "paid")
-				main._sync_freight()
+				main.freight.sync()
 				await _frames(20)
 				await _shot("m012_freight_done", false)
 			"m012_menu", "m012_menu_controls":
@@ -872,7 +872,7 @@ func _run(shots: Array) -> void:
 				_teleport_walker(RiversideInteriors.ROULETTE_SPOT, -PI / 2)
 				await _frames(5)
 				await _until_wheel(RouletteTable.Phase.OPEN)  # M013: Leo's next round
-				main._interact(main.walker.global_position)
+				main.interactions.use(main.walker.global_position)
 				await _frames(5)
 				var rv: RouletteView = main.hud.roulette_view
 				for b in [["straight:17", 2], ["split:20-23", 1], ["red", 3], ["corner:25-26-28-29", 0], ["dozen:3", 2], ["straight:32", 1]]:
@@ -896,7 +896,7 @@ func _run(shots: Array) -> void:
 				main.rackets.money = 800
 				_teleport_walker(RiversideInteriors.SLOTS[0] + Vector2(0, 32), -PI / 2)
 				await _frames(5)
-				main._interact(main.walker.global_position)
+				main.interactions.use(main.walker.global_position)
 				await _frames(5)
 				var hv: SlotView = main.hud.slot_view
 				var om: SlotMachine = main.back_rooms.slot_machines[0]
@@ -934,7 +934,7 @@ func _run(shots: Array) -> void:
 				main.rackets.money = 500
 				_teleport_walker(RiversideInteriors.SLOTS[1] + Vector2(0, 32), -PI / 2)
 				await _frames(5)
-				main._interact(main.walker.global_position)
+				main.interactions.use(main.walker.global_position)
 				await _frames(5)
 				var sv: SlotView = main.hud.slot_view
 				if s == "slots_paid":
@@ -969,7 +969,7 @@ func _run(shots: Array) -> void:
 				main.street.clear()
 				main.rackets.money = 2000
 				main.rackets.borrow_thompson()
-				main._arm_thompson(true)
+				main.armoury.arm_thompson(true)
 				_teleport_walker(Vector2(2330, 135), PI)
 				main.player.switch_gun()
 				await _frames(4)
@@ -1006,20 +1006,20 @@ func _run(shots: Array) -> void:
 					main.clock.set_time(main.rackets.cafe.due(main.rackets.night) - 0.02)
 					for f in 60:
 						await _frames(1)
-						if main.cafe_film != null:
+						if main.films.of("cafe") != null:
 							break
 					if s == "cafe_blast":
 						for f in 400:
 							await _frames(1)
-							if main.cafe_film != null and main.cafe_film.time >= 4.3:
+							if main.films.of("cafe") != null and main.films.of("cafe").time >= 4.3:
 								break
 					else:
 						for f in 60 * 9:
 							await _frames(1)
-							if main.cafe_film == null:
+							if main.films.of("cafe") == null:
 								break
-						if main.cafe_film != null:
-							main.cafe_film.skip()
+						if main.films.of("cafe") != null:
+							main.films.of("cafe").skip()
 						await _frames(120)
 						_teleport_walker(car_at + Vector2(150, 150), -PI / 2 - 0.6)
 						await _frames(60)
@@ -1042,13 +1042,13 @@ func _run(shots: Array) -> void:
 				main.clock.set_time(main.rackets.cafe.due(main.rackets.night) - 0.02)
 				for f in 60:
 					await _frames(1)
-					if main.cafe_film != null:
+					if main.films.of("cafe") != null:
 						break
-				if main.cafe_film != null:
-					main.cafe_film.skip()
+				if main.films.of("cafe") != null:
+					main.films.of("cafe").skip()
 				for f in 60 * 30:
 					await _frames(1)
-					if main.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"):
+					if main.cafe.emergency.units.all(func(u: Dictionary) -> bool: return u.state == "stopped"):
 						break
 				await _frames(480)  # the crews walk over to their places
 				_teleport_walker(car3 + Vector2(260, 170), -PI / 2 - 0.4)
@@ -1068,7 +1068,7 @@ func _run(shots: Array) -> void:
 					near.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a.pos as Vector2).y < (b.pos as Vector2).y)
 					_teleport_walker(near[0].stand, 0.0)
 					await _frames(2)
-					main._interact(main.walker.global_position)
+					main.interactions.use(main.walker.global_position)
 					cmd = PlayerCommand.make(Vector2.ZERO, false, true)
 					await _frames(40)
 				await _frames(20)
@@ -1142,7 +1142,7 @@ func _run(shots: Array) -> void:
 					main.walker.place(yl.contacts[0].pos + Vector2(4, 30), -PI / 2)
 					await _frames(10)
 					await _frames(10)
-					main._interact(main.walker.global_position)
+					main.interactions.use(main.walker.global_position)
 					await _frames(30)
 					await _shot("dutch", false)
 					main.dialogue.end()
@@ -1150,7 +1150,7 @@ func _run(shots: Array) -> void:
 					main.rackets.opportunities.take_crate()
 					main.walker.place(cp + Vector2(0, 20), -PI / 2)
 					await _frames(5)
-					main._take_errand("crate", cp)
+					main.errands.take_errand("crate", cp)
 					main.walker.place(ys.global_position + Vector2(0, -34), 0.0)
 					await _frames(2)
 					main.player.enter(ys)
@@ -1167,7 +1167,7 @@ func _run(shots: Array) -> void:
 					main.world.load_now("halloran")
 					await _frames(20)
 					await _frames(10)
-					main._interact(main.walker.global_position)
+					main.interactions.use(main.walker.global_position)
 					await _frames(30)
 					await _shot("feeney", false)
 					main.dialogue.end()

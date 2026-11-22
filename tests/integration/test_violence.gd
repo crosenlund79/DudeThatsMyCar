@@ -160,7 +160,7 @@ func test_the_bird_shot_means_no_music_tonight() -> void:
 	assert_false(main.soundscape.music.playing)
 	await wait_physics_frames(200)
 	assert_false(main.soundscape.music.playing, "and it does not start again")
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(5)
 	assert_true(main.soundscape.music.playing, "she is back the next night")
 
@@ -176,7 +176,7 @@ func test_the_beat_cop_is_mortal_and_replaced_the_next_night() -> void:
 	var at := cop.global_position
 	await wait_physics_frames(60)
 	assert_eq(cop.global_position, at, "he lies where he fell")
-	main.sleep()
+	main.night.sleep()
 	await wait_physics_frames(5)
 	assert_false(main.officer.is_down(), "a new man on the beat")
 

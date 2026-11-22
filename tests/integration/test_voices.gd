@@ -83,7 +83,7 @@ func test_rourke_remembers_meeting_him_across_saves() -> void:
 	add_child_autofree(main)
 	main.street.clear()
 	await wait_physics_frames(3)
-	assert_null(main.opening)
+	assert_null(main.films.of("opening"))
 	await talk_to("copper_owl", "rourke")
 	assert_false(main.dialogue.page.has("voice"), "a loaded game remembers they have met")
 	assert_string_contains(main.dialogue.page.text, Rackets.dollars(main.rackets.boss.expected), "straight to business")

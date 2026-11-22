@@ -52,6 +52,8 @@ var bird_show: BirdPerformance
 var hud: Hud
 var incident_views: IncidentViews
 var opportunity_views: OpportunityViews
+var weather_view: WeatherView
+var shake: ViewShake
 
 # ---- the directors (each owns its own part of the game)
 var back_rooms: BackRooms
@@ -63,6 +65,17 @@ var people: People
 var casualties: Casualties
 var districts: Districts
 var incident_director: IncidentDirector
+var films: Films
+var club: Club
+var armoury: Armoury
+var night: NightCycle
+var interactions: Interactions
+var missions: Missions
+var rourke_job: RourkeJobDirector
+var errands: Errands
+var freight: FreightJobDirector
+var cafe: CafeJobDirector
+var last_song: LastSong
 
 
 ## The game is saved (after a deal, a hand, a film...).
@@ -89,3 +102,9 @@ func ward_plan(id: String) -> InteriorPlan:
 		if (p as InteriorPlan).id == id:
 			return p
 	return null
+
+
+## M010: a weather state held all night instead of the night's course (tests,
+## screenshots): main's export, read when a night begins.
+func weather_override() -> String:
+	return String(root.get("weather_override"))

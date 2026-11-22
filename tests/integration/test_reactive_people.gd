@@ -146,7 +146,7 @@ func test_quilty_goes_home_and_leon_takes_his_coffee_at_dutchs() -> void:
 	assert_false(main.interiors.view_of("quilty_office").person_ok("quilty"), "gone home after one")
 	main.clock.set_time(24 * 60.0 + 5.0)
 	main.world.load_now("yards")
-	walker().place(Routines.LEON_AT_DUTCH + RiverfrontYards.ORIGIN + Vector2(0, 26), -PI / 2)
+	walker().place(main.world.layouts.yards.place("leon_at_dutch") + Vector2(0, 26), -PI / 2)
 	main.camera.snap_to(walker())
 	await wait_physics_frames(5)
 	assert_false(main.interiors.view_of("dispatch_office").person_ok("leon"), "not at his desk")
