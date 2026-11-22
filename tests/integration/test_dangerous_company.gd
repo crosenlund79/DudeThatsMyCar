@@ -91,13 +91,13 @@ func test_a_night_of_dangerous_company() -> void:
 	assert_false(walker().condition.is_hurt(), "patched up")
 	await press_e()
 	# a car taken under the beat cop's nose
-	var c: Car = main.cars[0]
+	var c: Car = main.fleet.cars[0]
 	await park(c, main.officer.body.global_position + Vector2(40, 140), 0.0)
 	walker().place(c.global_position + c.global_transform.y * -38.0, 0.0)
 	await wait_physics_frames(3)
 	await press_e()
 	assert_eq(player().car, c)
-	assert_eq(main.thefts_witnessed, 1)
+	assert_eq(main.fleet.thefts_witnessed, 1)
 	assert_true(main.officer.brain.is_hunting())
 	await press_e()
 	await wait_physics_frames(20)
@@ -113,7 +113,7 @@ func test_a_night_of_dangerous_company() -> void:
 	assert_true(main.stage.singing() and music.playing, "the Bird sings")
 	assert_true(lefty.is_down(), "Lefty stays dead")
 	assert_false(main.officer.is_down())
-	assert_false(main.thefts.is_stolen(0), "the car is back with its owner")
+	assert_false(main.fleet.thefts.is_stolen(0), "the car is back with its owner")
 	# saved and loaded
 	var fees: int = r.doctor_fees
 	main.save_game()

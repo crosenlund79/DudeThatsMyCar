@@ -27,10 +27,10 @@ func test_the_district_is_built_from_its_layout() -> void:
 	assert_eq(main.city.buildings.size(), layout.buildings.size())
 	assert_gte(main.city.solids.get_child_count(), layout.buildings.size() + layout.lamps.size())
 	assert_eq(main.city.lamp_lights.size(), layout.lamps.size())
-	assert_eq(main.cars.size(), layout.cars.size())
+	assert_eq(main.fleet.cars.size(), layout.cars.size())
 	assert_not_null(car_of_type("sedan"))
 	assert_not_null(car_of_type("coupe"))
-	for c in main.cars:
+	for c in main.fleet.cars:
 		assert_false(c.driven, "every car starts parked")
 
 

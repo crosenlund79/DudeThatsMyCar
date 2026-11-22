@@ -91,7 +91,7 @@ func test_danny_where_he_really_is_in_any_district() -> void:
 	var m := cmap()
 	assert_eq(m.danny, walker().global_position)
 	assert_true(m.map_rect.has_point(m.to_screen(walker().global_position)), "it opens on him")
-	assert_eq(m.car, main.my_car().global_position, "his car where it is")
+	assert_eq(m.car, main.fleet.my_car().global_position, "his car where it is")
 	assert_has(m.officers, main.officer.body.global_position, "the beat cop where he is")
 	_close()
 	main.world.load_now("yards")

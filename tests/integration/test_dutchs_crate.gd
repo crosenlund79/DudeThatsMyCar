@@ -52,7 +52,7 @@ func test_dutch_and_his_crate() -> void:
 	assert_eq(main.rackets.opportunities.crate, "taken")
 	await press_e()
 	# at the crate on foot with no car about: too heavy
-	var sedan: Car = main.my_car()
+	var sedan: Car = main.fleet.my_car()
 	_go(_crate_pos(l) + Vector2(0, 22), -PI / 2)
 	await wait_physics_frames(2)
 	assert_string_contains(main.hud.prompt_label.text, "Load the crate")
@@ -89,8 +89,8 @@ func test_dutch_and_his_crate() -> void:
 func test_novak_wants_it_out_front_not_across_town() -> void:
 	main.rackets.opportunities.take_crate()
 	main.rackets.opportunities.load_crate()
-	var sedan: Car = main.my_car()
-	main._set_cargo(sedan, true)
+	var sedan: Car = main.fleet.my_car()
+	main.fleet.set_cargo(sedan, true)
 	await park(sedan, Vector2(1000, 600), 0.0)  # down the avenue
 	await talk_to("grocery", "novak")
 	assert_false(main._page.options.any(func(o: Dictionary) -> bool: return o.id == "crate"), "he sees no crate")
@@ -113,8 +113,8 @@ func test_left_alone_dutch_finds_another_way() -> void:
 func test_taken_and_not_delivered_by_two() -> void:
 	main.rackets.opportunities.take_crate()
 	main.rackets.opportunities.load_crate()
-	var sedan: Car = main.my_car()
-	main._set_cargo(sedan, true)
+	var sedan: Car = main.fleet.my_car()
+	main.fleet.set_cargo(sedan, true)
 	_set_minute(Opportunities.CRATE_DELIVER_BY)
 	assert_eq(main.rackets.opportunities.crate, "dropped")
 	assert_false(sedan.has_meta("cargo"), "fetched out of the boot")

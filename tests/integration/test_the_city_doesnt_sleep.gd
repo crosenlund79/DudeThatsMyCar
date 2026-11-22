@@ -60,7 +60,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 	await _skip(3.0)
 	assert_false(main.incidents.get_incident("p1").is_empty(), "an argument outside Sal's, with Danny nowhere near")
 	# into the sedan and down Kessler Street into the yards
-	var sedan: Car = main.my_car()
+	var sedan: Car = main.fleet.my_car()
 	await walk_to(sedan.global_position + Vector2(0, -40), 8.0, 600)
 	await press_e()
 	assert_eq(player().car, sedan)
@@ -89,7 +89,7 @@ func test_three_nights_in_a_city_that_does_not_wait() -> void:
 		Vector2(1712, 760), Vector2(1980, 690)], 240.0, 2400)
 	assert_eq(main.world.current, "riverside")
 	await _out_of_the_car()
-	assert_not_null(main._crate_car_at(main._novak_door()), "out front of Novak's")
+	assert_not_null(main.fleet.crate_car_at(main._novak_door()), "out front of Novak's")
 	var money: int = main.rackets.money
 	await talk_to("grocery", "novak")
 	await answer_with("crate")

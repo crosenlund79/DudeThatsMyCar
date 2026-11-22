@@ -102,7 +102,7 @@ func test_never_through_a_building() -> void:
 func test_he_holds_fire_while_a_car_is_in_the_way() -> void:
 	var beat_cop := cop().body.global_position
 	walker().place(beat_cop + Vector2(0, 260), -PI / 2)
-	var c: Car = main.cars[0]
+	var c: Car = main.fleet.cars[0]
 	await park(c, beat_cop + Vector2(0, 130), 0.0)
 	cop().brain.witness_violence(walker().global_position)
 	await wait_physics_frames(3)
@@ -138,11 +138,11 @@ func test_shot_down_by_the_police_danny_comes_to_at_the_doc_s() -> void:
 
 
 func test_shot_at_the_wheel() -> void:
-	var c: Car = main.cars[7]  # Danny's sedan
+	var c: Car = main.fleet.cars[7]  # Danny's sedan
 	await seat_in(c)
 	var beat_cop := cop().body.global_position
 	for i in 40:
-		main._on_bullet_struck(c, c.global_position, Vector2.RIGHT, cop().body)
+		main.police.bullet_struck(c, c.global_position, Vector2.RIGHT, cop().body)
 	assert_true(walker().condition.is_hurt() or main.collapses > 0, "some rounds go through the door")
 	assert_true(beat_cop != Vector2.INF)
 

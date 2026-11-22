@@ -117,7 +117,7 @@ func _run() -> void:
 	var path := OS.get_user_data_dir().path_join("m013_probe_save.json")
 	main.save_path = path
 	main.world.load_now("halloran")
-	var car: Car = main.cars[main.car_ids.find("riverside/3")] if main.car_ids.has("riverside/3") else main.cars[0]
+	var car: Car = main.fleet.cars[main.fleet.ids.find("riverside/3")] if main.fleet.ids.has("riverside/3") else main.fleet.cars[0]
 	car.place(Transform2D(PI, Vector2(-600, 600)))
 	main.walker.place(car.global_position + Vector2(0, 40), 0.0)
 	main.player.enter(car)

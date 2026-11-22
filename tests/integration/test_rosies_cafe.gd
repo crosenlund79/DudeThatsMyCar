@@ -90,7 +90,7 @@ func test_the_whole_job() -> void:
 	assert_eq(main.camera.target, player().body())
 	assert_eq(main.cafe_scene.people.size(), 4, "the café's people out on the pavement")
 	assert_eq(walker().condition.total(), 0, "watched from a safe distance")
-	var cop: PoliceOfficer = main.officers().filter(func(o: PoliceOfficer) -> bool: return main.world.district_at(o.body.global_position) == "halloran")[0]
+	var cop: PoliceOfficer = main.police.officers().filter(func(o: PoliceOfficer) -> bool: return main.world.district_at(o.body.global_position) == "halloran")[0]
 	assert_false(cop.duty.is_empty(), "the square's copper comes to look at it")
 	assert_false(cop.brain.is_hunting(), "but nobody knows it was Danny")
 	assert_true(main.rackets.rumours.items.any(func(x: Dictionary) -> bool: return x.kind == "cafe_blast"))
@@ -133,7 +133,7 @@ func test_too_close_is_hurt() -> void:
 func test_seen_at_the_car_by_a_copper() -> void:
 	await _take_the_job()
 	await _at_the_car()
-	var cop: PoliceOfficer = main.officers().filter(func(o: PoliceOfficer) -> bool: return main.world.district_at(o.body.global_position) == "halloran")[0]
+	var cop: PoliceOfficer = main.police.officers().filter(func(o: PoliceOfficer) -> bool: return main.world.district_at(o.body.global_position) == "halloran")[0]
 	cop.body.place(walker().global_position + Vector2(150, 0), PI)  # along the pavement, in plain sight
 	await wait_physics_frames(2)
 	await press_e()

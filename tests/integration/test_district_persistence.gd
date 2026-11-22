@@ -40,7 +40,7 @@ func _until(cond: Callable, frames: int = 900) -> bool:
 
 
 func _cop_of(id: String) -> PoliceOfficer:
-	return main._districts.get(id, {}).get("officer")
+	return main.police.district_officer(id)
 
 
 func _victim(at: Vector2) -> Walker:
@@ -66,7 +66,7 @@ func test_saved_in_each_district_and_loaded() -> void:
 		await wait_physics_frames(3)
 		assert_eq(main.hud.district_label.text, l.name.to_upper())
 		assert_true(main.world.is_ready(id), "%s built again" % l.name)
-		assert_eq(main.cars.size(), 9 + l.cars.size(), "no car twice")
+		assert_eq(main.fleet.cars.size(), 9 + l.cars.size(), "no car twice")
 	main.save_path = ""
 
 
@@ -86,7 +86,7 @@ func test_a_beat_cop_shot_dead_stays_down_tonight() -> void:
 	var again := _cop_of("yards")
 	assert_true(again.is_down(), "still lying there after a reload")
 	assert_eq(again.body.global_position, where)
-	assert_eq(main.officers().size(), 2)
+	assert_eq(main.police.officers().size(), 2)
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(3)
@@ -98,8 +98,8 @@ func test_a_beat_cop_shot_dead_stays_down_tonight() -> void:
 func test_sleeping_puts_every_district_back() -> void:
 	main.world.load_now("halloran")
 	var i: int = 9  # the square's first parked car
-	var c: Car = main.cars[i]
-	var spec: Dictionary = main.car_specs[i]
+	var c: Car = main.fleet.cars[i]
+	var spec: Dictionary = main.fleet.specs[i]
 	await park(c, spec.pos + Vector2(300, 0), 0.0)
 	await talk_to("home", "bed")
 	await answer_with("sleep")

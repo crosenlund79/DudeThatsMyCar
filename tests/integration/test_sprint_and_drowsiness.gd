@@ -34,7 +34,7 @@ func test_shift_runs_and_letting_go_walks() -> void:
 
 
 func test_shift_does_nothing_at_the_wheel() -> void:
-	var c: Car = main.my_car()
+	var c: Car = main.fleet.my_car()
 	var start := Transform2D(PI, Vector2(1500, 640))
 	await seat_in(c)
 	var speeds := []
@@ -68,7 +68,7 @@ func test_heavy_eyes_towards_dawn() -> void:
 	assert_gt(main.drowsy.layer, 3)
 	assert_lt(main.drowsy.layer, main.hud.layer, "the HUD stays clear")
 	# at the wheel: much steadier
-	await seat_in(main.my_car())
+	await seat_in(main.fleet.my_car())
 	var sway_car := 0.0
 	for i in 240:
 		await wait_physics_frames(1)

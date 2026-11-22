@@ -87,7 +87,7 @@ func walker() -> Walker:
 
 
 func car_of_type(id: String) -> Car:
-	for c in main.cars:
+	for c in main.fleet.cars:
 		if c.vehicle.id == id:
 			return c
 	return null
@@ -96,7 +96,7 @@ func car_of_type(id: String) -> Car:
 ## The roadster parked by the hotel, next to the streetcar stop.
 func roadster() -> Car:
 	var best: Car = null
-	for c in main.cars:
+	for c in main.fleet.cars:
 		if c.vehicle.id == "coupe" and (best == null or c.global_position.distance_to(STREETCAR_STOP) < best.global_position.distance_to(STREETCAR_STOP)):
 			best = c
 	return best

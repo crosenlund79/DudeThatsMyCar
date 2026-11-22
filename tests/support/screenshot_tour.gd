@@ -112,7 +112,7 @@ func _run(shots: Array) -> void:
 				await _shot("walk")
 			"drive":
 				if main.player.on_foot():
-					var c: Car = main.cars[0]
+					var c: Car = main.fleet.cars[0]
 					main.walker.place(c.global_position + Vector2(0, -34), 0.0)
 					await _frames(2)
 					main.player.enter(c)
@@ -130,7 +130,7 @@ func _run(shots: Array) -> void:
 				await _frames(90)
 			"steer":
 				# M003: in the roadster at the curb, wheel turned to full lock (front tyres turn)
-				var c: Car = main.cars[0]
+				var c: Car = main.fleet.cars[0]
 				main.walker.place(c.global_position + Vector2(0, -34), 0.0)
 				await _frames(2)
 				main.player.enter(c)
@@ -372,7 +372,7 @@ func _run(shots: Array) -> void:
 			"crossing":
 				# M008: Danny's sedan crossing from the ward into the yards on Kessler Street, lights on
 				main.world.load_now("yards")
-				var sedan: Car = main.cars[7]
+				var sedan: Car = main.fleet.cars[7]
 				sedan.place(Transform2D(PI / 2, Vector2(1690, 2660)))
 				sedan.model.position = Vector2(1690, 2660)
 				_teleport_walker(Vector2(1640, 2600), 0.0)
@@ -472,7 +472,7 @@ func _run(shots: Array) -> void:
 				var picks := ["sedan", "coupe", "police", "sedan", "coupe", "sedan"]
 				var used := []
 				for k in spots.size():
-					for c in main.cars:
+					for c in main.fleet.cars:
 						if c.vehicle.id == picks[k] and not used.has(c):
 							used.append(c)
 							c.place(Transform2D(spots[k][1], spots[k][0]))
@@ -489,7 +489,7 @@ func _run(shots: Array) -> void:
 				var wpicks := ["sedan", "coupe", "police", "sedan"]
 				var wused := []
 				for k in wspots.size():
-					for c in main.cars:
+					for c in main.fleet.cars:
 						if c.vehicle.id == wpicks[k] and not wused.has(c) and not c.has_meta("away"):
 							wused.append(c)
 							c.place(Transform2D(wspots[k][1], wspots[k][0]))
@@ -518,7 +518,7 @@ func _run(shots: Array) -> void:
 				if s == "fog_alley":
 					_teleport_walker(Vector2(1800, 135), 0.0)
 				elif s == "fog_headlights":
-					var fc: Car = main.cars[0]
+					var fc: Car = main.fleet.cars[0]
 					fc.place(Transform2D(PI, Vector2(2420, 640)))
 					main.walker.place(fc.global_position + Vector2(0, -34), 0.0)
 					await _frames(2)
@@ -753,7 +753,7 @@ func _run(shots: Array) -> void:
 					if st.name == "Marlowe Avenue":
 						mar = st.rect
 				var rd: Car = null
-				for c in main.cars:
+				for c in main.fleet.cars:
 					if c.vehicle.id == "coupe":
 						rd = c
 						break
@@ -1083,7 +1083,7 @@ func _run(shots: Array) -> void:
 				_teleport_walker(vspec.pos + Vector2(-40, 0), 0.0)
 				main.world.load_now(did)
 				await _frames(20)
-				var hv: Car = main.cars.filter(func(x: Car) -> bool: return x.vehicle.id == s)[0]
+				var hv: Car = main.fleet.cars.filter(func(x: Car) -> bool: return x.vehicle.id == s)[0]
 				main.walker.place(hv.global_position + Vector2(-34, 20), 0.0)
 				await _frames(2)
 				main.player.enter(hv)
@@ -1135,7 +1135,7 @@ func _run(shots: Array) -> void:
 				var cp: Vector2 = yl.errands[0].pos
 				_teleport_walker(yl.contacts[0].pos + Vector2(0, 30), -PI / 2)
 				main.world.load_now("yards")
-				var ys: Car = main.my_car()
+				var ys: Car = main.fleet.my_car()
 				ys.place(Transform2D(PI, cp + Vector2(10, 74)))
 				await _frames(20)
 				if s == "dutch":
@@ -1192,7 +1192,7 @@ func _run(shots: Array) -> void:
 				await _shot("grocery_marker")
 			"drive_markers":
 				# M004: driving west down Marlowe Avenue: Sal's and Lindqvist's markers come up
-				var dc: Car = main.cars[1]
+				var dc: Car = main.fleet.cars[1]
 				dc.place(Transform2D(PI, Vector2(1700, 555)))
 				main.walker.place(dc.global_position + Vector2(0, -34), 0.0)
 				await _frames(2)
@@ -1272,7 +1272,7 @@ func _run(shots: Array) -> void:
 				_click = true
 				await _frames(50)
 				# run for the roadster
-				var car: Car = main.cars[0]
+				var car: Car = main.fleet.cars[0]
 				for i in 120:
 					var to: Vector2 = car.global_position + Vector2(0, -36) - main.walker.global_position
 					if to.length() < 8.0:
@@ -1358,7 +1358,7 @@ func _story() -> void:
 	await _shot("story_2_shots_fired", false)
 	await _frames(40)
 	# run for the roadster, the copper coming
-	var car: Car = main.cars[0]
+	var car: Car = main.fleet.cars[0]
 	for i in 200:
 		var to: Vector2 = car.global_position + Vector2(0, -36) - main.walker.global_position
 		if to.length() < 6.0:

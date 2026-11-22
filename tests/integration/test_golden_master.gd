@@ -113,10 +113,10 @@ func _snapshot() -> Dictionary:
 	var w: Walker = walker()
 	var p: PlayerController = player()
 	var cars := []
-	for i in main.cars.size():
-		var c: Car = main.cars[i]
-		cars.append({"id": main.car_ids[i], "pos": _v(c.global_position), "rot": _r(c.global_rotation, 3),
-			"away": c.has_meta("away"), "cargo": String(c.get_meta("cargo", "")), "stolen": main.thefts.is_stolen(i)})
+	for i in main.fleet.cars.size():
+		var c: Car = main.fleet.cars[i]
+		cars.append({"id": main.fleet.ids[i], "pos": _v(c.global_position), "rot": _r(c.global_rotation, 3),
+			"away": c.has_meta("away"), "cargo": String(c.get_meta("cargo", "")), "stolen": main.fleet.thefts.is_stolen(i)})
 	var camera := "other"
 	if main.camera.target == w:
 		camera = "walker"
@@ -139,12 +139,12 @@ func _snapshot() -> Dictionary:
 		"roulette": {"for_save": main.back_rooms.roulette.for_save(), "bets": main.back_rooms.roulette.bets, "phase": main.back_rooms.wheel.phase,
 			"number": main.back_rooms.wheel.number},
 		"danny": {"condition": w.condition.to_dict(), "pos": _v(w.global_position), "facing": _r(w.model.facing, 3),
-			"on_foot": p.on_foot(), "car": main.car_ids[main.cars.find(p.car)] if p.car != null else "",
+			"on_foot": p.on_foot(), "car": main.fleet.ids[main.fleet.cars.find(p.car)] if p.car != null else "",
 			"sitting": not p.seat.is_empty(), "down": w.down},
 		"gun": {"ammo": main.pistol.ammo, "spare": main.pistol.spare, "drawn": main.pistol.is_drawn(),
 			"thompson": main.thompson != null},
 		"cars": cars,
-		"thefts": [main.theft_incidents, main.thefts_witnessed],
+		"thefts": [main.fleet.theft_incidents, main.fleet.thefts_witnessed],
 		"ward_out": main.ward_out,
 		"rival": main.rival.to_dict(),
 		"night": main.rackets.night,

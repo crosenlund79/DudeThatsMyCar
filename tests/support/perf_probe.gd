@@ -27,7 +27,7 @@ func _run() -> void:
 	await _measure("inside the Copper Owl")
 	main.walker.place(Vector2(2350, 600), 0.0)
 	await _measure("on foot, Marlowe Ave traffic")
-	var c: Car = main.cars[0]
+	var c: Car = main.fleet.cars[0]
 	main.walker.place(c.global_position + Vector2(0, -36), 0.0)
 	await process_frame
 	main.player.enter(c)

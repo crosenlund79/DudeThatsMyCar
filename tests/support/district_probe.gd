@@ -47,7 +47,7 @@ func _fps(label: String, seconds: float = 2.5) -> void:
 
 ## Drives `c` with W from `from` heading `rot` until `done` holds; prints frame times by phase.
 func _drive(label: String, c: Car, from: Vector2, rot: float, border: Callable, done: Callable) -> void:
-	main._put_away(c, false)  # it may have been put away with a district it was left in
+	main.fleet.put_away(c, false)  # it may have been put away with a district it was left in
 	c.place(Transform2D(rot, from))
 	c.model.position = from
 	main.walker.place(from + Vector2(0, -40).rotated(rot), 0.0)
@@ -121,7 +121,7 @@ func _run() -> void:
 	var nodes1 := _nodes()
 	print("  one district (the ward):  %.1f MB static, %d nodes" % [mem1, nodes1])
 	await _fps("the ward, on foot at home")
-	var sedan: Car = main.cars[7]
+	var sedan: Car = main.fleet.cars[7]
 	# south into the Riverfront Yards
 	await _drive("driving south down Kessler Street into the Riverfront Yards", sedan, Vector2(1678, 1250), PI / 2,
 		func(p: Vector2) -> float: return p.y - 2700.0, func(p: Vector2) -> bool: return p.y > 3300.0)
@@ -175,5 +175,5 @@ func _run() -> void:
 	main.walker.place(Vector2(1600, 2300), 0.0)
 	await _wait_until(func() -> bool: return world.is_ready("yards"))
 	_stats("yards")
-	print("  loaded now: %s; cars %d (never duplicated)" % [world.ready_ids(), main.cars.size()])
+	print("  loaded now: %s; cars %d (never duplicated)" % [world.ready_ids(), main.fleet.cars.size()])
 	quit()

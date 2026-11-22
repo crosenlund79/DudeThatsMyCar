@@ -83,7 +83,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	var h: DistrictLayout = main.world.layouts.halloran
 	var marlowe := _street(h, "Marlowe Avenue")
 	var car := roadster()
-	var id: String = main.car_ids[main.cars.find(car)]
+	var id: String = main.fleet.ids[main.fleet.cars.find(car)]
 	await park(car, Vector2(marlowe.end.x - 700.0, marlowe.get_center().y + 30.0), 0.0)  # facing east, for the ward
 	await seat_in(car)
 	cmd = PlayerCommand.make(Vector2(0, -1))
@@ -95,7 +95,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	assert_eq(main.world.current, "halloran", "loaded in the square")
 	car = player().car
 	assert_not_null(car, "behind the wheel")
-	assert_eq(main.car_ids[main.cars.find(car)], id, "of the same car")
+	assert_eq(main.fleet.ids[main.fleet.cars.find(car)], id, "of the same car")
 	assert_lt(car.global_position.distance_to(at), 1.0)
 	# 3. back into the ward through the rain
 	main.weather.force("rain")
@@ -282,7 +282,7 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	assert_eq(main.rackets.night, 2)
 	assert_true(main.back_rooms.wheel.betting_open(), "the wheel turns again tonight")
 	assert_eq(main.back_rooms.slot_machines[0].stake, stake, "the machines remember")
-	var spec: Dictionary = main.car_specs[main.car_ids.find(id)]
-	assert_lt(main.cars[main.car_ids.find(id)].global_position.distance_to(spec.pos), 1.0, "the roadster back with its owner")
+	var spec: Dictionary = main.fleet.specs[main.fleet.ids.find(id)]
+	assert_lt(main.fleet.cars[main.fleet.ids.find(id)].global_position.distance_to(spec.pos), 1.0, "the roadster back with its owner")
 	await _reload()
 	assert_eq(main.rackets.night, 2)

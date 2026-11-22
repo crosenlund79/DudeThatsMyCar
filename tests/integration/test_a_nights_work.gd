@@ -31,7 +31,7 @@ func test_a_nights_work() -> void:
 	await _walk_path([home.inside_door(0, 20.0), home.outside_door(0, 22.0)])
 	assert_null(main.interiors.current, "out in the street")
 	var car: Car = null
-	for c in main.cars:
+	for c in main.fleet.cars:
 		if c.global_position.distance_to(Vector2(2585, 506)) < 5.0:
 			car = c
 	await walk_to(car.global_position + Vector2(0, -32), 4.0)

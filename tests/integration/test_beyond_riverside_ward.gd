@@ -40,7 +40,7 @@ func test_a_night_beyond_the_ward() -> void:
 	var home: InteriorPlan = main._plan("home")
 	walker().place(home.outside_door(0, 20.0), PI / 2)
 	await wait_physics_frames(3)
-	var sedan: Car = main.my_car()
+	var sedan: Car = main.fleet.my_car()
 	await walk_to(sedan.global_position + Vector2(0, -40), 8.0, 600)
 	await press_e()
 	assert_eq(player().car, sedan, "his own sedan")
@@ -76,7 +76,7 @@ func test_a_night_beyond_the_ward() -> void:
 			break
 		await press_e()
 	assert_true(player().on_foot())
-	var cop: PoliceOfficer = main._districts.yards.officer
+	var cop: PoliceOfficer = main.police.district_officer("yards")
 	var victim := Walker.create(main.resolver, "characters/worker", {"glow": false})
 	main.add_child(victim)
 	# along Front Street from the copper's corner (the works are behind him)
@@ -115,7 +115,7 @@ func test_a_night_beyond_the_ward() -> void:
 	await answer_with("sleep")
 	await wait_physics_frames(5)
 	assert_eq(main.rackets.night, 2)
-	assert_eq(sedan.global_position, main.car_specs[7].pos as Vector2, "his sedan back outside the flat")
+	assert_eq(sedan.global_position, main.fleet.specs[7].pos as Vector2, "his sedan back outside the flat")
 	assert_false(main.officer.brain.armed, "a new night, nothing on the beat cop's mind")
 	# saved and loaded
 	main.save_game()

@@ -70,7 +70,7 @@ func test_d_walks_right() -> void:
 
 
 func test_w_and_space_drive_the_car() -> void:
-	var c: Car = main.cars[0]
+	var c: Car = main.fleet.cars[0]
 	main.walker.place(c.global_position + Vector2(0, -40), 0.0)
 	await wait_physics_frames(1)
 	main.player.enter(c)

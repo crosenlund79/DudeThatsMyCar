@@ -4,15 +4,6 @@ extends Node2D
 ## and signals. No Autoloads. Tests run this scene with a scripted command
 ## source instead of the keyboard and mouse.
 
-const CAR_SCENE := preload("res://src/driving/car.tscn")
-const VEHICLES := {
-	"sedan": preload("res://src/driving/vehicles/sedan.tres"),
-	"coupe": preload("res://src/driving/vehicles/coupe.tres"),
-	"police": preload("res://src/driving/vehicles/police.tres"),
-	"dump_truck": preload("res://src/driving/vehicles/dump_truck.tres"),  # M009
-	"school_bus": preload("res://src/driving/vehicles/school_bus.tres"),
-}
-
 ## M009: an incident began, moved on or ended ("started", "phase", "over").
 signal incident_event(event: String, incident: Dictionary)
 ## M012: the game menu asked to go back to the last save (the scene is
@@ -79,7 +70,10 @@ var overhead: OverheadLine:
 	set(v): game.overhead = v
 ## M012: Leon at Dutch's counter after midnight (made with the yards, freed with them).
 var _leon_at_dutch: Walker
-var cars: Array[Car] = []
+## M014: every parked car and what is known about it (src/driving/fleet.gd),
+## and the beat cops of every built district (src/police/police_force.gd).
+var fleet: Fleet
+var police: PoliceForce
 var walker: Walker:
 	get: return game.walker
 	set(v): game.walker = v
@@ -138,8 +132,6 @@ var incidents: StreetIncidents:
 var incident_views: IncidentViews
 ## M009: the people Danny can take his own work from, and their errands.
 var opportunity_views: OpportunityViews
-## M009: a car within this much of Novak's door counts as "out front" for Dutch's crate.
-const CRATE_DROP_REACH := 280.0
 ## The incident Danny is stepping into ("" for none).
 var _incident_talking := ""
 ## M009: what stepping in brings or costs (cents).
@@ -148,16 +140,6 @@ const HANDOFF_TAKE := 600
 ## M008: what belongs to each neighbouring district while it is loaded:
 ## id -> {street: StreetLife, officer: PoliceOfficer (or null), cars_made: bool}.
 var _districts := {}
-## M008: the layout entry of every car in `cars` (the ward's first, then each
-## district's as it is first built: `cars` only ever grows, a car in a freed
-## district is put away, not freed, so nothing is ever duplicated).
-var car_specs: Array = []
-## M013: each parked car's lasting name, "<district>/<n>" (the district whose
-## layout parks it and its place in that list) - the same in every session,
-## whichever district happened to be built first. Parallel to `cars`.
-var car_ids: Array[String] = []
-## M013: a car being put back as it was saved (no door slam, no theft).
-var _restoring := false
 ## Tests: no passers-by or traffic in the neighbouring districts either.
 var quiet_streets := false
 var officer: PoliceOfficer
@@ -165,18 +147,10 @@ var officer: PoliceOfficer
 var rival: Rival:
 	get: return game.rival
 	set(v): game.rival = v
-## M006: whose car is whose and which Danny has taken tonight.
-var thefts: CarThefts
-## Cars stolen tonight, and how many of those the police saw (for tests and notices).
-var theft_incidents := 0
-var thefts_witnessed := 0
 ## Named people carried off to the Doc's: id -> the night it happened.
 var ward_out := {}
 ## Times Danny went down (for tests).
 var collapses := 0
-## M008: the chance a round that hits the car Danny drives goes through to him.
-const DRIVER_HIT_CHANCE := 0.25
-var _luck := RandomNumberGenerator.new()
 const RIVAL_POST: Array[Vector2] = [Vector2(1180, 1392), Vector2(1330, 1392)]
 var street: StreetLife
 @export var police_rules: PoliceRules = preload("res://src/police/default_police.tres")
@@ -263,12 +237,6 @@ var talk: Conversations:
 ## Who the player is talking to ("" = nobody) and the page on screen.
 var talking := ""
 var _page := {}
-## A shopkeeper going for the police (see _update_report).
-const REPORT_DELAY := 6.0
-const REPORT_RADIUS := 760.0  # M010: as far as it reached under the old 760 px hearing cap
-var _report_from: InteriorPlan = null
-var _report_left := 0.0
-var _report_who := ""
 var _saved := {}
 
 
@@ -288,7 +256,6 @@ func _ready() -> void:
 	game.roulette_rules = roulette_rules
 	game.slot_rules = slot_rules
 	game.fight_rules = fight_rules
-	_luck.seed = 1932008
 	settings = AudioSettings.new(settings_path)
 	settings.load_settings()
 	settings.apply()
@@ -339,8 +306,9 @@ func _ready() -> void:
 	back_rooms.name = "BackRooms"
 	game.back_rooms = back_rooms
 	back_rooms.load_poker(_saved.get("poker", {}), rackets.night)
-	_park_cars()
-	thefts = CarThefts.new(layout.cars)
+	fleet = Fleet.new(game)  # M014: the parked cars and their owners
+	game.fleet = fleet
+	fleet.park(layout)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
 	walker.place(layout.spawn, layout.spawn_facing)
@@ -362,7 +330,7 @@ func _ready() -> void:
 	player.name = "Player"
 	player.command_source = command_source
 	add_child(player)
-	player.setup(walker, cars, world)
+	player.setup(walker, fleet.cars, world)
 	pistol = walker.gun
 	player.carry(pistol, resolver.get_texture(gun_rules.look))
 	if rackets.loan.out:
@@ -397,12 +365,14 @@ func _ready() -> void:
 	officer = PoliceOfficer.new()
 	add_child(officer)
 	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body, bullets)
-	_wire_officer(officer)
-	bullets.struck.connect(_on_bullet_struck)
+	police = PoliceForce.new(game, streets)  # M014: the beat cops of every built district
+	game.police = police
+	police.add_ward_officer(officer)
+	bullets.struck.connect(police.bullet_struck)
 	player.fired.connect(_on_player_fired)
 	street = StreetLife.new()
 	add_child(street)
-	street.setup(layout, resolver, clock, CAR_SCENE, VEHICLES, cars, [walker, officer.body] as Array[Walker])
+	street.setup(layout, resolver, clock, Fleet.CAR_SCENE, Fleet.VEHICLES, fleet.cars, [walker, officer.body] as Array[Walker])
 	street.view = camera.view_rect()
 	rival = Rival.new()
 	add_child(rival)
@@ -410,8 +380,7 @@ func _ready() -> void:
 	rival.danny = walker
 	rival.fired.connect(gunfire.on_fired)
 	rival.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
-		for o in officers():
-			o.hear_gunshot(muzzle, gun_rules.noise_radius)
+		police.hear_gunshot(muzzle, gun_rules.noise_radius)
 		for s in streets():
 			s.hear_gunshot(muzzle))
 	rival.provoked.connect(func() -> void: hud.show_notice("Lefty Moran goes for his gun!"))
@@ -455,7 +424,7 @@ func _ready() -> void:
 	add_child(incident_views)
 	incident_views.setup(resolver, incidents, load(Hud.FONT_PATH))
 	incident_views.is_shown = world.is_ready
-	incident_views.officer_for = _officer_of
+	incident_views.officer_for = police.officer_of
 	incident_views.person_struck.connect(func(id: String) -> void: _end_incident(incidents.break_off(id, "shooting")))
 	incident_views.process_mode = Node.PROCESS_MODE_PAUSABLE
 	drowsy = DrowsyView.new()  # M010
@@ -494,14 +463,14 @@ func _ready() -> void:
 	add_child(back_rooms)  # M014: the tables, the room and their screens (where the room's lines were)
 	back_rooms.setup(_saved.get("slots", []))
 	_show_purse()
-	player.entered_car.connect(_on_entered_car)
-	player.exited_car.connect(_on_exited_car)
+	player.entered_car.connect(fleet.entered)
+	player.exited_car.connect(fleet.exited)
 	player.notice.connect(hud.show_notice)
-	_wire_officer_hud(officer)
+	police.wire_hud(officer)
 	# Esc must still work while the world is paused: the root always runs,
 	# the world itself stops.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, voice, bullets, gunfire, officer, street, rival, world] + cars:
+	for node in [city, interiors, walker, camera, player, vehicle_audio, soundscape, voice, bullets, gunfire, officer, street, rival, world] + fleet.cars:
 		(node as Node).process_mode = Node.PROCESS_MODE_PAUSABLE
 	if not command_source.is_valid():
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -701,7 +670,13 @@ func _resume_place() -> void:
 		_crate_without_a_car()
 		return
 	var at := Vector2(float(place.get("x", 0.0)), float(place.get("y", 0.0)))
-	var seat := _restore_cars()  # M013: the cars where they stood; the one he sat in
+	var seat: Car = null
+	var saved_cars: Dictionary = _saved.get("cars", {})
+	if saved_cars.is_empty() or int(saved_cars.get("night", -1)) != rackets.night:
+		_crate_without_a_car()
+	else:
+		seat = fleet.restore(saved_cars, layout.id)  # M013: the cars where they stood; the one he sat in
+		_crate_without_a_car()
 	if seat != null:
 		at = seat.global_position  # in his car (put back at its own place if it could not stand where it was saved)
 	var id := world.district_at(at)
@@ -712,136 +687,31 @@ func _resume_place() -> void:
 		world.load_now(id)
 	walker.place(at, float(place.get("facing", 0.0)))
 	if seat != null and not seat.has_meta("away"):
-		_restoring = true
+		fleet.restoring = true
 		player.enter(seat)  # behind the wheel, the engine running, standing still
-		_restoring = false
+		fleet.restoring = false
 	interiors.update_player(at if seat == null else Vector2.INF)
 	interiors.snap()
 	camera.snap_to(walker if seat == null else seat)
-
-
-## M013: where the cars stood tonight, as the save has it: a car moved from its
-## parking place stands where it was left (in any district - a district not
-## built yet keeps it put away until it is), a car Danny took tonight is still
-## taken, a crate is still in its boot. Returns the car he was sitting in (or
-## null). A saved place a car could not stand on (inside a building or the
-## river, or outside the city) leaves it at its own parking place instead.
-func _restore_cars() -> Car:
-	var saved: Dictionary = _saved.get("cars", {})
-	if saved.is_empty() or int(saved.get("night", -1)) != rackets.night:
-		_crate_without_a_car()
-		return null
-	var moved: Dictionary = saved.get("moved", {})
-	var named := {}
-	for id in moved.keys() + (saved.get("taken", []) as Array) + [String(saved.get("driving", ""))]:
-		named[String(id).get_slice("/", 0)] = true
-	for d in named:  # a neighbouring district's cars are made the first time they are needed
-		if d != layout.id and world.layouts.has(d):
-			_district_cars(world.layouts[d])
-	for id in moved:
-		var i := car_ids.find(String(id))
-		if i < 0:
-			continue
-		var m: Dictionary = moved[id]
-		if m.has("x"):
-			var p := Vector2(float(m.x), float(m.y))
-			if car_can_stand(cars[i], p):
-				cars[i].place(Transform2D(float(m.get("rot", 0.0)), p))
-		if String(m.get("cargo", "")) != "":
-			_set_cargo(cars[i], true)
-	for id in saved.get("taken", []):
-		thefts.mark_taken(car_ids.find(String(id)))
-	for c in cars:
-		_put_away(c, not world.is_ready(world.district_at(c.global_position)))
-	if rackets.opportunities.crate == "loaded" and not cars.any(func(c: Car) -> bool: return c.has_meta("cargo")):
-		_crate_without_a_car()
-	var seat := car_ids.find(String(saved.get("driving", "")))
-	return cars[seat] if seat >= 0 else null
-
-
-## M013: whether a car could be put down at `p`: inside a district, on open
-## ground (not in a building or the river) with room for its body.
-func car_can_stand(c: Car, p: Vector2) -> bool:
-	var d := world.district_at(p)
-	if d == "":
-		return false
-	var l: DistrictLayout = world.layouts[d]
-	return l.is_open_ground(p, minf(c.vehicle.size.y * 0.5, 12.0))
 
 
 ## M013: a game saved before the cars were (or with no car carrying it): Dutch's
 ## crate loaded into a boot that is not there any more goes back to the kerb, to
 ## be loaded again, rather than being lost.
 func _crate_without_a_car() -> void:
-	if rackets.opportunities.crate == "loaded" and not cars.any(func(c: Car) -> bool: return c.has_meta("cargo")):
+	if rackets.opportunities.crate == "loaded" and not fleet.any_cargo():
 		rackets.opportunities.crate = "taken"
-
-
-## M013: tonight's cars for the save: those moved from their parking places
-## (where and which way), what is in a boot, which Danny took and which one he
-## is sitting in - each by its lasting name.
-func _cars_to_save() -> Dictionary:
-	var moved := {}
-	var taken := []
-	for i in cars.size():
-		if car_ids[i] == "":
-			continue  # a car a test made by hand
-		var c := cars[i]
-		var spec: Dictionary = car_specs[i]
-		var m := {}
-		if c.global_position.distance_to(spec.pos) > 0.5 or absf(angle_difference(c.global_rotation, float(spec.rot))) > 0.002:
-			m = {"x": c.global_position.x, "y": c.global_position.y, "rot": c.global_rotation}
-		if c.has_meta("cargo"):
-			m["cargo"] = String(c.get_meta("cargo"))
-		if not m.is_empty():
-			moved[car_ids[i]] = m
-		if thefts.is_stolen(i):
-			taken.append(car_ids[i])
-	var driving := ""
-	if player != null and player.car != null and cars.has(player.car):
-		driving = car_ids[cars.find(player.car)]
-	return {"night": rackets.night, "moved": moved, "taken": taken, "driving": driving}
-
-
-## M008: a beat cop in the game: his own revolver is seen and heard like
-## anybody's (Danny's shots reach him through _on_player_fired).
-func _wire_officer(o: PoliceOfficer) -> void:
-	o.player_walker = walker
-	o.fired.connect(gunfire.on_fired)
-	o.fired.connect(func(muzzle: Vector2, _dir: Vector2) -> void:
-		for s in streets():
-			s.hear_gunshot(muzzle))
 
 
 ## Danny fired: every beat cop in earshot hears it (and takes a close one
 ## personally), passers-by scatter.
 func _on_player_fired(muzzle: Vector2, dir: Vector2) -> void:
-	for o in officers():
-		if not o.near_miss(muzzle, dir):
-			o.hear_gunshot(muzzle, walker.gun.rules.noise_radius)
+	police.player_fired(muzzle, dir)
 	for s in streets():
 		s.hear_gunshot(muzzle)
 	if incident_views != null:
 		for e in incident_views.hear_gunshot(muzzle):  # M009: they break off and run
 			_end_incident(e)
-
-
-func _wire_officer_hud(o: PoliceOfficer) -> void:
-	o.state_changed.connect(func(s: int) -> void: hud.set_police_status(s, _any_officer_armed()))
-	o.gave_up.connect(func() -> void: hud.show_notice("You lost him."))
-	o.drew_gun.connect(func() -> void:
-		hud.show_notice("The copper draws his revolver!")
-		hud.set_police_status(o.brain.state, true))
-
-
-## The beat cops in the loaded districts (M008).
-func officers() -> Array[PoliceOfficer]:
-	var out: Array[PoliceOfficer] = [officer]
-	for id in _districts:
-		var o: PoliceOfficer = _districts[id].get("officer")
-		if o != null and is_instance_valid(o):
-			out.append(o)
-	return out
 
 
 ## The street life of the loaded districts (M008).
@@ -861,7 +731,7 @@ func streets() -> Array[StreetLife]:
 ## What the streamer builds for a district besides its city, a slice at a
 ## time: its passers-by and traffic, and (the first time) its parked cars.
 func _district_steps(l: DistrictLayout, node: Node2D) -> Array[Callable]:
-	return [_district_street.bind(l, node), _district_cars.bind(l)]
+	return [_district_street.bind(l, node), fleet.district_cars.bind(l)]
 
 
 func _district(id: String) -> Dictionary:
@@ -874,26 +744,15 @@ func _district_street(l: DistrictLayout, node: Node2D) -> void:
 	var s := StreetLife.new()
 	node.add_child(s)
 	var others: Array[Walker] = [walker]
-	for o in officers():
+	for o in police.officers():
 		others.append(o.body)
-	s.setup(l, resolver, clock, CAR_SCENE, VEHICLES, cars, others)
+	s.setup(l, resolver, clock, Fleet.CAR_SCENE, Fleet.VEHICLES, fleet.cars, others)
 	s.name = "StreetLife"
 	if quiet_streets:
 		s.clear()
 	s.view = camera.view_rect()
 	soundscape.track_traffic(s.traffic)
 	_district(l.id).street = s
-
-
-## A district's parked cars join `cars` the first time it is built (later
-## they are only put away and brought back).
-func _district_cars(l: DistrictLayout) -> void:
-	var e := _district(l.id)
-	if e.cars_made:
-		return
-	e.cars_made = true
-	for j in l.cars.size():
-		_make_car(l.cars[j], "%s/%d" % [l.id, j])
 
 
 ## A district is complete: the camera may show it, the cars parked in it come
@@ -904,9 +763,7 @@ func _on_district_ready(id: String) -> void:
 	if id == layout.id:
 		return
 	var l: DistrictLayout = world.layouts[id]
-	for c in cars:
-		if c.has_meta("away") and l.bounds.has_point(c.global_position):
-			_put_away(c, false)
+	fleet.district_ready(l)
 	opportunity_views.district_ready(id, l, world.loaded[id].node)  # M009
 	interiors.add_district(l, world.city_of(id), world.loaded[id].node)  # M012: its rooms
 	plates.add_district(l, world.loaded[id].node)  # and the plates at its doors
@@ -916,8 +773,8 @@ func _on_district_ready(id: String) -> void:
 	world.loaded[id].node.add_child(o)
 	o.setup(resolver, police_rules, l.police_beat, world.navigator_of(id), player.body, bullets)
 	o.home_area = l.play_area
-	_wire_officer(o)
-	_wire_officer_hud(o)
+	police.wire(o)
+	police.wire_hud(o)
 	var st: Dictionary = world.state.get(id, {})
 	var past: Dictionary = st.get("officer", {})
 	if past.get("down", false) and int(past.get("night", -1)) == rackets.night:
@@ -926,7 +783,8 @@ func _on_district_ready(id: String) -> void:
 		o.body.down = true
 		o.body.lie_down()
 		o.torch.visible = false
-	_district(id).officer = o
+	_district(id)
+	police.set_district_officer(id, o)
 	for s in streets():
 		if not s.others.has(o.body):
 			s.others.append(o.body)
@@ -945,19 +803,17 @@ func _on_district_unloading(id: String) -> void:
 	if not _districts.has(id):
 		return
 	var e: Dictionary = _districts[id]
-	var o: PoliceOfficer = e.get("officer")
+	var o: PoliceOfficer = police.district_officer(id)
 	if o != null and is_instance_valid(o):
 		if not world.state.has(id):
 			world.state[id] = {}
 		world.state[id]["officer"] = {"down": o.is_down(), "pos": o.body.global_position, "night": rackets.night}
 		for s in streets():
 			s.others.erase(o.body)
-	e.officer = null
+	police.set_district_officer(id, null)
 	e.street = null
 	var b: Rect2 = world.layouts[id].bounds
-	for c in cars:
-		if c != player.car and b.has_point(c.global_position):
-			_put_away(c, true)
+	fleet.district_unloading(b)
 	if incident_views != null:
 		incident_views.drop_district(b)  # its incidents go on as state
 	if opportunity_views != null:
@@ -972,43 +828,6 @@ func _on_district_entered(id: String) -> void:
 		hud.set_district(l.name)
 	if soundscape != null:
 		soundscape.layout = l
-
-
-## A car in a district that is not loaded is put away (hidden, out of the
-## physics, not moving) - and brought back as it was.
-func _put_away(c: Car, away: bool) -> void:
-	if away == c.has_meta("away"):
-		return
-	if away:
-		c.set_meta("away", [c.collision_layer, c.collision_mask])
-		c.collision_layer = 0
-		c.collision_mask = 0
-		c.visible = false
-		c.process_mode = Node.PROCESS_MODE_DISABLED
-	else:
-		var layers: Array = c.get_meta("away")
-		c.collision_layer = layers[0]
-		c.collision_mask = layers[1]
-		c.visible = true
-		c.process_mode = Node.PROCESS_MODE_PAUSABLE
-		c.remove_meta("away")
-
-
-func _any_officer_armed() -> bool:
-	return officers().any(func(o: PoliceOfficer) -> bool: return o.is_armed() and o.brain.is_hunting())
-
-
-## M008: a round struck something. Danny's rounds in a person are a crime any
-## beat cop who could see it will answer with his revolver; somebody else's
-## round in the car Danny is driving may go through to him.
-func _on_bullet_struck(collider: Object, at: Vector2, direction: Vector2, shooter: Node) -> void:
-	if shooter == walker and collider is Walker and collider != walker:
-		for o in officers():
-			if o.body != collider:
-				o.witness_violence((collider as Walker).global_position, walker.global_position)
-	elif shooter != null and shooter != walker and not player.on_foot() and collider == player.car:
-		if _luck.randf() < DRIVER_HIT_CHANCE:
-			walker.hit_by_bullet(walker.global_position + direction * -2.0, direction, shooter)
 
 
 ## A new game: Danny tells you who he is while the camera drifts over the ward
@@ -1048,35 +867,6 @@ func _end_opening() -> void:
 	save_game()  # the game is under way: a later start loads it, without the opening
 
 
-func _park_cars() -> void:
-	for j in layout.cars.size():
-		_make_car(layout.cars[j], "%s/%d" % [layout.id, j])
-
-
-## A parked car from a layout entry (M008: any district's), added to `cars`,
-## its owner to `thefts` (once that exists). `id`: its lasting name (M013).
-func _make_car(spec: Dictionary, id: String = "") -> Car:
-	var vehicle: VehicleType = VEHICLES[spec.type]
-	var c: Car = CAR_SCENE.instantiate()
-	c.position = spec.pos
-	c.rotation = spec.rot
-	c.z_index = Layers.Z_ACTOR
-	add_child(c)
-	var paint: String = vehicle.paints[int(spec.paint) % vehicle.paints.size()]
-	c.setup(vehicle, resolver.get_texture(paint), paint)
-	var lights := VehicleLights.new()
-	lights.setup(c, resolver.get_texture("fx/glow"))
-	CarWheels.new().setup(c, resolver.get_texture(CarWheels.LOGICAL))
-	if process_mode == Node.PROCESS_MODE_ALWAYS:
-		c.process_mode = Node.PROCESS_MODE_PAUSABLE
-	cars.append(c)
-	car_specs.append(spec)
-	car_ids.append(id)
-	if thefts != null:
-		thefts.add(String(spec.get("owner", "")))
-	return c
-
-
 ## The room containing p (not its doorway), or null.
 func _room_containing(p: Vector2) -> InteriorPlan:
 	for plan in layout.interiors:
@@ -1090,29 +880,6 @@ func _plan(id: String) -> InteriorPlan:
 		if (p as InteriorPlan).id == id:
 			return p
 	return null
-
-
-func _on_entered_car(c: Car) -> void:
-	if not _restoring:
-		soundscape.play("vehicles/door", -3.0)
-	var i := cars.find(c)
-	if thefts.get_in(i):
-		theft_incidents += 1
-		if officers().any(func(o: PoliceOfficer) -> bool: return o.witness_theft(c.global_position)):
-			thefts_witnessed += 1
-			hud.show_notice("The beat cop saw you take it!")
-		else:
-			hud.show_notice("Not your car. Nobody saw you take it.")
-	camera.target = c
-	(c.get_node("Lights") as VehicleLights).set_on(true)
-	vehicle_audio.attach(c)
-
-
-func _on_exited_car(c: Car) -> void:
-	soundscape.play("vehicles/door", -3.0)
-	camera.target = walker
-	(c.get_node("Lights") as VehicleLights).set_on(false)
-	vehicle_audio.attach(null)
 
 
 ## The interaction spot the player stands at (on foot): someone to talk to or
@@ -1273,11 +1040,7 @@ func _show_purse() -> void:
 ## later); otherwise nobody knows who did it. The quarter hour starts.
 func _plant_parcel() -> void:
 	var at := cafe_scene.car_pos
-	var witnessed := false
-	for o in officers():
-		if not o.is_down() and o.body.global_position.distance_to(at) <= police_rules.sight_range \
-				and o.can_see(walker.global_position):
-			witnessed = true
+	var witnessed := police.saw_danny_at(at)
 	if not rackets.plant_parcel(clock.minute, witnessed):
 		return
 	moments.append(rackets.cafe.due(rackets.night))  # sitting and letting the time pass slows for it
@@ -1377,7 +1140,7 @@ func _cafe_goes_off() -> void:
 	_dispatch_emergency(at)
 	for s in streets():
 		s.hear_gunshot(at)
-	for o in officers():
+	for o in police.officers():
 		if o.is_down() or o.body.global_position.distance_to(at) > 1600.0:
 			continue
 		if rackets.cafe.seen:
@@ -1418,8 +1181,7 @@ func _danny_down() -> void:
 	end_talk()
 	if not player.on_foot():
 		player.eject()  # M008: shot at the wheel
-	for o in officers():
-		o.stand_down()  # he thinks he got you
+	police.stand_down()  # he thinks he got you
 	walker.condition.patch_up()
 	walker.down = false
 	if walker.gun != null:
@@ -1466,7 +1228,7 @@ func _talk_context() -> Dictionary:
 		"lefty_hurt": rival != null and rival.body.condition.worst() >= BodyCondition.Level.WOUNDED,
 		"danny_worst": walker.condition.worst(), "night": rackets.night, "money": rackets.money,
 		"incident_kind": incidents.get_incident(_incident_talking).get("kind", "") if _incident_talking != "" else "",
-		"crate_outside": _crate_car_at(_novak_door()) != null}
+		"crate_outside": fleet.crate_car_at(_novak_door()) != null}
 
 
 func _show(page: Dictionary) -> void:
@@ -1542,22 +1304,7 @@ func _apply(effects: Dictionary) -> void:
 		_show_purse()
 	if effects.get("police", false) and interiors.current != null:
 		# the shopkeeper waits until you have gone, then runs out for the copper
-		_report_from = interiors.current
-		_report_who = talk.speaker(talking)
-		_report_left = REPORT_DELAY
-
-
-## Someone runs out of `_report_from` shouting for the police once the player
-## has left it (or after REPORT_DELAY seconds, whichever comes first).
-func _update_report(delta: float) -> void:
-	if _report_from == null:
-		return
-	_report_left -= delta
-	if interiors.current != _report_from or _report_left <= 0.0:
-		var door := _report_from.outside_door(0, 30.0)
-		_report_from = null
-		officer.hear_gunshot(door, REPORT_RADIUS)
-		hud.show_notice("%s runs into the street, shouting for the copper!" % _report_who)
+		police.report_after(interiors.current, talk.speaker(talking))
 
 
 func end_talk() -> void:
@@ -1596,9 +1343,7 @@ func sleep() -> void:
 	if owl != null:
 		owl.dim(1.0)  # the house lights up for a new night
 	ward_out.clear()  # back from the Doc's, patched up (and they remember)
-	thefts.clear()  # the cars are back with their owners
-	for c in cars:
-		_set_cargo(c, false)  # M009: whatever was in a boot was fetched in the night
+	fleet.new_night()  # the cars are back with their owners, nothing in a boot (M009)
 	for v in interiors.views:
 		v.reset_people()
 	rival.reset()
@@ -1612,14 +1357,9 @@ func sleep() -> void:
 	moments.clear()
 	emergency.clear()  # the street is cleared by morning
 	_warned = 0
-	_report_from = null
-	for i in cars.size():
-		var spec: Dictionary = car_specs[i]
-		cars[i].place(Transform2D(spec.rot, spec.pos))
-		cars[i].driven = false
-		_put_away(cars[i], not world.is_ready(world.district_at(spec.pos)))
-	for o in officers():
-		o.reset()
+	police.cancel_report()
+	fleet.back_to_places()
+	police.new_night()
 	for s in streets():
 		s.reset()
 	for id in world.state:
@@ -1685,8 +1425,8 @@ func save_game() -> void:
 		data.rackets.loan.spare = thompson.spare
 	if world != null:
 		data["districts"] = _districts_to_save()
-	if thefts != null:
-		data["cars"] = _cars_to_save()  # M013: where the cars stand, which are taken, the one he sits in
+	if fleet != null and fleet.thefts != null:
+		data["cars"] = fleet.to_save()  # M013: where the cars stand, which are taken, the one he sits in
 	if walker != null and clock != null:  # M012: where and when (in the street or in a room, any district)
 		var at: Vector2 = walker.global_position if player == null or player.on_foot() else player.body().global_position
 		data["place"] = {"night": rackets.night, "minute": clock.minute, "x": at.x, "y": at.y, "facing": walker.model.facing}
@@ -1729,12 +1469,12 @@ func _advance_incidents() -> void:
 	for inc in incidents.active.duplicate():
 		if inc.kind == "stop" and inc.mercer == "" and incidents.phase_name(inc) != "leaving" \
 				and world.is_ready(inc.spot.district):
-			var cop := _officer_of(inc.spot.district)
+			var cop := police.officer_of(inc.spot.district)
 			if cop == null or cop.brain.is_hunting():
 				if cop != null:
 					cop.duty = {}
 				_end_incident(incidents.break_off(inc.id, "broken_off"))
-	for e in incidents.advance(clock.minute, danny, _can_stop):
+	for e in incidents.advance(clock.minute, danny, police.can_stop):
 		if e.event == "over":
 			rackets.street_incident_over(e.incident)
 		incident_event.emit(e.event, e.incident)
@@ -1746,12 +1486,6 @@ func _end_incident(e: Dictionary) -> void:
 		return
 	rackets.street_incident_over(e.incident)
 	incident_event.emit("over", e.incident)
-
-
-## A district's beat cop, if it is built and he is on his feet (else null).
-func _officer_of(district: String) -> PoliceOfficer:
-	var o: PoliceOfficer = officer if district == layout.id else _districts.get(district, {}).get("officer")
-	return o if o != null and is_instance_valid(o) and not o.is_down() else null
 
 
 ## Danny steps into the incident he is talking his way into (see Conversations).
@@ -1767,25 +1501,15 @@ func _step_in(choice: String) -> void:
 			rackets.money += HUSH_MONEY
 		"robbed":
 			rackets.money += HANDOFF_TAKE
-			for o in officers():  # a hold-up at gunpoint, if a copper saw it
-				o.witness_violence(walker.global_position, walker.global_position)
+			police.witness_violence(walker.global_position, walker.global_position)  # a hold-up at gunpoint, if a copper saw it
 		"bribed":
 			rackets.money -= mini(Conversations.STOP_BRIBE, rackets.money)
 		"vouched":
-			var cop := _officer_of(inc.spot.district)
+			var cop := police.officer_of(inc.spot.district)
 			if cop != null:
 				cop.duty = {}
 				cop.brain.suspect(walker.global_position)
 	incident_event.emit("phase", inc)
-
-
-## Whether a district's beat cop is free to stop somebody (an unloaded
-## district's man is, in the abstract; a loaded one not while he is after Danny).
-func _can_stop(district: String) -> bool:
-	if not world.is_ready(district):
-		return true
-	var o: PoliceOfficer = officer if district == layout.id else _districts.get(district, {}).get("officer")
-	return o != null and is_instance_valid(o) and not o.is_down() and not o.brain.is_hunting()
 
 
 ## M008: what each neighbouring district keeps for tonight - whether its beat
@@ -1795,7 +1519,7 @@ func _districts_to_save() -> Dictionary:
 	for id in world.order:
 		if id == layout.id:
 			continue
-		var o: PoliceOfficer = _districts.get(id, {}).get("officer")
+		var o: PoliceOfficer = police.district_officer(id)
 		var past: Dictionary = world.state.get(id, {}).get("officer", {})
 		if o != null and is_instance_valid(o):
 			past = {"down": o.is_down(), "pos": o.body.global_position, "night": rackets.night}
@@ -1969,18 +1693,12 @@ func show_map(on: bool) -> void:
 func _take_errand(id: String, at: Vector2) -> void:
 	match id:
 		"crate":
-			var best: Car = null
-			for c in cars:
-				if c.has_meta("away") or c.vehicle.id == "police":
-					continue
-				if c.global_position.distance_to(at) < OpportunityViews.LOAD_REACH \
-						and (best == null or c.global_position.distance_to(at) < best.global_position.distance_to(at)):
-					best = c
+			var best := fleet.loadable_car_near(at, OpportunityViews.LOAD_REACH)
 			if best == null:
 				hud.show_notice("You'll want a car up at the kerb for that. It's a heavy crate.")
 				return
 			if rackets.opportunities.load_crate():
-				_set_cargo(best, true)
+				fleet.set_cargo(best, true)
 				soundscape.play("vehicles/door", -3.0)
 				hud.show_notice("You and Dutch heave the crate into the boot. Novak's Grocery, before two.")
 				save_game()
@@ -1997,9 +1715,9 @@ func _opportunity(what: String) -> void:
 		"take_reel":
 			rackets.opportunities.take_reel()
 		"deliver_crate":
-			var c := _crate_car_at(_novak_door())
+			var c := fleet.crate_car_at(_novak_door())
 			if c != null and rackets.deliver_crate() >= 0:
-				_set_cargo(c, false)
+				fleet.set_cargo(c, false)
 				hud.show_notice("Dutch's crate delivered.")
 		"return_reel":
 			if rackets.return_reel() > 0:
@@ -2013,39 +1731,12 @@ func _opportunity_over(e: Dictionary) -> void:
 	rackets.opportunity_over(e)
 	match [e.what, e.outcome]:
 		["crate", "dropped"]:
-			for c in cars:
-				_set_cargo(c, false)
+			for c in fleet.cars:
+				fleet.set_cargo(c, false)
 			hud.show_notice("Two o'clock. Novak's shut - Dutch's nephew will be fetching his crate.")
 		["reel", "cancelled"]:
 			if promised:
 				hud.show_notice("Eleven o'clock. No reel at the Bijou - the late show's off.")
-
-
-## A car's boot with Dutch's crate in it (a crate strapped on the luggage rack, seen from above).
-func _set_cargo(c: Car, on: bool) -> void:
-	var s := c.get_node_or_null("Cargo") as Sprite2D
-	if not on:
-		if c.has_meta("cargo"):
-			c.remove_meta("cargo")
-		if s != null:
-			s.queue_free()
-		return
-	c.set_meta("cargo", "crate")
-	if s == null:
-		s = Sprite2D.new()
-		s.name = "Cargo"
-		s.texture = resolver.get_texture("props/crate")
-		s.scale = AssetCatalog.scale_for(s.texture, Vector2(17, 17))
-		s.position = Vector2(-c.vehicle.size.x * 0.5 - 4.0, 0.0)
-		c.add_child(s)
-
-
-## A car with Dutch's crate in it, parked near `at` (null if none).
-func _crate_car_at(at: Vector2) -> Car:
-	for c in cars:
-		if c.has_meta("cargo") and not c.has_meta("away") and c.global_position.distance_to(at) < CRATE_DROP_REACH:
-			return c
-	return null
 
 
 func _novak_door() -> Vector2:
@@ -2115,13 +1806,6 @@ func next_moment() -> float:
 func _drowsy_held() -> bool:
 	return talking != "" or opening != null or map_open or status_open or fighting or back_rooms.at_a_table() \
 		or cafe_film != null
-
-
-func my_car() -> Car:
-	for i in cars.size():
-		if thefts.is_dannys(i):
-			return cars[i]
-	return null
 
 
 ## M007: a fistfight with `opponent` (a Walker) - the dial over the street,
@@ -2406,10 +2090,10 @@ func _job_on_map() -> void:
 
 
 func _update_map() -> void:
-	var mine := my_car()
+	var mine := fleet.my_car()
 	var body := player.body()
 	var cops := []
-	for o in officers():
+	for o in police.officers():
 		if not o.is_down():
 			cops.append(o.body.global_position)
 	hud.city_map.set_state(body.global_position, walker.model.facing if player.on_foot() else player.car.model.heading,
@@ -2453,7 +2137,7 @@ func _process(delta: float) -> void:
 	if not get_tree().paused:
 		world.update(player.body().global_position)  # M008: neighbours streamed in and out
 	_update_view(delta)
-	_update_report(delta)
+	police.update_report(delta)
 
 
 func _update_view(delta: float) -> void:
@@ -2500,9 +2184,7 @@ func _update_view(delta: float) -> void:
 		elif c == null and _scenery_truck_near(walker.global_position):
 			prompt = "A works truck - chained up for the night"
 		elif c != null:
-			var i := cars.find(c)
-			prompt = "E   Get in your %s" % c.vehicle.params.display_name if thefts.is_dannys(i) \
-				else "E   Take the %s (%s)" % [c.vehicle.params.display_name, "taken" if thefts.is_stolen(i) else "not yours"]
+			prompt = fleet.prompt_for(c)
 	elif player.car.speed() < 30.0:
 		prompt = "E   Get out"
 	highlight.show_target(target)
@@ -2512,7 +2194,7 @@ func _update_view(delta: float) -> void:
 	var facing := walker.model.facing if player.on_foot() else player.car.model.heading
 	var speed := 0.0 if player.on_foot() else player.car.speed() / player.car.model.params.max_speed
 	var others := []
-	for o in officers():
+	for o in police.officers():
 		if o != officer and not o.is_down():
 			others.append({"pos": o.body.global_position, "hunting": o.brain.is_hunting()})
 	hud.minimap.other_police = others

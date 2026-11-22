@@ -65,7 +65,7 @@ func test_fences_seen_and_solid_along_their_line() -> void:
 
 
 func test_shadows_fall_one_way() -> void:
-	var c: Car = main.my_car()
+	var c: Car = main.fleet.my_car()
 	for rot in [0.0, PI / 2, PI, -2.3]:
 		await park(c, c.global_position, rot)
 		var shadow: Sprite2D = c.get_node("Shadow")

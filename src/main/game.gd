@@ -53,6 +53,8 @@ var hud: Hud
 
 # ---- the directors (each owns its own part of the game)
 var back_rooms: BackRooms
+var fleet: Fleet
+var police: PoliceForce
 
 
 ## The game is saved (after a deal, a hand, a film...).

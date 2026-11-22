@@ -92,7 +92,7 @@ func test_late_at_night_fewer_are_out_and_sleep_brings_the_evening_back() -> voi
 
 
 func test_the_squad_car_is_parked_in_the_alley() -> void:
-	var police: Array = main.cars.filter(func(c: Car) -> bool: return c.vehicle.id == "police")
+	var police: Array = main.fleet.cars.filter(func(c: Car) -> bool: return c.vehicle.id == "police")
 	assert_eq(police.size(), 1)
 	assert_eq(police[0].paint, "cars/police")
 	assert_false(police[0].driven, "nobody at the wheel")
@@ -106,7 +106,7 @@ func test_a_car_waits_short_of_a_bus_nosing_into_its_lane() -> void:
 	var c: Car = street().traffic[0]  # eastbound on Marlowe at the start
 	var lane_y := c.global_position.y
 	var x0 := c.global_position.x + 330.0
-	var bus: Car = main._make_car({"type": "school_bus", "paint": 0, "pos": Vector2(x0, lane_y + 68.0), "rot": -PI / 2,
+	var bus: Car = main.fleet.make_car({"type": "school_bus", "paint": 0, "pos": Vector2(x0, lane_y + 68.0), "rot": -PI / 2,
 		"owner": "St. Brendan's parish school"})
 	assert_true(street().parked.has(bus))
 	await wait_physics_frames(60 * 5)

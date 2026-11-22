@@ -117,10 +117,10 @@ func _run() -> void:
 	main.world.load_now("halloran")
 	for i in 10:
 		await process_frame
-	var bus: Car = main.cars.filter(func(x: Car) -> bool: return x.vehicle.id == "school_bus")[0]
+	var bus: Car = main.fleet.cars.filter(func(x: Car) -> bool: return x.vehicle.id == "school_bus")[0]
 	main.player.enter(bus)
 	cmd = PlayerCommand.make(Vector2(0, -1))
 	await _fps("Halloran Square, driving the school bus", 3.0)
 	cmd = PlayerCommand.new()
-	print("  cars %d, loaded %s" % [main.cars.size(), main.world.ready_ids()])
+	print("  cars %d, loaded %s" % [main.fleet.cars.size(), main.world.ready_ids()])
 	quit()

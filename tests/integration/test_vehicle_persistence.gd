@@ -46,24 +46,24 @@ func _street(l: DistrictLayout, street_name: String) -> Rect2:
 
 
 func _id_of(c: Car) -> String:
-	return main.car_ids[main.cars.find(c)]
+	return main.fleet.ids[main.fleet.cars.find(c)]
 
 
 func _car(id: String) -> Car:
-	var i: int = main.car_ids.find(id)
-	return main.cars[i] if i >= 0 else null
+	var i: int = main.fleet.ids.find(id)
+	return main.fleet.cars[i] if i >= 0 else null
 
 
 func _count(vehicle_id: String) -> int:
-	return main.cars.filter(func(c: Car) -> bool: return c.vehicle.id == vehicle_id).size()
+	return main.fleet.cars.filter(func(c: Car) -> bool: return c.vehicle.id == vehicle_id).size()
 
 
 func _assert_no_twins() -> void:
 	var seen := {}
-	for id in main.car_ids:
+	for id in main.fleet.ids:
 		assert_false(seen.has(id), "one car called %s" % id)
 		seen[id] = true
-	assert_eq(main.car_ids.size(), main.cars.size())
+	assert_eq(main.fleet.ids.size(), main.fleet.cars.size())
 
 
 func test_saved_at_the_wheel_in_halloran_square() -> void:
@@ -82,8 +82,8 @@ func test_saved_at_the_wheel_in_halloran_square() -> void:
 	assert_eq(main.world.current, "halloran")
 	var at := car.global_position
 	var heading := car.global_rotation
-	var cars_before: int = main.cars.size()
-	var notices_before: int = main.theft_incidents
+	var cars_before: int = main.fleet.cars.size()
+	var notices_before: int = main.fleet.theft_incidents
 	await _reload()
 	assert_eq(main.world.current, "halloran", "the square is built again")
 	assert_true(main.world.is_ready("halloran"))
@@ -97,12 +97,12 @@ func test_saved_at_the_wheel_in_halloran_square() -> void:
 	assert_ne(car.collision_layer, 0)
 	assert_eq(main.camera.target, car, "the camera on the car")
 	assert_false(walker().visible, "Danny in the seat, not beside it")
-	assert_true(main.thefts.is_stolen(main.cars.find(car)), "still a stolen car")
-	assert_eq(main.theft_incidents, 0, "loading is not a second theft")
-	assert_eq(main.cars.size(), cars_before, "no car lost, none made twice (the square's cars made with it)")
+	assert_true(main.fleet.thefts.is_stolen(main.fleet.cars.find(car)), "still a stolen car")
+	assert_eq(main.fleet.theft_incidents, 0, "loading is not a second theft")
+	assert_eq(main.fleet.cars.size(), cars_before, "no car lost, none made twice (the square's cars made with it)")
 	_assert_no_twins()
-	var spec: Dictionary = main.car_specs[main.cars.find(car)]
-	assert_false(main.cars.any(func(c: Car) -> bool: return c != car and c.global_position.distance_to(spec.pos) < 1.0),
+	var spec: Dictionary = main.fleet.specs[main.fleet.cars.find(car)]
+	assert_false(main.fleet.cars.any(func(c: Car) -> bool: return c != car and c.global_position.distance_to(spec.pos) < 1.0),
 		"nothing left standing at its old parking place")
 	# the controls work
 	cmd = PlayerCommand.make(Vector2(0, -1))
@@ -113,7 +113,7 @@ func test_saved_at_the_wheel_in_halloran_square() -> void:
 
 
 func test_left_in_the_street_beside_it() -> void:
-	var sedan: Car = main.my_car()
+	var sedan: Car = main.fleet.my_car()
 	var id := _id_of(sedan)
 	await seat_in(sedan)
 	await park(sedan, Vector2(2300, 560), 0.0)
@@ -135,17 +135,17 @@ func test_left_in_the_street_beside_it() -> void:
 	sedan = _car(id)
 	assert_lt(sedan.global_position.distance_to(at), 1.0, "his car where he left it, not back at home")
 	assert_lt(absf(angle_difference(sedan.global_rotation, heading)), 0.01)
-	assert_false(main.thefts.is_stolen(main.cars.find(sedan)), "his own car")
+	assert_false(main.fleet.thefts.is_stolen(main.fleet.cars.find(sedan)), "his own car")
 	assert_false(sedan.driven, "parked")
 	_assert_no_twins()
 
 
 func test_saved_right_after_getting_in() -> void:
-	var sedan: Car = main.my_car()
+	var sedan: Car = main.fleet.my_car()
 	await seat_in(sedan)
 	await _reload()
 	assert_false(player().on_foot())
-	assert_eq(player().car, main.my_car(), "his own car")
+	assert_eq(player().car, main.fleet.my_car(), "his own car")
 	assert_true(player().car.driven)
 
 
@@ -171,7 +171,7 @@ func test_a_truck_from_the_yards_left_in_the_ward() -> void:
 	assert_not_null(truck, "the truck is made all the same")
 	assert_lt(truck.global_position.distance_to(at), 1.0, "in the ward where he left it")
 	assert_true(truck.visible and not truck.has_meta("away"))
-	assert_true(main.thefts.is_stolen(main.cars.find(truck)), "still Brennan's, still taken")
+	assert_true(main.fleet.thefts.is_stolen(main.fleet.cars.find(truck)), "still Brennan's, still taken")
 	main.world.load_now("yards")
 	await wait_physics_frames(3)
 	assert_eq(_count("dump_truck"), 1, "no second truck at Brennan's when the yards are built")
@@ -206,7 +206,7 @@ func test_a_car_never_jumps_home_when_its_district_goes() -> void:
 
 
 func test_a_place_no_car_can_stand_on() -> void:
-	var sedan: Car = main.my_car()
+	var sedan: Car = main.fleet.my_car()
 	var id := _id_of(sedan)
 	await seat_in(sedan)
 	main.save_game()
@@ -227,19 +227,19 @@ func test_a_place_no_car_can_stand_on() -> void:
 	add_child_autofree(main)
 	await wait_physics_frames(3)
 	sedan = _car(id)
-	var spec: Dictionary = main.car_specs[main.cars.find(sedan)]
+	var spec: Dictionary = main.fleet.specs[main.fleet.cars.find(sedan)]
 	assert_lt(sedan.global_position.distance_to(spec.pos), 1.0, "back at its own parking place, not inside a wall")
 	assert_eq(player().car, sedan, "and Danny still in it")
 	assert_false(main.layout.is_in_building(sedan.global_position))
 
 
 func test_dutchs_crate_stays_in_the_boot() -> void:
-	var sedan: Car = main.my_car()
+	var sedan: Car = main.fleet.my_car()
 	main.rackets.opportunities.crate = "loaded"
-	main._set_cargo(sedan, true)
+	main.fleet.set_cargo(sedan, true)
 	await _reload()
 	assert_eq(main.rackets.opportunities.crate, "loaded")
-	assert_true(main.my_car().has_meta("cargo"), "the crate still in the boot")
+	assert_true(main.fleet.my_car().has_meta("cargo"), "the crate still in the boot")
 
 
 func test_an_old_save_with_a_crate_and_no_cars() -> void:
@@ -262,11 +262,11 @@ func test_an_old_save_with_a_crate_and_no_cars() -> void:
 
 
 func test_sleeping_still_brings_them_home() -> void:
-	var sedan: Car = main.my_car()
-	var spec: Dictionary = main.car_specs[main.cars.find(sedan)]
+	var sedan: Car = main.fleet.my_car()
+	var spec: Dictionary = main.fleet.specs[main.fleet.cars.find(sedan)]
 	await park(sedan, Vector2(2300, 560), 0.0)
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(3)
 	await _reload()
-	assert_lt(main.my_car().global_position.distance_to(spec.pos), 1.0, "outside the flat the next evening")
+	assert_lt(main.fleet.my_car().global_position.distance_to(spec.pos), 1.0, "outside the flat the next evening")

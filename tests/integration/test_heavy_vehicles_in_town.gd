@@ -18,7 +18,7 @@ func _built(id: String, spec_type: String) -> Car:
 	var spec: Dictionary = l.cars.filter(func(s: Dictionary) -> bool: return s.type == spec_type)[0]
 	_go(spec.pos + Vector2(0, -80).rotated(spec.rot + PI / 2))
 	main.world.load_now(id)
-	for c in main.cars:
+	for c in main.fleet.cars:
 		if c.vehicle.id == spec_type:
 			return c
 	return null
@@ -41,19 +41,19 @@ func test_the_coal_truck_on_its_dock() -> void:
 	assert_not_null(truck, "Brennan's truck is there when the yards are")
 	var spec := _spec("yards", "dump_truck")
 	assert_lt(truck.global_position.distance_to(spec.pos), 1.0)
-	var i: int = main.cars.find(truck)
-	assert_eq(main.thefts.owner(i), "Brennan Coal & Ice")
+	var i: int = main.fleet.cars.find(truck)
+	assert_eq(main.fleet.thefts.owner(i), "Brennan Coal & Ice")
 	# the yards' copper happens to be watching
-	var cop: PoliceOfficer = main._districts.yards.officer
+	var cop: PoliceOfficer = main.police.district_officer("yards")
 	cop.body.place(truck.global_position + Vector2(-120, -60), 0.0)
 	_go(truck.global_position + Vector2(-34, 20), 0.0)
 	await wait_physics_frames(3)
 	assert_string_contains(main.hud.prompt_label.text, "Take the Dump Truck (not yours)")
-	var witnessed: int = main.thefts_witnessed
+	var witnessed: int = main.fleet.thefts_witnessed
 	await press_e()
 	assert_eq(player().car, truck)
-	assert_true(main.thefts.is_stolen(i), "a theft like any other")
-	assert_eq(main.thefts_witnessed, witnessed + 1, "and the copper saw it")
+	assert_true(main.fleet.thefts.is_stolen(i), "a theft like any other")
+	assert_eq(main.fleet.thefts_witnessed, witnessed + 1, "and the copper saw it")
 	cop.body.place(cop.body.global_position + Vector2(-2000, 0), 0.0)  # out of the way of the test drive
 	cop.reset()
 	# up Wharf Street and left onto Front Street, away west, with the normal pedals and wheel
@@ -99,8 +99,8 @@ func test_the_coal_truck_is_found() -> void:
 func test_the_school_bus_by_the_church() -> void:
 	var bus := _built("halloran", "school_bus")
 	assert_not_null(bus, "St. Brendan's bus is there when the square is")
-	var i: int = main.cars.find(bus)
-	assert_eq(main.thefts.owner(i), "St. Brendan's parish school")
+	var i: int = main.fleet.cars.find(bus)
+	assert_eq(main.fleet.thefts.owner(i), "St. Brendan's parish school")
 	_go(bus.global_position + Vector2(40, 0), PI)
 	await wait_physics_frames(3)
 	assert_string_contains(main.hud.prompt_label.text, "Take the School Bus (not yours)")
@@ -119,11 +119,11 @@ func test_the_school_bus_by_the_church() -> void:
 
 func test_heavy_against_a_parked_car_and_solid_against_a_wall() -> void:
 	var truck := _built("yards", "dump_truck")
-	main._put_away(truck, false)
+	main.fleet.put_away(truck, false)
 	_go(main.layout.spawn)
 	# along Marlowe Avenue in the ward, a sedan parked in its way
 	await park(truck, Vector2(900, 640), 0.0)
-	var sedan: Car = main.cars.filter(func(c: Car) -> bool: return c.vehicle.id == "sedan" and c != main.my_car())[0]
+	var sedan: Car = main.fleet.cars.filter(func(c: Car) -> bool: return c.vehicle.id == "sedan" and c != main.fleet.my_car())[0]
 	await park(sedan, Vector2(1180, 640), 0.0)
 	await seat_in(truck)
 	cmd = PlayerCommand.make(Vector2(0, -1))
@@ -152,8 +152,8 @@ func test_heavy_against_a_parked_car_and_solid_against_a_wall() -> void:
 
 func test_the_bus_across_the_border_and_back() -> void:
 	var bus := _built("halloran", "school_bus")
-	var count: int = main.cars.size()
-	main._put_away(bus, false)
+	var count: int = main.fleet.cars.size()
+	main.fleet.put_away(bus, false)
 	# at the east end of Marlowe Avenue in the square, nose east
 	await park(bus, Vector2(-1950, 640), 0.0)
 	await seat_in(bus)
@@ -176,12 +176,12 @@ func test_the_bus_across_the_border_and_back() -> void:
 	assert_false(main.world.is_ready("halloran"))
 	assert_true(is_instance_valid(bus) and bus.visible and not bus.has_meta("away"), "Danny's bus is not put away with the square")
 	assert_eq(player().car, bus)
-	assert_eq(main.cars.size(), count, "no car made or lost")
+	assert_eq(main.fleet.cars.size(), count, "no car made or lost")
 	main.world.enabled = true
 	# back west: the square is built again round him - and there is still one bus
 	await park(bus, Vector2(-1750, 640), PI)
 	main.world.load_now("halloran")
 	await wait_physics_frames(5)
-	assert_eq(main.cars.size(), count, "no second bus")
-	assert_eq(main.cars.filter(func(c: Car) -> bool: return c.vehicle.id == "school_bus").size(), 1)
+	assert_eq(main.fleet.cars.size(), count, "no second bus")
+	assert_eq(main.fleet.cars.filter(func(c: Car) -> bool: return c.vehicle.id == "school_bus").size(), 1)
 	assert_eq(player().car, bus)
