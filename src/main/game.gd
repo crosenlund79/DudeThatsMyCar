@@ -76,6 +76,8 @@ var errands: Errands
 var freight: FreightJobDirector
 var cafe: CafeJobDirector
 var last_song: LastSong
+var modals: Modals
+var saves: Saves
 
 
 ## The game is saved (after a deal, a hand, a film...).

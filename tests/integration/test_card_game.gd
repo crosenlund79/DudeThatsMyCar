@@ -117,7 +117,7 @@ func test_sitting_in_playing_and_getting_up() -> void:
 	cmd = PlayerCommand.new()
 	assert_lt(walker().global_position.distance_to(at), 1.0, "no walking at the table")
 	assert_false(walker().gun.is_drawn(), "no gun at the table")
-	assert_true(main._drowsy_held(), "no drowsy sway at the cards")
+	assert_true(main.modals.drowsy_held(), "no drowsy sway at the cards")
 	await _play_hands(4)
 	assert_gte(main.back_rooms.poker.hands, 4, "hands dealt and played")
 	assert_eq(main.rackets.money + main.back_rooms.poker.danny_chips() + main.back_rooms.poker.players_money(), books, "the books balance at the table")

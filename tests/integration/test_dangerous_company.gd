@@ -82,7 +82,7 @@ func test_a_night_of_dangerous_company() -> void:
 	assert_true(lefty.is_down(), "Lefty Moran shot down")
 	# how Danny is, and the Doc
 	main._unhandled_input(_key(CityInput.STATUS))
-	assert_true(main.status_open)
+	assert_true(main.modals.status_open)
 	main._unhandled_input(_key(CityInput.STATUS))
 	r.money = maxi(r.money, 2000)
 	await talk_to("vet", "pettibone")

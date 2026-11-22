@@ -48,7 +48,7 @@ func _drag(from: Vector2, by: Vector2) -> void:
 func test_m_opens_and_closes_it() -> void:
 	assert_false(cmap().visible)
 	await _open()
-	assert_true(main.map_open)
+	assert_true(main.modals.map_open)
 	assert_true(cmap().visible)
 	assert_true(get_tree().paused, "the night waits")
 	_close()
@@ -57,7 +57,7 @@ func test_m_opens_and_closes_it() -> void:
 	await _open()
 	main._unhandled_input(_key(CityInput.MENU))
 	assert_false(cmap().visible, "Esc closes it")
-	assert_false(main.paused, "and does not open the pause screen")
+	assert_false(main.modals.paused, "and does not open the pause screen")
 
 
 func test_every_district_in_its_true_place() -> void:
@@ -186,7 +186,7 @@ func test_nothing_moves_while_it_is_open() -> void:
 func test_not_while_talking() -> void:
 	await talk_to("copper_owl", "augie")
 	main._unhandled_input(_key(CityInput.MAP))
-	assert_false(main.map_open, "finish the talk first")
+	assert_false(main.modals.map_open, "finish the talk first")
 
 
 func test_the_minimap_runs_on_across_the_border() -> void:

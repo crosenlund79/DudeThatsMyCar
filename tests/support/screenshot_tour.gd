@@ -232,10 +232,10 @@ func _run(shots: Array) -> void:
 				# M006: the map of the whole ward (M)
 				_teleport_walker(Vector2(2350, 600), PI * 0.3)
 				await _frames(10)
-				main.show_map(true)
+				main.modals.show_map(true)
 				await _frames(5)
 				await _shot(s, false)
-				main.show_map(false)
+				main.modals.show_map(false)
 			"vet":
 				# M006: Doc Pettibone's surgery, Danny wounded and asking to be patched up
 				main.walker.condition.shoot("left_arm", 0.5)
@@ -253,10 +253,10 @@ func _run(shots: Array) -> void:
 				main.walker.condition.shoot("left_arm", 0.5)
 				main.walker.condition.hurt("right_leg", 80)
 				main.walker.condition.hurt("torso", 20)
-				main.show_status(true)
+				main.modals.show_status(true)
 				await _frames(5)
 				await _shot("status", false)
-				main.show_status(false)
+				main.modals.show_status(false)
 				main.walker.condition.heal_all()
 			"morgue":
 				# M006: the Morgue on Pruitt Street
@@ -309,10 +309,10 @@ func _run(shots: Array) -> void:
 				main.rackets.job.learn("culprit")
 				_teleport_walker(Vector2(2280, 1050), PI * 0.5)
 				await _frames(10)
-				main.show_map(true)
+				main.modals.show_map(true)
 				await _frames(5)
 				await _shot("job_map", false)
-				main.show_map(false)
+				main.modals.show_map(false)
 			"confront":
 				# M007: outside Doyle's Garage - talk, threaten or fight
 				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
@@ -359,7 +359,7 @@ func _run(shots: Array) -> void:
 				# M008: the city map zoomed out over all three districts, and looking at Halloran Square
 				_teleport_walker(Vector2(2350, 600), PI * 0.3)
 				await _frames(10)
-				main.show_map(true)
+				main.modals.show_map(true)
 				var cm: CityMap = main.hud.city_map
 				if s == "city_map_wide":
 					cm.zoom_at(cm.map_rect.get_center(), 100.0)
@@ -368,7 +368,7 @@ func _run(shots: Array) -> void:
 					cm.zoom_at(cm.map_rect.get_center(), 0.8)
 				await _frames(5)
 				await _shot(s, false)
-				main.show_map(false)
+				main.modals.show_map(false)
 			"crossing":
 				# M008: Danny's sedan crossing from the ward into the yards on Kessler Street, lights on
 				main.world.load_now("yards")
@@ -843,11 +843,11 @@ func _run(shots: Array) -> void:
 				main.rackets.job.stage = RourkeJob.Stage.OFFERED
 				_teleport_walker(Vector2(2350, 600), PI * 0.3)
 				await _frames(20)
-				main.open_menu(true)
+				main.modals.open_menu(true)
 				main.hud.game_menu.show_page("notebook" if s == "m012_menu" else "controls")
 				await _frames(10)
 				await _shot(s, false)
-				main.open_menu(false)
+				main.modals.open_menu(false)
 			"city_map_civic":
 				# M011: the city map close over Halloran Park: City Hall, the mayor's house (with its address), the aldermen
 				main.weather.force("clear")

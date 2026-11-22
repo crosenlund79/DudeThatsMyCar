@@ -1,0 +1,148 @@
+{
+	"gun": {
+		"ammo": 7,
+		"spare": 14
+	},
+	"rackets": {
+		"boss": {
+			"arrears": 0,
+			"ban": false,
+			"ban_nights": 0,
+			"belief": {
+				"copper_owl": "good"
+			},
+			"belief_night": {
+				"copper_owl": 1
+			},
+			"caught": 0,
+			"claims": [],
+			"commission": 20,
+			"expected": 1500,
+			"handed": 0,
+			"heard": [],
+			"knows_rye": true,
+			"paid_log": [
+				{
+					"cents": 1000,
+					"id": "copper_owl",
+					"night": 1,
+					"seq": 1
+				}
+			],
+			"patience": 3,
+			"purse": 0,
+			"recent": [],
+			"seen_rye": 1800,
+			"settled": false,
+			"trust": 60
+		},
+		"bottles": 0,
+		"bought_by_bar": 6,
+		"commission_earned": 0,
+		"held": 1000,
+		"incidents": [],
+		"last_seq": {
+			"copper_owl": 1
+		},
+		"loans": {},
+		"memory": {
+			"entries": {
+				"augie": [
+					{
+						"kind": "deal",
+						"night": 1,
+						"note": ""
+					}
+				],
+				"sal": [
+					{
+						"kind": "deal",
+						"night": 1,
+						"note": ""
+					}
+				]
+			},
+			"promises": []
+		},
+		"money": 3877,
+		"night": 1,
+		"paid": {
+			"copper_owl": "asked"
+		},
+		"paid_amount": {
+			"copper_owl": 1000
+		},
+		"paid_total": {
+			"copper_owl": 1000
+		},
+		"rumours": {
+			"items": [
+				{
+					"business": "copper_owl",
+					"cents": 1000,
+					"id": 1,
+					"kind": "paid",
+					"known": [
+						"augie"
+					],
+					"night": 1,
+					"origin": "augie",
+					"seq": 1,
+					"text": ""
+				}
+			],
+			"next": 2
+		},
+		"seq": 1,
+		"skimmed": 0,
+		"sold_by_barber": 6,
+		"town": {
+			"barber_shop": {
+				"carry": 0.0,
+				"cash": 2900,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 0
+			},
+			"copper_owl": {
+				"carry": 0.00888888888888081,
+				"cash": 1200,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 12
+			},
+			"eddie": {
+				"carry": 0.0,
+				"cash": 1000,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 4
+			},
+			"grocery": {
+				"carry": 0.0,
+				"cash": 2100,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 2
+			},
+			"night_done": 0.0011111111111101
+		}
+	},
+	"version": 1
+}

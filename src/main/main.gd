@@ -192,17 +192,8 @@ var back_rooms: BackRooms  ## the card table, the wheel, the machines (src/gamin
 var fleet: Fleet  ## the parked cars (src/driving/)
 var police: PoliceForce  ## the beat cops of every built district (src/police/)
 var shake := ViewShake.new()  ## what jolts the view (src/camera/)
-
-# ------------------------------------------------------------------ the screens over the world
-
-var paused := false
-## M006: the ward map, or the status screen, is open (the world is paused under it).
-var map_open := false
-var status_open := false
-## The sound level chosen on the menu's Sound page (index into AudioSettings.BUSES).
-var sound_row := 0
-## The save as it was read at start-up ({} for a new game).
-var _saved := {}
+var modals: Modals  ## what is over the street and has the keys: the menu, the maps, a table, a film (src/ui/)
+var saves: Saves  ## the save read, checked and written by sections (src/save/)
 
 
 func _init() -> void:
@@ -230,6 +221,10 @@ func _ready() -> void:
 	clock = NightClock.new(night_rules)
 	rackets.town.night_minutes = float(night_rules.dawn_minute - night_rules.start_minute)
 	talk = Conversations.new(rackets)
+	saves = Saves.new(game)  # M014: the save by sections, at the current format
+	game.saves = saves
+	modals = Modals.new(game)  # M014: what has the keys
+	game.modals = modals
 	dialogue = Dialogue.new(game)  # M014: talking in the game
 	game.dialogue = dialogue
 	people = People.new(game)  # M014: call-outs and routines
@@ -297,18 +292,18 @@ func _ready() -> void:
 	world.district_ready.connect(districts.ready)
 	world.district_unloading.connect(districts.unloading)
 	world.district_entered.connect(districts.entered)
-	districts.load_saved(_saved.get("districts", {}))
+	districts.load_saved(saves.section("districts"))
 	var all_layouts := world.order.map(func(id: String) -> DistrictLayout: return world.layouts[id])
 	incidents = StreetIncidents.new(StreetIncidents.spots_of(all_layouts))
 	incidents.begin_night(rackets.night, float(night_rules.start_minute), float(night_rules.dawn_minute),
-		StreetIncidents.saved_history(_saved.get("incidents", {}), rackets.night))
+		StreetIncidents.saved_history(saves.section("incidents"), rackets.night))
 	weather = Weather.new()
 	weather.begin_night(rackets.night, float(night_rules.start_minute))
 	weather.force(weather_override)
 	back_rooms = BackRooms.new(game)  # M014: the card game's state early, as M010 had it
 	back_rooms.name = "BackRooms"
 	game.back_rooms = back_rooms
-	back_rooms.load_poker(_saved.get("poker", {}), rackets.night)
+	back_rooms.load_poker(saves.section("poker"), rackets.night)
 	fleet = Fleet.new(game)  # M014: the parked cars and their owners
 	game.fleet = fleet
 	fleet.park(layout)
@@ -319,7 +314,7 @@ func _ready() -> void:
 	walker.rng.seed = 1932001
 	walker.hurt.connect(casualties.danny_hurt)
 	walker.struck_down.connect(casualties.danny_down)
-	armoury.load_gun(_saved.get("gun", {}))
+	armoury.load_gun(saves.section("gun"))
 	interiors.update_player(walker.global_position)
 	interiors.snap()
 	walker.aim_point = layout.spawn + Vector2.from_angle(layout.spawn_facing) * 60.0
@@ -403,7 +398,7 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(resolver, layout.name)
 	hud.add_minimap(layout)
-	hud.game_menu.action.connect(menu_action)  # M012: a click in the menu
+	hud.game_menu.action.connect(modals.menu_action)  # M012: a click in the menu
 	incident_views = IncidentViews.new()
 	add_child(incident_views)
 	incident_views.setup(resolver, incidents, load(Hud.FONT_PATH))
@@ -433,7 +428,7 @@ func _ready() -> void:
 	hud.dialogue_choice.connect(dialogue.answer)
 	_wire_dialogue()
 	add_child(back_rooms)  # M014: the tables, the room and their screens (where the room's lines were)
-	back_rooms.setup(_saved.get("slots", []))
+	back_rooms.setup(saves.section("slots", []))
 	_show_purse()
 	player.entered_car.connect(fleet.entered)
 	player.exited_car.connect(fleet.exited)
@@ -448,7 +443,7 @@ func _ready() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_resume_place()  # M012: a game saved mid-night goes on where and when it was saved
 	_update_view(0.0)
-	if opening_enabled and _saved.is_empty():
+	if opening_enabled and saves.is_new_game():
 		films.start_opening(game.ward_plan("copper_owl"))
 
 
@@ -458,14 +453,7 @@ func _ready() -> void:
 func _people_update(delta: float) -> void:
 	people.apply_routines()
 	last_song.update(delta, callouts_enabled)  # M012: after half past one, her last song
-	people.update_callouts(delta, callouts_enabled, _busy)
-
-
-## What Danny is in the middle of, for whoever might call out to him (M012).
-func _busy() -> Dictionary:
-	return {"talking": dialogue.talking != "", "busy": back_rooms.at_a_table() or not player.seat.is_empty(),
-		"film": films.playing() or last_song.scene != "", "fighting": fights.fighting,
-		"menu": paused or map_open or status_open}
+	people.update_callouts(delta, callouts_enabled, modals.busy)
 
 
 ## M014: what a talk's pages do, each to the part of the game that owns it
@@ -501,13 +489,13 @@ func _wire_rooms(new_views: Array) -> void:
 ## the street or inside a room, in any district. (A game saved at the start
 ## of a night - after sleeping - begins at home as always.)
 func _resume_place() -> void:
-	var place: Dictionary = _saved.get("place", {})
+	var place: Dictionary = saves.section("place")
 	if place.is_empty() or int(place.get("night", -1)) != rackets.night:
 		missions.restored()  # M013: Dutch's crate back at the kerb if its car is not there
 		return
 	var at := Vector2(float(place.get("x", 0.0)), float(place.get("y", 0.0)))
 	var seat: Car = null
-	var saved_cars: Dictionary = _saved.get("cars", {})
+	var saved_cars: Dictionary = saves.section("cars")
 	if saved_cars.is_empty() or int(saved_cars.get("night", -1)) != rackets.night:
 		missions.restored()
 	else:
@@ -556,44 +544,29 @@ func _show_purse() -> void:
 
 ## The night moves on (not under the menu, not during the opening narration).
 func _update_clock(delta: float) -> void:
-	night.update(delta, not paused and films.of("opening") == null)
+	night.update(delta, not modals.paused and films.of("opening") == null)
 
 
+## The game written to the save file, section by section (src/save/saves.gd).
 func save_game() -> void:
-	var data := {"rackets": rackets.to_dict(), "voices": voice_lines.to_dict(), "poker": {}}
-	back_rooms.save_into(data)  # the tables: the card game, the machines, his chips counted as his money
-	if walker != null:
-		data["danny"] = walker.condition.to_dict()
-	if rival != null:
-		data["ward"] = {"out": casualties.ward_out.duplicate(), "rival": rival.to_dict()}
-	armoury.save_into(data)  # the .45's rounds; M010: the Thompson's with the loan
-	if world != null:
-		data["districts"] = districts.to_save()
-	if fleet != null and fleet.thefts != null:
-		data["cars"] = fleet.to_save()  # M013: where the cars stand, which are taken, the one he sits in
-	if walker != null and clock != null:  # M012: where and when (in the street or in a room, any district)
-		var at: Vector2 = walker.global_position if player == null or player.on_foot() else player.body().global_position
-		data["place"] = {"night": rackets.night, "minute": clock.minute, "x": at.x, "y": at.y, "facing": walker.model.facing}
-	if incidents != null:
-		data["incidents"] = incidents.to_dict()
-	SaveGame.write(save_path, data)
+	saves.write(save_path)
 
 
+## The save read (migrated and checked), and the books and the voices put back
+## first (SaveSchema.RESTORE_ORDER): everything after is built around them.
 func _load_game() -> void:
-	_saved = SaveGame.read(save_path)
-	if _saved.has("rackets"):
-		rackets.from_dict(_saved.rackets)
-	if _saved.has("voices"):
-		voice_lines.from_dict(_saved.voices)
-	elif _saved.has("rackets"):
-		voice_lines.assume_old_acquaintances()  # a game from before the voices
+	saves.read(save_path)
+	if saves.has("rackets"):
+		rackets.from_dict(saves.section("rackets"))
+	if saves.has("voices"):
+		voice_lines.from_dict(saves.section("voices"))  # (M006: a game from before the voices knows its old acquaintances)
 
 
 ## M006: Danny's wounds, Lefty's fate and who is out tonight, from the save.
 func _load_ward() -> void:
-	if _saved.has("danny"):
-		walker.condition.from_dict(_saved.danny)
-	var ward: Dictionary = _saved.get("ward", {})
+	if saves.has("danny"):
+		walker.condition.from_dict(saves.section("danny"))
+	var ward: Dictionary = saves.section("ward")
 	rival.from_dict(ward.get("rival", {}))
 	casualties.load_out(ward.get("out", {}), rackets.night)
 	for v in interiors.views:
@@ -605,145 +578,9 @@ func _load_ward() -> void:
 		soundscape.stop_music()
 
 
+## Keys and clicks no control took: to whatever is over the street (src/ui/modals.gd).
 func _unhandled_input(event: InputEvent) -> void:
-	if fights.fighting:
-		# only Space, for the dial; no walking, shooting, maps or menus mid-fight
-		if event.is_action_pressed(CityInput.HANDBRAKE):
-			fights.press()
-		return
-	if back_rooms.handle_key(event):
-		return  # M010, M011: at a table only the table's keys
-	if films.skip_input(event):
-		return  # a film: E, Esc, Space or a click skips it (M012: the Bird's to her question)
-	if map_open and event.is_action_pressed(CityInput.RECENTRE):
-		hud.city_map.recentre()
-		return
-	if map_open and (event.is_action_pressed(CityInput.MAP) or event.is_action_pressed(CityInput.MENU)):
-		show_map(false)
-		return
-	if status_open and (event.is_action_pressed(CityInput.STATUS) or event.is_action_pressed(CityInput.MENU)):
-		show_status(false)
-		return
-	if map_open or status_open:
-		return  # nothing else while one is open
-	if event.is_action_pressed(CityInput.MAP) and not paused and dialogue.talking == "":
-		show_map(true)
-		return
-	if event.is_action_pressed(CityInput.STATUS) and not paused and dialogue.talking == "":
-		show_status(true)
-		return
-	if event.is_action_pressed(CityInput.MENU) and dialogue.talking != "":
-		dialogue.end()
-	elif paused:
-		var what := hud.game_menu.handle_key(event)  # M012: the game menu has the keys
-		if what == "sound":
-			_sound_input(event)
-		else:
-			menu_action(what)
-	elif event.is_action_pressed(CityInput.MENU):
-		open_menu(true)
-	elif event.is_action_pressed(CityInput.HELP):
-		hud.toggle_help()
-
-
-## M012: the game menu open (Esc) or shut: the world waits under it - the
-## clock, the cards, the coppers, every timer - and nothing it does reaches
-## the street (the click that closes it never fires the gun).
-func open_menu(on: bool) -> void:
-	paused = on
-	get_tree().paused = on
-	if on:
-		hud.game_menu.notebook = Notebook.entries(rackets, clock.minute)
-		hud.game_menu.can_load = save_path != "" and FileAccess.file_exists(save_path)
-	hud.set_paused(on)
-	hud.show_sound(settings, sound_row)
-	if not command_source.is_valid():
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if on else Input.MOUSE_MODE_HIDDEN
-	if not on:
-		player.fire_lock = true
-
-
-## M012: what the game menu asked for ("resume", "save", "load", "quit"; "" nothing).
-func menu_action(what: String) -> void:
-	match what:
-		"resume":
-			open_menu(false)
-		"save":
-			save_game()
-			var here_l := world.layout_at(player.body().global_position)
-			var at: String = interiors.current.name if interiors.current != null else (here_l.name if here_l != null else layout.name)
-			hud.game_menu.say("Saved - Night %d, %s, %s." % [rackets.night, clock.text(), at] if save_path != ""
-				else "Nothing written: this game is not being saved.")
-			hud.game_menu.can_load = save_path != "" and FileAccess.file_exists(save_path)
-		"load":
-			if save_path == "" or not FileAccess.file_exists(save_path):
-				return
-			reload_requested.emit()
-			if get_tree().current_scene == self:
-				get_tree().paused = false
-				get_tree().reload_current_scene()
-		"quit":
-			save_game()
-			get_tree().quit()
-
-
-## M006: the map of the whole ward, on (M) or off (M or Esc). The world waits
-## under it: no walking, driving or shooting while it is open.
-func show_map(on: bool) -> void:
-	map_open = on
-	get_tree().paused = on
-	var here := world.layout_at(player.body().global_position)
-	hud.show_map(on, player.body().global_position, here.bounds if here != null else layout.bounds)
-	if on:
-		rourke_job.on_map()
-		_update_map()
-	# M008: the mouse drags the city map round while it is open
-	if not command_source.is_valid():
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if on else Input.MOUSE_MODE_HIDDEN
-
-
-## M010: while the drowsiness must keep out of the way (talk, a scene, the maps, a fight).
-func _drowsy_held() -> bool:
-	return dialogue.talking != "" or films.of("opening") != null or map_open or status_open or fights.fighting \
-		or back_rooms.at_a_table() or films.of("cafe") != null
-
-
-## M006: how Danny is (C or Esc closes). The world waits meanwhile.
-func show_status(on: bool) -> void:
-	status_open = on
-	get_tree().paused = on
-	hud.show_status(on, walker.condition)
-
-
-func _update_map() -> void:
-	var mine := fleet.my_car()
-	var body := player.body()
-	var cops := []
-	for o in police.officers():
-		if not o.is_down():
-			cops.append(o.body.global_position)
-	hud.city_map.set_state(body.global_position, walker.model.facing if player.on_foot() else player.car.model.heading,
-		mine.global_position if mine != null and mine != player.car else Vector2.INF, mine.rotation if mine != null else 0.0, cops)
-
-
-## On the pause screen: Up / Down choose a sound level, Left / Right change it
-## by a tenth (heard at once, kept for next time). True when the key was used.
-func _sound_input(event: InputEvent) -> bool:
-	var n := AudioSettings.BUSES.size()
-	var bus: String = AudioSettings.BUSES[sound_row]
-	if event.is_action_pressed("ui_up"):
-		sound_row = (sound_row + n - 1) % n
-	elif event.is_action_pressed("ui_down"):
-		sound_row = (sound_row + 1) % n
-	elif event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
-		var step := 0.1 if event.is_action_pressed("ui_right") else -0.1
-		settings.set_volume(bus, snappedf(settings.volume[bus] + step, 0.1))
-		if settings_path != "":
-			settings.save_settings()
-	else:
-		return false
-	hud.show_sound(settings, sound_row)
-	return true
+	modals.route(event)
 
 
 func _notification(what: int) -> void:
@@ -752,6 +589,7 @@ func _notification(what: int) -> void:
 
 
 func _process(delta: float) -> void:
+	var paused := modals.paused
 	back_rooms.update(delta, paused)  # the card players in their chairs; Leo's wheel and the regulars (not under the menu)
 	if not paused:
 		club.update(delta)  # the band counts her back in
@@ -767,7 +605,7 @@ func _process(delta: float) -> void:
 func _update_view(delta: float) -> void:
 	camera.update_camera(delta)
 	# M010: drowsy before dawn - kept out of the way of talk, cards and scenes
-	camera.offset = shake.offset(drowsy.update(clock.drowsiness(), _drowsy_held(), not player.on_foot(), delta), delta)
+	camera.offset = shake.offset(drowsy.update(clock.drowsiness(), modals.drowsy_held(), not player.on_foot(), delta), delta)
 	if films.kind == "cafe" or films.kind == "bird":
 		camera.zoom_override = films.current.zoom
 	city.update_view(camera.eye(), camera.eye_height(), camera.view_rect())
@@ -811,10 +649,10 @@ func _update_view(delta: float) -> void:
 	var here := world.layout_at(focus) if world != null else null
 	var place := interiors.current.name if interiors.current != null else (here if here != null else layout).place_name(focus)
 	hud.refresh(delta, place, prompt, player.car, get_viewport().get_mouse_position(),
-		player.on_foot() and not paused)
+		player.on_foot() and not modals.paused)
 	hud.show_gun(walker.gun if player.on_foot() else null)
-	if map_open:
-		_update_map()
+	if modals.map_open:
+		modals.update_map()
 	soundscape.set_speech(films.of("opening") != null or voice.speaking())
 	soundscape.rain = weather.rain_strength()  # M010
 	soundscape.downpour = weather.downpour()  # M012

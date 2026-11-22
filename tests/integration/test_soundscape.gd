@@ -185,7 +185,7 @@ func test_passing_cars_carry_their_engines() -> void:
 
 func test_sound_levels_on_the_pause_screen() -> void:
 	main._unhandled_input(_key(CityInput.MENU))
-	assert_true(main.paused)
+	assert_true(main.modals.paused)
 	assert_true(main.hud.game_menu.visible, "M012: the game menu")
 	while main.hud.game_menu.current() != "sound":  # its Sound page
 		main._unhandled_input(_key("ui_down"))
@@ -194,19 +194,19 @@ func test_sound_levels_on_the_pause_screen() -> void:
 	assert_eq(main.hud.sound_rows.size(), 6, "Master, Music, Engine, Effects, Voice, Ambience")
 	var music: float = main.settings.volume["Music"]
 	main._unhandled_input(_key("ui_down"))
-	assert_eq(AudioSettings.BUSES[main.sound_row], "Music")
+	assert_eq(AudioSettings.BUSES[main.modals.sound_row], "Music")
 	main._unhandled_input(_key("ui_left"))
 	assert_almost_eq(main.settings.volume["Music"], music - 0.1, 0.001, "quieter")
 	assert_almost_eq(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music")), linear_to_db(music - 0.1), 0.01,
 		"heard at once")
 	main._unhandled_input(_key("ui_up"))
 	main._unhandled_input(_key("ui_up"))
-	assert_eq(AudioSettings.BUSES[main.sound_row], "Ambience", "round to the bottom")
+	assert_eq(AudioSettings.BUSES[main.modals.sound_row], "Ambience", "round to the bottom")
 	var amb: float = main.settings.volume["Ambience"]
 	main._unhandled_input(_key("ui_right"))
 	assert_almost_eq(main.settings.volume["Ambience"], minf(amb + 0.1, 1.0), 0.001, "louder")
 	assert_eq(main.hud.sound_rows[5][2].text, "%d%%" % int(round(main.settings.volume["Ambience"] * 100.0)))
 	main._unhandled_input(_key(CityInput.MENU))
-	assert_true(main.paused, "Esc: back to the menu's list")
+	assert_true(main.modals.paused, "Esc: back to the menu's list")
 	main._unhandled_input(_key(CityInput.MENU))
-	assert_false(main.paused, "Esc again: back to the street")
+	assert_false(main.modals.paused, "Esc again: back to the street")

@@ -1,0 +1,183 @@
+{
+	"danny": {
+		"head": 0,
+		"left_arm": 0,
+		"left_leg": 0,
+		"right_arm": 0,
+		"right_leg": 0,
+		"torso": 0
+	},
+	"gun": {
+		"ammo": 7,
+		"spare": 14
+	},
+	"rackets": {
+		"boss": {
+			"arrears": 0,
+			"ban": false,
+			"ban_nights": 0,
+			"belief": {
+				"copper_owl": "good"
+			},
+			"belief_night": {
+				"copper_owl": 1
+			},
+			"caught": 0,
+			"claims": [],
+			"commission": 20,
+			"expected": 1500,
+			"handed": 0,
+			"heard": [],
+			"knows_rye": false,
+			"paid_log": [
+				{
+					"cents": 1000,
+					"id": "copper_owl",
+					"night": 1,
+					"seq": 1
+				}
+			],
+			"patience": 3,
+			"purse": 0,
+			"recent": [],
+			"seen_rye": 0,
+			"settled": false,
+			"trust": 60
+		},
+		"bottles": 6,
+		"bought_by_bar": 0,
+		"commission_earned": 0,
+		"doctor_fees": 0,
+		"held": 1000,
+		"incidents": [],
+		"job": {
+			"attempts": [],
+			"bluff_called_night": -1,
+			"fight_lost_night": -1,
+			"hid_money": false,
+			"learned": [],
+			"lefty_shot": false,
+			"lies": [],
+			"money_went": "",
+			"offered_night": 0,
+			"outcome": "",
+			"postponed_night": -1,
+			"postpones": 0,
+			"recovered": 0,
+			"resolved_night": 0,
+			"reward_owed": 0,
+			"rourke_news": "",
+			"stage": 0,
+			"success": false,
+			"told": "",
+			"verdict": ""
+		},
+		"last_seq": {
+			"copper_owl": 1
+		},
+		"loans": {},
+		"memory": {
+			"entries": {
+				"sal": [
+					{
+						"kind": "deal",
+						"night": 1,
+						"note": ""
+					}
+				]
+			},
+			"promises": []
+		},
+		"money": 2077,
+		"night": 1,
+		"paid": {
+			"copper_owl": "asked"
+		},
+		"paid_amount": {
+			"copper_owl": 1000
+		},
+		"paid_total": {
+			"copper_owl": 1000
+		},
+		"rumours": {
+			"items": [
+				{
+					"business": "copper_owl",
+					"cents": 1000,
+					"id": 1,
+					"kind": "paid",
+					"known": [
+						"augie"
+					],
+					"night": 1,
+					"origin": "augie",
+					"seq": 1,
+					"text": ""
+				}
+			],
+			"next": 2
+		},
+		"seq": 1,
+		"skimmed": 0,
+		"sold_by_barber": 6,
+		"town": {
+			"barber_shop": {
+				"carry": 0.0,
+				"cash": 2900,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 0
+			},
+			"copper_owl": {
+				"carry": 0.0155555555555414,
+				"cash": 3000,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 6
+			},
+			"eddie": {
+				"carry": 0.0,
+				"cash": 1000,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 4
+			},
+			"grocery": {
+				"carry": 0.0,
+				"cash": 2100,
+				"history": [],
+				"last_profit": 0,
+				"last_sales": 0,
+				"last_shortfall": 0,
+				"last_takings": 0,
+				"missed_delivery": 0,
+				"stock": 2
+			},
+			"night_done": 0.00194444444444267
+		}
+	},
+	"version": 1,
+	"voices": {
+		"heard": [
+			"augie_greeting"
+		]
+	},
+	"ward": {
+		"out": {},
+		"rival": {
+			"dead": false
+		}
+	}
+}

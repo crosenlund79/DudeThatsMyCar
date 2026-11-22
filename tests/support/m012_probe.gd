@@ -134,9 +134,9 @@ func _run() -> void:
 	main.last_song.start_film()
 	await _fps("the Bird's film (lights down, the room hushed)", 4.0)
 	main.weather.force("clear")
-	main.open_menu(true)
+	main.modals.open_menu(true)
 	await _fps("the game menu open (the world paused)")
-	main.open_menu(false)
+	main.modals.open_menu(false)
 	print(" rooms built now: %d; memory %.1f MB static, %d nodes" % [main.interiors.views.size(),
 		Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0, int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))])
 	quit()

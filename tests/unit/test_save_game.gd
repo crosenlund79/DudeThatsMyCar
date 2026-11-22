@@ -14,7 +14,7 @@ func test_round_trip() -> void:
 	r.buy_bottles(2)
 	assert_true(SaveGame.write(PATH, {"rackets": r.to_dict()}))
 	var back := SaveGame.read(PATH)
-	assert_eq(int(back.version), SaveGame.VERSION)
+	assert_eq(int(back.version), SaveSchema.VERSION)  # M014: the format version lives with the schema
 	var copy := Rackets.new(EconomyRules.new())
 	copy.from_dict(back.rackets)
 	assert_eq(copy.bottles, 2)

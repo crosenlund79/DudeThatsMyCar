@@ -163,7 +163,7 @@ func _snapshot() -> Dictionary:
 		"collapses": main.casualties.collapses,
 		"moments": main.night.moments,
 		"fighting": main.fights.fighting,
-		"paused": main.paused,
+		"paused": main.modals.paused,
 		"views": {"poker": main.hud.poker_view.is_open(), "roulette": main.hud.roulette_view.is_open(),
 			"slot": main.hud.slot_view.is_open()},
 	}
@@ -539,3 +539,35 @@ func test_films_played_and_skipped() -> void:
 			break
 	await wait_physics_frames(5)
 	_check("bird_film_skipped")
+
+
+## M014: the real saves written by each milestone's own code (M003-M013,
+## tests/fixtures/saves/), each loaded into a new scene and snapshotted - the
+## same snapshot as loading them with the M013 build (recorded there).
+const FIXTURES := ["m003", "m005", "m006", "m007", "m008", "m009", "m010", "m011", "m012", "m013"]
+
+
+func _load_fixture(fixture: String) -> void:
+	remove_child(main)
+	main.free()
+	var text := FileAccess.get_file_as_string("res://tests/fixtures/saves/%s.json" % fixture)
+	var f := FileAccess.open(SAVE, FileAccess.WRITE)
+	f.store_string(text)
+	f.close()
+	main = MAIN.instantiate()
+	main.command_source = _source
+	main.callouts_enabled = false
+	main.save_path = SAVE
+	main.settings_path = ""
+	main.opening_enabled = true  # a loaded game never plays the opening
+	main.quiet_streets = true
+	add_child_autofree(main)
+	main.street.clear()
+	_seed()
+	await wait_physics_frames(10)
+
+
+func test_historical_saves_load_as_before() -> void:
+	for fixture in FIXTURES:
+		await _load_fixture(fixture)
+		_check("loaded_" + fixture)

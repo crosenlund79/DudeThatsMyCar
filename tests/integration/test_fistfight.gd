@@ -64,7 +64,7 @@ func test_the_dial_over_the_street_and_nothing_else_moves() -> void:
 	_fire_pending = false
 	main._unhandled_input(_key(CityInput.MAP))
 	main._unhandled_input(_key(CityInput.STATUS))
-	assert_false(main.map_open or main.status_open, "no maps mid-fight")
+	assert_false(main.modals.map_open or main.modals.status_open, "no maps mid-fight")
 	assert_false(main.fights.start(lefty(), "Lefty Moran", _done), "one fight at a time")
 
 

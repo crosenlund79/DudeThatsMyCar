@@ -177,7 +177,7 @@ func test_the_menu_over_a_waiting_world() -> void:
 		"the Notebook: Rourke's offer (beside tonight's errands)")
 	assert_eq(menu.notebook, Notebook.entries(main.rackets, main.clock.minute), "exactly what is under way tonight")
 	# Save: written where he stands
-	main.menu_action(menu.choose(1))
+	main.modals.menu_action(menu.choose(1))
 	assert_true(FileAccess.file_exists(_save))
 	assert_string_contains(menu.status, "Saved")
 	var saved: Dictionary = SaveGame.read(_save)
@@ -185,7 +185,7 @@ func test_the_menu_over_a_waiting_world() -> void:
 	# Load: back to the last save
 	var asked := [0]
 	main.reload_requested.connect(func() -> void: asked[0] += 1)
-	main.menu_action(menu.choose(2))
+	main.modals.menu_action(menu.choose(2))
 	assert_eq(asked[0], 1, "Load asks for the last save")
 	# the pages
 	for id in ["notebook", "controls", "sound", "cheats"]:
@@ -195,9 +195,9 @@ func test_the_menu_over_a_waiting_world() -> void:
 		assert_eq(menu.page, id)
 		main._unhandled_input(_key(CityInput.MENU))
 		assert_eq(menu.page, "", "Esc: back to the list")
-		assert_true(main.paused)
+		assert_true(main.modals.paused)
 	main._unhandled_input(_key(CityInput.MENU))
-	assert_false(main.paused, "Esc on the list: back to the street")
+	assert_false(main.modals.paused, "Esc on the list: back to the street")
 	assert_false(get_tree().paused)
 	assert_true(main.player.fire_lock, "the click that closed it is not a shot")
 	await wait_physics_frames(3)
@@ -210,4 +210,4 @@ func test_at_the_card_table_esc_is_the_tables() -> void:
 	main._unhandled_input(_key(CityInput.MENU))
 	await wait_physics_frames(2)
 	assert_false(main.hud.game_menu.visible, "no menu over the cards")
-	assert_false(main.paused)
+	assert_false(main.modals.paused)

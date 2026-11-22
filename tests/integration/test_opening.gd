@@ -102,7 +102,7 @@ func test_any_key_skips_it_and_hands_over() -> void:
 	await wait_physics_frames(30)
 	main._unhandled_input(_key(CityInput.INTERACT))
 	assert_true(main.films.of("opening").is_handing_over())
-	assert_false(main.paused)
+	assert_false(main.modals.paused)
 	await wait_physics_frames(80)
 	assert_null(main.films.of("opening"), "over")
 	assert_true(main.hud.visible)
@@ -114,13 +114,13 @@ func test_any_key_skips_it_and_hands_over() -> void:
 	assert_lt(main.soundscape.duck, 0.1, "the night comes back up")
 	assert_true(FileAccess.file_exists(_save), "the game is saved as under way")
 	main._unhandled_input(_key(CityInput.MENU))
-	assert_true(main.paused, "and Esc pauses again as usual")
+	assert_true(main.modals.paused, "and Esc pauses again as usual")
 
 
 func test_esc_skips_rather_than_pausing() -> void:
 	await _start()
 	main._unhandled_input(_key(CityInput.MENU))
-	assert_false(main.paused)
+	assert_false(main.modals.paused)
 	assert_true(main.films.of("opening").is_handing_over())
 
 

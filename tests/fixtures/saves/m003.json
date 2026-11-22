@@ -1,0 +1,20 @@
+{
+	"gun": {
+		"ammo": 7,
+		"spare": 14
+	},
+	"rackets": {
+		"bottles": 0,
+		"bought_by_bar": 6,
+		"money": 3877,
+		"night": 1,
+		"paid": {
+			"copper_owl": "asked"
+		},
+		"paid_total": {
+			"copper_owl": 1000
+		},
+		"sold_by_barber": 6
+	},
+	"version": 1
+}
