@@ -149,7 +149,13 @@ func test_money_never_goes_below_zero() -> void:
 
 
 func test_the_table_limits() -> void:
+	# the limits are enforced as the table's rules set them (M011's small table here; M015 raised the defaults)
 	var rules := RouletteRules.new()
+	rules.chips = [5, 10, 25, 100]
+	rules.max_straight = 50
+	rules.max_inside = 100
+	rules.max_outside = 500
+	rules.max_total = 1000
 	var r := Roulette.new(rules)
 	var money := 100000
 	for i in 2:
@@ -331,3 +337,23 @@ func test_the_head_never_stops_and_never_snaps() -> void:
 				m.launch()
 			if i == 60 * 12:
 				m.drop(round_i * 9, 3.6)
+
+
+## M015: the table's limits about ten times M011's, a $5 chip, shown in words.
+func test_the_m015_limits() -> void:
+	var rules: RouletteRules = load("res://src/gaming/default_roulette.tres")
+	assert_eq(rules.chips, [5, 10, 25, 100, 500] as Array[int])
+	assert_eq([rules.min_bet, rules.max_straight, rules.max_inside, rules.max_outside, rules.max_total], [5, 500, 1000, 5000, 10000])
+	var r := Roulette.new(rules)
+	var money := 100000
+	for i in 10:
+		money -= r.place("straight:17", 100, money)
+	assert_eq(r.bets["straight:17"], 500, "$5 on a number")
+	assert_eq(r.place("straight:17", 5, money), 0, "and no more")
+	for i in 10:
+		money -= r.place("red", 500, money)
+	assert_eq(r.bets["red"], 5000, "$50 on an outside bet")
+	assert_eq(money + r.total_staked(), 100000)
+	assert_string_contains(rules.limits_text(), "$5 on a number")
+	assert_string_contains(rules.limits_text(), "$100 a spin")
+

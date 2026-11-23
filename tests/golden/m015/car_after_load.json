@@ -1,0 +1,727 @@
+{
+	"camera": "car",
+	"cars": [
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/0",
+			"pos": [
+				-2342.88,
+				630.0
+			],
+			"rot": 0.0,
+			"stolen": true
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/1",
+			"pos": [
+				2150.0,
+				506.0
+			],
+			"rot": -3.142,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/2",
+			"pos": [
+				700.0,
+				-235.0
+			],
+			"rot": 0.0,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/3",
+			"pos": [
+				960.0,
+				1190.0
+			],
+			"rot": 1.571,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/4",
+			"pos": [
+				1040.0,
+				1250.0
+			],
+			"rot": -1.571,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/5",
+			"pos": [
+				3845.0,
+				150.0
+			],
+			"rot": 1.571,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/6",
+			"pos": [
+				2600.0,
+				1432.0
+			],
+			"rot": -3.142,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/7",
+			"pos": [
+				2585.0,
+				506.0
+			],
+			"rot": -3.142,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/8",
+			"pos": [
+				1835.0,
+				1065.0
+			],
+			"rot": -3.142,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "halloran/0",
+			"pos": [
+				-4100.0,
+				-238.0
+			],
+			"rot": 0.0,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "halloran/1",
+			"pos": [
+				-2200.0,
+				1438.0
+			],
+			"rot": -3.142,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "halloran/2",
+			"pos": [
+				-2300.0,
+				692.0
+			],
+			"rot": 0.0,
+			"stolen": false
+		},
+		{
+			"away": false,
+			"cargo": "",
+			"id": "halloran/3",
+			"pos": [
+				-3562.0,
+				1030.0
+			],
+			"rot": 1.571,
+			"stolen": false
+		}
+	],
+	"collapses": 0.0,
+	"danny": {
+		"car": "riverside/0",
+		"condition": {
+			"head": 0.0,
+			"left_arm": 0.0,
+			"left_leg": 0.0,
+			"right_arm": 0.0,
+			"right_leg": 0.0,
+			"torso": 0.0
+		},
+		"down": false,
+		"facing": -0.241,
+		"on_foot": false,
+		"pos": [
+			-2342.88,
+			630.0
+		],
+		"sitting": false
+	},
+	"fighting": false,
+	"films": {
+		"bird": false,
+		"bird_scene": "",
+		"cafe": false,
+		"opening": false
+	},
+	"gun": {
+		"ammo": 7.0,
+		"drawn": false,
+		"spare": 14.0,
+		"thompson": false
+	},
+	"hud_visible": true,
+	"incidents": {
+		"history": [],
+		"night": 1.0
+	},
+	"minute": 1171.4,
+	"moments": [],
+	"night": 1.0,
+	"page": {
+		"options": [],
+		"text": ""
+	},
+	"paused": false,
+	"poker": {
+		"hands": 0.0,
+		"level": 0.0,
+		"net": 0.0
+	},
+	"poker_purses": 9750.0,
+	"poker_seated": false,
+	"rackets": {
+		"bird_scene": "",
+		"bird_scene_night": -1.0,
+		"boss": {
+			"arrears": 0.0,
+			"ban": false,
+			"ban_nights": 0.0,
+			"belief": {
+				"copper_owl": "good"
+			},
+			"belief_night": {
+				"copper_owl": 1.0
+			},
+			"caught": 0.0,
+			"claims": [],
+			"commission": 20.0,
+			"expected": 1500.0,
+			"handed": 0.0,
+			"heard": [],
+			"knows_rye": false,
+			"paid_log": [],
+			"patience": 3.0,
+			"purse": 0.0,
+			"recent": [],
+			"seen_rye": 0.0,
+			"settled": false,
+			"trust": 60.0
+		},
+		"bottles": 0.0,
+		"bought_by_bar": 0.0,
+		"cafe": {
+			"blast_minute": -1.0,
+			"blast_night": -1.0,
+			"caught_in_it": false,
+			"paid": false,
+			"seen": false,
+			"stage": 0.0
+		},
+		"callouts": {
+			"called": {},
+			"night": 1.0,
+			"said": {}
+		},
+		"commission_earned": 0.0,
+		"doctor_fees": 0.0,
+		"freight": {
+			"crates_out": false,
+			"deadline": 1560.0,
+			"fee_paid": false,
+			"fight_lost_night": -1.0,
+			"how": "",
+			"learned": {},
+			"leon_agreed": false,
+			"night": -1.0,
+			"stage": 0.0,
+			"threat_failed_night": -1.0,
+			"walt_paid_by": ""
+		},
+		"held": 0.0,
+		"incidents": [],
+		"job": {
+			"attempts": [],
+			"bluff_called_night": -1.0,
+			"fight_lost_night": -1.0,
+			"hid_money": false,
+			"learned": [],
+			"lefty_shot": false,
+			"lies": [],
+			"money_went": "",
+			"offered_night": 0.0,
+			"outcome": "",
+			"postponed_night": -1.0,
+			"postpones": 0.0,
+			"recovered": 0.0,
+			"resolved_night": 0.0,
+			"reward_owed": 0.0,
+			"rourke_news": "",
+			"stage": 0.0,
+			"success": false,
+			"told": "",
+			"verdict": ""
+		},
+		"last_seq": {},
+		"loan": {
+			"ammo": 0.0,
+			"lent": 0.0,
+			"out": false,
+			"returned": 0.0,
+			"since": 0.0,
+			"spare": 0.0
+		},
+		"loans": {},
+		"memory": {
+			"entries": {},
+			"promises": []
+		},
+		"money": 1200.0,
+		"night": 1.0,
+		"opportunities": {
+			"crate": "waiting",
+			"history": [],
+			"night": 1.0,
+			"reel": "lost",
+			"reel_promised": false
+		},
+		"paid": {},
+		"paid_amount": {},
+		"paid_total": {},
+		"parcel_wanted": false,
+		"parcels": 0.0,
+		"rumours": {
+			"items": [],
+			"next": 1.0
+		},
+		"seq": 0.0,
+		"skimmed": 0.0,
+		"sold_by_barber": 0.0,
+		"town": {
+			"barber_shop": {
+				"carry": 0.0,
+				"cash": 2000.0,
+				"history": [],
+				"last_profit": 0.0,
+				"last_sales": 0.0,
+				"last_shortfall": 0.0,
+				"last_takings": 0.0,
+				"missed_delivery": 0.0,
+				"stock": 6.0
+			},
+			"copper_owl": {
+				"carry": 0.019,
+				"cash": 4000.0,
+				"history": [],
+				"last_profit": 0.0,
+				"last_sales": 0.0,
+				"last_shortfall": 0.0,
+				"last_takings": 0.0,
+				"missed_delivery": 0.0,
+				"stock": 6.0
+			},
+			"eddie": {
+				"carry": 0.0,
+				"cash": 1000.0,
+				"history": [],
+				"last_profit": 0.0,
+				"last_sales": 0.0,
+				"last_shortfall": 0.0,
+				"last_takings": 0.0,
+				"missed_delivery": 0.0,
+				"stock": 4.0
+			},
+			"grocery": {
+				"carry": 0.0,
+				"cash": 2100.0,
+				"history": [],
+				"last_profit": 0.0,
+				"last_sales": 0.0,
+				"last_shortfall": 0.0,
+				"last_takings": 0.0,
+				"missed_delivery": 0.0,
+				"stock": 2.0
+			},
+			"night_done": 0.002
+		}
+	},
+	"rival": {
+		"dead": false
+	},
+	"room": "",
+	"roulette": {
+		"bets": {},
+		"for_save": 0.0,
+		"number": -1.0,
+		"phase": 0.0
+	},
+	"save": {
+		"cars": {
+			"driving": "riverside/0",
+			"moved": {
+				"riverside/0": {
+					"rot": 0.0,
+					"x": -2342.879,
+					"y": 630.0
+				}
+			},
+			"night": 1.0,
+			"taken": [
+				"riverside/0"
+			]
+		},
+		"danny": {
+			"head": 0.0,
+			"left_arm": 0.0,
+			"left_leg": 0.0,
+			"right_arm": 0.0,
+			"right_leg": 0.0,
+			"torso": 0.0
+		},
+		"districts": {},
+		"gun": {
+			"ammo": 7.0,
+			"spare": 14.0
+		},
+		"incidents": {
+			"history": [],
+			"night": 1.0
+		},
+		"place": {
+			"facing": -0.241,
+			"minute": 1171.4,
+			"night": 1.0,
+			"x": -2342.879,
+			"y": 630.0
+		},
+		"poker": {
+			"hands": 0.0,
+			"level": 0.0,
+			"net": 0.0
+		},
+		"rackets": {
+			"bird_scene": "",
+			"bird_scene_night": -1.0,
+			"boss": {
+				"arrears": 0.0,
+				"ban": false,
+				"ban_nights": 0.0,
+				"belief": {
+					"copper_owl": "good"
+				},
+				"belief_night": {
+					"copper_owl": 1.0
+				},
+				"caught": 0.0,
+				"claims": [],
+				"commission": 20.0,
+				"expected": 1500.0,
+				"handed": 0.0,
+				"heard": [],
+				"knows_rye": false,
+				"paid_log": [],
+				"patience": 3.0,
+				"purse": 0.0,
+				"recent": [],
+				"seen_rye": 0.0,
+				"settled": false,
+				"trust": 60.0
+			},
+			"bottles": 0.0,
+			"bought_by_bar": 0.0,
+			"cafe": {
+				"blast_minute": -1.0,
+				"blast_night": -1.0,
+				"caught_in_it": false,
+				"paid": false,
+				"seen": false,
+				"stage": 0.0
+			},
+			"callouts": {
+				"called": {},
+				"night": 1.0,
+				"said": {}
+			},
+			"commission_earned": 0.0,
+			"doctor_fees": 0.0,
+			"freight": {
+				"crates_out": false,
+				"deadline": 1560.0,
+				"fee_paid": false,
+				"fight_lost_night": -1.0,
+				"how": "",
+				"learned": {},
+				"leon_agreed": false,
+				"night": -1.0,
+				"stage": 0.0,
+				"threat_failed_night": -1.0,
+				"walt_paid_by": ""
+			},
+			"held": 0.0,
+			"incidents": [],
+			"job": {
+				"attempts": [],
+				"bluff_called_night": -1.0,
+				"fight_lost_night": -1.0,
+				"hid_money": false,
+				"learned": [],
+				"lefty_shot": false,
+				"lies": [],
+				"money_went": "",
+				"offered_night": 0.0,
+				"outcome": "",
+				"postponed_night": -1.0,
+				"postpones": 0.0,
+				"recovered": 0.0,
+				"resolved_night": 0.0,
+				"reward_owed": 0.0,
+				"rourke_news": "",
+				"stage": 0.0,
+				"success": false,
+				"told": "",
+				"verdict": ""
+			},
+			"last_seq": {},
+			"loan": {
+				"ammo": 0.0,
+				"lent": 0.0,
+				"out": false,
+				"returned": 0.0,
+				"since": 0.0,
+				"spare": 0.0
+			},
+			"loans": {},
+			"memory": {
+				"entries": {},
+				"promises": []
+			},
+			"money": 1200.0,
+			"night": 1.0,
+			"opportunities": {
+				"crate": "waiting",
+				"history": [],
+				"night": 1.0,
+				"reel": "lost",
+				"reel_promised": false
+			},
+			"paid": {},
+			"paid_amount": {},
+			"paid_total": {},
+			"parcel_wanted": false,
+			"parcels": 0.0,
+			"rumours": {
+				"items": [],
+				"next": 1.0
+			},
+			"seq": 0.0,
+			"skimmed": 0.0,
+			"sold_by_barber": 0.0,
+			"town": {
+				"barber_shop": {
+					"carry": 0.0,
+					"cash": 2000.0,
+					"history": [],
+					"last_profit": 0.0,
+					"last_sales": 0.0,
+					"last_shortfall": 0.0,
+					"last_takings": 0.0,
+					"missed_delivery": 0.0,
+					"stock": 6.0
+				},
+				"copper_owl": {
+					"carry": 0.019,
+					"cash": 4000.0,
+					"history": [],
+					"last_profit": 0.0,
+					"last_sales": 0.0,
+					"last_shortfall": 0.0,
+					"last_takings": 0.0,
+					"missed_delivery": 0.0,
+					"stock": 6.0
+				},
+				"eddie": {
+					"carry": 0.0,
+					"cash": 1000.0,
+					"history": [],
+					"last_profit": 0.0,
+					"last_sales": 0.0,
+					"last_shortfall": 0.0,
+					"last_takings": 0.0,
+					"missed_delivery": 0.0,
+					"stock": 4.0
+				},
+				"grocery": {
+					"carry": 0.0,
+					"cash": 2100.0,
+					"history": [],
+					"last_profit": 0.0,
+					"last_sales": 0.0,
+					"last_shortfall": 0.0,
+					"last_takings": 0.0,
+					"missed_delivery": 0.0,
+					"stock": 2.0
+				},
+				"night_done": 0.002
+			}
+		},
+		"slots": [
+			{
+				"held": [
+					false,
+					false,
+					false
+				],
+				"hold_offered": false,
+				"respin": false,
+				"stake": 5.0,
+				"stops": [
+					0.0,
+					0.0,
+					0.0
+				]
+			},
+			{
+				"held": [
+					false,
+					false,
+					false
+				],
+				"hold_offered": false,
+				"respin": false,
+				"stake": 5.0,
+				"stops": [
+					0.0,
+					0.0,
+					0.0
+				]
+			},
+			{
+				"held": [
+					false,
+					false,
+					false
+				],
+				"hold_offered": false,
+				"respin": false,
+				"stake": 10.0,
+				"stops": [
+					0.0,
+					0.0,
+					0.0
+				]
+			}
+		],
+		"voices": {
+			"heard": [
+				"augie_greeting",
+				"bird_greeting",
+				"eddie_greeting",
+				"eddie_sales",
+				"rourke_greeting"
+			]
+		},
+		"ward": {
+			"out": {},
+			"rival": {
+				"dead": false
+			}
+		}
+	},
+	"slots": [
+		{
+			"held": [
+				false,
+				false,
+				false
+			],
+			"hold_offered": false,
+			"respin": false,
+			"stake": 5.0,
+			"stops": [
+				0.0,
+				0.0,
+				0.0
+			]
+		},
+		{
+			"held": [
+				false,
+				false,
+				false
+			],
+			"hold_offered": false,
+			"respin": false,
+			"stake": 5.0,
+			"stops": [
+				0.0,
+				0.0,
+				0.0
+			]
+		},
+		{
+			"held": [
+				false,
+				false,
+				false
+			],
+			"hold_offered": false,
+			"respin": false,
+			"stake": 10.0,
+			"stops": [
+				0.0,
+				0.0,
+				0.0
+			]
+		}
+	],
+	"talking": "",
+	"thefts": [
+		0.0,
+		0.0
+	],
+	"views": {
+		"poker": false,
+		"roulette": false,
+		"slot": false
+	},
+	"voices": {
+		"heard": [
+			"augie_greeting",
+			"bird_greeting",
+			"eddie_greeting",
+			"eddie_sales",
+			"rourke_greeting"
+		]
+	},
+	"ward_out": {},
+	"weather": {
+		"fog": 0.0,
+		"rain": 0.758,
+		"state": "rain"
+	},
+	"world": {
+		"current": "halloran",
+		"ready": [
+			"halloran",
+			"riverside"
+		]
+	}
+}

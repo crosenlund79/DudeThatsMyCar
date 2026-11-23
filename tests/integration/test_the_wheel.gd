@@ -337,3 +337,20 @@ func test_the_wheel_rests_when_nobody_is_in_the_room() -> void:
 	await wait_physics_frames(120)
 	assert_eq(_wheel().round_time, t, "no wheel turned for an empty room")
 	assert_eq(_wheel().rounds, r)
+
+
+## M015: T at the rail asks Leo for the next pace of the betting timer (from
+## his next round); the choice is the player's preference; the limits are on
+## the table.
+func test_the_pace_at_the_rail() -> void:
+	await _step_up()
+	var w := _wheel()
+	var before := w.pace_asked
+	await _key(KEY_T)
+	assert_eq(w.pace_asked, RouletteRules.next_pace(before), "the next pace")
+	assert_eq(main.game.prefs.get_pref("roulette_pace"), w.pace_asked, "kept as the player's preference")
+	assert_string_contains(_view().message, "\"")
+	await _key(KEY_T)
+	await _key(KEY_T)
+	assert_eq(w.pace_asked, before, "round the three presets")
+	assert_string_contains(w.rules.limits_text(), "Table limits")

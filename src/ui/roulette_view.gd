@@ -27,6 +27,8 @@ signal take_back_requested(key: String, chip: int)
 signal clear_requested
 signal repeat_requested
 signal leave_requested
+## M015: Danny asks Leo for the next pace of the betting timer.
+signal pace_requested
 
 const CREAM := Color("f1e4c6")
 const DIM := Color("f1e4c6", 0.55)
@@ -37,7 +39,9 @@ const RED := Color("9a2322")
 const BLACK := Color("1c1a1e")
 const GREEN := Color("2f7a3a")
 const LINE := Color("e8dcc0", 0.85)
-const CHIP_COLOURS := {5: Color("e8e0cf"), 10: Color("c0392b"), 25: Color("2f5fa8"), 100: Color("2f7a46")}
+## M015: the chips' spacing in the tray (five chips before the buttons).
+const CHIP_STEP := 56.0
+const CHIP_COLOURS := {5: Color("e8e0cf"), 10: Color("c0392b"), 25: Color("2f5fa8"), 100: Color("2f7a46"), 500: Color("5b2a6e")}
 ## Base screen px (at 1280 x 720), from the screen's middle.
 const WHEEL_AT := Vector2(-345, 10)
 const BOWL_RADIUS := 165.0
@@ -219,8 +223,10 @@ func handle_key(event: InputEvent) -> bool:
 	var k: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
 	if k == KEY_ESCAPE or k == KEY_E:
 		leave_requested.emit()
-	elif k >= KEY_1 and k <= KEY_4:
+	elif k >= KEY_1 and k < KEY_1 + table.rules.chips.size():
 		pick_chip(k - KEY_1)
+	elif k == KEY_T:
+		pace_requested.emit()
 	elif k == KEY_SPACE or k == KEY_ENTER or k == KEY_KP_ENTER:
 		say("Leo calls the bets, not you. Watch the ring round the wheel.")
 	elif k == KEY_BACKSPACE or k == KEY_DELETE:
@@ -271,6 +277,8 @@ func _click(id: String) -> void:
 			clear_requested.emit()
 		"repeat":
 			repeat_requested.emit()
+		"pace":
+			pace_requested.emit()
 		_:
 			if id.begins_with("chip"):
 				pick_chip(int(id.substr(4)))
@@ -340,6 +348,12 @@ func _draw() -> void:
 	_panel(r, Color(COPPER, 0.4), 1.0)
 	_text(r.get_center() + Vector2(0, _s(6)), "Esc   Leave the wheel", 15, DIM)
 	_buttons.append({"rect": r, "id": "leave"})
+	# M015: the betting timer's pace (Leo changes it from his next round), beside the message line
+	var pr := Rect2(Vector2(size.x - _s(250), size.y - _s(108)), Vector2(_s(230), _s(36)))
+	_panel(pr, Color(COPPER, 0.7), 1.0)
+	var pace_words := "T   Pace: %s%s" % [RouletteRules.pace_name(wheel.pace_asked), "  (next round)" if wheel.pace_asked != wheel.pace else ""]
+	_text(pr.get_center() + Vector2(0, _s(6)), pace_words, 14, CREAM)
+	_buttons.append({"rect": pr, "id": "pace"})
 
 
 func _draw_wheel() -> void:
@@ -486,7 +500,7 @@ func _draw_tray() -> void:
 	var x0 := _from_layout(Vector2.ZERO).x + _s(30)
 	for i in table.rules.chips.size():
 		var c: int = table.rules.chips[i]
-		var p := Vector2(x0 + i * _s(64), y - (_s(6) if i == chip_index else 0.0))
+		var p := Vector2(x0 + i * _s(CHIP_STEP), y - (_s(6) if i == chip_index else 0.0))
 		if i == chip_index:
 			draw_circle(p, _s(25), Color(GOLD, 0.5))
 		draw_texture_rect(_chip, Rect2(p - Vector2(_s(20), _s(20)), Vector2(_s(40), _s(40))), false, CHIP_COLOURS.get(c, Color.WHITE))
@@ -500,6 +514,8 @@ func _draw_tray() -> void:
 		_panel(r, Color(COPPER, 0.7 if on else 0.25), 1.0)
 		_text(r.get_center() + Vector2(0, _s(6)), items[i][1], 13, CREAM if on else DIM)
 		_buttons.append({"rect": r, "id": items[i][0]})
+	# M015: the table's limits, plainly, under the chips and buttons
+	_text(Vector2(_from_layout(Vector2(RouletteLayout.SIZE.x * 0.5, 0)).x, y + _s(58)), table.rules.limits_text(), 13, GOLD)
 	# the round as it stands, beside them (Leo calls it, not Danny)
 	var sr := Rect2(Vector2(bx + 2 * _s(128), y - _s(18)), Vector2(_s(136), _s(32)))
 	var left := wheel.seconds_to_close()
@@ -511,7 +527,7 @@ func _draw_tray() -> void:
 		state = "Last bets!"
 	_panel(sr, Color(RED.lightened(0.3) if last else (GOLD if on else COPPER), 0.75 if on else 0.35), 1.0)
 	_text(sr.get_center() + Vector2(0, _s(6)), state, 14, GOLD if on else DIM)
-	if on and wheel.changed_at >= 0.0 and wheel.close_time() > wheel.rules.open_seconds + wheel.rules.ball_seconds:
+	if on and wheel.changed_at >= 0.0 and wheel.close_time() > wheel.usual_close():
 		_text(sr.get_center() + Vector2(0, _s(30)), "Leo waits on you", 12, DIM)
 
 
@@ -552,8 +568,8 @@ func _draw_status() -> void:
 		line = "%s  -  pays %d to 1%s" % [Roulette.words(hover_key), Roulette.pays(hover_key),
 			"  (on it: %s)" % PokerView.money_text(int(table.bets[hover_key])) if table.bets.has(hover_key) else ""]
 	var result := wheel.phase == RouletteTable.Phase.RESULT
-	var r := Rect2(Vector2(centre.x - _s(420), size.y - _s(108)), Vector2(_s(840), _s(36)))
+	var r := Rect2(Vector2(centre.x - _s(440), size.y - _s(108)), Vector2(_s(800), _s(36)))  # (the pace beside it, M015)
 	_panel(r, Color(GOLD if result else COPPER, 0.6), 1.0)
 	_text(r.get_center() + Vector2(0, _s(6)), line, 16, GOLD if result and hover_key == "" else CREAM)
 	_text(Vector2(centre.x, size.y - _s(20)),
-		"1-4 / wheel  Chip     Click  Bet     Right-click  Take one back     Backspace  Clear     R  Same again     Esc  Leave", 13, DIM)
+		"1-%d / wheel  Chip     Click  Bet     Right-click  Take one back     Backspace  Clear     R  Same again     T  Pace     Esc  Leave" % table.rules.chips.size(), 13, DIM)

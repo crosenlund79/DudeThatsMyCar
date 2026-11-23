@@ -216,6 +216,8 @@ func _ready() -> void:
 	settings = AudioSettings.new(settings_path)
 	settings.load_settings()
 	settings.apply()
+	game.prefs = Preferences.new(settings_path)  # M015: the player's own preferences (not the save)
+	game.prefs.load_prefs()
 	resolver = AssetResolver.new(override_root)
 	rackets = Rackets.new(economy_rules)
 	clock = NightClock.new(night_rules)

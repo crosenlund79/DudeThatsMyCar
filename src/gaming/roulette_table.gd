@@ -33,6 +33,9 @@ extends RefCounted
 ## "cents"}), nothing after the call, and are settled at the rest by the same
 ## rules ("rest" carries "others": [{id, staked, paid}]). Their purses are
 ## theirs; their choices come from their own generator, never the draw's.
+## M015: the betting timer's pace (RouletteRules.PACES: Quick, Normal,
+## Relaxed) scales how long the bets stay open and the number stands; a new
+## pace starts with the next round (never stretching or cutting one under way).
 
 enum Phase { OPEN, BALL, DROP, RESULT, CLOSED }
 
@@ -57,6 +60,9 @@ var danny_in := false
 var _called_last := false
 ## M013.3: the other players at the rail (null: nobody but Danny).
 var patrons: RoulettePatrons = null
+## M015: the pace of the round under way, and the one asked for (from the next round).
+var pace := RouletteRules.DEFAULT_PACE
+var pace_asked := RouletteRules.DEFAULT_PACE
 
 
 func _init(p_rules: RouletteRules, p_danny: Roulette = null, p_seed := -1) -> void:
@@ -74,7 +80,34 @@ func _init(p_rules: RouletteRules, p_danny: Roulette = null, p_seed := -1) -> vo
 func set_patrons(p: RoulettePatrons) -> void:
 	patrons = p
 	if patrons != null and betting_open():
-		patrons.plan_round(rules.open_seconds + rules.ball_seconds)
+		patrons.plan_round(usual_close())
+
+
+## M015: a pace for the table (from the next round; now, before the first round has run).
+func set_pace(p: String) -> void:
+	if not RouletteRules.PACES.has(p):
+		return
+	pace_asked = p
+	if phase == Phase.OPEN and round_time == 0.0:
+		pace = p
+
+
+## M015: the round's times at this round's pace.
+func open_seconds() -> float:
+	return rules.open_seconds * float(RouletteRules.PACES[pace].betting)
+
+
+func ball_seconds() -> float:
+	return rules.ball_seconds * float(RouletteRules.PACES[pace].betting)
+
+
+func result_seconds() -> float:
+	return rules.result_seconds * float(RouletteRules.PACES[pace].result)
+
+
+## When the call comes if nobody keeps Leo waiting.
+func usual_close() -> float:
+	return open_seconds() + ball_seconds()
 
 
 func betting_open() -> bool:
@@ -84,7 +117,7 @@ func betting_open() -> bool:
 ## When the call comes (round time): the usual moment, or later while Danny is
 ## still busy at the layout - never past the limit.
 func close_time() -> float:
-	var usual := rules.open_seconds + rules.ball_seconds
+	var usual := usual_close()
 	if changed_at < 0.0:
 		return usual
 	return clampf(changed_at + rules.grace_seconds, usual, usual + rules.max_extension)
@@ -134,13 +167,13 @@ func advance(dt: float) -> Array:
 func _next_boundary() -> float:
 	match phase:
 		Phase.OPEN:
-			return rules.open_seconds
+			return open_seconds()
 		Phase.BALL:
 			return close_time()
 		Phase.DROP:
 			return close_time() + rules.drop_seconds
 		Phase.RESULT:
-			return close_time() + rules.drop_seconds + rules.result_seconds
+			return close_time() + rules.drop_seconds + result_seconds()
 	return INF
 
 
@@ -196,6 +229,7 @@ func _cross(out: Array) -> void:
 
 func _open() -> void:
 	phase = Phase.OPEN
+	pace = pace_asked
 	round_time = 0.0
 	number = -1
 	changed_at = -1.0
@@ -205,7 +239,7 @@ func _open() -> void:
 	motion.kick()
 	motion.lift()
 	if patrons != null:
-		patrons.plan_round(rules.open_seconds + rules.ball_seconds)
+		patrons.plan_round(usual_close())
 
 
 ## Danny walked away from the layout: Leo no longer waits on him.

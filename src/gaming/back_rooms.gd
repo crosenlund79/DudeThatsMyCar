@@ -68,6 +68,7 @@ func setup(saved_slots: Array) -> void:
 	wheel = RouletteTable.new(game.roulette_rules, roulette)  # M013: an unpredictable draw in play (tests seed their own)
 	wheel_patrons = RoulettePatrons.new(game.roulette_rules)  # M013.3: their own generator, never the draw's
 	wheel.set_patrons(wheel_patrons)  # (who is at the rail: the room's life, M013.6)
+	wheel.set_pace(String(game.prefs.get_pref("roulette_pace")))  # M015: the player's pace for the betting timer
 	react_rng.randomize()
 	taunt_rng.randomize()
 	room_lines = RoomLines.new()
@@ -84,6 +85,7 @@ func setup(saved_slots: Array) -> void:
 	rv.clear_requested.connect(clear_bets)
 	rv.repeat_requested.connect(repeat_bets)
 	rv.leave_requested.connect(leave_roulette)
+	rv.pace_requested.connect(change_pace)
 	for r in game.slot_rules:
 		slot_machines.append(SlotMachine.new(r))
 	slot_rng.randomize()
@@ -389,6 +391,18 @@ func repeat_bets() -> void:
 	_wheel_money()
 
 
+## M015: T at the rail: the betting timer's next pace (Quick, Normal, Relaxed).
+## Leo runs it from his next round; the choice is kept as the player's preference.
+func change_pace() -> void:
+	var p := RouletteRules.next_pace(wheel.pace_asked)
+	wheel.set_pace(p)
+	game.prefs.set_pref("roulette_pace", p)
+	var words: String = {"quick": "\"Quick it is, Mr. Mercer - I'll keep them coming.\"",
+		"normal": "\"The usual pace, then.\"", "relaxed": "\"We'll take our time, Mr. Mercer.\""}[p]
+	game.hud.roulette_view.say(words + ("  (From the next round.)" if wheel.pace != p else ""))
+	game.hud.roulette_view.refresh()
+
+
 ## M013: Leo's wheel goes round while Danny is in the gaming room (at the rail
 ## or anywhere in it; nobody runs it for an empty room): the round moves on,
 ## the wheel in the room turns as the one on screen does, and the round's
@@ -428,6 +442,10 @@ func _on_wheel_event(e: Dictionary) -> void:
 			_wheel_sound("gaming/chips_stack", -10.0)  # a regular's chips going down (not Danny's own sound)
 			if rv.is_open():
 				rv.refresh()
+				# M015: who bets what, for a man watching from the rail (not over Danny's own words)
+				if wheel.changed_at < 0.0 or wheel.round_time - wheel.changed_at > 2.0:
+					rv.say("%s: %s on %s." % [Patrons.name_of(String(e.id)), RouletteView._chip_words(int(e.cents)),
+						Roulette.words(String(e.key))])
 		"last_call":
 			if rv.is_open():
 				rv.say("\"Last bets...\"")
@@ -456,6 +474,7 @@ func _on_wheel_event(e: Dictionary) -> void:
 			if bool(e.played):
 				game.save()
 		"round_over":
+			_wheel_sound("gaming/chips_stack", -12.0)  # M015: Leo rakes the layout clear for the next round
 			if rv.is_open():
 				rv.refresh()
 			var room := game.interiors.view_of("gaming_room")

@@ -310,3 +310,53 @@ func test_a_long_frame_misses_nothing() -> void:
 	assert_eq(_names(events).count("rest"), 2)
 	assert_eq(_names(events).count("no_more_bets"), 2)
 	assert_eq(t.danny.history.size(), 2)
+
+
+## M015: the betting timer's presets - Quick, Normal (5 + 5 s of bets, the
+## number 4 s) and Relaxed (M013's 9 + 7 s, 5.5 s) - scale the bets' time and
+## the number's; the drop and the grace after Danny's last change do not.
+func test_the_paces() -> void:
+	var t := RouletteTable.new(rules, null, 7)
+	assert_eq(t.pace, "normal")
+	assert_almost_eq(t.usual_close(), 10.0, 0.001)
+	assert_almost_eq(t.result_seconds(), 4.0, 0.001)
+	t.set_pace("relaxed")
+	assert_eq(t.pace, "relaxed", "before the first round has run, at once")
+	assert_almost_eq(t.usual_close(), 16.0, 0.001, "M013's pace")
+	assert_almost_eq(t.result_seconds(), 5.5, 0.001)
+	t.set_pace("quick")
+	assert_almost_eq(t.usual_close(), 5.0, 0.001)
+	assert_almost_eq(t.result_seconds(), 2.4, 0.001)
+	var quick_round := t.usual_close() + rules.drop_seconds + t.result_seconds()
+	assert_lt(quick_round, 12.0, "a quick round is about twelve seconds")
+
+
+func test_a_new_pace_starts_with_the_next_round() -> void:
+	var t := RouletteTable.new(rules, null, 7)
+	_run(t, 2.0)
+	t.set_pace("quick")
+	assert_eq(t.pace, "normal", "the round under way keeps its time")
+	assert_eq(t.pace_asked, "quick")
+	assert_almost_eq(t.close_time(), 10.0, 0.001)
+	var opened := false
+	for e in _run(t, 10.0 + rules.drop_seconds + 4.0 + 0.1):
+		opened = opened or e.event == "open"
+	assert_true(opened)
+	assert_eq(t.pace, "quick", "the next round at the new pace")
+	assert_almost_eq(t.close_time(), 5.0, 0.001)
+	t.set_pace("bogus")
+	assert_eq(t.pace_asked, "quick", "only the presets")
+
+
+func test_the_grace_is_the_same_at_every_pace() -> void:
+	for p in RouletteRules.PACE_ORDER:
+		var t := RouletteTable.new(rules, null, 7)
+		t.set_pace(p)
+		_run(t, t.usual_close() - 0.5)
+		t.touch()  # Danny puts a chip down half a second before the call
+		assert_almost_eq(t.close_time(), t.usual_close() - 0.5 + rules.grace_seconds, 0.01, p)
+		_run(t, 0.2)
+		for i in 40:
+			t.touch()
+			_run(t, 0.5)
+		assert_lte(t.close_time(), t.usual_close() + rules.max_extension + 0.001, p + ": never past the limit")

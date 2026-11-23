@@ -22,6 +22,8 @@ var fight_rules: FightRules
 
 # ---- state and services, in the order main builds them
 var settings: AudioSettings
+## M015: the player's preferences (the wheel's pace), kept beside the sound levels.
+var prefs: Preferences
 var resolver: AssetResolver
 var rackets: Rackets
 var clock: NightClock

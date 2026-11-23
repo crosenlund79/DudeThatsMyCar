@@ -5,6 +5,10 @@ extends "res://tests/support/city_test.gd"
 ## tables, the films). The snapshots were recorded on the M013 code before the
 ## M014 refactor (tests/golden/m013/) and every later build must reproduce them
 ## exactly - the refactor changes the architecture, never the game.
+## M015 changes the game on purpose: the recordings live in tests/golden/m015/
+## (M013's stay in tests/golden/m013/ for reference); a case is recorded again
+## only after its differences were checked to be the intended ones, and each
+## time is listed with its reason in tests/golden/m015/CHANGES.md.
 ##
 ## Record (only ever on the reference build):
 ##   GOLDEN_RECORD=1 godot --headless --path . --fixed-fps 60 -s addons/gut/gut_cmdln.gd \
@@ -12,7 +16,7 @@ extends "res://tests/support/city_test.gd"
 ## Every random generator the game randomizes in play is seeded here, so two
 ## runs of the same build give the same snapshots (checked when recording).
 
-const GOLDEN := "res://tests/golden/m013/"
+const GOLDEN := "res://tests/golden/m015/"
 const SAVE := "user://test_golden_master.json"
 
 var _record := OS.get_environment("GOLDEN_RECORD") == "1"
@@ -214,7 +218,7 @@ func _check(case_name: String) -> void:
 	for k in b:
 		if not a.has(k):
 			diffs.append("%s: (missing) -> %s" % [k, b[k]])
-	assert_eq(diffs.size(), 0, "%s as recorded on M013; %d differences: %s" % [case_name, diffs.size(), "\n".join(diffs.slice(0, 25))])
+	assert_eq(diffs.size(), 0, "%s as recorded (%s); %d differences: %s" % [case_name, GOLDEN, diffs.size(), "\n".join(diffs.slice(0, 25))])
 
 
 # ------------------------------------------------------------------ helpers
