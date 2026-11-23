@@ -7,6 +7,8 @@ extends RefCounted
 var rules: NightRules
 ## Minutes after midnight of the evening the night began (past 1440 = next day).
 var minute := 0.0
+## M015.12: game minutes of drowsiness held off (Mrs. Dvorak's coffee; set by the game).
+var held_off := 0.0
 
 
 func _init(p_rules: NightRules = null) -> void:
@@ -35,9 +37,10 @@ func is_late() -> bool:
 ## M010: how drowsy Danny is (0 until the drowsy hour, growing to 1 at dawn).
 func drowsiness() -> float:
 	var span := float(rules.dawn_minute - rules.drowsy_minute)
-	if span <= 0.0 or minute <= rules.drowsy_minute:
+	var m := minute - maxf(held_off, 0.0)
+	if span <= 0.0 or m <= rules.drowsy_minute:
 		return 0.0
-	var t := clampf((minute - rules.drowsy_minute) / span, 0.0, 1.0)
+	var t := clampf((m - rules.drowsy_minute) / span, 0.0, 1.0)
 	return t * t * (3.0 - 2.0 * t)
 
 

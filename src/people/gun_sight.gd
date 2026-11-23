@@ -53,6 +53,21 @@ const SHY := {
 		"Good heavens - a machine gun! Put it away, please."],
 	"leon": ["Put that away. I've got enough trouble without a gun in my office.",
 		"Put the Tommy gun away, Mercer. This is a freight office."],
+	# M015.12: the new quarters' keepers
+	"hrabal": ["Put it away. I have a cleaver and I'm faster than you think.",
+		"A machine gun, in the market? Put it away before the whole hall runs out into the street."],
+	"dvorak": ["Put that away, darling. Nobody gets coffee with a pistol in his hand.",
+		"Jezismarja! Put it away - put it away, I can't pour with my hands shaking."],
+	"chu": ["Not at my tables, Mr. Mercer. Put it away and sit down.",
+		"Please. My customers are leaving through the kitchen. Put it away."],
+	"feld": ["I buy guns, young man. I don't talk to them. Put it away.",
+		"That I couldn't sell if I wanted to. Put it away before my heart stops."],
+	"pratt": ["Sir. Put that away, or I ring for the house detective and then for the police.",
+		"Put that away at once. The Belvedere is not a shooting gallery."],
+	"ruby": ["Put that away, handsome. The girls only dance with one kind of rod.",
+		"A Tommy gun at a tea dance? Put it away before the band packs up."],
+	"bandleader": ["Whoa, pal - put that away. We play requests, not hold-ups.",
+		"Put it away, mister! The drummer's under the piano already."],
 }
 
 

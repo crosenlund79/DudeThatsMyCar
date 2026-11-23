@@ -17,6 +17,8 @@ extends Node
 signal sound_played(logical: String)
 
 const BUS_CLUB_MUSIC := "ClubMusic"
+## M015.12: a room's own music heard from outside (the Paradise's band), low-passed.
+const BUS_ROOM_MUSIC := "RoomMusic"
 const BUS_CLUB_ROOM := "ClubRoom"
 const BUS_STREET := "Street"
 const MUSIC := "music/copper_owl_jazz"
@@ -28,7 +30,7 @@ const DISTANT_DB := {"horn": -9.0, "foghorn": -7.0, "clatter": -11.0}
 ## Shops with a bell over the door.
 const BELL_SHOPS := ["barber_shop", "grocery", "hardware"]
 ## Keepers with a till that rings when money changes hands.
-const TILLS := ["sal", "augie", "novak", "lindqvist"]
+const TILLS := ["sal", "augie", "novak", "lindqvist", "dvorak", "chu", "feld", "ruby"]
 ## How fast levels follow the listener (s): through a door, and otherwise.
 const DOOR_TAU := 0.4
 const LEVEL_TAU := 0.3
@@ -74,6 +76,10 @@ const GAMING := "ambience/gaming_room"
 const ROOM_EVENTS := {
 	"back_room": ["gaming/chips_stack", "gaming/shuffle", "gaming/glass", "gaming/chair", "gaming/laugh"],
 	"gaming_room": ["gaming/chips_stack", "gaming/glass", "gaming/chair", "gaming/laugh", "gaming/laugh"],
+	# M015.12: the new quarters' rooms
+	"market_hall": ["places/cleaver", "places/cleaver", "places/cup", "gaming/chair"],
+	"golden_lantern": ["places/cup", "gaming/glass", "gaming/chair", "gaming/laugh"],
+	"paradise": ["gaming/glass", "gaming/laugh", "gaming/chair", "gaming/glass"],
 }
 var gaming_bed: AudioStreamPlayer
 var gaming_starts := 0
@@ -92,6 +98,7 @@ static func ensure_buses() -> void:
 	_ensure_bus(BUS_CLUB_MUSIC, "Music", true)
 	_ensure_bus(BUS_CLUB_ROOM, "Ambience", true)
 	_ensure_bus(BUS_STREET, "Ambience", false)
+	_ensure_bus(BUS_ROOM_MUSIC, "Music", false)
 
 
 static func _ensure_bus(bus: String, send: String, with_panner: bool) -> void:

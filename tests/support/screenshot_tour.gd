@@ -930,6 +930,23 @@ func _run(shots: Array) -> void:
 					st.recount_locals(true)
 				await _frames(60 * 2)
 				await _shot(s, false)
+			"m015_hall", "m015_lantern", "m015_pawn", "m015_belvedere", "m015_ballroom":
+				# M015.12: the landmark rooms, Danny standing at the place to talk
+				main.weather.force("clear")
+				main.clock.set_time(22 * 60 + 40.0)
+				var at: Array = {"m015_hall": ["market", "market_hall", "dvorak"], "m015_lantern": ["market", "golden_lantern", "chu"],
+					"m015_pawn": ["market", "pawnshop", "feld"], "m015_belvedere": ["terrace", "belvedere", "pratt"],
+					"m015_ballroom": ["terrace", "paradise", "ruby"]}[s]
+				var plan_data: InteriorPlan = null
+				for p in (main.world.layouts[at[0]] as DistrictLayout).interiors:
+					if p.id == at[1]:
+						plan_data = p
+				for sp in plan_data.spots:
+					if sp.id == at[2]:
+						_teleport_walker(sp.pos, -PI / 2)
+				main.world.load_now(at[0])
+				await _frames(60 * 2)
+				await _shot(s, false)
 			"m015_notebook":
 				# M015: the Notebook as case sheets - Rourke's job, Lefty found out, Eddie's tip
 				main.weather.force("clear")

@@ -26,8 +26,15 @@ static func unshaded() -> CanvasItemMaterial:
 
 func setup(layout: DistrictLayout, resolver: AssetResolver) -> void:
 	name = "PlaceMarkers"
+	add_layout(layout, resolver)
+
+
+## M015.12: the badges over the doors of another district's places (made once,
+## from its plan; a badge only shows near its door, so a district not built
+## costs nothing but the node).
+func add_layout(layout: DistrictLayout, resolver: AssetResolver) -> void:
 	var mat := unshaded()
-	var k := 0
+	var k := markers.size()
 	for plan in layout.interiors:
 		var p: InteriorPlan = plan
 		if p.marker == "" or p.doors.is_empty():

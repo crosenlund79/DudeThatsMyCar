@@ -74,17 +74,29 @@ func setup(p_layout: DistrictLayout, resolver: AssetResolver, frame: StyleBoxTex
 	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 		_frame.set_texture_margin(side, 12.0 * t.x)
 	_font = font
-	for plan in layout.interiors:
+	_resolver = resolver
+	_add_places(layout)
+
+
+var _resolver: AssetResolver = null
+
+
+## The places one can walk into in `d`, with their badges.
+func _add_places(d: DistrictLayout) -> void:
+	for plan in d.interiors:
 		var p: InteriorPlan = plan
 		if p.marker != "" and not p.doors.is_empty():
-			places.append({"pos": p.outside_door(0, 10.0), "tex": resolver.get_texture(p.marker), "home": p.is_home,
+			places.append({"pos": p.outside_door(0, 10.0), "tex": _resolver.get_texture(p.marker), "home": p.is_home,
 				"id": p.id})
 
 
 ## M008: a district's map, painted once from its plan (it need not be built).
+## M015.12: with the badges of its places (the new quarters' have some).
 func add_district(d: DistrictLayout) -> void:
 	var img := paint(d)
 	districts.append({"layout": d, "image": img, "texture": ImageTexture.create_from_image(img), "rect": d.bounds})
+	if _resolver != null:
+		_add_places(d)
 
 
 ## The district painted once: one image pixel per IMAGE_SCALE world px, its bounds exactly.

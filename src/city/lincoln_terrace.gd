@@ -62,6 +62,8 @@ func _build() -> void:
 	_ground_details()
 	_people_and_cars()
 	_incident_spots()
+	TerraceInteriors.add_to(d)  # M015.12: the Belvedere's lobby, the Paradise Ballroom
+	_clear_doorways()
 	# the way south, under the tracks, into the Riverside Ward
 	d.exits.append({"to": "riverside", "rect": Rect2(WHARF - HALF - SW, HEIGHT - 6, (HALF + SW) * 2.0, 6)})
 

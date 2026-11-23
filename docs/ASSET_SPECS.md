@@ -297,10 +297,15 @@ image is its window light at night and is replaced separately. Cars and people f
 | `ui/map_police` | `custom/graphics/ui/map_police.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Minimap: the beat cop (screen px). |
 | `ui/marker_bar` | `custom/graphics/ui/marker_bar.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker (world and minimap): the Copper Owl. Badge on top, the pin's point at the bottom middle. |
 | `ui/marker_barber` | `custom/graphics/ui/marker_barber.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Sal's Barber Shop. |
+| `ui/marker_dance` | `custom/graphics/ui/marker_dance.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M015 place marker: the Paradise Ballroom (two notes). |
+| `ui/marker_eats` | `custom/graphics/ui/marker_eats.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M015 place marker: the Golden Lantern chop-suey house (a bowl and chopsticks). |
 | `ui/marker_grocery` | `custom/graphics/ui/marker_grocery.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Novak's Grocery. |
 | `ui/marker_hardware` | `custom/graphics/ui/marker_hardware.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: Lindqvist Hardware. |
 | `ui/marker_home` | `custom/graphics/ui/marker_home.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | Place marker: your flat (house-shaped, unlike the businesses). |
+| `ui/marker_hotel` | `custom/graphics/ui/marker_hotel.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M015 place marker: the Belvedere Hotel (a room key on its tag). |
+| `ui/marker_market` | `custom/graphics/ui/marker_market.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M015 place marker: the Canal Market Hall (a basket with a loaf). |
 | `ui/marker_morgue` | `custom/graphics/ui/marker_morgue.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 landmark badge: The Morgue (slate grey: a landmark, not a business; ward map only). |
+| `ui/marker_pawn` | `custom/graphics/ui/marker_pawn.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M015 place marker: A. Feld, Loans (the pawnbroker's three balls). |
 | `ui/marker_union` | `custom/graphics/ui/marker_union.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M011 place marker: the dock and freight workers' union hall (a cargo hook). |
 | `ui/marker_vet` | `custom/graphics/ui/marker_vet.png` | 64x80 | sprite (image, scaled to its display size) | 30x37 | M006 place marker: Pettibone Animal Hospital (a paw print). |
 | `ui/menu_card` | `custom/graphics/ui/menu_card.png` | 400x480 | sprite (image, scaled to its display size) | 540x470 | M012 the menu's page: cream card, soft foxed edges, a ruled Art Deco border (stretched; the game prints on it). |
@@ -371,8 +376,11 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `gaming/murmur` | `custom/audio/gaming/murmur.ogg` (or .wav / .mp3) | `template_murmur.ogg` | no | Ambience | M013: two of the gaming room's regulars exchanging a few words (voiced murmurs, no words; about 2.5 s), played where they stand. |
 | `gaming/shuffle` | `custom/audio/gaming/shuffle.ogg` (or .wav / .mp3) | `template_shuffle.ogg` | no | Ambience | M011: a riffle shuffle somewhere in the room (about 1 s). |
 | `music/copper_owl_jazz` | `custom/audio/music/copper_owl_jazz.ogg` (or .wav / .mp3) | `copper_owl_jazz.ogg` | yes | Music | The Copper Owl's singer, "Leave the Lights Low" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet. |
+| `music/paradise_band` | `custom/audio/music/paradise_band.ogg` (or .wav / .mp3) | `template_paradise_band.ogg` | yes | Music | M015.12: the Paradise Ballroom's dance band - an original synthesised foxtrot (sixteen bars, about 33 s, loops whole). Played from the bandstand: full in the ballroom, low-passed and quieter outside; the bandleader's requests change its pace; silent after three. |
 | `music/record_scratch` | `custom/audio/music/record_scratch.ogg` (or .wav / .mp3) | `template_record_scratch.ogg` | no | Music | M006: the needle dragged off the record when Danny interrupts the Bird (under 1 s). Heard through the club's walls like the song. |
 | `places/bottles` | `custom/audio/places/bottles.ogg` (or .wav / .mp3) | `template_bottles.ogg` | no | Effects | Bottles of rye changing hands. |
+| `places/cleaver` | `custom/audio/places/cleaver.ogg` (or .wav / .mp3) | `template_cleaver.ogg` | no | Effects | M015.12: a cleaver into a block - the Canal Market Hall's night butcher, now and then (0.35 s). |
+| `places/cup` | `custom/audio/places/cup.ogg` (or .wav / .mp3) | `template_cup.ogg` | no | Effects | M015.12: a cup set down on its saucer - the market's coffee urn, the Golden Lantern's tables (0.4 s). |
 | `places/door` | `custom/audio/places/door.ogg` (or .wav / .mp3) | `template_door.ogg` | no | Effects | Going in or out by a door: latch, hinges, the door falling to. |
 | `places/register` | `custom/audio/places/register.ogg` (or .wav / .mp3) | `template_register.ogg` | no | Effects | A shop's till when money changes hands. |
 | `places/shop_bell` | `custom/audio/places/shop_bell.ogg` (or .wav / .mp3) | `template_shop_bell.ogg` | no | Effects | The bell over a shop door (barber, grocer, hardware). |

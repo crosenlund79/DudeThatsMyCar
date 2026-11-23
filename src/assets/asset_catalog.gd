@@ -353,6 +353,11 @@ const SPECS := {
 	"ui/marker_hardware": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "Place marker: Lindqvist Hardware."},
 	"ui/marker_home": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "Place marker: your flat (house-shaped, unlike the businesses)."},
 	"ui/marker_union": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "M011 place marker: the dock and freight workers' union hall (a cargo hook)."},
+	"ui/marker_market": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "M015 place marker: the Canal Market Hall (a basket with a loaf)."},
+	"ui/marker_eats": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "M015 place marker: the Golden Lantern chop-suey house (a bowl and chopsticks)."},
+	"ui/marker_pawn": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "M015 place marker: A. Feld, Loans (the pawnbroker's three balls)."},
+	"ui/marker_hotel": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "M015 place marker: the Belvedere Hotel (a room key on its tag)."},
+	"ui/marker_dance": {"kind": "sprite", "template_size": Vector2i(64, 80), "display_size": Vector2(30, 37), "notes": "M015 place marker: the Paradise Ballroom (two notes)."},
 	"ui/menu_panel": {"kind": "sprite", "template_size": Vector2i(640, 480), "display_size": Vector2(900, 560), "notes": "M012 the game menu's case: worn oxblood leather, a tooled gilt border, brass corner fittings (stretched to the menu)."},
 	"ui/menu_card": {"kind": "sprite", "template_size": Vector2i(400, 480), "display_size": Vector2(540, 470), "notes": "M012 the menu's page: cream card, soft foxed edges, a ruled Art Deco border (stretched; the game prints on it)."},
 	"ui/door_plate": {"kind": "sprite", "template_size": Vector2i(64, 20), "display_size": Vector2(38, 11), "notes": "M012 a worn brass threshold plate before a street door, seen from above, drawn light (the game tints it: warm, cold, amber)."},
@@ -412,6 +417,7 @@ const AUDIO := {
 	"police/whistle": {"loop": false, "bus": "Effects", "notes": "The officer's whistle when he spots you."},
 	"vehicles/impact_wall": {"loop": false, "bus": "Effects", "notes": "Car hits a wall or kerb object, under 1 s."},
 	# M005: the user's recordings (shipped under their own names), the night's soundscape and the sounds of dealings
+	"music/paradise_band": {"loop": true, "bus": "Music", "notes": "M015.12: the Paradise Ballroom's dance band - an original synthesised foxtrot (sixteen bars, about 33 s, loops whole). Played from the bandstand: full in the ballroom, low-passed and quieter outside; the bandleader's requests change its pace; silent after three."},
 	"music/copper_owl_jazz": {"loop": true, "bus": "Music", "notes": "The Copper Owl's singer, \"Leave the Lights Low\" (the user's recording, cleaned). One continuous player: full inside the club, low-passed and quieter through its walls outside. Loops whole; keep both ends quiet."},
 	"voice/danny_opening": {"loop": false, "bus": "Voice", "notes": "Danny's opening monologue on a new game (the user's recording, unaltered; about 23 s). The subtitles follow the shipped recording."},
 	# M006: the people's own voices (the user's recordings, unaltered; subtitles follow the shipped recordings)
@@ -470,6 +476,8 @@ const AUDIO := {
 	"emergency/bell": {"loop": false, "bus": "Effects", "notes": "M010: a fire engine's brass bell clanged by hand (one-shot, about 2.6 s)."},
 	"places/door": {"loop": false, "bus": "Effects", "notes": "Going in or out by a door: latch, hinges, the door falling to."},
 	"places/shop_bell": {"loop": false, "bus": "Effects", "notes": "The bell over a shop door (barber, grocer, hardware)."},
+	"places/cleaver": {"loop": false, "bus": "Effects", "notes": "M015.12: a cleaver into a block - the Canal Market Hall's night butcher, now and then (0.35 s)."},
+	"places/cup": {"loop": false, "bus": "Effects", "notes": "M015.12: a cup set down on its saucer - the market's coffee urn, the Golden Lantern's tables (0.4 s)."},
 	"places/register": {"loop": false, "bus": "Effects", "notes": "A shop's till when money changes hands."},
 	"places/bottles": {"loop": false, "bus": "Effects", "notes": "Bottles of rye changing hands."},
 	"vehicles/door": {"loop": false, "bus": "Effects", "notes": "Getting into or out of a car: the handle and a heavy door shutting."},

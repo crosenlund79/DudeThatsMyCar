@@ -77,7 +77,7 @@ func _read(who: String) -> Dictionary:
 
 ## M012: whether E at this spot reads something rather than talking to someone.
 static func is_readable(id: String) -> bool:
-	return id == "union_board" or READS.has(id)
+	return id == "union_board" or READS.has(id) or QuarterTalk.READS.has(id)
 
 var rackets: Rackets
 
@@ -87,7 +87,17 @@ func _init(p_rackets: Rackets) -> void:
 
 
 func speaker(who: String) -> String:
-	return NAMES.get(who, who.capitalize())
+	return NAMES.get(who, QuarterTalk.NAMES.get(who, who.capitalize()))
+
+
+## M015.12: the new quarters' people are QuarterTalk's.
+var _quarter: QuarterTalk = null
+
+
+func quarter() -> QuarterTalk:
+	if _quarter == null:
+		_quarter = QuarterTalk.new(self)
+	return _quarter
 
 
 ## Who greets Danny with a recording the first time they meet, and his reply.
@@ -145,6 +155,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 		fx["holster"] = true
 		hello["effects"] = fx
 		return hello
+	if QuarterTalk.handles(who):
+		return quarter().say(who, step, context)
 	match who:
 		"augie":
 			return _augie(step, context)

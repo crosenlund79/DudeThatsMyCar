@@ -129,6 +129,25 @@ func _prop(kind: String, pos: Vector2, rot: float = 0.0, solid: Variant = 0.0, h
 	d.props.append(p)
 
 
+## M015.12: nothing solid in front of a room's door - a lamp post there slides
+## along the kerb out of the way; a stall, a pushcart or a crate there goes.
+## (Run once the rooms are added, in the district's own coordinates.)
+func _clear_doorways() -> void:
+	for plan in d.interiors:
+		var p: InteriorPlan = plan
+		for i in p.doors.size():
+			var at := p.outside_door(i, 30.0)
+			var along: Vector2 = (p.doors[i].side as Vector2).orthogonal()
+			for k in d.lamps.size():
+				var lamp: Vector2 = d.lamps[k]
+				if lamp.distance_to(at) < 50.0:
+					var away := signf((lamp - at).dot(along))
+					d.lamps[k] = lamp + along * (away if away != 0.0 else 1.0) * 60.0
+			d.props = d.props.filter(func(pr: Dictionary) -> bool:
+				return pr.kind == "props/el_column" or not (pr.has("box") or pr.has("radius")) \
+					or (pr.pos as Vector2).distance_to(at) > 64.0)
+
+
 ## n sawhorses side by side along `along`, centred on c, with lanterns at the ends.
 func _barricade_line(c: Vector2, along: Vector2, n: int) -> void:
 	var length := 96.0

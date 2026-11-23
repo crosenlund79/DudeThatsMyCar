@@ -43,6 +43,8 @@ const DUCK_DB := -10.0
 ## M011: the Copper Owl's back rooms (the card room, the gaming room): their own
 ## bed, quiet under the games, and the odd sound of the room now and then.
 const BACK_ROOMS := ["back_room", "gaming_room"]
+## M015.12: the new quarters' busy rooms, with their own odd sounds (no bed).
+const BUSY_ROOMS := ["market_hall", "golden_lantern", "paradise"]
 const GAMING_DB := -12.0
 const ROOM_EVENT_DB := -11.0
 
@@ -63,6 +65,7 @@ static func listen(layout: DistrictLayout, club: InteriorPlan, p: Vector2, room:
 		"in_club": club != null and room == club,
 		"indoors": room != null,
 		"back_room": room != null and room.id in BACK_ROOMS,
+		"busy_room": room != null and room.id in BUSY_ROOMS,
 		"driving": driving,
 		"club_distance": rect_distance(club_rect, p) if club != null else INF,
 		"club_dx": club_rect.get_center().x - p.x,
@@ -179,7 +182,7 @@ static func next_gap(kind: String, activity: float, u: float) -> float:
 ## Whether a distant sound of a kind would be heard here at all.
 static func can_hear(kind: String, l: Dictionary) -> bool:
 	if kind == "room":
-		return l.get("back_room", false)  # M011
+		return l.get("back_room", false) or l.get("busy_room", false)  # M011, M015.12
 	if l.in_club:
 		return false
 	match kind:

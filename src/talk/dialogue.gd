@@ -10,7 +10,7 @@ extends RefCounted
 ## The effects a page can have, in the order they are applied (as M003-M012
 ## applied them). A handler gets (value, all effects).
 const EFFECTS := ["incident", "opportunity", "fight", "bird_scene", "freight", "job", "heal", "rounds",
-	"thompson", "parcel", "cafe", "police", "holster"]
+	"thompson", "parcel", "cafe", "police", "holster", "quarter"]
 
 var game: Game
 ## Who the player is talking to ("" = nobody) and the page on screen.

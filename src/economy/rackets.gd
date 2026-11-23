@@ -304,6 +304,7 @@ func end_night() -> Array:
 	night += 1
 	opportunities.begin_night(night)
 	callouts.begin_night(night)  # M012
+	quarters.begin_night(night)  # M015.12
 	sold_by_barber = 0
 	bought_by_bar = 0
 	paid.clear()
@@ -370,6 +371,8 @@ var bird_scene := ""
 var bird_scene_night := -1
 ## M015: what Lefty Moran knows about his car.
 var lefty_car := LeftysCar.new()
+## M015.12: Danny's dealings in Canal Market and Lincoln Terrace.
+var quarters := Quarters.new()
 
 
 ## M010: Danny takes Rourke's café job on: Eddie will sell him the parcel.
@@ -642,7 +645,7 @@ func to_dict() -> Dictionary:
 		"opportunities": opportunities.to_dict(), "loan": loan.to_dict(), "parcels": parcels,
 		"parcel_wanted": parcel_wanted, "cafe": cafe.to_dict(), "callouts": callouts.to_dict(),
 		"freight": freight.to_dict(), "bird_scene": bird_scene, "bird_scene_night": bird_scene_night,
-		"lefty_car": lefty_car.to_dict()}
+		"lefty_car": lefty_car.to_dict(), "quarters": quarters.to_dict()}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -669,6 +672,10 @@ func from_dict(d: Dictionary) -> void:
 	lefty_car = LeftysCar.new()
 	if d.get("lefty_car") is Dictionary:
 		lefty_car.from_dict(d.lefty_car)
+	quarters = Quarters.new()  # M015.12
+	quarters.begin_night(maxi(1, int(d.get("night", night))))
+	if d.get("quarters") is Dictionary:
+		quarters.from_dict(d.quarters)
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
 	callouts.night = night

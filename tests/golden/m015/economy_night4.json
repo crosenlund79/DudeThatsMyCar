@@ -368,6 +368,19 @@
 		},
 		"parcel_wanted": false,
 		"parcels": 0.0,
+		"quarters": {
+			"coffee_at": -1.0,
+			"coffees": 0.0,
+			"danced_total": 0.0,
+			"dances": 0.0,
+			"feld_boxes": 0.0,
+			"meals": 0.0,
+			"met": {},
+			"night": 4.0,
+			"tipped": false,
+			"tune": "blue_canal",
+			"tunes": 0.0
+		},
 		"rumours": {
 			"items": [
 				{
@@ -802,6 +815,19 @@
 			},
 			"parcel_wanted": false,
 			"parcels": 0.0,
+			"quarters": {
+				"coffee_at": -1.0,
+				"coffees": 0.0,
+				"danced_total": 0.0,
+				"dances": 0.0,
+				"feld_boxes": 0.0,
+				"meals": 0.0,
+				"met": {},
+				"night": 4.0,
+				"tipped": false,
+				"tune": "blue_canal",
+				"tunes": 0.0
+			},
 			"rumours": {
 				"items": [
 					{

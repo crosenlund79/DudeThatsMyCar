@@ -66,7 +66,15 @@ func test_saved_in_each_district_and_loaded() -> void:
 		await wait_physics_frames(3)
 		assert_eq(main.hud.district_label.text, l.name.to_upper())
 		assert_true(main.world.is_ready(id), "%s built again" % l.name)
-		assert_eq(main.fleet.cars.size(), main.layout.cars.size() + l.cars.size(), "no car twice")
+		# M015: a neighbour near the beat (the market's Halloran Square) may be built in these frames too
+		var want := 0
+		for b in main.world.ready_ids():
+			want += (main.world.layouts[b] as DistrictLayout).cars.size()
+		assert_eq(main.fleet.cars.size(), want, "no car twice (the cars of %s)" % [main.world.ready_ids()])
+		var seen := {}
+		for car_id in main.fleet.ids:
+			assert_false(seen.has(car_id), "%s made once" % car_id)
+			seen[car_id] = true
 	main.save_path = ""
 
 

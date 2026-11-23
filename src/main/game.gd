@@ -86,6 +86,7 @@ var leftys_car: LeftysCarDirector  ## M015: Lefty Moran's speedster (src/rivals/
 var dev: DevTools  ## M015: the developer tools (src/dev/), for testing
 var gun_watch: GunWatch  ## M015: who sees the gun in Danny's hand (src/people/)
 var run_overs: RunOvers  ## M015: somebody knocked down by Danny's car (src/crime/)
+var quarter_life: QuarterLife  ## M015.12: the new quarters' rooms - the band, the dancers, a dance, a coffee (src/quarters/)
 var casework: Casework  ## M015: the case sheets and where the work points (src/jobs/)
 var modals: Modals
 var saves: Saves

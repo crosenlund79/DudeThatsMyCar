@@ -50,6 +50,7 @@ func update(delta: float, running: bool) -> void:
 	elif clock.is_late() and warned < 1:
 		warned = 1
 		hud.show_notice("It's getting late. Time to head home to bed.")
+	clock.held_off = game.rackets.quarters.lift(clock.minute)  # M015.12: the coffee
 	hud.set_clock(game.rackets.night, clock.text(), clock.is_late())
 
 

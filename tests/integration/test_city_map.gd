@@ -81,7 +81,7 @@ func test_every_district_in_its_true_place() -> void:
 	for n in ["Doyle's Garage", "Hotel Marlowe", "The Morgue", "Great Lakes Tanning Co.", "North Branch Freight",
 			"The Bijou", "St. Brendan's Church", "Halloran Park"]:  # M010: the square's middle is a park
 		assert_has(labels, n)
-	assert_eq(m.minimap.places.size(), 7, "the seven places he can walk into, with their badges (M011: the union hall)")
+	assert_eq(m.minimap.places.size(), 12, "the twelve places he can walk into, with their badges (M011: the union hall; M015: the new quarters' five)")
 	_close()
 
 

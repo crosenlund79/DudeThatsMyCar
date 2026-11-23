@@ -578,6 +578,34 @@ def _pictogram(img, kind, cx, cy, col=MARK_CREAM):
         line(img, [(S(cx), S(cy - 8)), (S(cx), S(cy + 3))], col, 2.4 * SS, 255)
         hook = [(cx - 5 + 5 * math.cos(a), cy + 2 + 6 * math.sin(a)) for a in np.linspace(0.0, math.pi * 1.2, 14)]
         line(img, [S(x, y) for x, y in hook], col, 2.4 * SS, 255)
+    elif kind == "market":  # M015: a market basket with a loaf and greens
+        paint_shape(img, SP([(cx - 11, cy - 1), (cx + 11, cy - 1), (cx + 8, cy + 10), (cx - 8, cy + 10)]), col, 31, outline=None, wob=0.05)
+        for k in range(-7, 9, 4):
+            line(img, [(S(cx + k), S(cy)), (S(cx + k * 0.8), S(cy + 9))], MARK_ENAMEL, 1.0 * SS, 200)
+        handle = [(cx - 9 + 18 * t, cy - 1 - 10 * math.sin(math.pi * t)) for t in np.linspace(0, 1, 12)]
+        line(img, [S(x, y) for x, y in handle], col, 1.8 * SS, 255)
+        paint_shape(img, SP(ellipse_pts(cx - 3, cy - 3, 5, 3)), "#d8b070", 32, outline=None, wob=0.05)
+    elif kind == "eats":  # M015: a rice bowl with chopsticks
+        paint_shape(img, SP([(cx - 11, cy - 1), (cx + 11, cy - 1), (cx + 7, cy + 8), (cx - 7, cy + 8)]), col, 33, outline=None, wob=0.04)
+        paint_shape(img, SP(ellipse_pts(cx, cy - 2, 11, 3)), "#f4ecd8", 34, outline=None, wob=0.02)
+        line(img, [(S(cx - 2), S(cy - 3)), (S(cx + 9), S(cy - 13))], col, 1.6 * SS, 255)
+        line(img, [(S(cx + 2), S(cy - 2)), (S(cx + 11), S(cy - 11))], col, 1.6 * SS, 255)
+    elif kind == "pawn":  # M015: the pawnbroker's three balls on their bar
+        line(img, [(S(cx - 10), S(cy - 10)), (S(cx + 10), S(cy - 10))], col, 2.0 * SS, 255)
+        for k, (bx, by) in enumerate(((-7, 0), (7, 0), (0, 8))):
+            line(img, [(S(cx + bx * 0.8), S(cy - 10)), (S(cx + bx), S(cy + by - 4))], col, 1.0 * SS, 230)
+            paint_shape(img, SP(ellipse_pts(cx + bx, cy + by, 4.2, 4.2)), "#e0b84a", 35 + k, outline=None, wob=0.02)
+    elif kind == "hotel":  # M015: a hotel room key on its brass tag
+        paint_shape(img, SP(ellipse_pts(cx - 5, cy - 4, 5, 5)), col, 38, outline=None, wob=0.02)
+        paint_shape(img, SP(ellipse_pts(cx - 5, cy - 4, 2, 2)), MARK_ENAMEL, 39, outline=None, wob=0.02)
+        line(img, [(S(cx - 1), S(cy)), (S(cx + 9), S(cy + 10))], col, 2.4 * SS, 255)
+        line(img, [(S(cx + 5), S(cy + 6)), (S(cx + 9), S(cy + 3))], col, 2.0 * SS, 255)
+        line(img, [(S(cx + 7), S(cy + 8)), (S(cx + 10), S(cy + 6))], col, 2.0 * SS, 255)
+    elif kind == "dance":  # M015: two eighth notes - the ballroom
+        for k, nx in enumerate((-6, 6)):
+            paint_shape(img, SP(ellipse_pts(cx + nx - 2, cy + 7, 4, 3, rot=-0.4)), col, 40 + k, outline=None, wob=0.02)
+            line(img, [(S(cx + nx + 1.5), S(cy + 6)), (S(cx + nx + 1.5), S(cy - 9))], col, 1.8 * SS, 255)
+        line(img, [(S(cx - 4.5), S(cy - 9)), (S(cx + 7.5), S(cy - 11))], col, 3.0 * SS, 255)
     elif kind == "home":  # a bed under a crescent moon: where the henchman sleeps by day
         paint_shape(img, SP(rrect_pts(cx - 10, cy + 1, cx + 10, cy + 7, 1.5)), col, 15, outline=None, wob=0.05)
         paint_shape(img, SP(rrect_pts(cx - 10, cy - 4, cx - 7, cy + 10, 1)), col, 16, outline=None, wob=0.03)
@@ -907,6 +935,11 @@ ASSETS = {
     "ui/marker_vet": lambda: place_marker("vet"),
     "ui/marker_morgue": lambda: place_marker("morgue"),
     "ui/marker_union": lambda: place_marker("union"),
+    "ui/marker_market": lambda: place_marker("market"),  # M015
+    "ui/marker_eats": lambda: place_marker("eats"),
+    "ui/marker_pawn": lambda: place_marker("pawn"),
+    "ui/marker_hotel": lambda: place_marker("hotel"),
+    "ui/marker_dance": lambda: place_marker("dance"),
     "signs/vet": lambda: painted_roof_sign("vet", "PETTIBONE ANIMAL HOSPITAL", 16, 384, 64),
     "signs/morgue": lambda: painted_roof_sign("morgue", "THE MORGUE", 26, 256, 64, col="#d6dde4"),
     "signs/union": lambda: painted_roof_sign("union", "DOCK & FREIGHT WORKERS  LOCAL 9", 15, 384, 64),

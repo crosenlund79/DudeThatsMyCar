@@ -73,6 +73,8 @@ func _build() -> void:
 	_ground_details()
 	_people_and_cars()
 	_incident_spots()
+	MarketInteriors.add_to(d)  # M015.12: the market hall, the Golden Lantern, Feld's
+	_clear_doorways()
 	# the ways north into Halloran Square and east into the Riverfront Yards
 	for x in [HALLORAN_AVE, GARRITY, ASHBY]:
 		d.exits.append({"to": "halloran", "rect": Rect2(x - HALF - SW, 0, (HALF + SW) * 2.0, 6)})
@@ -352,9 +354,9 @@ func _people_and_cars() -> void:
 		{"look": "characters/patron_woman", "kind": "stand", "pos": Vector2(2600, mkt_s + 8.0), "face": -PI * 0.5, "hours": [19 * 60 + 30, 22 * 60],
 			"lines": ["Pickles! Two for a penny!", "Last of the cabbages, cheap, cheap!"]},
 		# a knot outside the Golden Lantern
-		{"look": "characters/patron_man", "kind": "stand", "pos": Vector2(2470, mkt_n - 8.0), "face": 0.3, "hours": [21 * 60, 27 * 60],
-			"group": "lantern", "lines": ["Best egg foo young this side of the river.", "Mr. Wong don't ask questions. I like that."]},
-		{"look": "characters/worker", "kind": "stand", "pos": Vector2(2496, mkt_n - 14.0), "face": 2.8, "hours": [21 * 60, 27 * 60],
+		{"look": "characters/patron_man", "kind": "stand", "pos": Vector2(2580, mkt_n - 8.0), "face": 0.3, "hours": [21 * 60, 27 * 60],
+			"group": "lantern", "lines": ["Best egg foo young this side of the river.", "Mr. Chu don't ask questions. I like that."]},
+		{"look": "characters/worker", "kind": "stand", "pos": Vector2(2606, mkt_n - 14.0), "face": 2.8, "hours": [21 * 60, 27 * 60],
 			"group": "lantern", "lines": ["The El shakes my teeth loose, I swear.", "Chop suey at two in the morning. Civilization."]},
 		# women on St. Casimir's steps after the evening service
 		{"look": "characters/lady", "kind": "stand", "pos": Vector2(1800, 470), "face": -0.2, "hours": [19 * 60 + 30, 21 * 60],

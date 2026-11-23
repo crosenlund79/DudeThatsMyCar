@@ -195,6 +195,7 @@ var leftys_car: LeftysCarDirector  ## M015: Lefty's speedster (src/rivals/)
 var dev: DevTools  ## M015: the developer tools (src/dev/)
 var gun_watch: GunWatch  ## M015: who sees the gun in his hand (src/people/)
 var run_overs: RunOvers  ## M015: somebody knocked down by Danny's car (src/crime/)
+var quarter_life: QuarterLife  ## M015.12: the new quarters' rooms (src/quarters/)
 var casework: Casework  ## M015: the case sheets and where the work points (src/jobs/)
 var work_markers: WorkMarkers  ## M015: the work's marks in the street
 var back_rooms: BackRooms  ## the card table, the wheel, the machines (src/gaming/)
@@ -256,6 +257,7 @@ func _ready() -> void:
 	last_song = missions.add(game.make(&"last_song", LastSong))
 	leftys_car = missions.add(game.make(&"leftys_car", LeftysCarDirector))  # M015
 	run_overs = missions.add(game.make(&"run_overs", RunOvers))  # M015
+	quarter_life = missions.add(game.make(&"quarter_life", QuarterLife))  # M015.12
 	dev = game.make(&"dev", DevTools)  # M015: for testing, from the game menu
 	gun_watch = game.make(&"gun_watch", GunWatch)  # M015
 	casework = game.make(&"casework", Casework)  # M015
@@ -425,6 +427,7 @@ func _ready() -> void:
 	for id in world.order:
 		if id != layout.id:
 			hud.minimap.add_district(world.layouts[id])
+			markers.add_layout(world.layouts[id], resolver)  # M015.12: the new quarters' places have badges
 	hud.city_map.refresh_districts()
 	player.interaction = interactions.use
 	player.conversation = dialogue.converse
