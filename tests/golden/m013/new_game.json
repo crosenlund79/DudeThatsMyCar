@@ -139,7 +139,7 @@
 		"history": [],
 		"night": 1.0
 	},
-	"minute": 1170.22,
+	"minute": 1170.25,
 	"moments": [],
 	"night": 1.0,
 	"page": {
@@ -355,7 +355,7 @@
 		},
 		"place": {
 			"facing": -2.99,
-			"minute": 1170.217,
+			"minute": 1170.25,
 			"night": 1.0,
 			"x": 2522.0,
 			"y": 384.0
@@ -662,7 +662,7 @@
 	"ward_out": {},
 	"weather": {
 		"fog": 0.0,
-		"rain": 0.722,
+		"rain": 0.723,
 		"state": "rain"
 	},
 	"world": {

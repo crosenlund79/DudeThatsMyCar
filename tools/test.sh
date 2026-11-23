@@ -50,9 +50,10 @@ serial() {
 	local want got
 	got=$(strip < "$log" | grep -E '^Scripts' | grep -oE '[0-9]+' | head -1)
 	echo "($((SECONDS - start)) s)"
-	[ "$KEEP" = 1 ] && echo "log: $log" || rm -f "$log"
-	[ "$code" = 0 ] || return 1
+	# the whole log is kept when anything failed (or with -k), for the details
+	if [ "$KEEP" = 1 ] || [ "$code" != 0 ]; then echo "log: $log"; else rm -f "$log"; fi
 	echo "$got"
+	return "$code"
 }
 
 # Each script in its own process, JOBS at a time; heaviest (largest) first.
@@ -117,8 +118,11 @@ case "$TIER" in
 		parallel "${F[@]}" ;;
 	serial)
 		want=$(all_scripts | wc -l)
-		got=$(serial | tee /dev/stderr | tail -1)
-		[ "$got" = "$want" ] || { echo "only $got of $want test scripts ran"; exit 1; } ;;
+		out=$(mktemp)
+		serial > "$out"; code=$?
+		cat "$out"; got=$(tail -1 "$out"); rm -f "$out"
+		[ "$got" = "$want" ] || { echo "only $got of $want test scripts ran"; exit 1; }
+		[ "$code" = 0 ] || { echo "failing tests (see above)"; exit 1; } ;;
 	playthrough)
 		F=()
 		for p in $PLAYTHROUGHS; do F+=("tests/integration/$p.gd"); done

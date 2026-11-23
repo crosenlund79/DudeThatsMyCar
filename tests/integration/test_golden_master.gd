@@ -278,8 +278,13 @@ func _until_paid() -> void:
 # ------------------------------------------------------------------ the cases
 
 ## A new game, straight into the night; and one with the opening, watched a
-## little and skipped.
+## little and skipped. The new game starts from a scene built here, like every
+## other case: the very first scene in a Godot process gets one frame of the
+## night clock less than any later one (M013 and M014 alike), so the scene
+## made before the test gave a different minute when the suite ran in one
+## process. new_game.json was recorded again on the M013 code with this start.
 func test_new_game_and_the_opening() -> void:
+	await _rebuild(false)
 	await wait_physics_frames(10)
 	_check("new_game")
 	await _rebuild(false, true)
