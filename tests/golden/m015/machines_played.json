@@ -150,11 +150,18 @@
 				"mercer": "",
 				"outcome": "released",
 				"spot": "front_stop"
+			},
+			{
+				"id": "n1_5",
+				"kind": "exchange",
+				"mercer": "",
+				"outcome": "done",
+				"spot": "churchyard"
 			}
 		],
 		"night": 1.0
 	},
-	"minute": 1508.15,
+	"minute": 1527.62,
 	"moments": [],
 	"night": 1.0,
 	"page": {
@@ -265,7 +272,7 @@
 			"entries": {},
 			"promises": []
 		},
-		"money": 4845.0,
+		"money": 4725.0,
 		"night": 1.0,
 		"opportunities": {
 			"crate": "gone",
@@ -324,15 +331,15 @@
 				"stock": 6.0
 			},
 			"copper_owl": {
-				"carry": 0.909,
-				"cash": 4000.0,
+				"carry": 0.169,
+				"cash": 4600.0,
 				"history": [],
 				"last_profit": 0.0,
-				"last_sales": 0.0,
+				"last_sales": 1.0,
 				"last_shortfall": 0.0,
-				"last_takings": 0.0,
+				"last_takings": 600.0,
 				"missed_delivery": 0.0,
-				"stock": 6.0
+				"stock": 5.0
 			},
 			"eddie": {
 				"carry": 0.0,
@@ -356,7 +363,7 @@
 				"missed_delivery": 0.0,
 				"stock": 2.0
 			},
-			"night_done": 0.114
+			"night_done": 0.146
 		}
 	},
 	"rival": {
@@ -366,7 +373,7 @@
 	"roulette": {
 		"bets": {},
 		"for_save": 0.0,
-		"number": 8.0,
+		"number": 1.0,
 		"phase": 3.0
 	},
 	"save": {
@@ -404,13 +411,20 @@
 					"mercer": "",
 					"outcome": "released",
 					"spot": "front_stop"
+				},
+				{
+					"id": "n1_5",
+					"kind": "exchange",
+					"mercer": "",
+					"outcome": "done",
+					"spot": "churchyard"
 				}
 			],
 			"night": 1.0
 		},
 		"place": {
 			"facing": -3.022,
-			"minute": 1508.15,
+			"minute": 1527.617,
 			"night": 1.0,
 			"x": 1884.0,
 			"y": 226.0
@@ -516,7 +530,7 @@
 				"entries": {},
 				"promises": []
 			},
-			"money": 4845.0,
+			"money": 4725.0,
 			"night": 1.0,
 			"opportunities": {
 				"crate": "gone",
@@ -575,15 +589,15 @@
 					"stock": 6.0
 				},
 				"copper_owl": {
-					"carry": 0.909,
-					"cash": 4000.0,
+					"carry": 0.169,
+					"cash": 4600.0,
 					"history": [],
 					"last_profit": 0.0,
-					"last_sales": 0.0,
+					"last_sales": 1.0,
 					"last_shortfall": 0.0,
-					"last_takings": 0.0,
+					"last_takings": 600.0,
 					"missed_delivery": 0.0,
-					"stock": 6.0
+					"stock": 5.0
 				},
 				"eddie": {
 					"carry": 0.0,
@@ -607,7 +621,7 @@
 					"missed_delivery": 0.0,
 					"stock": 2.0
 				},
-				"night_done": 0.114
+				"night_done": 0.146
 			}
 		},
 		"slots": [
@@ -621,9 +635,9 @@
 				"respin": true,
 				"stake": 10.0,
 				"stops": [
-					14.0,
-					17.0,
-					12.0
+					12.0,
+					8.0,
+					3.0
 				]
 			},
 			{
@@ -633,12 +647,12 @@
 					false
 				],
 				"hold_offered": false,
-				"respin": false,
+				"respin": true,
 				"stake": 10.0,
 				"stops": [
 					6.0,
-					8.0,
-					13.0
+					16.0,
+					16.0
 				]
 			},
 			{
@@ -648,12 +662,12 @@
 					false
 				],
 				"hold_offered": false,
-				"respin": false,
+				"respin": true,
 				"stake": 20.0,
 				"stops": [
-					12.0,
-					16.0,
-					16.0
+					6.0,
+					0.0,
+					7.0
 				]
 			}
 		],
@@ -684,9 +698,9 @@
 			"respin": true,
 			"stake": 10.0,
 			"stops": [
-				14.0,
-				17.0,
-				12.0
+				12.0,
+				8.0,
+				3.0
 			]
 		},
 		{
@@ -696,12 +710,12 @@
 				false
 			],
 			"hold_offered": false,
-			"respin": false,
+			"respin": true,
 			"stake": 10.0,
 			"stops": [
 				6.0,
-				8.0,
-				13.0
+				16.0,
+				16.0
 			]
 		},
 		{
@@ -711,12 +725,12 @@
 				false
 			],
 			"hold_offered": false,
-			"respin": false,
+			"respin": true,
 			"stake": 20.0,
 			"stops": [
-				12.0,
-				16.0,
-				16.0
+				6.0,
+				0.0,
+				7.0
 			]
 		}
 	],
@@ -742,7 +756,7 @@
 	"ward_out": {},
 	"weather": {
 		"fog": 1.0,
-		"rain": 0.341,
+		"rain": 0.0,
 		"state": "fog"
 	},
 	"world": {

@@ -34,15 +34,16 @@ func test_three_machines_one_implementation_period_symbols() -> void:
 
 
 ## M013: the paytables were rebalanced for hold-and-respin (no bar completing
-## a pair any more; see test_slot_holds and tools/slot_odds/analyse.py).
+## a pair any more); M015 again, for a hold after every losing pull (see
+## test_slot_holds and tools/slot_odds/analyse.py).
 func test_the_paytable_first_line_that_matches() -> void:
 	var r: SlotRules = load(MACHINES[0])
-	assert_eq(SlotMachine.coins_for(r, ["bar", "bar", "bar"]), 40)
-	assert_eq(SlotMachine.coins_for(r, ["seven", "seven", "seven"]), 25)
-	assert_eq(SlotMachine.coins_for(r, ["bell", "bell", "bell"]), 12)
+	assert_eq(SlotMachine.coins_for(r, ["bar", "bar", "bar"]), 30)
+	assert_eq(SlotMachine.coins_for(r, ["seven", "seven", "seven"]), 18)
+	assert_eq(SlotMachine.coins_for(r, ["bell", "bell", "bell"]), 9)
 	assert_eq(SlotMachine.coins_for(r, ["bell", "bell", "bar"]), 0, "M013: a bar no longer completes the bells")
-	assert_eq(SlotMachine.coins_for(r, ["plum", "plum", "plum"]), 10)
-	assert_eq(SlotMachine.coins_for(r, ["orange", "orange", "orange"]), 8)
+	assert_eq(SlotMachine.coins_for(r, ["plum", "plum", "plum"]), 7)
+	assert_eq(SlotMachine.coins_for(r, ["orange", "orange", "orange"]), 6)
 	assert_eq(SlotMachine.coins_for(r, ["cherry", "cherry", "cherry"]), 8)
 	assert_eq(SlotMachine.coins_for(r, ["cherry", "cherry", "lemon"]), 5)
 	assert_eq(SlotMachine.coins_for(r, ["cherry", "plum", "bell"]), 3, "a cherry on the first reel")

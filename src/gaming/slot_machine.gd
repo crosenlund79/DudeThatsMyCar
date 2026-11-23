@@ -10,14 +10,16 @@ extends RefCounted
 ## The return to the player follows from the strips and the paytable alone
 ## (`expected_return`, exact).
 ##
-## M013 hold-and-respin. A pull is a full spin (all three reels). After a full
-## spin that pays nothing, the machine's HOLD lamps may light - by a fair draw
-## made with the pull, the same chance every time (`rules.hold_chance`, printed
-## on the plate), nothing to do with money or play. With the lamps lit Danny
-## may hold one or two reels (never three) for the next pull: it costs the same
-## stake (taken once), the held reels keep their symbols and stand still, the
-## others spin, and all three are paid as any line. Then the holds are
-## released, and the pull after a respin is always a full spin - no chains.
+## M013 hold-and-respin, M015's rule (approved). A pull is a full spin (all
+## three reels). After every full spin that pays nothing the machine's HOLD
+## lamps light (no chance about it). With the lamps lit Danny may hold one or
+## two reels (never three) for the next pull: it costs the same stake (taken
+## once), the held reels keep their symbols and stand still, the others spin,
+## and all three are paid as any line. Then every hold is released, and the
+## pull after a hold-assisted one is always a full spin - never two in a row.
+## (M013 lit the lamps after one losing pull in three or four; with a hold after
+## every loss M015 rebalanced the paytables so that the best play stays below
+## what goes in.)
 ## The stake (one, two or five coins: `rules.stakes`) pays in proportion; it
 ## cannot be changed under lit lamps without putting them out. The best a
 ## player can get from holds is exact too (`best_hold_return`), and below what
@@ -38,14 +40,12 @@ var paid_total := 0
 var taken_total := 0
 ## M013: the stake a pull (cents: the coin times rules.stakes[k]).
 var stake := 0
-## The HOLD lamps are lit (after a losing full spin, by the draw): reels may be held.
+## The HOLD lamps are lit (after a losing full spin): reels may be held.
 var hold_offered := false
 ## The reels held for the next pull.
 var held: Array[bool] = [false, false, false]
 ## The pull under way (or the last) was a respin of held reels.
 var respin := false
-## The lamp drawn with the pull under way (only lit if it loses).
-var _lamp := false
 ## The reels held for the pull under way (shown standing still).
 var spun_held: Array[bool] = [false, false, false]
 
@@ -165,9 +165,8 @@ func _release() -> void:
 
 
 ## The lever is pulled: the stake goes in and the stops of the reels that spin
-## are drawn from `seed` - decided here, once, with the HOLD lamp for a losing
-## full spin (the same draw: three stops and the lamp). Held reels (one or two,
-## under lit lamps) keep theirs. Returns the cents taken (0: refused).
+## are drawn from `seed` - decided here, once. Held reels (one or two, under
+## lit lamps) keep theirs. Returns the cents taken (0: refused).
 func pull(money: int, seed: int) -> int:
 	if cannot_pull(money) != "":
 		return 0
@@ -179,7 +178,6 @@ func pull(money: int, seed: int) -> int:
 		var drawn := rng.randi_range(0, rules.strips[r].size() - 1)
 		if not keep:
 			stops[r] = drawn
-	_lamp = rng.randf() < rules.hold_chance
 	respin = holding
 	spun_held = held.duplicate() if holding else ([false, false, false] as Array[bool])
 	_release()  # the holds go with the pull
@@ -191,7 +189,7 @@ func pull(money: int, seed: int) -> int:
 
 
 ## The reels have stopped: the win paid, once. Returns the cents paid (0 a
-## second time). A full spin that paid nothing may light the HOLD lamps.
+## second time). A full spin that paid nothing lights the HOLD lamps.
 func collect() -> int:
 	if not pending:
 		return 0
@@ -202,7 +200,7 @@ func collect() -> int:
 
 
 func _lights_after() -> bool:
-	return not respin and win == 0 and _lamp
+	return not respin and win == 0
 
 
 ## What a save should count on top of Danny's pocket: a pull under way is decided, so its win.
@@ -256,9 +254,8 @@ func expected_return() -> float:
 
 
 ## M013: the long-run share that comes back to a player who uses the HOLD
-## lamps as well as anyone can (exact, from the strips, the paytable and the
-## lamp's chance): every losing full spin lights the lamps with
-## rules.hold_chance; the best hold for that line (one or two reels) is worth
+## lamps as well as anyone can (exact, from the strips and the paytable):
+## M015, every losing full spin lights the lamps; the best hold for that line (one or two reels) is worth
 ## its mean respin; holding is worth it when that beats what the play as a
 ## whole returns - the threshold that gives the most. The same sums as
 ## tools/slot_odds/analyse.py.
@@ -281,7 +278,7 @@ func best_hold_return() -> float:
 				values.append(best)
 	values.sort()
 	values.reverse()
-	var q := rules.hold_chance
+	var q := 1.0  # M015: the lamps light after every losing full spin
 	var best_r := base
 	var sum := 0.0
 	for k in values.size():

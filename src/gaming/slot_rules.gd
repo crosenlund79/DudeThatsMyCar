@@ -17,8 +17,5 @@ extends Resource
 @export var pays: Array[Dictionary] = []
 ## M013: the stakes a pull may take, in coins (the paytable pays in proportion).
 @export var stakes: Array[int] = [1, 2, 5]
-## M013: the chance that a full spin which pays nothing lights the HOLD lamps
-## (a fair draw with the pull, printed on the plate as "one in N").
-@export var hold_chance := 1.0 / 3.0
 ## Seconds after the lever is pulled that each reel stops (presentation).
 @export var stop_times: PackedFloat32Array = PackedFloat32Array([1.1, 1.6, 2.15])

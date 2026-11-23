@@ -6,8 +6,8 @@ Reads each machine's reel strips and paytable from its .tres and works out,
 exactly (every combination of stops, no sampling):
 
   * the return of plain pulls (every pull a full spin);
-  * after a losing full spin the HOLD lamps light with the machine's
-    hold_chance (a fair draw with the pull); then the player may hold one or two reels (never three)
+  * after every losing full spin the HOLD lamps light (M015's rule; M013 lit
+    them with a chance); then the player may hold one or two reels (never three)
     for the next pull at the same stake; held reels keep their stop, the
     others are drawn afresh; after that respin the next pull must be a full
     spin again. The best a player can do: hold whenever (and whatever) gives
@@ -15,7 +15,7 @@ exactly (every combination of stops, no sampling):
     this is a cycle - a full spin, sometimes followed by one respin - so the
     return is (what a full spin pays + what the respins pay) / (coins put in),
     maximised over the threshold policy "respin when a hold is worth v or more"
-    (a lit lamp comes with hold_chance of the losing full spins).
+    (a lit lamp comes with every losing full spin).
 
 The same sums are done in GDScript by SlotMachine (expected_return,
 best_hold_return), and test_slot_machine checks they agree with the numbers
@@ -31,7 +31,7 @@ def parse(path):
         pays.append((int(m.group(1)), [x.strip().strip('"') for x in m.group(2).split(",")]))
     title = re.search(r'title = "([^"]*)"', text).group(1)
     q = re.search(r'hold_chance = ([0-9.]+)', text)
-    return title, strips, pays, float(q.group(1)) if q else 1.0 / 3.0
+    return title, strips, pays, float(q.group(1)) if q else 1.0
 
 def coins(pays, line):
     for c, want in pays:
@@ -85,5 +85,5 @@ if __name__ == "__main__":
     paths = sys.argv[1:] or ["src/gaming/slot_owl.tres", "src/gaming/slot_bell.tres", "src/gaming/slot_star.tres"]
     for p in paths:
         title, base, held, loss, respin, thr, q = analyse(p)
-        print("%-9s plain pulls %6.2f%%   with the best holds %6.2f%%   (HOLD lamps after 1 in %.0f losing pulls; loses %4.1f%% of full pulls; a respin after %4.1f%% of them at best%s)" % (
-            title, base * 100, held * 100, 1.0 / q, loss * 100, respin * 100, ", holds worth %.2f coins and up" % thr if thr else ""))
+        print("%-9s plain pulls %6.2f%%   with the best holds %6.2f%%   (loses %4.1f%% of full pulls; a respin after %4.1f%% of them at best%s)" % (
+            title, base * 100, held * 100, loss * 100, respin * 100, ", holds worth %.2f coins and up" % thr if thr else ""))

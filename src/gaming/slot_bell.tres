@@ -7,6 +7,5 @@ script = ExtResource("1")
 title = "The Bell"
 coin = 5
 strips = Array[PackedStringArray]([PackedStringArray("bell", "lemon", "orange", "cherry", "plum", "bell", "orange", "bar", "lemon", "plum", "cherry", "orange", "bell", "lemon", "plum", "cherry", "orange", "bell", "seven", "bar"), PackedStringArray("orange", "bell", "lemon", "plum", "cherry", "lemon", "bell", "bar", "orange", "plum", "lemon", "bell", "cherry", "orange", "seven", "plum", "lemon", "bell", "cherry", "lemon"), PackedStringArray("lemon", "bell", "plum", "orange", "lemon", "cherry", "bell", "bar", "lemon", "plum", "orange", "lemon", "bell", "seven", "plum", "lemon", "orange", "bell", "lemon", "bar")])
-pays = Array[Dictionary]([{"coins": 50, "line": ["bar", "bar", "bar"]}, {"coins": 30, "line": ["seven", "seven", "seven"]}, {"coins": 14, "line": ["bell", "bell", "bell"]}, {"coins": 12, "line": ["plum", "plum", "plum"]}, {"coins": 10, "line": ["orange", "orange", "orange"]}, {"coins": 10, "line": ["cherry", "cherry", "cherry"]}, {"coins": 5, "line": ["cherry", "cherry", "*"]}, {"coins": 4, "line": ["cherry", "*", "*"]}])
+pays = Array[Dictionary]([{"coins": 32, "line": ["bar", "bar", "bar"]}, {"coins": 20, "line": ["seven", "seven", "seven"]}, {"coins": 9, "line": ["bell", "bell", "bell"]}, {"coins": 8, "line": ["plum", "plum", "plum"]}, {"coins": 6, "line": ["orange", "orange", "orange"]}, {"coins": 10, "line": ["cherry", "cherry", "cherry"]}, {"coins": 5, "line": ["cherry", "cherry", "*"]}, {"coins": 4, "line": ["cherry", "*", "*"]}])
 stakes = Array[int]([1, 2, 5])
-hold_chance = 0.25

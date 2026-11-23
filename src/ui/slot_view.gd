@@ -168,8 +168,10 @@ func show_paid(cents: int) -> void:
 	if machine.respin:
 		message += "   The holds come off: the next pull spins all three."
 	elif machine.hold_offered:
-		message += "   The HOLD lamps light! Hold one or two reels (1-3), then pull."
+		message += "   The HOLD lamps light! Hold one or two reels (1-3) and pull - or just pull for a fresh spin."
 		sound.emit("lamps")
+	elif cents > 0:
+		message += "   (No holds after a pull that pays.)"
 	queue_redraw()
 
 
@@ -345,7 +347,7 @@ func _draw_paytable() -> void:
 		_text(_f(o + Vector2(col_w - 18, row_h * 0.45 + 5)), _short_money(amount), 13, RED_INK if int(pays[k].coins) >= 25 else INK,
 			HORIZONTAL_ALIGNMENT_RIGHT, false)
 	_text(_f(PLATE_RECT.position + Vector2(PLATE_RECT.size.x * 0.5, PLATE_RECT.size.y - 2)),
-		"paid for %s in   -   HOLD lamps one losing pull in %d" % [PokerView.money_text(machine.stake), roundi(1.0 / maxf(machine.rules.hold_chance, 0.01))],
+		"paid for %s in   -   HOLD after every losing pull" % PokerView.money_text(machine.stake),
 		9, INK, HORIZONTAL_ALIGNMENT_CENTER, false)
 
 

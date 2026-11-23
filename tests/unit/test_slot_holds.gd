@@ -1,26 +1,26 @@
 extends GutTest
-## M013 hold-and-respin (SlotMachine, SlotReels, pure). After a full pull that
-## pays nothing the HOLD lamps may light (a fair draw with the pull: the same
-## chance every time, nothing to do with money); then one or two reels - never
+## M013 hold-and-respin (SlotMachine, SlotReels, pure), M015's approved rule:
+## after every full pull that pays nothing the HOLD lamps light (no chance
+## about it; never after a win or a hold-assisted pull); then one or two reels - never
 ## three - may be held; the next pull takes the stake once, keeps the held
 ## reels' symbols (they stand still), spins the others and pays the line; the
 ## holds are released and the pull after that is a full spin. Stakes of one,
 ## two or five coins pay in proportion and cannot be changed under lit lamps
-## without putting them out. The returns are exact: plain pulls about 85%, the
-## best possible hold play about 94-95% - below what goes in. Saving keeps the
+## without putting them out. The returns are exact: M015's paytables give
+## plain pulls 77-81% and the best possible hold play 94-96% - below what goes in. Saving keeps the
 ## reels, lamps, holds and stake, and a pull under way counts as paid, once.
 
 const MACHINES := ["res://src/gaming/slot_owl.tres", "res://src/gaming/slot_bell.tres", "res://src/gaming/slot_star.tres"]
 ## The exact returns (tools/slot_odds/analyse.py prints the same).
-const PLAIN := [0.8574, 0.8544, 0.8497]
-const BEST := [0.9432, 0.9522, 0.9499]
+const PLAIN := [0.81425, 0.772625, 0.789625]
+const BEST := [0.959039, 0.940099, 0.941740]
 
 
 func _machine(i: int) -> SlotMachine:
 	return SlotMachine.new(load(MACHINES[i]) as SlotRules)
 
 
-## A seed whose full pull loses and lights the lamps (or, `lit` false, loses without).
+## A seed whose full pull loses (and so lights the lamps).
 func _losing_seed(m: SlotMachine, lit := true, from := 0) -> int:
 	var probe := SlotMachine.new(m.rules)
 	probe.stake = m.stake
@@ -37,8 +37,7 @@ func test_returns_exact_and_below_what_goes_in() -> void:
 		var m := _machine(i)
 		var plain := m.expected_return()
 		var best := m.best_hold_return()
-		gut.p("%s: plain %.2f%%, the best holds %.2f%% (lamps one losing pull in %d)" % [m.rules.title, plain * 100, best * 100,
-			roundi(1.0 / m.rules.hold_chance)])
+		gut.p("%s: plain %.2f%%, the best holds %.2f%% (lamps after every losing pull)" % [m.rules.title, plain * 100, best * 100])
 		assert_almost_eq(plain, PLAIN[i], 0.0001, "%s plain" % m.rules.title)
 		assert_almost_eq(best, BEST[i], 0.0001, "%s with the best holds" % m.rules.title)
 		assert_lt(best, 1.0, "however well he holds, the house keeps a little")
@@ -69,23 +68,46 @@ func test_the_lamps_never_light_after_a_win() -> void:
 			assert_false(m.hold_offered, "a win never lights the lamps")
 
 
-func test_the_lamp_is_a_fair_chance() -> void:
+## M015: the lamps light after every full pull that pays nothing - no chance
+## about it - and never after a pull that pays or after a hold-assisted pull.
+func test_the_lamps_after_every_losing_pull() -> void:
 	for i in 3:
 		var m := _machine(i)
 		var losing := 0
-		var lit := 0
-		for s in 20000:
+		for s in 3000:
 			m.pull(100000, s)
 			m.collect()
 			if m.win == 0:
 				losing += 1
-				if m.hold_offered:
-					lit += 1
+				assert_true(m.hold_offered, "%s: a losing full pull always lights the lamps" % m.rules.title)
+			else:
+				assert_false(m.hold_offered, "%s: never after a win" % m.rules.title)
 			m.set_stake(m.stake)  # (keeps it full spins: nothing held)
 			m.hold_offered = false
-		var share := float(lit) / float(losing)
-		assert_almost_eq(share, m.rules.hold_chance, 0.02, "%s: the lamps light about one losing pull in %d (%.3f)" % [
-			m.rules.title, roundi(1.0 / m.rules.hold_chance), share])
+		assert_gt(losing, 1500)
+
+
+## M015: never two hold-assisted pulls in a row - after one, every hold is
+## released and the lamps stay dark until another ordinary full pull has lost.
+func test_never_two_holds_in_a_row() -> void:
+	var m := _machine(0)
+	for k in 30:
+		var s := _losing_seed(m, true, k * 997)
+		m.pull(100000, s)
+		m.collect()
+		assert_true(m.hold_offered)
+		assert_eq(m.toggle_hold(0), "")
+		m.pull(100000, s + 1)  # the hold-assisted pull
+		assert_true(m.respin)
+		m.collect()
+		assert_false(m.hold_offered, "no lamps after a hold-assisted pull, whatever it paid")
+		assert_eq(m.held, [false, false, false] as Array[bool], "every hold released")
+		assert_ne(m.toggle_hold(1), "", "nothing can be held")
+		m.pull(100000, s + 2)
+		assert_false(m.respin, "the next pull spins all three")
+		m.collect()
+		assert_eq(m.hold_offered, m.win == 0, "lamps again only if that ordinary pull lost")
+		m.hold_offered = false
 
 
 func test_one_reel_held() -> void:
@@ -294,11 +316,11 @@ func test_held_reels_stand_still() -> void:
 
 
 func test_the_machines_differ() -> void:
-	var chances := []
 	var tops := []
+	var tables := []
 	for i in 3:
 		var m := _machine(i)
-		chances.append(m.rules.hold_chance)
 		tops.append(int(m.rules.pays[0].coins))
-	assert_ne(chances[0], chances[1], "the Bell's lamps light less often")
+		tables.append(m.rules.pays.map(func(p: Dictionary) -> int: return int(p.coins)))
+	assert_true(tables[0] != tables[1] and tables[1] != tables[2] and tables[0] != tables[2], "each machine its own paytable")
 	assert_true(tops[0] != tops[1] or tops[1] != tops[2], "different top prizes")
