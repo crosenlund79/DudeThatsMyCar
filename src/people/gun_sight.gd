@@ -68,6 +68,8 @@ const SHY := {
 		"A Tommy gun at a tea dance? Put it away before the band packs up."],
 	"bandleader": ["Whoa, pal - put that away. We play requests, not hold-ups.",
 		"Put it away, mister! The drummer's under the piano already."],
+	"kaz": ["Put that away, Riverside. In this place you'll get soy sauce on it.",
+		"A Tommy gun at the Lantern? Put it away before Chu calls his cousins."],
 }
 
 

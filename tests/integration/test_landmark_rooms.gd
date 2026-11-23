@@ -79,6 +79,7 @@ func test_each_room_sits_in_its_building_with_its_door_on_open_ground_and_a_badg
 
 func test_walked_into_used_and_left_with_the_normal_controls() -> void:
 	main.rackets.money = 2000
+	main.clock.set_time(24 * 60.0)  # M015.13: midnight, when Kaz Wrobel is at his table in the Lantern
 	for id in ROOMS:
 		var p := await _to(id)
 		assert_not_null(p, "%s is built with its district" % id)

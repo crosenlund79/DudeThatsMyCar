@@ -53,6 +53,11 @@ var tune := "two_bits"
 var met := {}
 ## How many dances Danny has had, all nights (the hostesses' lines go round).
 var danced_total := 0
+## M015.13: the business that starts here (stall insurance, the State's
+## Attorney's man, a card for the Bird).
+var leads := QuarterLeads.new()
+## How many dollars Danny has slid the Belvedere's night manager, all nights.
+var tips_total := 0
 
 
 ## A new evening: tonight's limits start afresh; the band opens with its usual.
@@ -66,6 +71,7 @@ func begin_night(n: int) -> void:
 	tipped = false
 	coffee_at = -1.0
 	tune = TUNES[(n - 1) % 2].id  # the band opens with "Two Bits" or "Blue Canal"
+	leads.begin_night(n)  # M015.13
 
 
 ## Whether `who` is meeting Danny for the first time (and remembers him from now on).
@@ -169,13 +175,14 @@ func tip(r: Rackets) -> bool:
 	if not can_tip(r) or not _pay(r, TIP):
 		return false
 	tipped = true
+	tips_total += 1
 	return true
 
 
 func to_dict() -> Dictionary:
 	return {"night": night, "coffees": coffees, "meals": meals, "feld_boxes": feld_boxes, "dances": dances,
 		"tunes": tunes, "tipped": tipped, "coffee_at": coffee_at, "tune": tune, "met": met.duplicate(),
-		"danced_total": danced_total}
+		"danced_total": danced_total, "leads": leads.to_dict(), "tips_total": tips_total}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -193,3 +200,7 @@ func from_dict(d: Dictionary) -> void:
 	for k in m:
 		met[String(k)] = int(m[k])
 	danced_total = maxi(0, int(d.get("danced_total", 0)))
+	tips_total = maxi(0, int(d.get("tips_total", 0)))
+	leads = QuarterLeads.new()
+	if d.get("leads") is Dictionary:
+		leads.from_dict(d.leads)

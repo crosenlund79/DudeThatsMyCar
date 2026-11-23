@@ -59,6 +59,9 @@ static func cases(r: Rackets, minute: float) -> Array:
 	_history(r, all)
 	_thompson(r, all)
 	_leftys_car(r, all)
+	_stall(r, all)  # M015.13
+	_sa_man(r, all)
+	_bird_card(r, all)
 	var order := {OPEN: 0, LEAD: 1, CLOSED: 2, LAPSED: 2}
 	var out := []
 	for rank in [0, 1, 2]:
@@ -460,4 +463,120 @@ static func _leftys_car(r: Rackets, out: Array) -> void:
 		c.standing = "Lefty knows you took his car. He'll go for you on sight."
 		c.leads.append("Bring it back to his kerb and he might let it go.")
 		_mark(c, LEFTY, "Lefty's kerb", false)
+	out.append(c)
+
+
+# ------------------------------------------------------------------ M015.13: the new quarters' business
+
+const HALL_BOARD := "market/spot/market_hall/hall_board"
+const HRABAL := "market/spot/market_hall/hrabal"
+const HALL_DOOR := "market/door/market_hall/0"
+const CHU := "market/spot/golden_lantern/chu"
+const KAZ := "market/spot/golden_lantern/kaz"
+const LANTERN_DOOR := "market/door/golden_lantern/0"
+const BIRD := "riverside/spot/copper_owl/bird"
+
+
+static func _stall(r: Rackets, out: Array) -> void:
+	var L := r.quarters.leads
+	if L.stall == QuarterLeads.Stall.UNKNOWN:
+		return
+	var c := _sheet("stall", "Stall insurance", "Your own", LEAD, "Somebody is collecting from the market's stallholders.")
+	c.places.append("The Canal Market Hall, Canal Market")
+	c.things.append("\"Stall insurance\" - fifty cents a stall, Saturdays")
+	if L.stall_heard.has("board"):
+		c.known.append("The market master's notice: fees at the office only, no other collector. Somebody pencilled TELL THAT TO K.")
+	if L.stall_heard.has("hrabal"):
+		c.persons.append("Josef Hrabal - the market's night butcher")
+		c.known.append("Hrabal says a fellow comes round on Saturdays for stall insurance - \"insurance against him\".")
+	if L.stall >= QuarterLeads.Stall.KNOWN:
+		c.status = OPEN
+		c.persons.append("Kaz Wrobel - the collector")
+		c.places.append("The Golden Lantern, Market Street - Kaz eats there from eleven to two")
+		c.known.append("Henry Chu says it's Kaz Wrobel, and that he eats at the Lantern after his rounds.")
+		c.standing = "Kaz Wrobel collects from the stallholders. What you do about it is up to you."
+	else:
+		c.unknown.append("Who \"K.\" is, and where to find him.")
+		c.leads.append("Henry Chu at the Golden Lantern hears everything said at his tables.")
+		_mark(c, LANTERN_DOOR, "The Golden Lantern", false, CHU)
+		if not L.stall_heard.has("hrabal"):
+			_mark(c, HALL_DOOR, "Josef Hrabal", false, HRABAL)
+	if L.stall_heard.has("chu"):
+		c.persons.append("Henry Chu - the Golden Lantern")
+	match L.stall:
+		QuarterLeads.Stall.KNOWN, QuarterLeads.Stall.MET:
+			c.leads.append("Have a word with Kaz at the Lantern between eleven and two: lean on him, buy him off, or get in on it.")
+			if L.kaz_fights_lost > 0:
+				c.known.append("Kaz beat you once. He's bigger than he looks sitting down.")
+			_mark(c, LANTERN_DOOR, "Kaz Wrobel", true, KAZ)
+		QuarterLeads.Stall.SETTLED:
+			match L.stall_how:
+				"beaten":
+					c.standing = "You beat Kaz Wrobel in the Golden Lantern. He's quit the market."
+				"bought":
+					c.standing = "You paid Kaz Wrobel five dollars to find another market."
+				"cut":
+					c.standing = "You're in on Kaz's stall insurance: a dollar a night at the Lantern. Hrabal knows."
+			if L.thanks_due() > 0:
+				c.status = OPEN
+				c.leads.append("Hrabal will want to know the insurance man won't be back.")
+				_mark(c, HALL_DOOR, "Josef Hrabal", true, HRABAL)
+			elif L.stall_how == "cut":
+				c.status = OPEN
+				if L.kaz_paid_night != r.night:
+					c.leads.append("Tonight's dollar is waiting at the Lantern from eleven.")
+					_mark(c, LANTERN_DOOR, "Kaz Wrobel", true, KAZ)
+			else:
+				c.status = CLOSED
+				c.known.append("Hrabal thanked you out of the stallholders' tin.")
+	out.append(c)
+
+
+static func _sa_man(r: Rackets, out: Array) -> void:
+	var L := r.quarters.leads
+	if L.sa == QuarterLeads.Sa.UNKNOWN:
+		return
+	var c := _sheet("sa_man", "The State's Attorney's man", "Rourke", OPEN,
+		"A man from the State's Attorney's office is staying at the Belvedere, asking after Rourke's people.")
+	c.persons.append("A man from the State's Attorney's office")
+	c.persons.append("Ellery Pratt - the Belvedere's night manager, who told you for a dollar")
+	c.places.append("The Belvedere Hotel, Lincoln Boulevard")
+	c.unknown.append("Who sent him, and who he's talked to.")
+	match L.sa:
+		QuarterLeads.Sa.KNOWN:
+			c.leads.append("Rourke would want to know. Or you could keep it to yourself.")
+			_mark(c, OWL_DOOR, "Rourke", false, ROURKE)
+		QuarterLeads.Sa.TOLD:
+			c.status = CLOSED
+			c.standing = "You told Rourke. He said the right people would hear about it."
+		QuarterLeads.Sa.LAPSED:
+			c.status = LAPSED
+			c.standing = "The State's Attorney's man checked out of the Belvedere. Rourke never heard it from you."
+	out.append(c)
+
+
+static func _bird_card(r: Rackets, out: Array) -> void:
+	var L := r.quarters.leads
+	if L.card == QuarterLeads.Card.NONE:
+		return
+	var c := _sheet("bird_card", "A card for the Bird", "Your own", OPEN,
+		"The Paradise's bandleader paid you a dollar to take the Bird his card.")
+	c.things.append("The bandleader's card: fifteen a week at the Paradise Ballroom")
+	c.persons.append("The Paradise Ballroom's bandleader")
+	c.persons.append("The Bird - sings at the Copper Owl; Rourke's")
+	c.places.append("The Copper Owl, Marlowe Avenue")
+	match L.card:
+		QuarterLeads.Card.CARRYING:
+			c.known.append("The Bird is Rourke's. Rourke might not like the Paradise asking.")
+			c.leads.append("Give her the card - or give it to Rourke instead.")
+			_mark(c, OWL_DOOR, "The Bird", true, BIRD)
+		QuarterLeads.Card.TO_BIRD:
+			c.status = CLOSED
+			c.standing = "You gave the Bird the card. She kept it."
+		QuarterLeads.Card.TO_ROURKE:
+			c.status = CLOSED
+			c.standing = "You gave the card to Rourke. He said he'd have a word with the bandleader."
+		QuarterLeads.Card.LAPSED:
+			c.status = LAPSED
+			c.standing = "You never gave anybody the card. The bandleader stopped asking."
 	out.append(c)

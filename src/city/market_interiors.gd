@@ -84,7 +84,7 @@ static func golden_lantern(d: DistrictLayout) -> InteriorPlan:
 		{"kind": "interiors/chair", "pos": Vector2(2420, 476)},
 		{"kind": "interiors/chair", "pos": Vector2(2420, 524), "rot": PI},
 		{"kind": "interiors/table_club", "pos": Vector2(2420, 560), "radius": 15.0},
-		{"kind": "interiors/chair", "pos": Vector2(2444, 560), "rot": PI / 2},
+		{"kind": "interiors/chair", "pos": Vector2(2444, 560), "rot": PI / 2},  # Kaz's
 		{"kind": "interiors/table_club", "pos": Vector2(2580, 560), "radius": 15.0},
 		{"kind": "interiors/chair", "pos": Vector2(2556, 560), "rot": -PI / 2},
 		{"kind": "interiors/chair", "pos": Vector2(2604, 560), "rot": PI / 2},
@@ -99,9 +99,12 @@ static func golden_lantern(d: DistrictLayout) -> InteriorPlan:
 		{"id": "chu", "name": "Henry Chu", "look": "characters/clerk", "pos": Vector2(2590, 464), "facing": PI / 2},
 		{"id": "diner_a", "name": "", "look": "characters/patron_man", "pos": Vector2(2420, 476), "facing": PI / 2},
 		{"id": "diner_b", "name": "", "look": "characters/patron_woman", "pos": Vector2(2556, 560), "facing": 0.0},
+		# M015.13: Kaz Wrobel at the corner table after his rounds (eleven to two)
+		{"id": "kaz", "name": "Kaz Wrobel", "look": "characters/patron_man", "pos": Vector2(2444, 560), "facing": PI},
 	]
 	p.spots = [
 		{"id": "chu", "pos": Vector2(2590, 505), "radius": 20.0, "prompt": "Talk to Mr. Chu"},
+		{"id": "kaz", "pos": Vector2(2470, 530), "radius": 18.0, "prompt": "Talk to the man at the corner table"},
 	]
 	return p
 

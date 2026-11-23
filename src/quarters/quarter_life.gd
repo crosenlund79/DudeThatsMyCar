@@ -45,6 +45,31 @@ func effects() -> Dictionary:
 	return {"quarter": _on_effect}
 
 
+## M015.13: the fistfight with Kaz Wrobel at the Golden Lantern.
+func fights() -> Dictionary:
+	return {"kaz": _fight_kaz}
+
+
+func _fight_kaz() -> void:
+	game.fights.clear_pending()
+	var kaz := game.interiors.person("golden_lantern", "kaz")
+	if kaz == null or kaz.down or game.walker.global_position.distance_to(kaz.global_position) > 120.0:
+		return
+	game.fights.start(kaz, "Kaz Wrobel", _on_kaz_fight)
+
+
+func _on_kaz_fight(won: bool, _results: Array) -> void:
+	var r := game.rackets
+	r.quarters.leads.fought_kaz(won)
+	game.dialogue.start("kaz")
+	game.dialogue.show(game.talk.choose("kaz", "fight_won" if won else "fight_lost", game.dialogue.context()))
+	game.save()
+
+
+## The case a page moved on, for the notice ("lead": stall / sa / card).
+const LEAD_TITLES := {"stall": "Stall insurance", "sa": "The State's Attorney's man", "card": "A card for the Bird"}
+
+
 func _on_effect(v: Variant, _effects: Dictionary) -> void:
 	var d: Dictionary = v
 	if d.get("coffee", false):
@@ -53,6 +78,11 @@ func _on_effect(v: Variant, _effects: Dictionary) -> void:
 		game.night.pass_minutes(Quarters.DANCE_MINUTES)  # four minutes on the floor
 	if d.has("tune") and band != null:
 		band.pitch_scale = pace()
+	if d.has("lead"):
+		game.hud.show_notice("In your notebook: %s." % LEAD_TITLES.get(String(d.lead), "a new case"))
+		if game.casework != null:
+			game.casework.refresh()
+	sync_kaz()
 
 
 ## Tonight's tune's pace (the band's playback speed).
@@ -87,6 +117,7 @@ func district_unloading(district: String) -> void:
 
 
 func rooms_built() -> void:
+	sync_kaz()
 	var v := game.interiors.view_of("paradise") if game.interiors != null else null
 	if v == null or v == _view:
 		return
@@ -114,7 +145,15 @@ func band_on() -> bool:
 	return band != null and game.clock.minute < BAND_CLOSES
 
 
+## Kaz at his corner table only for his hours (and never once he has quit the market).
+func sync_kaz() -> void:
+	var v := game.interiors.view_of("golden_lantern") if game.interiors != null else null
+	if v != null:
+		v.set_away("kaz", not game.rackets.quarters.leads.kaz_in(game.clock.minute))
+
+
 func clock(minute: float, delta: float) -> void:
+	sync_kaz()
 	if band == null or not is_instance_valid(band):
 		band = null
 		return

@@ -10,9 +10,9 @@ extends RefCounted
 ## {"quarter": {"coffee": true} | {"dance": true} | {"tune": id}}.
 
 const NAMES := {"hrabal": "Josef Hrabal", "dvorak": "Mrs. Dvorak", "chu": "Henry Chu", "feld": "Abe Feld",
-	"pratt": "Ellery Pratt", "ruby": "Ruby Marchetti", "bandleader": "The bandleader",
+	"pratt": "Ellery Pratt", "ruby": "Ruby Marchetti", "bandleader": "The bandleader", "kaz": "Kaz Wrobel",
 	"hall_board": "The noticeboard", "belvedere_lift": "The lift"}
-const PEOPLE := ["hrabal", "dvorak", "chu", "feld", "pratt", "ruby", "bandleader"]
+const PEOPLE := ["hrabal", "dvorak", "chu", "feld", "pratt", "ruby", "bandleader", "kaz"]
 
 ## Things to look at (narrated pages; nothing changes hands).
 const READS := {
@@ -69,6 +69,11 @@ const UPSTAIRS := [
 		+ "you people, in a general way.\"",
 ]
 
+## M015.13: the night manager's dollar's worth, once Danny has been coming a while.
+const SA_MAN := ("\"A gentleman from the State's Attorney's office has taken 612 for the week. He drinks the hotel's coffee as if "
+	+ "it were evidence, and he asked the bell captain - in a general way - which of our guests do business with a Mr. "
+	+ "Rourke.\" Pratt squares the pen again. \"I mention it only because you asked.\"")
+
 ## The hostess who takes Danny's ticket, and what she says (round in turn).
 const HOSTESSES := [
 	["Fay", "\"You dance like a man who's carrying something heavy,\" she says. \"In your pocket, I mean.\""],
@@ -77,15 +82,21 @@ const HOSTESSES := [
 		+ "she says. \"Pays for three dances and stands on all of them.\""],
 ]
 
-var conv: Conversations
+## The Conversations that hands its people on to this (weakly: it owns this,
+## and the two must not keep each other alive when the scene is freed).
+var _conv: WeakRef
 var rackets: Rackets
 var q: Quarters
 
 
 func _init(p_conv: Conversations) -> void:
-	conv = p_conv
+	_conv = weakref(p_conv)
 	rackets = p_conv.rackets
 	q = rackets.quarters
+
+
+func conv() -> Conversations:
+	return _conv.get_ref() as Conversations
 
 
 static func handles(who: String) -> bool:
@@ -95,7 +106,10 @@ static func handles(who: String) -> bool:
 func say(who: String, step: String, context: Dictionary) -> Dictionary:
 	q = rackets.quarters  # a loaded game has a new Quarters
 	if READS.has(who):
-		return conv._told(who, READS[who], [{"id": "bye", "text": "Leave it be."}]) if step == "hello" else {}
+		if step != "hello":
+			return {}
+		var news := q.leads.hear_stall("board") if who == "hall_board" else false  # M015.13: "K."
+		return conv()._told(who, READS[who], [{"id": "bye", "text": "Leave it be."}], _lead_fx(news, "stall"))
 	match who:
 		"hrabal":
 			return _hrabal(step)
@@ -111,7 +125,13 @@ func say(who: String, step: String, context: Dictionary) -> Dictionary:
 			return _ruby(step)
 		"bandleader":
 			return _bandleader(step)
+		"kaz":
+			return _kaz(step)
 	return {}
+
+
+func _told(who: String, text: String, options: Array = [], effects: Dictionary = {}) -> Dictionary:
+	return conv()._told(who, text, options, effects)
 
 
 func _night_line(lines: Array) -> String:
@@ -119,7 +139,7 @@ func _night_line(lines: Array) -> String:
 
 
 func _page(who: String, text: String, options: Array = [], effects: Dictionary = {}) -> Dictionary:
-	return conv._page(who, text, options, effects)
+	return conv()._page(who, text, options, effects)
 
 
 # ------------------------------------------------------------------ the Canal Market Hall
@@ -127,8 +147,14 @@ func _page(who: String, text: String, options: Array = [], effects: Dictionary =
 func _hrabal(step: String) -> Dictionary:
 	var choices := [{"id": "night", "text": "What's a butcher doing up at this hour?"},
 		{"id": "who_runs", "text": "Who runs things around here?"}, {"id": "bye", "text": "Just looking."}]
+	var L := q.leads
+	if L.thanks_due() > 0:
+		choices.insert(0, {"id": "thanks", "text": "The insurance man won't trouble the market again."})
 	match step:
 		"hello":
+			if L.stall_how == "cut":
+				return _page("hrabal", "Hrabal doesn't look up from the block. \"Kaz Wrobel's friend. Buy your meat on "
+					+ "Halsted Street.\" The cleaver comes down harder than it needs to.", [])
 			if q.meet("hrabal"):
 				return _page("hrabal", "\"Ahoj. You're not from the market. Nobody from the market comes in with clean "
 					+ "shoes.\" He wipes the cleaver on his apron and looks you over, slowly, the way he looks at a side of beef.",
@@ -139,9 +165,19 @@ func _hrabal(step: String) -> Dictionary:
 				+ "his own boy for the tenderloins, and the boy counts every ounce.\" The cleaver comes down. \"So I count "
 				+ "them first.\"", choices.slice(1))
 		"who_runs":
+			var news := L.hear_stall("hrabal")  # M015.13
 			return _page("hrabal", "\"The market master has an office upstairs and a book with every stall in it. The "
 				+ "ward has its alderman. And lately there's a fellow comes round on Saturdays for stall insurance.\" He "
-				+ "spits into the sawdust. \"Insurance against him, I think.\"", [choices[0], choices[2]])
+				+ "spits into the sawdust. \"Insurance against him, I think.\"",
+				choices.filter(func(o: Dictionary) -> bool: return o.id != "who_runs"), _lead_fx(news, "stall"))
+		"thanks":
+			var k := L.take_thanks(rackets)
+			if k <= 0:
+				return {}
+			rackets.memory.remember("hrabal", "favour", rackets.night, "saw Kaz Wrobel off")
+			return _page("hrabal", "Hrabal wipes his hands for a long time. Then he goes to a cocoa tin behind the block and "
+				+ "counts out %s in nickels and dimes. \"From the stallholders. Don't argue - they voted.\"" % Rackets.dollars(k),
+				[{"id": "bye", "text": "Much obliged."}], {"quarter": {"lead": "stall"}})
 	return {}
 
 
@@ -180,7 +216,7 @@ func _table_talk() -> String:
 		var t: Dictionary = rackets.rumours.items[i]
 		if Rackets.BACKGROUND_TALK.has(t.kind):
 			continue
-		var line := conv._talk_line(t)
+		var line: String = conv()._talk_line(t)
 		if line != "":
 			return "\"Somebody at table four,\" he says, quietly. \"%s\"" % line.trim_prefix("Word is ").capitalize().substr(0, 1) \
 				+ line.trim_prefix("Word is ").substr(1) + "\""
@@ -192,7 +228,16 @@ func _chu(step: String) -> Dictionary:
 	if q.meals < Quarters.MEALS:
 		choices.append({"id": "eat", "text": "A plate of chop suey. (25¢)"})
 	choices.append({"id": "talk", "text": "Heard anything worth hearing?"})
+	var L := q.leads
+	if L.stall == QuarterLeads.Stall.SUSPECTED:
+		choices.append({"id": "who_k", "text": "Who's \"K.\"? Somebody's collecting from the market stalls."})
 	match step:
+		"who_k":
+			var news := L.hear_stall("chu")
+			return _page("chu", "Chu glances at the corner table, then away. \"Kaz Wrobel. He eats there after his rounds, "
+				+ "eleven till two. He pays in nickels - other people's.\" He refills your cup. \"You didn't hear it from "
+				+ "the cook's cousin.\"", choices.filter(func(o: Dictionary) -> bool: return o.id != "who_k"),
+				_lead_fx(news, "stall"))
 		"hello":
 			if q.meet("chu"):
 				return _page("chu", "\"Welcome to the Golden Lantern. Chop suey, egg foo young, tea or tea.\" He smiles "
@@ -265,8 +310,10 @@ func _pratt(step: String) -> Dictionary:
 		"tip":
 			if not q.tip(rackets):
 				return _page("pratt", "\"Sir.\" Nothing more.", [choices[1], choices[2]])
-			return _page("pratt", "The dollar goes under the blotter without his hand seeming to move. " + _night_line(UPSTAIRS),
-				[choices[1], {"id": "bye", "text": "Much obliged."}])
+			var sa := rackets.night >= 2 and q.leads.learn_sa(rackets.night)  # M015.13: from the second night
+			return _page("pratt", "The dollar goes under the blotter without his hand seeming to move. "
+				+ (SA_MAN if sa else _night_line(UPSTAIRS)), [choices[1], {"id": "bye", "text": "Much obliged."}],
+				_lead_fx(sa, "sa"))
 		"rourke":
 			return _page("pratt", "\"Mr. Rourke does not keep rooms here. Mr. Rourke's friends occasionally do, and they "
 				+ "use the side door on Astor Street.\" A thin smile. \"So should his employees.\"", [choices[0], choices[2]])
@@ -312,6 +359,22 @@ func _bandleader(step: String) -> Dictionary:
 		if t.id != q.tune:
 			choices.append({"id": "tune_" + t.id, "text": "\"%s\". (5¢)" % t.name})
 	choices = choices.slice(0, 3)
+	var L := q.leads
+	if L.card == QuarterLeads.Card.NONE and q.tunes > 0:
+		choices.append({"id": "card", "text": "Anything else on your mind?"})
+	if step == "card" and L.card == QuarterLeads.Card.NONE:
+		return _page("bandleader", "He looks round, then leans down further. \"You're from Riverside - the Copper Owl. "
+			+ "That girl they call the Bird. Fifteen a week here, top billing, and nobody owns her.\" He holds out a card "
+			+ "and a dollar bill together. \"See she gets it?\"", [{"id": "take_card", "text": "(Take the card and the dollar.)"},
+			{"id": "bye", "text": "Not my business."}])
+	if step == "take_card":
+		if not L.take_card(rackets):
+			return {}
+		return _page("bandleader", "\"Attaboy.\" He straightens up and counts the band in again.", [{"id": "bye", "text": "(Pocket it.)"}],
+			{"quarter": {"lead": "card"}})
+	if step == "hello" and L.card == QuarterLeads.Card.TO_ROURKE:
+		return _page("bandleader", "The bandleader sees you and his face shuts. \"Somebody told Rourke. Two of his boys came "
+			+ "round and explained the music business to me. Thanks for nothing, pal.\"", [])
 	if step == "hello":
 		return _page("bandleader", "The bandleader leans down from the stand between numbers, mopping his face. \"They're "
 			+ "playing \"%s\" over there, it says on the card. Request? A nickel in the cup and we play it like we mean "
@@ -323,4 +386,133 @@ func _bandleader(step: String) -> Dictionary:
 		return _page("bandleader", "The nickel rings in the cup. He counts the band in and they swing into \"%s\". The "
 			% Quarters.tune_named(id).name + "couples on the floor change step.", [{"id": "bye", "text": "(Nod.)"}],
 			{"quarter": {"tune": id}})
+	return {}
+
+
+# ------------------------------------------------------------------ M015.13: the leads
+
+## "In your notebook" for the game, when a page taught Danny something new.
+func _lead_fx(news: bool, lead: String) -> Dictionary:
+	return {"quarter": {"lead": lead}} if news else {}
+
+
+## Kaz Wrobel at his corner table in the Golden Lantern.
+func _kaz(step: String) -> Dictionary:
+	var L := q.leads
+	var deal := [{"id": "warn", "text": "The market's stallholders are done paying you."},
+		{"id": "business", "text": "How's business?"}]
+	match step:
+		"hello":
+			L.meet_kaz()
+			if L.stall == QuarterLeads.Stall.SETTLED and L.stall_how == "cut":
+				var opts: Array = []
+				if L.kaz_paid_night != rackets.night:
+					opts.append({"id": "collect", "text": "My end."})
+				return _page("kaz", "Kaz doesn't get up. \"Partner.\" He says it like a man tasting a word he doesn't trust.",
+					opts, _lead_fx(true, "stall"))
+			if L.kaz_fights_lost > 0:
+				return _page("kaz", "Kaz grins with the side of his mouth that isn't swollen. \"Back for more, Riverside? The "
+					+ "chop suey's better than the fighting here.\"", deal, _lead_fx(true, "stall"))
+			return _page("kaz", "A heavy man in a good coat, a plate of egg foo young and a cigar going at once. \"Kaz "
+				+ "Wrobel. And you're Rourke's boy from Riverside, the one who goes about in other people's business.\" "
+				+ "He pushes a chair out with his foot. \"Sit, if you're sitting.\"", deal, _lead_fx(true, "stall"))
+		"business":
+			return _page("kaz", "\"The market's a dangerous place, friend. Fires. Breakages. Carts that tip over in the "
+				+ "night.\" He taps his cigar into the soy sauce. \"Insurance. Fifty cents a stall, Saturdays. Cheaper than "
+				+ "a fire.\"", [deal[0]])
+		"warn":
+			var opts := [{"id": "fists", "text": "(Put your fists up.)"}]
+			if rackets.money >= QuarterLeads.KAZ_BUYOUT:
+				opts.append({"id": "buy", "text": "Five dollars says you find another market."})
+			opts.append({"id": "cut", "text": "Then cut me in."})
+			opts.append({"id": "bye", "text": "Forget I said it."})
+			return _page("kaz", "Kaz puts his fork down, slowly. \"Says who? Rourke? Rourke's got Riverside. This side of "
+				+ "the canal, nobody's got it. So I've got it.\" He looks you up and down. \"Or you're going to stop me.\"", opts)
+		"fists":
+			return _page("kaz", "Kaz sighs and stands up, and keeps standing up for longer than you'd like. Henry Chu "
+				+ "moves the teapot off the table.", [{"id": "bye", "text": "(Raise your fists.)"}], {"fight": "kaz"})
+		"fight_won":
+			return _told("kaz", "Kaz sits down on the floor of the Golden Lantern and stays there a while, a napkin to his "
+				+ "nose. \"All right,\" he says thickly. \"All right. The market's yours, Riverside. I was getting tired "
+				+ "of fish anyway.\" Mr. Chu puts the teapot back.", [], {"quarter": {"lead": "stall"}})
+		"fight_lost":
+			return _told("kaz", "You end up against the wall with the lanterns swinging over you. Kaz straightens his "
+				+ "coat. \"Go home, Riverside. Put a steak on it - Hrabal's got good ones.\" He sits back down to his "
+				+ "egg foo young.", [], {"quarter": {"lead": "stall"}})
+		"buy":
+			if not L.buy_off_kaz(rackets):
+				return _page("kaz", "\"Five, friend. Not four and a promise.\"", [{"id": "bye", "text": "(Leave it.)"}])
+			return _page("kaz", "He counts it twice, folds it into his hatband. \"Halsted Street market's got stallholders "
+				+ "too.\" He picks the fork back up. \"Pleasure doing business with Rourke's boy.\"",
+				[{"id": "bye", "text": "(Leave him to it.)"}], {"quarter": {"lead": "stall"}})
+		"cut":
+			L.cut_in()
+			rackets.memory.remember("hrabal", "threat", rackets.night, "in with Kaz Wrobel's stall insurance")
+			return _page("kaz", "Kaz laughs until he coughs. \"Now that's a Riverside boy. A dollar a night, here, after "
+				+ "eleven. The stallholders don't need to know whose friend you are.\" He looks over at Henry Chu. \"Not "
+				+ "that anybody in this room can keep a secret.\"", [{"id": "collect", "text": "Starting tonight."}],
+				{"quarter": {"lead": "stall"}})
+		"collect":
+			var k := L.collect_cut(rackets)
+			if k <= 0:
+				return _page("kaz", "\"You had tonight's, partner. Come back tomorrow.\"", [])
+			return _page("kaz", "A dollar bill, folded small, slid under the soy sauce. \"Nice doing business.\"", [])
+	return {}
+
+
+## Rourke's and the Bird's first page: the word Danny can give them.
+func with_leads(who: String, page: Dictionary) -> Dictionary:
+	# (not on a page that is a step of something else - a first meeting's greeting has no way out)
+	if page.is_empty() or not (page.get("options", []) as Array).any(func(o: Dictionary) -> bool: return o.id == "bye"):
+		return page
+	q = rackets.quarters
+	var L := q.leads
+	var extra: Array = []
+	match who:
+		"rourke":
+			if L.sa == QuarterLeads.Sa.KNOWN:
+				extra.append({"id": "lead_sa", "text": "There's a State's Attorney man at the Belvedere asking after us."})
+			if L.card == QuarterLeads.Card.CARRYING:
+				extra.append({"id": "lead_card_rourke", "text": "The Paradise's bandleader wants the Bird to sing for him."})
+		"bird":
+			if L.card == QuarterLeads.Card.CARRYING:
+				extra.append({"id": "lead_card_bird", "text": "A bandleader at the Paradise sent you his card."})
+	if extra.is_empty():
+		return page
+	var opts: Array = (page.options as Array).duplicate()
+	var at := opts.size()
+	for i in opts.size():
+		if opts[i].id == "bye":
+			at = i
+			break
+	for e in extra:
+		opts.insert(at, e)
+		at += 1
+	page["options"] = opts
+	return page
+
+
+## What Rourke and the Bird say to the word Danny brings.
+func lead_step(who: String, step: String) -> Dictionary:
+	q = rackets.quarters
+	var L := q.leads
+	match step:
+		"lead_sa":
+			if not L.tell_rourke_sa(rackets):
+				return {}
+			return _page("rourke", "\"The State's Attorney.\" Rourke turns his glass a quarter turn on the cloth. \"Somebody's "
+				+ "been talking, or somebody wants to. Good eyes, Dimes. The right people will hear about it - and he'll "
+				+ "find the Belvedere's coffee isn't to his taste.\"", [], {"quarter": {"lead": "sa"}})
+		"lead_card_rourke":
+			if not L.card_to_rourke(rackets):
+				return {}
+			return _page("rourke", "\"Does he.\" Rourke doesn't look towards the stage. He holds out his hand for the card "
+				+ "and puts it in his waistcoat without reading it. \"I'll have a word with Mr. Bandleader about who sings "
+				+ "where. You did right to bring it to me.\"", [], {"quarter": {"lead": "card"}})
+		"lead_card_bird":
+			if who != "bird" or not L.card_to_bird(rackets):
+				return {}
+			return _page("bird", "She turns the card over twice. \"Fifteen a week and nobody owns you, it says. Nobody "
+				+ "writes that unless somebody does.\" She tucks it into her glove. \"Thanks, Mercer. Don't tell the boss "
+				+ "you were the postman.\"", [], {"quarter": {"lead": "card"}})
 	return {}

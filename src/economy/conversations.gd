@@ -118,6 +118,7 @@ func open(who: String, context: Dictionary = {}) -> Dictionary:
 		page["voice"] = [g[0]]
 		return page
 	var hello := _say(who, "hello", context)
+	hello = quarter().with_leads(who, hello)  # M015.13: word from the new quarters for Rourke or the Bird
 	var called := String(context.get("callout", ""))
 	if called != "" and Callouts.LINES.has(called) and not hello.is_empty():
 		var line: Dictionary = Callouts.LINES[called]
@@ -157,6 +158,8 @@ func _say(who: String, step: String, context: Dictionary) -> Dictionary:
 		return hello
 	if QuarterTalk.handles(who):
 		return quarter().say(who, step, context)
+	if step.begins_with("lead_"):  # M015.13
+		return quarter().lead_step(who, step)
 	match who:
 		"augie":
 			return _augie(step, context)
