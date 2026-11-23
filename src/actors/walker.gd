@@ -18,6 +18,8 @@ signal shot_at(at: Vector2, direction: Vector2)
 ## M006: the round left a wound (region, BodyCondition.Level) - and a fatal one.
 signal hurt(region: String, level: int)
 signal struck_down
+## M015: a car knocked them down (and how hard it was going, px/s).
+signal run_down(impact: float)
 
 var model := WalkerModel.new()
 ## Command for this tick (set by the player controller or tests).
@@ -44,6 +46,10 @@ var down := false
 var rng := RandomNumberGenerator.new()
 var _stain: Sprite2D
 var _layer := 0
+## M015: what hurt them last ("gun" or "car"), and how long they still lie in
+## the road after a car knocked them off their feet (s).
+var last_cause := "gun"
+var knocked := 0.0
 
 
 ## options: "glow" (bool, a faint light round the person, default true),
@@ -109,6 +115,7 @@ func muzzle_position() -> Vector2:
 func hit_by_bullet(at: Vector2, direction: Vector2, shooter: Node = null) -> void:
 	if not down:
 		last_shooter = shooter  # M008: known to whoever hears about the shot below
+		last_cause = "gun"
 	shot_at.emit(at, direction)
 	if down:
 		return
@@ -122,6 +129,59 @@ func hit_by_bullet(at: Vector2, direction: Vector2, shooter: Node = null) -> voi
 		struck_down.emit()
 		if falls:
 			lie_down()
+
+
+## M015: a car going `car_velocity` struck them at `impact` px/s (closing
+## speed) from `car_at`; `driver` is whoever was at the wheel (as a shooter is
+## for a round). Hurt by how hard (BodyCondition.car_injuries), thrown clear
+## of its path - aside and a little along it, stopped by any wall - and off
+## their feet: for a moment after a clip, longer after a hard knock, for good
+## after a fatal one.
+func hit_by_car(car_velocity: Vector2, impact: float, car_at: Vector2, driver: Node = null) -> void:
+	if down:
+		return
+	last_shooter = driver
+	last_cause = "car"
+	var across := car_velocity.orthogonal().normalized()
+	var side := 1.0 if across.dot(global_position - car_at) >= 0.0 else -1.0
+	var right := Vector2.from_angle(model.facing + PI * 0.5).dot(car_at - global_position) > 0.0
+	var worst := ""
+	for region in BodyCondition.car_injuries(impact, right).keys():
+		condition.hurt(region, BodyCondition.car_injuries(impact, right)[region])
+		if worst == "" or condition.level(region) > condition.level(worst):
+			worst = region
+	model.velocity = Vector2.ZERO
+	move = Vector2.ZERO
+	move_and_collide(across * side * (22.0 + impact * 0.08) + car_velocity.normalized() * minf(impact * 0.14, 46.0))
+	model.facing = (-car_velocity).angle()  # thrown, facing where it came from
+	_flash()
+	hurt.emit(worst, condition.level(worst))
+	run_down.emit(impact)
+	if condition.is_fatal():
+		down = true
+		struck_down.emit()
+		if falls:
+			lie_down()
+		return
+	knocked = 1.3 if impact < 150.0 else 3.2
+	_sprawl()
+
+
+## M015: lying in the road after a knock (they get up again).
+func _sprawl() -> void:
+	sprite.frame = 0
+	sprite.rotation = model.facing + PI * 0.5
+	sprite.scale = base_scale * Vector2(1.4, 0.78)
+	sprite.position = Vector2.from_angle(model.facing) * -5.0
+	if pistol != null:
+		pistol.visible = false
+
+
+func _get_up() -> void:
+	knocked = 0.0
+	sprite.scale = base_scale
+	sprite.position = Vector2.ZERO
+	sprite.rotation = model.facing
 
 
 ## A brief red flush where the round went in (no gore).
@@ -169,6 +229,7 @@ func lie_down() -> void:
 ## Up again, unhurt (a new night).
 func revive() -> void:
 	condition.heal_all()
+	knocked = 0.0
 	down = false
 	active = true
 	if _layer != 0:
@@ -219,6 +280,13 @@ func place(p: Vector2, facing: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not active:
+		return
+	if knocked > 0.0:
+		knocked -= delta
+		velocity = Vector2.ZERO
+		model.velocity = Vector2.ZERO
+		if knocked <= 0.0:
+			_get_up()
 		return
 	model.aim_at(global_position, aim_point)
 	velocity = model.update(delta, move * condition.speed_factor())

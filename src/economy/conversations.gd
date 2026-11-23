@@ -402,6 +402,13 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is the copper %s takes a dollar to look the other way. Somebody tried it." % t.text
 		"shot":
 			return "Word is you put a bullet in %s. People are scared of you, Dimes. Scared ain't the same as loyal." % speaker(t.text)
+		# M015: somebody run down by Danny's car
+		"ran_down":
+			return "Word is you ran %s down in the street, Dimes. In a car. People are crossing the road when they see you coming." % speaker(t.text)
+		"ran_down_street":
+			return "Word is a car knocked some fella flat %s and never stopped. Folks are saying it looked a lot like you at the wheel." % t.text
+		"ran_down_dead":
+			return "Word is some poor fella got run down %s and never got up. The driver never stopped. People are saying your name, Dimes." % t.text
 		# M015: Lefty Moran's speedster
 		"lefty_car":
 			return "Word is somebody drove off in Lefty Moran's speedster. Lefty's asking around, Dimes - and he's asking about you."

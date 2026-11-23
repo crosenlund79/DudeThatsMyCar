@@ -109,6 +109,14 @@ func hear_gunshot(at: Vector2) -> void:
 		p.hear_gunshot(at)
 
 
+## M015: a car knocked somebody down at `at`: the people near enough to see
+## it scatter (the one knocked down runs once they are up again).
+func scare(at: Vector2, radius: float) -> void:
+	for p in pedestrians:
+		if p.active and not p.body.down:
+			p.brain.scare(p.body.global_position, at, radius, 3.0 + p.body.knocked)
+
+
 ## Empties the streets: everyone indoors, every car off the road.
 func clear() -> void:
 	enabled = false

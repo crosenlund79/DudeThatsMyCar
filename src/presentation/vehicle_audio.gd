@@ -14,6 +14,8 @@ var load_layer: AudioStreamPlayer
 var squeal: AudioStreamPlayer
 var impact_wall: AudioStreamPlayer
 var impact_car: AudioStreamPlayer
+## M015: a person struck by the car (a dull thump: the fistfight's landed punch, lower).
+var impact_person: AudioStreamPlayer
 var _pitch := 0.78
 var _load := 0.0
 var _last_speed := 0.0
@@ -27,6 +29,7 @@ func setup(resolver: AssetResolver) -> void:
 	squeal = _player(resolver.get_audio("vehicles/tire_squeal", true), "Effects")
 	impact_wall = _player(resolver.get_audio("vehicles/impact_wall"), "Effects")
 	impact_car = _player(resolver.get_audio("vehicles/impact_car"), "Effects")
+	impact_person = _player(resolver.get_audio("fight/punch_landed"), "Effects")
 
 
 func _player(stream: AudioStream, bus: String) -> AudioStreamPlayer:
@@ -43,6 +46,7 @@ func attach(p_car: Car) -> void:
 		if car.wall_hit.is_connected(_on_wall_hit):
 			car.wall_hit.disconnect(_on_wall_hit)
 			car.car_hit.disconnect(_on_car_hit)
+			car.struck_person.disconnect(_on_struck_person)
 	car = p_car
 	for p in [engine, load_layer, squeal]:
 		p.stop()
@@ -50,6 +54,7 @@ func attach(p_car: Car) -> void:
 		return
 	car.wall_hit.connect(_on_wall_hit)
 	car.car_hit.connect(_on_car_hit)
+	car.struck_person.connect(_on_struck_person)
 	_last_speed = 0.0
 	_pitch = params.pitch_idle
 	engine.volume_db = params.volume_idle_db
@@ -106,6 +111,12 @@ func _on_wall_hit(_normal: Vector2, impact_speed: float) -> void:
 
 func _on_car_hit(_other: Car, impact_speed: float) -> void:
 	_knock(impact_car, impact_speed)
+
+
+func _on_struck_person(_person: Walker, impact_speed: float) -> void:
+	_knock(impact_person, impact_speed + 60.0)
+	if impact_person.stream != null:
+		impact_person.pitch_scale = randf_range(0.62, 0.74)
 
 
 func _knock(p: AudioStreamPlayer, impact_speed: float) -> void:

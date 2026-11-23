@@ -7,11 +7,20 @@ extends CharacterBody2D
 
 signal wall_hit(normal: Vector2, impact_speed: float)
 signal car_hit(other: Car, impact_speed: float)
+## M015: the car, driven, struck a person this hard (closing speed, px/s).
+signal struck_person(person: Walker, impact_speed: float)
 
 const MAX_SLIDES := 4
 ## Simulation step used for all driving maths, independent of engine timing.
 ## Matches the project's 60 physics ticks per second.
 const FIXED_STEP := 1.0 / 60.0
+## M015: a car that strikes people (one Danny can drive, while driven) knocks
+## somebody down when it meets them at this speed or more; slower, they stand
+## in its way as before. It keeps this much of its speed through them, and
+## passes them (no contact) for PASS_TIME s.
+const STRIKE_SPEED := 70.0
+const STRIKE_KEEP := 0.86
+const PASS_TIME := 0.7
 
 var model: CarModel
 var vehicle: VehicleType
@@ -25,6 +34,11 @@ var handbrake := false
 ## Someone is at the wheel. Otherwise the car is parked.
 var driven := false
 var active := true
+## M015: whether it knocks people down (the cars Danny can drive; the
+## traffic keeps clear of people and stops short of them).
+var strikes_people := false
+## People it has just struck and is passing (Walker -> seconds left).
+var _passing := {}
 
 @onready var sprite: Sprite2D = $Sprite
 @onready var shadow: Sprite2D = $Shadow
@@ -97,6 +111,8 @@ func speed() -> float:
 
 
 func _physics_process(_delta: float) -> void:
+	if not _passing.is_empty():
+		_pass_people(FIXED_STEP)
 	if model == null or not active:
 		return
 	if driven:
@@ -113,7 +129,17 @@ func _physics_process(_delta: float) -> void:
 			break
 		var normal := collision.get_normal()
 		var other := collision.get_collider() as Car
-		if other != null and other.model != null:
+		var person := collision.get_collider() as Walker
+		if person != null and strikes_people and driven and -model.velocity.dot(normal) >= STRIKE_SPEED:
+			# M015: it knocks them down and goes on through, a little slower
+			var impact := -model.velocity.dot(normal)
+			_passing[person] = PASS_TIME
+			add_collision_exception_with(person)
+			person.add_collision_exception_with(self)
+			model.velocity *= STRIKE_KEEP
+			struck_person.emit(person, impact)
+			motion = collision.get_remainder() * STRIKE_KEEP
+		elif other != null and other.model != null:
 			var closing := -(model.velocity - other.model.velocity).dot(normal)
 			CarModel.resolve_car_collision(model, other.model, normal, collision.get_position(), global_position, other.global_position)
 			if closing > 0.0:
@@ -130,3 +156,16 @@ func _physics_process(_delta: float) -> void:
 			break
 	model.position = global_position
 	aim_shadow()
+
+
+## M015: the people it struck lately are solid to it again once it is past them.
+func _pass_people(delta: float) -> void:
+	for w in _passing.keys():
+		if not is_instance_valid(w):
+			_passing.erase(w)
+			continue
+		_passing[w] = float(_passing[w]) - delta
+		if float(_passing[w]) <= 0.0:
+			_passing.erase(w)
+			remove_collision_exception_with(w)
+			(w as Walker).remove_collision_exception_with(self)

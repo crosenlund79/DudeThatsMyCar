@@ -53,7 +53,17 @@ func tick(dt: float, cars: Array, danny: Dictionary = {}) -> void:
 	if not active or body.down:
 		return
 	var me := body.global_position
+	if brain.state == PedestrianBrain.State.DODGE and _against_wall():
+		brain.blocked()  # M015: no way through there - the other way
 	var out := brain.update(dt, me, cars, danny)
 	body.model.walk_speed = out.speed
 	body.move = out.dir
 	body.aim_point = out.look if (out.look as Vector2).distance_to(me) > 4.0 else me + (out.dir as Vector2) * 40.0
+
+
+## M015: their last step ran into something that is not a car (a wall, a post).
+func _against_wall() -> bool:
+	for i in body.get_slide_collision_count():
+		if not (body.get_slide_collision(i).get_collider() is Car):
+			return true
+	return false

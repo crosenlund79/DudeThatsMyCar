@@ -143,6 +143,22 @@ func witness_violence(victim: Vector2, shooter: Vector2) -> bool:
 	return true
 
 
+## M015: Danny's car struck somebody at `victim` (the car at `car`). If he
+## could see it he comes for Danny: with his revolver out when it was a hard
+## knock or worse (`serious`), or to have a word when it was a clip. Struck
+## himself, he always knows. Returns whether he saw it.
+func witness_run_down(victim: Vector2, car: Vector2, serious: bool, himself := false) -> bool:
+	if body.down:
+		return false
+	if not himself and not (can_see(victim) or can_see(car)):
+		return false
+	if serious or himself:
+		brain.witness_violence(car)
+	else:
+		brain.suspect(car)
+	return true
+
+
 ## M008: Danny fired from `muzzle` along `direction` and the round passed close by him.
 func near_miss(muzzle: Vector2, direction: Vector2) -> bool:
 	if body.down or not Marksman.passes_near(body.global_position, muzzle, direction):
@@ -206,8 +222,8 @@ static func velocity_of(n: Node2D) -> Vector2:
 
 
 func _physics_process(_delta: float) -> void:
-	if body.down:
-		return
+	if body.down or body.knocked > 0.0:
+		return  # M015: knocked off his feet by a car, for the moment
 	var dt := Car.FIXED_STEP
 	var me := body.global_position
 	var t := _target()

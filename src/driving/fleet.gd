@@ -11,6 +11,8 @@ extends RefCounted
 
 ## M015: Danny took a car not his (`index` in `cars`; `witnessed`: a copper saw it).
 signal car_taken(index: int, witnessed: bool)
+## M015: one of the cars struck a person while driven (RunOvers sees to it).
+signal person_struck(car: Car, person: Walker, impact: float)
 
 const CAR_SCENE := preload("res://src/driving/car.tscn")
 const VEHICLES := {
@@ -78,6 +80,8 @@ func make_car(spec: Dictionary, id: String = "") -> Car:
 	game.root.add_child(c)
 	var paint: String = vehicle.paints[int(spec.paint) % vehicle.paints.size()]
 	c.setup(vehicle, game.resolver.get_texture(paint), paint)
+	c.strikes_people = true  # M015: a car Danny drives knocks people down
+	c.struck_person.connect(func(person: Walker, impact: float) -> void: person_struck.emit(c, person, impact))
 	var lights := VehicleLights.new()
 	lights.setup(c, game.resolver.get_texture("fx/glow"))
 	CarWheels.new().setup(c, game.resolver.get_texture(CarWheels.LOGICAL))

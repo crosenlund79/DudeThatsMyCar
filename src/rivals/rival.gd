@@ -87,8 +87,8 @@ func _target() -> Node2D:
 
 
 func _physics_process(_delta: float) -> void:
-	if body.down:
-		return
+	if body.down or body.knocked > 0.0:
+		return  # M015: knocked off his feet by a car, for the moment
 	if held:
 		body.move = Vector2.ZERO
 		var tt := _target()

@@ -51,6 +51,24 @@ func shoot(region: String, u: float = 0.5) -> int:
 	return hurt(region, amount)
 
 
+## M015: what a car does to a person it strikes at `impact` px/s (closing
+## speed), the near side `right` (the side it came from): {region: damage}.
+## A clip at a crawl bruises the near leg; a hard knock hurts both legs and
+## the body; at a fast town speed (about 250 px/s and up) the blow is
+## fatal - the head and an arm too.
+const CAR_GENTLE := 70.0
+const CAR_FATAL := 300.0
+static func car_injuries(impact: float, right: bool) -> Dictionary:
+	var k := clampf((impact - CAR_GENTLE) / (CAR_FATAL - CAR_GENTLE), 0.0, 1.4)
+	var near := "right_leg" if right else "left_leg"
+	var far := "left_leg" if right else "right_leg"
+	var out := {near: int(round(22.0 + 66.0 * k)), far: int(round(8.0 + 40.0 * k)), "torso": int(round(6.0 + 88.0 * k))}
+	if k > 0.75:
+		out["head"] = int(round(60.0 * (k - 0.75) / 0.65 * 1.4))
+		out["right_arm" if right else "left_arm"] = int(round(30.0 * k))
+	return out
+
+
 func hurt(region: String, amount: int) -> int:
 	var before: int = damage[region]
 	damage[region] = mini(MAX, before + maxi(0, amount))

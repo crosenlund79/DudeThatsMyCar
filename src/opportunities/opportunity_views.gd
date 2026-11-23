@@ -38,6 +38,7 @@ func district_ready(id: String, layout: DistrictLayout, parent: Node) -> void:
 			continue  # carried off to the Doc's for the night
 		var w := Walker.create(resolver, c.look, {"glow": false})
 		w.name = "Contact_%s" % c.id
+		w.set_meta("person", String(c.id))  # M015: who a car knocked down
 		parent.add_child(w)
 		w.place(c.pos, float(c.face))
 		entry.contacts[c.id] = w

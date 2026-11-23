@@ -37,7 +37,9 @@ func test_steps_out_of_the_way_of_a_car_coming_at_them() -> void:
 	var b := _brain()
 	var me := Vector2(200, 0)
 	var car := {"pos": Vector2(200, -150), "vel": Vector2(0, 200)}  # coming straight at them
-	var out := b.update(DT, me, [car])
+	var out := {}
+	for i in int(PedestrianBrain.REACT / DT) + 1:  # M015: a moment to react
+		out = b.update(DT, me, [car])
 	assert_eq(b.state, PedestrianBrain.State.DODGE)
 	assert_eq(out.speed, PedestrianBrain.RUN)
 	var end := _run(b, me, 40, [car])

@@ -153,5 +153,8 @@ func novak_door() -> Vector2:
 ## M009: Dutch or Mr. Feeney hit: if Danny did it, they (and the talk) remember.
 func _on_contact_hurt(id: String, w: Walker) -> void:
 	var r := game.rackets
-	if w.last_shooter == game.walker and r.memory.recent(id, "shot", r.night, 1) == 0:
+	if w.last_shooter == game.walker and w.last_cause == "car":
+		if r.memory.recent(id, "run_down", r.night, 1) == 0:
+			r.ran_down(id, false)  # M015: Danny's car, not his gun
+	elif w.last_shooter == game.walker and r.memory.recent(id, "shot", r.night, 1) == 0:
 		r.shot_person(id)

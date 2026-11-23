@@ -472,6 +472,22 @@ func shot_person(who: String) -> void:
 	boss._pressure()
 
 
+## M015: Danny's car ran `who` down (one of the city's named people; `killed`:
+## they did not get up). Remembered like a shooting, and talked about.
+func ran_down(who: String, killed: bool) -> void:
+	memory.remember(who, "run_down", night, "killed" if killed else "")
+	rumours.start("ran_down", who, night, {"text": who})
+	boss.trust = maxi(0, boss.trust - (20 if who in ROURKES_OWN else 6))
+	boss.hear("Dimes ran %s down in the street" % who.capitalize(), night)
+	boss._pressure()
+
+
+## M015: Danny's car ran somebody down at `place` and a local (`by`) saw or
+## heard it: the talk starts with them (`killed`: the fella didn't get up).
+func ran_down_stranger(by: String, place: String, killed: bool) -> void:
+	rumours.start("ran_down_dead" if killed else "ran_down_street", by, night, {"text": place})
+
+
 ## Someone hears a piece of talk.
 ## M009: one of the city's own incidents is over. The named person who saw
 ## it (if any) starts the talk, and remembers Danny's part in it.
@@ -552,6 +568,10 @@ func _hear(person: String, r: Dictionary) -> void:
 		match r.kind:
 			"shot":
 				boss.hear("Dimes shot %s" % r.text.capitalize(), night)
+			"ran_down":
+				boss.hear("Dimes ran %s down in the street" % r.text.capitalize(), night)
+			"ran_down_street", "ran_down_dead":
+				boss.hear("Dimes ran a fella down %s" % r.text, night)
 			"paid":
 				if boss.learn_paid(r.business, int(r.cents), int(r.night), int(r.seq)) > 0:
 					memory.remember("rourke", "lie", night, "found out")
@@ -564,7 +584,7 @@ func _hear(person: String, r: Dictionary) -> void:
 				boss.hear("Dimes is lending money to %s" % town.get_business(r.business).name, night)
 		return
 	match r.kind:
-		"threat", "shot", "job_backed_down", "job_beaten", "job_killed":
+		"threat", "shot", "job_backed_down", "job_beaten", "job_killed", "ran_down", "ran_down_street", "ran_down_dead":
 			if r.origin != person:
 				memory.remember(person, "heard_threat", night)
 		"job_deal", "job_returned":
@@ -602,7 +622,8 @@ func gossip(person: String) -> Dictionary:
 				news = r
 		elif r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
 				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still", "crate_run", "crate_dropped",
-				"reel_returned", "cafe_seen", "lefty_car", "lefty_car_back"] or String(r.kind).begins_with("street_"):
+				"reel_returned", "cafe_seen", "lefty_car", "lefty_car_back", "ran_down", "ran_down_street",
+				"ran_down_dead"] or String(r.kind).begins_with("street_"):
 			return r
 	return news
 

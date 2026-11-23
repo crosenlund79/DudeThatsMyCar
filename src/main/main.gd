@@ -191,6 +191,7 @@ var last_song: LastSong
 var leftys_car: LeftysCarDirector  ## M015: Lefty's speedster (src/rivals/)
 var dev: DevTools  ## M015: the developer tools (src/dev/)
 var gun_watch: GunWatch  ## M015: who sees the gun in his hand (src/people/)
+var run_overs: RunOvers  ## M015: somebody knocked down by Danny's car (src/crime/)
 var back_rooms: BackRooms  ## the card table, the wheel, the machines (src/gaming/)
 var fleet: Fleet  ## the parked cars (src/driving/)
 var police: PoliceForce  ## the beat cops of every built district (src/police/)
@@ -249,6 +250,7 @@ func _ready() -> void:
 	cafe = missions.add(game.make(&"cafe", CafeJobDirector))
 	last_song = missions.add(game.make(&"last_song", LastSong))
 	leftys_car = missions.add(game.make(&"leftys_car", LeftysCarDirector))  # M015
+	run_overs = missions.add(game.make(&"run_overs", RunOvers))  # M015
 	dev = game.make(&"dev", DevTools)  # M015: for testing, from the game menu
 	gun_watch = game.make(&"gun_watch", GunWatch)  # M015
 	_load_game()
