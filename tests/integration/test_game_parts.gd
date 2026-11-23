@@ -27,7 +27,7 @@ func test_every_part_is_built_once() -> void:
 		assert_same(director, g.get(n), n)
 		assert_same(director.get("game"), g, "%s works on the one Game" % n)
 	for j in main.missions.jobs:
-		assert_same((j as JobDirector).game, g)
+		assert_same(j.get("game"), g)
 	assert_same(g.root, main)
 
 

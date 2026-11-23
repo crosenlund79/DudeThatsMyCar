@@ -8,6 +8,13 @@ extends JobDirector
 ## running them out. Which nights, the pay and the memory are the pure
 ## Opportunities (in Rackets).
 
+var game: Game
+
+
+func _init(p_game: Game) -> void:
+	game = p_game
+
+
 ## Dutch, Mr. Feeney, the crate and the film can where they are built.
 var views: OpportunityViews
 
@@ -130,6 +137,11 @@ func restored() -> void:
 	var r := game.rackets
 	if r.opportunities.crate == "loaded" and not game.fleet.any_cargo():
 		r.opportunities.crate = "taken"
+
+
+## The views' signals call back into this job: let them go with it.
+func release() -> void:
+	views = null
 
 
 ## In front of Novak's Grocery, where the crate is delivered.

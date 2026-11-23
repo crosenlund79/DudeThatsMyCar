@@ -7,6 +7,13 @@ extends JobDirector
 ## job's course and money are the pure FreightJob (in Rackets).
 
 
+var game: Game
+
+
+func _init(p_game: Game) -> void:
+	game = p_game
+
+
 func id() -> String:
 	return "freight"
 

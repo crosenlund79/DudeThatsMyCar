@@ -221,47 +221,28 @@ func _ready() -> void:
 	clock = NightClock.new(night_rules)
 	rackets.town.night_minutes = float(night_rules.dawn_minute - night_rules.start_minute)
 	talk = Conversations.new(rackets)
-	saves = Saves.new(game)  # M014: the save by sections, at the current format
-	game.saves = saves
-	modals = Modals.new(game)  # M014: what has the keys
-	game.modals = modals
-	dialogue = Dialogue.new(game)  # M014: talking in the game
-	game.dialogue = dialogue
-	people = People.new(game)  # M014: call-outs and routines
-	game.people = people
-	fights = Fights.new(game)  # M014: fistfights
-	game.fights = fights
-	casualties = Casualties.new(game)  # M014: who is hurt or out tonight
-	game.casualties = casualties
+	saves = game.make(&"saves", Saves)  # M014: the save by sections, at the current format
+	modals = game.make(&"modals", Modals)  # M014: what has the keys
+	dialogue = game.make(&"dialogue", Dialogue)  # M014: talking in the game
+	people = game.make(&"people", People)  # M014: call-outs and routines
+	fights = game.make(&"fights", Fights)  # M014: fistfights
+	casualties = game.make(&"casualties", Casualties)  # M014: who is hurt or out tonight
 	people.is_out = casualties.is_out
-	districts = Districts.new(game)  # M014: what each district holds while it is built
-	game.districts = districts
+	districts = game.make(&"districts", Districts)  # M014: what each district holds while it is built
 	districts.quiet_streets = quiet_streets
-	incident_director = IncidentDirector.new(game)  # M014: the city's incidents in the game
-	game.incident_director = incident_director
-	films = Films.new(game)  # M014: the films, one at a time
-	game.films = films
-	club = Club.new(game)  # M014: the bandstand
-	game.club = club
-	armoury = Armoury.new(game)  # M014: Danny's guns
-	game.armoury = armoury
-	night = NightCycle.new(game)  # M014: the night and sleeping through the day
-	game.night = night
+	incident_director = game.make(&"incident_director", IncidentDirector)  # M014: the city's incidents in the game
+	films = game.make(&"films", Films)  # M014: the films, one at a time
+	club = game.make(&"club", Club)  # M014: the bandstand
+	armoury = game.make(&"armoury", Armoury)  # M014: Danny's guns
+	night = game.make(&"night", NightCycle)  # M014: the night and sleeping through the day
 	dialogue.on_sleep = night.sleep
-	interactions = Interactions.new(game)  # M014: what E does
-	game.interactions = interactions
-	missions = Missions.new(game)  # M014: every authored job the same way (clock order)
-	game.missions = missions
-	rourke_job = missions.add(RourkeJobDirector.new(game))
-	game.rourke_job = rourke_job
-	errands = missions.add(Errands.new(game))
-	game.errands = errands
-	freight = missions.add(FreightJobDirector.new(game))
-	game.freight = freight
-	cafe = missions.add(CafeJobDirector.new(game))
-	game.cafe = cafe
-	last_song = missions.add(LastSong.new(game))
-	game.last_song = last_song
+	interactions = game.make(&"interactions", Interactions)  # M014: what E does
+	missions = game.make(&"missions", Missions)  # M014: every authored job the same way (clock order)
+	rourke_job = missions.add(game.make(&"rourke_job", RourkeJobDirector))
+	errands = missions.add(game.make(&"errands", Errands))
+	freight = missions.add(game.make(&"freight", FreightJobDirector))
+	cafe = missions.add(game.make(&"cafe", CafeJobDirector))
+	last_song = missions.add(game.make(&"last_song", LastSong))
 	_load_game()
 	layout = RiversideWard.create()
 	city = City.new()
@@ -301,12 +282,10 @@ func _ready() -> void:
 	weather = Weather.new()
 	weather.begin_night(rackets.night, float(night_rules.start_minute))
 	weather.force(weather_override)
-	back_rooms = BackRooms.new(game)  # M014: the card game's state early, as M010 had it
+	back_rooms = game.make(&"back_rooms", BackRooms)  # M014: the card game's state early, as M010 had it
 	back_rooms.name = "BackRooms"
-	game.back_rooms = back_rooms
 	back_rooms.load_poker(saves.section("poker"), rackets.night)
-	fleet = Fleet.new(game)  # M014: the parked cars and their owners
-	game.fleet = fleet
+	fleet = game.make(&"fleet", Fleet)  # M014: the parked cars and their owners
 	fleet.park(layout)
 	walker = Walker.create(resolver, "characters/gangster", {"armed_sheet": "characters/gangster_armed", "gun": gun_rules})
 	add_child(walker)
@@ -350,8 +329,7 @@ func _ready() -> void:
 	officer = PoliceOfficer.new()
 	add_child(officer)
 	officer.setup(resolver, police_rules, layout.police_beat, navigator, player.body, bullets)
-	police = PoliceForce.new(game, districts.streets)  # M014: the beat cops of every built district
-	game.police = police
+	police = game.make(&"police", PoliceForce, [districts.streets])  # M014: the beat cops of every built district
 	police.add_ward_officer(officer)
 	bullets.struck.connect(police.bullet_struck)
 	player.fired.connect(_on_player_fired)
@@ -587,6 +565,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
+	elif what == NOTIFICATION_PREDELETE:
+		game.release()  # M014: the directors and the Game refer to each other: let them all go
 
 
 func _process(delta: float) -> void:

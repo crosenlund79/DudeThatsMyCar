@@ -10,12 +10,11 @@ extends RefCounted
 ##
 ## A new job: a pure model (its stages, what it pays, to_dict / from_dict,
 ## kept in Rackets), a director extending this, one line in Missions.
-
-var game: Game
-
-
-func _init(p_game: Game) -> void:
-	game = p_game
+##
+## Each job declares its own `var game: Game` and `_init(p_game)`; this base
+## names no Game on purpose. A base class inside Game's circle of references
+## makes Godot compile every job extending it many times over (about 45 MB
+## more memory at start-up, measured in M014); outside it, once.
 
 
 ## A short name for this job (tests, the notebook's order, messages).
@@ -83,3 +82,9 @@ func restored() -> void:
 ## While its film or scene keeps Danny busy (no call-outs, no drowsiness).
 func busy() -> bool:
 	return false
+
+
+## The scene is being freed: let go of whatever refers back to this job (its
+## views' signals), so nothing is kept in memory with it.
+func release() -> void:
+	pass

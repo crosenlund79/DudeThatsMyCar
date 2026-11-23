@@ -3,17 +3,19 @@ extends GutTest
 ## Dialogue applies a page's effects in one fixed order whoever registered
 ## them first, one handler an effect, one call a hook; Missions registers each
 ## job's effects and fights once and calls every hook in the order the jobs
-## were added (the M007-M012 clock order).
+## were added (the M007-M012 clock order). And how main and the jobs refer to
+## Game, which keeps the memory as it was at M013.
 
 
 class Spy extends JobDirector:
+	var game: Game
 	var name := ""
 	var log: Array
 	var fx := {}
 	var fights_of := {}
 
 	func _init(g: Game, n: String, l: Array) -> void:
-		super(g)
+		game = g
 		name = n
 		log = l
 
@@ -155,3 +157,30 @@ func test_the_game_wires_six_jobs_none_twice() -> void:
 		"bird_scene": "last_song"})
 	assert_true(m.fight_starter("lefty").is_valid())
 	assert_true(m.fight_starter("walt").is_valid())
+
+
+## Godot analyses Game and every director over again for main.gd, and keeps
+## it all (about 42 MB more memory at start-up, measured in M014), when main.gd
+## calls a director's .new() itself or when the jobs' base class names Game.
+## So main makes the directors through Game.make, and each job keeps its own
+## `game` (src/jobs/job_director.gd).
+func test_main_makes_the_directors_through_game() -> void:
+	var paths := {}
+	for c in ProjectSettings.get_global_class_list():
+		paths[String(c["class"])] = String(c["path"])
+	var directors := []
+	for p in Game.new().get_property_list():
+		var cls := String(p.class_name)
+		if not (int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE) or not paths.has(cls):
+			continue
+		for q in (load(paths[cls]) as Script).get_script_property_list():
+			if q.name == "game":
+				directors.append(cls)
+				break
+	assert_gt(directors.size(), 20, "the directors Game holds")
+	var main_src := FileAccess.get_file_as_string("res://src/main/main.gd")
+	for cls in directors:
+		assert_false(main_src.contains(cls + ".new("), "main.gd makes %s through game.make" % cls)
+	for q in (JobDirector as Script).get_script_property_list():
+		assert_ne(q.name, "game", "the jobs' base class names no Game")
+

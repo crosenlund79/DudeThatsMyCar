@@ -112,3 +112,37 @@ func ward_plan(id: String) -> InteriorPlan:
 ## screenshots): main's export, read when a night begins.
 func weather_override() -> String:
 	return String(root.get("weather_override"))
+
+
+## M014: the scene is being freed: every reference let go. The directors refer
+## to this object and to each other through it; RefCounted objects that refer
+## to each other in a ring are never freed on their own, so without this a
+## freed scene's game (its books, its layouts, every director) would stay in
+## memory - once for every reload.
+func release() -> void:
+	if missions != null:
+		missions.release()  # the jobs' own rings first (their views' signals)
+	for p in get_property_list():
+		if not (int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		match int(p.type):
+			TYPE_ARRAY:
+				set(p.name, [])
+			TYPE_DICTIONARY:
+				set(p.name, {})
+			TYPE_OBJECT, TYPE_NIL:
+				set(p.name, null)
+
+
+
+## M014: makes the director `script` on this game (`args` after the game),
+## keeps it as `part` and returns it; main makes them in its build order.
+## Through the script on purpose: `Fleet.new(game)` written in main.gd makes
+## Godot analyse Game and every director over again for main.gd and keep it
+## all (about 42 MB more memory at start-up, measured in M014); this costs
+## nothing and makes the same object.
+func make(part: StringName, script: Script, args := []) -> Variant:
+	assert(part in self and get(part) == null, "game.%s is made once" % part)
+	var director: Object = script.callv("new", [self] + args)
+	set(part, director)
+	return director

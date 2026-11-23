@@ -6,6 +6,13 @@ extends JobDirector
 ## Danny's rounds in him, the next step on the HUD and on the city map. The
 ## job's course, money and lies are the pure RourkeJob (in Rackets).
 
+var game: Game
+
+
+func _init(p_game: Game) -> void:
+	game = p_game
+
+
 const FIGHT_TIP_BONUS := 14.0
 const FIGHT_HURT_PACE := 0.85
 

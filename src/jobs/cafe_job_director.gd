@@ -8,6 +8,13 @@ extends JobDirector
 ## ambulance, the wreck. The job's course and the pay are the pure CafeJob
 ## (in Rackets); the scene's nodes are CafeScene and EmergencyViews.
 
+var game: Game
+
+
+func _init(p_game: Game) -> void:
+	game = p_game
+
+
 var scene: CafeScene
 ## M010: the police car, the fire engine and the ambulance that come to it.
 var emergency := EmergencyResponse.new()

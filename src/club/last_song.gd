@@ -7,6 +7,13 @@ extends JobDirector
 ## to her: a short film, her question, his answer (remembered). What he said is
 ## kept in Rackets (bird_scene); the lines are Conversations'.
 
+var game: Game
+
+
+func _init(p_game: Game) -> void:
+	game = p_game
+
+
 ## After this hour (1:30 AM) her next song is her last, if Danny is in the club.
 const LAST_SONG := 25 * 60 + 30.0
 

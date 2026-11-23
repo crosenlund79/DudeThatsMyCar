@@ -83,5 +83,13 @@ func restored() -> void:
 		j.restored()
 
 
+## The scene is being freed: every job lets go, then the list (see Game.release).
+func release() -> void:
+	for j in jobs:
+		j.release()
+	jobs.clear()
+	_starters.clear()
+
+
 func busy() -> bool:
 	return jobs.any(func(j: JobDirector) -> bool: return j.busy())
