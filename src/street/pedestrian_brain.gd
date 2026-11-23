@@ -3,9 +3,11 @@ extends RefCounted
 ## One person out late (pure, deterministic for a seed): strolls along a
 ## sidewalk route and back, stops now and then, steps out of the way of a car
 ## coming at them and watches it go by, runs from gunfire, then wanders back
-## to the route. Never knows more than what is in front of them.
+## to the route. Never knows more than what is in front of them. M015: a gun
+## in Danny's hand makes them wary - they walk briskly away along their route,
+## an eye on him - and they run if he comes too close with it (GunSight).
 
-enum State { WALK, PAUSE, DODGE, WATCH, FLEE, RETURN }
+enum State { WALK, PAUSE, DODGE, WATCH, FLEE, RETURN, WARY }
 
 const STROLL := 46.0
 const RUN := 125.0
@@ -15,6 +17,8 @@ const LOOKAHEAD := 1.6
 const THREAT_SPEED := 45.0
 ## Gunfire closer than this sends them running.
 const SCARE_RANGE := 650.0
+## M015: the pace of someone keeping their distance from a gun.
+const BRISK := 85.0
 
 var route := PackedVector2Array()
 ## Next route point, and which way along the route they walk.
@@ -66,9 +70,22 @@ static func threat(me: Vector2, cars: Array) -> Vector2:
 	return best
 
 
-## One tick. cars: [{pos, vel}]. Returns {dir: Vector2 (unit or zero), speed, look: Vector2}.
-func update(dt: float, me: Vector2, cars: Array) -> Dictionary:
+## One tick. cars: [{pos, vel}]; M015 `danny`: {pos, level} - the gun he has
+## out where they can see it (level 0: none). Returns {dir: Vector2 (unit or
+## zero), speed, look: Vector2}.
+func update(dt: float, me: Vector2, cars: Array, danny: Dictionary = {}) -> Dictionary:
 	timer -= dt
+	var level := int(danny.get("level", 0))
+	var dp: Vector2 = danny.get("pos", Vector2.INF)
+	if level > 0 and state != State.FLEE and state != State.DODGE:
+		match GunSight.passer(me.distance_to(dp), level):
+			"flee":
+				state = State.FLEE
+				away = (me - dp).normalized() if me.distance_to(dp) > 1.0 else Vector2.RIGHT
+				watch = dp
+				timer = _rng.randf_range(2.0, 3.0)
+			"wary":
+				state = State.WARY
 	if state != State.FLEE and state != State.DODGE:
 		var miss := threat(me, cars)
 		if miss != Vector2.INF:
@@ -92,6 +109,11 @@ func update(dt: float, me: Vector2, cars: Array) -> Dictionary:
 			if timer <= 0.0:
 				state = State.RETURN
 			return {"dir": away, "speed": RUN, "look": me + away * 50.0}
+		State.WARY:
+			if GunSight.passer(me.distance_to(dp), level) == "":
+				state = State.RETURN
+			else:
+				return {"dir": _away_along_route(me, dp), "speed": BRISK, "look": dp}
 		State.PAUSE:
 			if timer <= 0.0:
 				state = State.WALK
@@ -120,6 +142,21 @@ func _walk(me: Vector2) -> Dictionary:
 	elif _rng.randf() < 0.0015:  # now and then: a look in a shop window
 		_pause(me, me + (target - me).orthogonal(), _rng.randf_range(1.5, 3.0))
 	return {"dir": (target - me).normalized(), "speed": STROLL, "look": target}
+
+
+## M015: the way along their route that takes them away from `from` (straight
+## away from it when the route leads towards it).
+func _away_along_route(me: Vector2, from: Vector2) -> Vector2:
+	if route.size() < 2:
+		return (me - from).normalized()
+	var other := clampi(index - dir, 0, route.size() - 1)
+	if route[other].distance_to(from) > route[index].distance_to(from) + 10.0:
+		dir = -dir
+		index = other
+	var go := (route[index] - me).normalized()
+	if go.dot((me - from).normalized()) < -0.2:
+		go = (me - from).normalized()
+	return go
 
 
 func _pause(_me: Vector2, look_at: Vector2, seconds: float) -> void:

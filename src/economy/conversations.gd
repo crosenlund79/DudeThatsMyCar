@@ -131,6 +131,20 @@ func choose(who: String, option: String, context: Dictionary = {}) -> Dictionary
 
 
 func _say(who: String, step: String, context: Dictionary) -> Dictionary:
+	# M015: somebody who keeps a place of business won't do it with a gun out
+	var gun := int(context.get("gun_out", 0))
+	if step == "hello" and gun > 0 and GunSight.SHY.has(who):
+		if rackets.memory.recent(who, "gun_shown", rackets.night, 1) == 0:
+			rackets.memory.remember(who, "gun_shown", rackets.night)
+		return _page(who, GunSight.line(who, gun), [{"id": "holster", "text": "(Put it away.)"}])
+	if step == "holster":
+		var hello := _say(who, "hello", context.merged({"gun_out": 0}, true))
+		if hello.is_empty():
+			return hello
+		var fx: Dictionary = hello.get("effects", {})
+		fx["holster"] = true
+		hello["effects"] = fx
+		return hello
 	match who:
 		"augie":
 			return _augie(step, context)

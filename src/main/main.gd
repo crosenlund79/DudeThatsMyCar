@@ -190,6 +190,7 @@ var cafe: CafeJobDirector
 var last_song: LastSong
 var leftys_car: LeftysCarDirector  ## M015: Lefty's speedster (src/rivals/)
 var dev: DevTools  ## M015: the developer tools (src/dev/)
+var gun_watch: GunWatch  ## M015: who sees the gun in his hand (src/people/)
 var back_rooms: BackRooms  ## the card table, the wheel, the machines (src/gaming/)
 var fleet: Fleet  ## the parked cars (src/driving/)
 var police: PoliceForce  ## the beat cops of every built district (src/police/)
@@ -249,6 +250,7 @@ func _ready() -> void:
 	last_song = missions.add(game.make(&"last_song", LastSong))
 	leftys_car = missions.add(game.make(&"leftys_car", LeftysCarDirector))  # M015
 	dev = game.make(&"dev", DevTools)  # M015: for testing, from the game menu
+	gun_watch = game.make(&"gun_watch", GunWatch)  # M015
 	_load_game()
 	layout = RiversideWard.create()
 	city = City.new()
@@ -343,6 +345,7 @@ func _ready() -> void:
 	add_child(street)
 	districts.add_ward_street(street)
 	street.setup(layout, resolver, clock, Fleet.CAR_SCENE, Fleet.VEHICLES, fleet.cars, [walker, officer.body] as Array[Walker])
+	street.gun_shown = armoury.shown  # M015: a gun in his hand where passers-by can see it
 	street.view = camera.view_rect()
 	rival = Rival.new()
 	add_child(rival)
@@ -587,6 +590,8 @@ func _process(delta: float) -> void:
 		world.update(player.body().global_position)  # M008: neighbours streamed in and out
 	_update_view(delta)
 	police.update_report(delta)
+	if not paused:
+		gun_watch.update(delta)  # M015: a gun in his hand, out in the open
 
 
 func _update_view(delta: float) -> void:

@@ -18,6 +18,24 @@ func _init(p_game: Game) -> void:
 	game = p_game
 
 
+## M015: the gun people can see in Danny's hand: 0 none (put away, or he is in
+## a car, or down), 1 a handgun, 2 Eddie's Thompson (GunSight).
+func shown_level() -> int:
+	var player := game.player
+	var walker := game.walker
+	if player == null or walker == null or not player.on_foot() or walker.down:
+		return GunSight.NONE
+	var g := walker.gun
+	if g == null or not g.is_drawn():
+		return GunSight.NONE
+	return GunSight.THOMPSON if g == thompson else GunSight.HANDGUN
+
+
+## M015: {pos, level} for the street life (StreetLife.gun_shown).
+func shown() -> Dictionary:
+	return {"pos": game.walker.global_position, "level": shown_level()}
+
+
 ## The saved rounds back in the gun he holds (after the walker exists).
 func load_gun(saved: Dictionary) -> void:
 	var walker := game.walker
@@ -59,6 +77,10 @@ func wire() -> void:
 ## What Eddie's pages do to the guns: rounds bought, the Thompson lent or back.
 func wire_dialogue() -> void:
 	var dialogue := game.dialogue
+	dialogue.on_context(func() -> Dictionary: return {"gun_out": shown_level()})  # M015: who won't deal with it out
+	dialogue.on_effect("holster", func(_v: Variant, _e: Dictionary) -> void:  # M015: put away, as they asked
+		if game.walker.gun != null:
+			game.walker.gun.holster())
 	dialogue.on_effect("rounds", func(v: Variant, _e: Dictionary) -> void:
 		if pistol != null:
 			pistol.add_spare(int(v)))

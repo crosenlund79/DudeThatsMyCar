@@ -22,6 +22,8 @@ var parked: Array[Car] = []
 var others: Array[Walker] = []
 ## Where the camera looks (set by the game every frame).
 var view := Rect2()
+## M015: () -> {pos, level}: the gun Danny has out where people can see it (Armoury.shown).
+var gun_shown: Callable
 ## False: nobody out at all (clear()).
 var enabled := true
 var _traffic_start: Array[Transform2D] = []
@@ -183,8 +185,9 @@ func _physics_process(dt: float) -> void:
 	for c in parked + traffic:
 		if c.visible:
 			movers.append({"pos": c.global_position, "vel": c.model.velocity if c.model != null else Vector2.ZERO})
+	var danny: Dictionary = gun_shown.call() if gun_shown.is_valid() else {}
 	for p in pedestrians:
-		p.tick(dt, movers)
+		p.tick(dt, movers, danny)
 	var obstacles := _obstacles()
 	for i in traffic.size():
 		if not _traffic_on[i]:

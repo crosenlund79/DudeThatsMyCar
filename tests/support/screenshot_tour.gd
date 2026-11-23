@@ -619,6 +619,20 @@ func _run(shots: Array) -> void:
 				await _shot(s, false)
 				if s != "back_room":
 					main.back_rooms.leave_poker()
+			"m015_gun_reactions":
+				# M015: the .45 out on Marlowe Avenue by the beat cop's corner - the copper calls on him to put it
+				# away, the passers-by keep their distance
+				main.weather.force("clear")
+				var cop: PoliceOfficer = main.officer
+				_teleport_walker(cop.body.global_position + Vector2(-40, 150), -PI / 2)
+				await _frames(30)
+				main.walker.gun.toggle_kept()
+				for p in main.street.pedestrians:
+					if p.active:
+						p.body.place(main.walker.global_position + Vector2(randf_range(-260, 260), randf_range(40, 110)), 0.0)
+				await _frames(70)
+				await _shot(s, false)
+				main.walker.gun.holster()
 			"m015_leftys_car":
 				# M015: Lefty Moran on his corner outside Doyle's Garage, his speedster at the kerb
 				main.weather.force("clear")

@@ -52,6 +52,7 @@ func _district_street(l: DistrictLayout, node: Node2D) -> void:
 	for o in game.police.officers():
 		others.append(o.body)
 	s.setup(l, game.resolver, game.clock, Fleet.CAR_SCENE, Fleet.VEHICLES, game.fleet.cars, others)
+	s.gun_shown = game.armoury.shown  # M015
 	s.name = "StreetLife"
 	if quiet_streets:
 		s.clear()

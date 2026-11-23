@@ -82,6 +82,7 @@ var cafe: CafeJobDirector
 var last_song: LastSong
 var leftys_car: LeftysCarDirector  ## M015: Lefty Moran's speedster (src/rivals/)
 var dev: DevTools  ## M015: the developer tools (src/dev/), for testing
+var gun_watch: GunWatch  ## M015: who sees the gun in Danny's hand (src/people/)
 var modals: Modals
 var saves: Saves
 

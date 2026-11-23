@@ -48,12 +48,12 @@ func hear_gunshot(at: Vector2) -> void:
 		brain.hear_gunshot(body.global_position, at)
 
 
-## One physics tick; cars: [{pos, vel}].
-func tick(dt: float, cars: Array) -> void:
+## One physics tick; cars: [{pos, vel}]; M015 danny: {pos, level} (the gun he shows).
+func tick(dt: float, cars: Array, danny: Dictionary = {}) -> void:
 	if not active or body.down:
 		return
 	var me := body.global_position
-	var out := brain.update(dt, me, cars)
+	var out := brain.update(dt, me, cars, danny)
 	body.model.walk_speed = out.speed
 	body.move = out.dir
 	body.aim_point = out.look if (out.look as Vector2).distance_to(me) > 4.0 else me + (out.dir as Vector2) * 40.0

@@ -86,6 +86,9 @@ func test_a_night_of_dangerous_company() -> void:
 	main._unhandled_input(_key(CityInput.STATUS))
 	r.money = maxi(r.money, 2000)
 	await talk_to("vet", "pettibone")
+	if (main.dialogue.page.options as Array).any(func(o: Dictionary) -> bool: return o.id == "holster"):
+		await answer_with("holster")  # M015: straight from the gunfight, gun in hand - the Doc won't treat him so
+	assert_false(walker().gun.is_drawn(), "put away")
 	if walker().condition.is_hurt():
 		await answer_with("patch")
 	assert_false(walker().condition.is_hurt(), "patched up")
