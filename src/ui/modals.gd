@@ -96,6 +96,9 @@ func open_menu(on: bool) -> void:
 	game.root.get_tree().paused = on
 	if on:
 		hud.game_menu.notebook = Notebook.entries(game.rackets, game.clock.minute)
+		game.casework.refresh()  # M015: the case sheets as they stand
+		hud.game_menu.cases = game.casework.sheets
+		hud.game_menu.markers_on = game.casework.shown()
 		hud.game_menu.can_load = save_path != "" and FileAccess.file_exists(save_path)
 		hud.game_menu.dev_on = bool(game.prefs.get_pref("dev_tools"))  # M015
 		hud.game_menu.dev_categories = game.dev.menu_list() if hud.game_menu.dev_on else []
@@ -133,6 +136,10 @@ func menu_action(what: String) -> void:
 		"quit":
 			game.save()
 			root.get_tree().quit()
+		"markers":  # M015: work marked in the street, on or off (a preference)
+			game.casework.set_shown(not game.casework.shown())
+			hud.game_menu.markers_on = game.casework.shown()
+			hud.game_menu.say("Work is marked in the street." if hud.game_menu.markers_on else "No marks in the street - the notebook and the map still have them.")
 		"dev_on":  # M015: the developer tools switched on (a preference)
 			game.prefs.set_pref("dev_tools", true)
 			hud.game_menu.dev_on = true

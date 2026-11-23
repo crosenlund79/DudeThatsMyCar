@@ -22,6 +22,8 @@ var resolver: AssetResolver
 var place_label: Label
 var purse_label: Label
 var minimap: Minimap
+## M015: arrows at the edge of the view to known work out of sight.
+var work_arrows: WorkArrows
 ## M006: the whole ward (M), and how Danny is (C).
 var city_map: CityMap
 var status_screen: StatusScreen
@@ -217,6 +219,10 @@ func add_minimap(layout: DistrictLayout) -> void:
 	add_child(minimap)
 	minimap.setup(layout, resolver, _panel_style(), _font)
 	move_child(minimap, 0)  # under the dialogue panel and notices
+	work_arrows = WorkArrows.new()  # M015: known work out of sight
+	add_child(work_arrows)
+	work_arrows.setup(_font)
+	move_child(work_arrows, 1)
 	city_map = CityMap.new()
 	add_child(city_map)
 	city_map.setup(minimap, _font)

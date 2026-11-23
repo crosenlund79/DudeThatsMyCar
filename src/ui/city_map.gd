@@ -57,6 +57,11 @@ var drawn_labels: Array[Rect2] = []
 var job_text := ""
 var job_at := Vector2.INF
 var lefty_at := Vector2.INF
+## M015: where Danny's work points ([{pos, label, sure}], Casework) - a copper
+## ring for what he knows he has to do, a dashed one for what he suspects - and
+## the open cases' names for the key.
+var work: Array = []
+var work_cases: Array = []
 ## The "back to Danny" button in the key.
 var recentre_rect := Rect2()
 var dragging := false
@@ -270,6 +275,18 @@ func _draw() -> void:
 			jp -= Vector2(0, ICON * 0.4)
 		draw_arc(jp, 21.0, 0.0, TAU, 40, Color(COPPER, 0.9), 2.0)
 		draw_arc(jp, 25.0, 0.0, TAU, 40, Color(COPPER, 0.35), 1.0)
+	for wm in work:  # M015
+		var wp := to_screen(wm.pos)
+		if not map_rect.has_point(wp):
+			continue
+		if bool(wm.sure):
+			draw_arc(wp, 13.0, 0.0, TAU, 32, Color(COPPER, 0.95), 2.0)
+			draw_circle(wp, 3.0, COPPER)
+		else:
+			for k in 10:
+				draw_arc(wp, 13.0, k * TAU / 10.0, k * TAU / 10.0 + TAU / 20.0, 4, Color(COPPER, 0.75), 1.5)
+		if scale_px < LANDMARKS_BELOW:
+			_label(wp + Vector2(0, -20), String(wm.label), 11, COPPER)
 	if car != Vector2.INF and map_rect.has_point(to_screen(car)):
 		draw_set_transform(to_screen(car), car_heading, Vector2.ONE)
 		draw_rect(Rect2(-7, -3.5, 14, 7), COPPER)
@@ -409,6 +426,14 @@ func _draw_key() -> void:
 	_dashed(Vector2(x, y + 10.0), Vector2(x + 24.0, y + 10.0), BORDER, false)
 	_text(Vector2(x + 28.0, y + 15.0), "District border", 13, INK)
 	y += 34.0
+	if not work_cases.is_empty():  # M015
+		draw_arc(Vector2(x + 10.0, y + 9.0), 7.0, 0.0, TAU, 20, COPPER, 1.8)
+		_text(Vector2(x + 28.0, y + 15.0), "Work (dashed: a hunch)", 13, INK)
+		y += 22.0
+		for t in work_cases.slice(0, 4):
+			_text(Vector2(x + 8.0, y + 12.0), "- " + String(t), 12, INK)
+			y += 16.0
+		y += 10.0
 	if job_text != "":
 		_text(Vector2(x, y), "ROURKE'S JOB", 13, COPPER)
 		y += 18.0

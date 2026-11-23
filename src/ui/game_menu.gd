@@ -53,6 +53,12 @@ var selected := 0
 var page := ""
 ## What the Notebook shows: [{title, lines: [String]}] (set by the game).
 var notebook: Array = []
+## M015: the Notebook as case sheets (Casebook.cases, set by the game), the
+## sheet on show and how far down it is scrolled; whether work is marked in the street.
+var cases: Array = []
+var case_index := 0
+var case_scroll := 0
+var markers_on := true
 ## A line under the entries ("Saved: Night 2, 11:40 PM").
 var status := ""
 ## Whether there is a save to go back to (Load is greyed out otherwise).
@@ -192,6 +198,10 @@ func handle_key(event: InputEvent) -> String:
 		var dev := _dev_key(event)
 		if dev != "?":
 			return dev
+	if page == "notebook" and not event.is_action(CityInput.MENU):
+		var nb := _notebook_key(event)
+		if nb != "?":
+			return nb
 	if event.is_action(CityInput.MENU):
 		if page != "":
 			show_page("")
@@ -224,6 +234,31 @@ func choose(i: int) -> String:
 			_refresh()
 			return "load" if can_load else ""
 	show_page(id)
+	return ""
+
+
+## M015: a key on the Notebook page: Left / Right another case, Up / Down
+## scroll the sheet, Enter switches the work marks in the street on or off
+## ("markers": the game keeps the preference). "?" when not the page's key.
+func _notebook_key(event: InputEvent) -> String:
+	var n := cases.size()
+	if event.is_action("ui_accept") or event.is_action(CityInput.INTERACT) or event.is_action(CityInput.HANDBRAKE):
+		return "markers"
+	if n == 0:
+		return "?"
+	if event.is_action("ui_left") or event.is_action(CityInput.LEFT):
+		case_index = (case_index + n - 1) % n
+		case_scroll = 0
+	elif event.is_action("ui_right") or event.is_action(CityInput.RIGHT):
+		case_index = (case_index + 1) % n
+		case_scroll = 0
+	elif event.is_action("ui_up") or event.is_action(CityInput.UP):
+		case_scroll = maxi(0, case_scroll - 1)
+	elif event.is_action("ui_down") or event.is_action(CityInput.DOWN):
+		case_scroll += 1
+	else:
+		return "?"
+	_refresh()
 	return ""
 
 
@@ -321,12 +356,15 @@ func _refresh() -> void:
 				else "There is no saved game to go back to yet.")
 		"notebook":
 			_heading("Notebook")
-			if notebook.is_empty():
+			if cases.is_empty():
 				_text("Nothing on your plate tonight. The city has a way of finding you.")
-			for e in notebook:
-				_sub(String(e.title))
-				for line in e.lines:
-					_text(String(line))
+				for e in notebook:
+					_sub(String(e.title))
+					for line in e.lines:
+						_text(String(line))
+			else:
+				_case_sheet()
+			_page_box.add_child(_label("Enter: work marked in the street - %s" % ("on" if markers_on else "off"), _serif, 12, INK_DIM))
 		"controls":
 			_heading("Controls")
 			# two columns on the card: on foot and driving; the city, the tables and a fight
@@ -388,6 +426,53 @@ func _refresh() -> void:
 		"quit":
 			_heading("Save and quit")
 			_text("Saves the game where it stands and closes it. Next time it goes on from here.")
+
+
+## M015: one case sheet: its name and where it stands, then the things,
+## persons and places in it, what Danny knows, what he doesn't, and his leads
+## (only as much as fits; Up / Down scroll the rest).
+const SHEET_LINES := 13
+const STAMPS := {"open": "OPEN", "lead": "A HUNCH", "closed": "CLOSED", "lapsed": "LAPSED"}
+
+func _case_sheet() -> void:
+	case_index = clampi(case_index, 0, cases.size() - 1)
+	var c: Dictionary = cases[case_index]
+	_sub("‹  %s  ›      %d of %d" % [String(c.title), case_index + 1, cases.size()])
+	var stamp := _label("%s   ·   %s" % [STAMPS.get(String(c.status), ""), "Rourke's business" if String(c.who) == "Rourke" else "your own business"],
+		_serif_bold, 12, ACCENT if c.status == "open" or c.status == "lead" else INK_DIM)
+	_page_box.add_child(stamp)
+	var rows := []  # [kind, text]: "h" a heading, "s" the standing, "l" a line
+	if String(c.standing) != "":
+		rows.append(["s", String(c.standing)])
+	for part in [["things", "Things"], ["persons", "Persons"], ["places", "Places"], ["known", "What you know"],
+			["unknown", "What you don't"], ["leads", "Leads"]]:
+		var lines: Array = c.get(part[0], [])
+		if lines.is_empty():
+			continue
+		rows.append(["h", String(part[1]).to_upper()])
+		for line in lines:
+			rows.append(["l", String(line)])
+	case_scroll = clampi(case_scroll, 0, maxi(0, rows.size() - SHEET_LINES))
+	var shown := 0
+	for i in range(case_scroll, rows.size()):
+		if shown >= SHEET_LINES:
+			break
+		var row: Array = rows[i]
+		var l: Label
+		match row[0]:
+			"s":
+				l = _label(String(row[1]), _serif, 14, INK)
+			"h":
+				l = _label(String(row[1]), _serif_bold, 11, ACCENT)
+			_:
+				l = _label("-  " + String(row[1]), _serif, 13, INK)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size = Vector2(CARD_SIZE.x - 76, 0)
+		_page_box.add_child(l)
+		shown += 1
+	var more := rows.size() - case_scroll - shown
+	_page_box.add_child(_label("Left / Right: another case%s" % ("     Up / Down: %d more lines" % more if more > 0 or case_scroll > 0 else ""),
+		_serif, 12, INK_DIM))
 
 
 func _heading(text: String) -> void:

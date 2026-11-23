@@ -893,6 +893,35 @@ func _run(shots: Array) -> void:
 				await _frames(10)
 				await _shot(s, false)
 				main.modals.open_menu(false)
+			"m015_notebook":
+				# M015: the Notebook as case sheets - Rourke's job, Lefty found out, Eddie's tip
+				main.weather.force("clear")
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
+				await _frames(10)
+				var rj: RourkeJob = main.rackets.job
+				rj.stage = RourkeJob.Stage.ACCEPTED
+				rj.learn("culprit")
+				rj.learn("tip")
+				main.rackets.loan.out = true
+				main.modals.open_menu(true)
+				main.hud.game_menu.show_page("notebook")
+				await _frames(10)
+				await _shot(s, false)
+				main.modals.open_menu(false)
+			"m015_work_marks":
+				# M015: known work in the street - a mark at Lindqvist Hardware's door, an arrow to the Copper Owl
+				main.weather.force("clear")
+				main.rackets.job.stage = RourkeJob.Stage.ACCEPTED
+				main.rackets.job.learned = {}
+				main.rackets.loan.out = false
+				main.rackets.opportunities.crate = "taken"
+				var hw: Vector2 = main.game.locations.at(Casebook.HARDWARE_DOOR)
+				_teleport_walker(hw + Vector2(-90, 150), -PI * 0.25)
+				main.camera.snap_to(main.walker)
+				await _frames(30)
+				main.casework.refresh()
+				await _frames(10)
+				await _shot(s, true)
 			"city_map_civic":
 				# M011: the city map close over Halloran Park: City Hall, the mayor's house (with its address), the aldermen
 				main.weather.force("clear")

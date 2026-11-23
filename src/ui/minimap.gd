@@ -129,6 +129,10 @@ const PING_TIME := 2.4
 const PING_COLOUR := Color("e8743c")
 var pings: Array = []
 var arrows: Array[Vector2] = []
+## M015: where Danny's work points ([{pos, sure}], Casework): a small brass
+## lozenge on the map (hollow for work he only suspects).
+var work: Array = []
+const WORK_COLOUR := Color(0.93, 0.74, 0.42)
 
 
 func ping(world: Vector2) -> void:
@@ -222,6 +226,13 @@ func _draw() -> void:
 		var at := to_map(pg.pos)
 		draw_arc(at, 3.0 + 15.0 * t, 0.0, TAU, 28, Color(PING_COLOUR, 1.0 - t), 2.0)
 		draw_circle(at, 2.5, Color(PING_COLOUR, 1.0 - t))
+	for wm in work:  # M015
+		var wp := to_map(wm.pos)
+		if Rect2(Vector2.ZERO, SIZE).grow(-BORDER - 4.0).has_point(wp):
+			var lz := PackedVector2Array([wp + Vector2(0, -6), wp + Vector2(4.5, 0), wp + Vector2(0, 6), wp + Vector2(-4.5, 0), wp + Vector2(0, -6)])
+			if bool(wm.sure):
+				draw_colored_polygon(lz.slice(0, 4), WORK_COLOUR)
+			draw_polyline(lz, Color("1d1712") if bool(wm.sure) else Color(WORK_COLOUR, 0.8), 1.2)
 	for ap in arrows:
 		var rim: Dictionary = place_on_map(ap)
 		if rim.on_map:
