@@ -962,6 +962,48 @@ func _run(shots: Array) -> void:
 				await _frames(10)
 				await _shot(s, false)
 				main.modals.open_menu(false)
+			"m015_city":
+				# M015.11: the city map zoomed out: five districts, the new quarters' landmarks and badges
+				main.weather.force("clear")
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
+				await _frames(10)
+				main.modals.show_map(true)
+				await _frames(3)
+				var cm: CityMap = main.hud.city_map
+				cm.zoom_at(cm.map_rect.get_center(), 100.0)
+				await _frames(5)
+				await _shot(s, false)
+				main.modals.show_map(false)
+			"m015_cases", "m015_case_marks":
+				# M015.13: the quarters' business in the Notebook - stall insurance with Kaz named, the State's
+				# Attorney's man, the bandleader's card; then the marks it puts in the market
+				main.weather.force("clear")
+				main.clock.set_time(23 * 60.0 + 20.0)
+				var L: QuarterLeads = main.rackets.quarters.leads
+				L.hear_stall("board")
+				L.hear_stall("hrabal")
+				L.hear_stall("chu")
+				L.learn_sa(main.rackets.night)
+				L.card = QuarterLeads.Card.CARRYING
+				main.casework.refresh()
+				if s == "m015_cases":
+					_teleport_walker(Vector2(2350, 600), PI * 0.3)
+					await _frames(10)
+					main.modals.open_menu(true)
+					main.hud.game_menu.show_page("notebook")
+					var titles: Array = main.hud.game_menu.cases.map(func(c: Dictionary) -> String: return c.title)
+					main.hud.game_menu.case_index = maxi(0, titles.find("Stall insurance"))
+					main.hud.game_menu.show_page("notebook")
+					await _frames(10)
+					await _shot(s, false)
+					main.modals.open_menu(false)
+				else:
+					_teleport_walker(Vector2(-2400, 3380), -PI / 2)
+					main.world.load_now("market")
+					await _frames(60)
+					main.casework.refresh()
+					await _frames(30)
+					await _shot(s, false)
 			"m015_work_marks":
 				# M015: known work in the street - a mark at Lindqvist Hardware's door, an arrow to the Copper Owl
 				main.weather.force("clear")

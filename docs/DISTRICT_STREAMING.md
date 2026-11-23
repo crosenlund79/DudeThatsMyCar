@@ -389,3 +389,38 @@ differ most show the same scene - the same people, lines, clock, money and cars 
 traffic, the camera's last few pixels or the wheel's last number apart. A few M014 shots are in
 `docs/screenshots/m014/`.
 
+
+## Milestone 015: five districts, three built at once
+
+M015 adds Canal Market (south of Halloran Square, west of the yards; the square's three avenues and the
+yards' Front and Foundry Street run on into it) and Lincoln Terrace (north of the ward, through a new
+underpass at the north end of Wharf Street). The market joins two neighbours that are not the ward, so
+`DistrictStreamer.MAX_LOADED` is now **3**: the ward (still pinned), the district Danny is in and the one
+he is nearing. A fourth district wanted while three are built lets the one he needs least go (the
+farthest; never the pinned ward or the one he is in) - `test_crossing_districts`,
+`test_district_streaming` (a fourth toy district) and `test_new_quarters` check it. Nothing else in the
+streamer changed: each new district is data at start-up and nodes on demand, a slice a frame.
+
+`tests/support/m015_probe.gd` (software OpenGL - Mesa llvmpipe, no GPU - at 1280 x 720):
+
+| | |
+| --- | --- |
+| Lincoln Terrace: build | 26.4 ms of work over 7 frames (341 ms start to finish), worst frame 4.6 ms, slowest step the ground, lots and water 3.0 ms |
+| Canal Market: build | 26.0 ms of work over 6 frames (311 ms), worst frame 6.1 ms, slowest step the El train 2.6 ms |
+| The yards built as the fourth district wanted (the square let go) | 25.3 ms over 6 frames; the square's unload 2.0 ms |
+| Driving under the railroad into the terrace: before / at the border | mean 48.7 / 50.8 ms a frame, worst 65.4 / 66.0 ms (the build itself never shows in a frame) |
+| Driving into the market (three built): at the border / after | mean 56.1 / 56.5 ms, worst 74.1 / 98.5 ms |
+| Memory: one / two / three districts built | 117.4 / 129.7 / 139.4 MB static; 3950 / 6336 / 8006 nodes |
+| The ward at home / Lincoln Boulevard with and without its street life | 16.8 / 14.8 and 16.4 fps |
+| In the Paradise (the band, the dancers) / in the Canal Market Hall | 17.2 / 14.8 fps |
+| Market Street under the El, with and without its street life | 14.0 / 15.6 fps |
+| Market Street in fog / in rain | 9.2 / 12.0 fps |
+
+`tests/support/m013_probe.gd` on the M015 code, against M014 (same machine, same renderer): Marlowe
+Avenue clear / rain / fog 16.4 / 13.6 / 10.8 fps (M014 17.2 / 14.4 / 11.6), the gaming room 16.4 (17.6),
+loading at the wheel in Halloran Square 433 ms (341); static memory after the run 128.8 MB (114.5).
+About 1 fps lower throughout - at the edge of the 1-2 fps the same build varies by between runs, and in
+line with the street life M015 added (about 1.5 fps where it is busiest). The extra memory is the two
+new districts' data made at start-up (layouts, map images, grime, ground shadows, fog cover) and M015's
+scripts. Three districts built cost about 22 MB more than one. A real GPU has still not been measured;
+the street fog is still the costliest effect.

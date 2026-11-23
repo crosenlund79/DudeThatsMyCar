@@ -168,6 +168,18 @@ pays once, also across a save written and read back through the format). A film 
 `game.films.hand_over(kind, film, follow_rate)` / `take_back(target)`. Lines and choices stay in
 `Conversations` / `JobLines`; there is no generic story format.
 
+**M015: the new quarters (`src/quarters/`).** The rooms of Canal Market and Lincoln Terrace follow
+the same split. `Quarters` (pure, in `Rackets` as `quarters`) holds Danny's priced, once-a-night
+dealings there and `QuarterLeads` the three pieces of business that start there (stall insurance,
+the State's Attorney's man, the bandleader's card). `QuarterTalk` writes their pages:
+`Conversations._say` hands it the new people (`QuarterTalk.handles`) and any `lead_` step, and
+`Conversations.open` lets it add the leads' words to Rourke's and the Bird's first page. It keeps
+only a **weak** reference back to `Conversations` - the two refer to each other, and a strong pair
+kept a freed scene's game alive (`test_scene_cleanup`). `QuarterLife` is a `JobDirector`: the
+`quarter` effect (a coffee, a dance passing four minutes, a tune), Kaz Wrobel's fight and hours,
+and the Paradise's band and dancers, made in `district_ready` and dropped in `district_unloading`.
+The case sheets for the leads are three more functions in `Casebook`; the work marks follow.
+
 ## 8. The save
 
 - One JSON file (`user://chicago1932_save.json`); written after deals, hands, films, on sleeping and

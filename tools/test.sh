@@ -34,7 +34,7 @@ TIER="${1:-}"
 
 PLAYTHROUGHS="test_a_nights_work test_the_city_has_ears test_dangerous_company test_a_job_for_rourke \
 test_beyond_riverside_ward test_the_city_doesnt_sleep test_the_darker_side test_power_and_vice \
-test_city_behind_closed_doors test_the_house_always_wins"
+test_city_behind_closed_doors test_the_house_always_wins test_the_city_breathes"
 
 all_scripts() { find tests/unit tests/integration -name 'test_*.gd' | sort; }
 
