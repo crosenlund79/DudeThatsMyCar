@@ -3,8 +3,9 @@ extends Control
 ## M012: the game menu on Esc - a worn leather case with brass corners, the
 ## entries down its left side in gilt, and a page of old paper on the right:
 ## Resume, Save the game, Load the last save, the Notebook (what is on Danny's
-## plate tonight), Controls (every key), Sound (the six levels), Cheats (none
-## in this build) and Save and quit. The world waits underneath (the game
+## plate tonight), Controls (every key), Sound (the six levels), Developer
+## tools (M015: for testing - switched on here first; the game's DevTools
+## lists them) and Save and quit. The world waits underneath (the game
 ## pauses it). Presentation and navigation only: the game does the saving,
 ## loading and quitting when `handle_key` / a click asks for it.
 ##
@@ -17,7 +18,7 @@ signal action(what: String)
 
 const ENTRIES := [
 	["resume", "Resume"], ["save", "Save the game"], ["load", "Load the last save"], ["notebook", "Notebook"],
-	["controls", "Controls"], ["sound", "Sound"], ["cheats", "Cheats"], ["quit", "Save and quit"],
+	["controls", "Controls"], ["sound", "Sound"], ["cheats", "Developer tools"], ["quit", "Save and quit"],
 ]
 ## Every key, as the Controls page lists it.
 const CONTROLS := [
@@ -35,9 +36,8 @@ const CONTROLS := [
 		["Esc", "get up from the table"]]],
 	["IN A FIGHT", [["Space", "throw the punch while the needle is in the bright zone"]]],
 ]
-## Cheats: none in this build. One {id, name} per cheat when there are some -
-## the page lists them, greyed out, until a build turns them on.
-const CHEATS: Array = []
+## M015: the developer tools' page shows this many tools at a time (a long list scrolls with the cursor).
+const DEV_ROWS := 12
 
 const INK := Color("2a1a10")
 const INK_DIM := Color("2a1a10", 0.62)
@@ -57,6 +57,14 @@ var notebook: Array = []
 var status := ""
 ## Whether there is a save to go back to (Load is greyed out otherwise).
 var can_load := true
+## M015: the developer tools - switched on (the player's preference), their
+## categories as the game lists them ([{name, tools: [{id, name, ask}]}]), and
+## where the cursor is on that page.
+var dev_on := false
+var dev_categories: Array = []
+var dev_cat := 0
+var dev_row := 0
+var _dev_confirm := ""
 ## The six sound levels [name, bar, percent] (labels the game fills in).
 var sound_rows: Array = []
 
@@ -180,6 +188,10 @@ func handle_key(event: InputEvent) -> String:
 	if page == "sound" and (event.is_action("ui_up") or event.is_action("ui_down") or event.is_action("ui_left")
 			or event.is_action("ui_right")):
 		return "sound"
+	if page == "cheats" and not event.is_action(CityInput.MENU):
+		var dev := _dev_key(event)
+		if dev != "?":
+			return dev
 	if event.is_action(CityInput.MENU):
 		if page != "":
 			show_page("")
@@ -213,6 +225,64 @@ func choose(i: int) -> String:
 			return "load" if can_load else ""
 	show_page(id)
 	return ""
+
+
+## M015: a key on the developer tools' page: "dev_on" (switch them on),
+## "dev:<id>" (use a tool), "" (the page took it), "?" (not the page's key).
+func _dev_key(event: InputEvent) -> String:
+	var accept: bool = event.is_action("ui_accept") or event.is_action(CityInput.INTERACT) or event.is_action(CityInput.HANDBRAKE)
+	if not dev_on:
+		return "dev_on" if accept else "?"
+	if dev_categories.is_empty():
+		return "?"
+	var n := dev_categories.size()
+	if event.is_action("ui_left") or event.is_action(CityInput.LEFT):
+		dev_cat = (dev_cat + n - 1) % n
+	elif event.is_action("ui_right") or event.is_action(CityInput.RIGHT):
+		dev_cat = (dev_cat + 1) % n
+	elif event.is_action("ui_up") or event.is_action(CityInput.UP):
+		dev_row = maxi(0, dev_row - 1)
+		_dev_confirm = ""
+		_refresh()
+		return ""
+	elif event.is_action("ui_down") or event.is_action(CityInput.DOWN):
+		dev_row = mini((dev_categories[dev_cat].tools as Array).size() - 1, dev_row + 1)
+		_dev_confirm = ""
+		_refresh()
+		return ""
+	elif accept:
+		return dev_pick(dev_row)
+	else:
+		return "?"
+	dev_row = 0
+	_dev_confirm = ""
+	_refresh()
+	return ""
+
+
+## Tool `i` of the category on show: a tool that throws something away asks
+## first (a second Enter or click goes ahead). Returns "dev:<id>" or "".
+func dev_pick(i: int) -> String:
+	var tools: Array = dev_categories[dev_cat].tools if dev_cat < dev_categories.size() else []
+	if i < 0 or i >= tools.size():
+		return ""
+	dev_row = i
+	var tool: Dictionary = tools[i]
+	if String(tool.ask) != "" and _dev_confirm != String(tool.id):
+		_dev_confirm = String(tool.id)
+		status = "%s  Enter again to go ahead." % tool.ask
+		_refresh()
+		return ""
+	_dev_confirm = ""
+	return "dev:" + String(tool.id)
+
+
+func _on_dev_input(event: InputEvent, i: int) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var what := dev_pick(i)
+		if what != "":
+			action.emit(what)
+		accept_event()
 
 
 func _on_entry_input(event: InputEvent, i: int) -> void:
@@ -289,12 +359,32 @@ func _refresh() -> void:
 			_heading("Sound")
 			_page_box.add_child(_sound_box)
 		"cheats":
-			_heading("Cheats")
-			if CHEATS.is_empty():
-				_text("None in this build. When there are some, they will be listed here - and stay switched off until "
-					+ "you switch them on.")
-			for c in CHEATS:
-				_page_box.add_child(_label("·  " + String(c.name), _serif, 16, INK_DIM))
+			_heading("Developer tools")
+			var note := _label("For testing the game - not part of it. Every tool works through the game itself; nothing is "
+				+ "saved until the game saves.", _serif, 13, INK_DIM)
+			note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			note.custom_minimum_size = Vector2(CARD_SIZE.x - 76, 0)
+			_page_box.add_child(note)
+			if not dev_on:
+				_text("Switched off.  Enter: switch them on (they stay on in later games until switched off here).")
+			elif not dev_categories.is_empty():
+				dev_cat = clampi(dev_cat, 0, dev_categories.size() - 1)
+				var cat: Dictionary = dev_categories[dev_cat]
+				var tools: Array = cat.tools
+				dev_row = clampi(dev_row, 0, maxi(0, tools.size() - 1))
+				_sub("‹  %s  ›      %d of %d" % [cat.name, dev_cat + 1, dev_categories.size()])
+				var first := clampi(dev_row - DEV_ROWS / 2, 0, maxi(0, tools.size() - DEV_ROWS))
+				for i in range(first, mini(tools.size(), first + DEV_ROWS)):
+					var on := i == dev_row
+					var asks: bool = String(tools[i].ask) != ""
+					var l := _label(("›  " if on else "    ") + String(tools[i].name) + ("   (asks first)" if asks else ""),
+						_serif_bold if on else _serif, 14, ACCENT if on else INK)
+					l.mouse_filter = Control.MOUSE_FILTER_STOP
+					l.gui_input.connect(_on_dev_input.bind(i))
+					_page_box.add_child(l)
+				if tools.size() > DEV_ROWS:
+					_page_box.add_child(_label("    (%d more: Up / Down)" % (tools.size() - DEV_ROWS), _serif, 12, INK_DIM))
+				_page_box.add_child(_label("Left / Right: another kind     Up / Down: choose     Enter or a click: use", _serif, 12, INK_DIM))
 		"quit":
 			_heading("Save and quit")
 			_text("Saves the game where it stands and closes it. Next time it goes on from here.")

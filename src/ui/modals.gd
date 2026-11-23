@@ -97,6 +97,8 @@ func open_menu(on: bool) -> void:
 	if on:
 		hud.game_menu.notebook = Notebook.entries(game.rackets, game.clock.minute)
 		hud.game_menu.can_load = save_path != "" and FileAccess.file_exists(save_path)
+		hud.game_menu.dev_on = bool(game.prefs.get_pref("dev_tools"))  # M015
+		hud.game_menu.dev_categories = game.dev.menu_list() if hud.game_menu.dev_on else []
 	hud.set_paused(on)
 	hud.show_sound(game.settings, sound_row)
 	game.mouse(on)
@@ -131,6 +133,20 @@ func menu_action(what: String) -> void:
 		"quit":
 			game.save()
 			root.get_tree().quit()
+		"dev_on":  # M015: the developer tools switched on (a preference)
+			game.prefs.set_pref("dev_tools", true)
+			hud.game_menu.dev_on = true
+			hud.game_menu.dev_categories = game.dev.menu_list()
+			hud.game_menu.say("Developer tools switched on - for testing.")
+		_:
+			if what.begins_with("dev:"):  # M015: a developer tool
+				var out := game.dev.run(what.substr(4))
+				if bool(out.close):
+					if String(out.text) != "":
+						hud.show_notice(String(out.text))
+				else:
+					hud.game_menu.dev_categories = game.dev.menu_list()
+					hud.game_menu.say(String(out.text))
 
 
 ## M006: the map of the whole city, on (M) or off (M or Esc). The world waits

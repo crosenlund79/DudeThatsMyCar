@@ -3,7 +3,7 @@ extends GutTest
 ## under way in Danny's own terms (nothing when nothing is); a gun drawn with H
 ## stays out until put away, keeps its rounds and is put away by H; the menu
 ## goes round its entries, opens pages, goes back with Esc and asks the game to
-## resume, save, load or quit; Cheats is a page of none.
+## resume, save, load or quit; M015: Cheats is the developer tools' page.
 
 
 ## A night with nothing of its own under way (no crate, no reel tonight).
@@ -122,7 +122,8 @@ func test_the_controls_page_lists_every_key() -> void:
 	for want in ["W A S D", "Left Shift", "Left click", "Tab", "H", "E", "1 - 4", "Space", "M", "C", "F1", "Esc",
 			"Backspace", "accelerate", "handbrake", "get out", "spin", "pull", "punch"]:
 		assert_string_contains(all, want)
-	assert_eq(GameMenu.CHEATS, [], "no cheats in this build")
+	# M015: the Cheats placeholder became the developer tools
+	assert_true(GameMenu.ENTRIES.any(func(e: Array) -> bool: return e[0] == "cheats" and e[1] == "Developer tools"))
 
 
 func _key(action: String) -> InputEventAction:

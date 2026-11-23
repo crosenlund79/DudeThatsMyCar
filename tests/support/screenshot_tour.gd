@@ -862,6 +862,23 @@ func _run(shots: Array) -> void:
 				await _frames(10)
 				await _shot(s, false)
 				main.modals.open_menu(false)
+			"m015_dev_tools":
+				# M015: the developer tools, switched on, the rooms' list (a tool chosen)
+				main.weather.force("clear")
+				_teleport_walker(Vector2(2350, 600), PI * 0.3)
+				await _frames(20)
+				main.game.prefs.set_pref("dev_tools", true)
+				main.modals.open_menu(true)
+				main.hud.game_menu.show_page("cheats")
+				var cats: Array = main.hud.game_menu.dev_categories
+				for k in cats.size():
+					if cats[k].name == "Go into a room":
+						main.hud.game_menu.dev_cat = k
+				main.hud.game_menu.dev_row = 3
+				main.hud.game_menu.say("Developer tools switched on - for testing.")
+				await _frames(10)
+				await _shot(s, false)
+				main.modals.open_menu(false)
 			"city_map_civic":
 				# M011: the city map close over Halloran Park: City Hall, the mayor's house (with its address), the aldermen
 				main.weather.force("clear")

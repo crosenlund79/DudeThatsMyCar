@@ -53,6 +53,25 @@ func update(delta: float, running: bool) -> void:
 	hud.set_clock(game.rackets.night, clock.text(), clock.is_late())
 
 
+## M015 (developer tools): `minutes` of the night pass at once, a minute at a
+## time, with everything that moves with the clock (the ward's businesses, the
+## incidents, the weather, the jobs) - never past dawn. Then the hour's
+## consequences and the clock on the HUD, as every frame.
+func pass_minutes(minutes: float) -> void:
+	var clock := game.clock
+	var left := minutes
+	while left > 0.0 and clock.minute < float(game.night_rules.dawn_minute):
+		var step := minf(1.0, left)
+		var before := clock.minute
+		clock.set_time(clock.minute + step)
+		game.rackets.town.advance(clock.minute - before)
+		game.incident_director.advance()
+		game.weather.advance(clock.minute)
+		game.missions.clock(clock.minute, 0.0)
+		left -= step
+	update(0.0, false)
+
+
 ## M010: sitting with Space held, the night passes FAST_TIME times as fast -
 ## but never past the next moment that must not be missed (it slows to normal
 ## a couple of minutes before). M015: at the card table, POKER_TIME (0 while

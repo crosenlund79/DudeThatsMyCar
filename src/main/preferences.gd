@@ -1,12 +1,13 @@
 class_name Preferences
 extends RefCounted
 ## M015: the player's own preferences for how the game is played (not the
-## save: they hold across games) - the wheel's betting timer so far. Kept in
+## save: they hold across games) - the wheel's betting timer, whether the
+## developer tools are switched on. Kept in
 ## the settings file beside the sound levels (section "game"); with no path
 ## (tests, screenshots) they live in memory only and nothing is written.
 
 const SECTION := "game"
-const DEFAULTS := {"roulette_pace": RouletteRules.DEFAULT_PACE}
+const DEFAULTS := {"roulette_pace": RouletteRules.DEFAULT_PACE, "dev_tools": false}
 
 var path := ""
 var values := {}
