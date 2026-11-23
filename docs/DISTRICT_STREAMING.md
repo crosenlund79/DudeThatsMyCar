@@ -345,3 +345,47 @@ effect, and it still covers the street outside the gaming room's walls (9.6 fps 
 fog out). The wheel's screen is the heaviest table screen under software rendering (the wheel is
 redrawn every frame now, since it always turns, and the table once a second for its count). Nothing
 was optimised further; a real GPU has still not been measured.
+
+## Milestone 014: under the hood (the same game, measured against M013)
+
+M014 changed the code's organisation only, so everything here is compared with the M013 code (`29835b7`)
+on the same machine, run back to back (software OpenGL - Mesa llvmpipe, no GPU - at 1280 x 720).
+Nothing streams differently: the streamer is unchanged, and a district's content is now registered
+and forgotten by its owners (`Districts`) in the M008-M012 order. The district build's slowest step
+is now called `district_cars` (it was `_district_cars` in main).
+
+`tests/support/m013_probe.gd`, M013 then M014:
+
+| | M013 | M014 |
+| --- | --- | --- |
+| Marlowe Avenue: clear / rain / a downpour | 19.2 / 15.6 / 14.4 fps | 17.2 / 14.4 / 14.8 fps |
+| Marlowe Avenue: fog / rain and fog | 12.8 / 10.4 fps | 11.6 / 10.4 fps |
+| The rain's fall a frame / the regulars' life / Leo's wheel | 0.084 / 0.180 / 0.042 ms | 0.093 / 0.185 / 0.044 ms |
+| The gaming room, regulars about / with rain and fog outside | 17.6 / 10.8 fps | 17.6 / 9.6 fps |
+| At the wheel (bets open / ball dropping), the Owl, the card table | 15.2 / 13.8, 17.0, 17.3 fps | 14.0 / 14.8, 17.5, 17.7 fps |
+| Loading a game saved at the wheel in Halloran Square | 342 ms, then 10.8 fps | 341 ms, then 10.8 fps |
+| Memory after the run | 112.0 MB static, 5895 nodes | 114.5 MB static, 5896 nodes |
+
+Under software rendering the same scene varies by 1-2 fps from run to run (clear weather measured
+19.6 and 19.2 on M013, 19.2, 18.4 and 17.2 on M014 over five runs); no figure moved beyond that
+spread in both directions. The script side, measured headless in the street in the rain (process
+and physics time a frame over 900 frames, three runs each), is 4.6-5.5 / 3.9-6.0 ms on M013 and
+4.4-4.7 / 2.7-3.0 ms on M014, with the same nodes processing. `tests/support/district_probe.gd`
+gives the same building work (the yards 20.0 ms over 5 frames, M013 20.5; Halloran Square 27.6 ms
+over 6, M013 27.2) and the same frame times at the borders within noise.
+
+Memory: the first refactoring step had raised the static memory at start-up by about 42 MB, a
+Godot 4.7 effect of how `main.gd` made the directors (see `docs/ARCHITECTURE.md`, section 3). After
+the fix: scripts compiled 47.6 MB (M013 45.4), one scene 124.2 MB (M013 121.9), the scene freed
+54.0 MB (M013 60.7); each district adds the same as at M013 (the yards +9.6 MB). The rest of the
+difference is the 27 new scripts.
+
+Screenshots (`tests/support/screenshot_tour.gd`, 27 shots): two runs of the M013 code differ from each
+other by a mean of 0.0-18.7 levels a pixel (rain, traffic, the camera's easing and the wheel's
+unseeded draw are not frame-exact). Each M014 shot differs from the nearer M013 run by at most about
+1.2 times what the two M013 runs differ by (the club: 14.5 against 12.6; the wheel: 1.06 against
+0.88), and `city_map` and `job_map` match the second M013 run exactly. Side by side, the shots that
+differ most show the same scene - the same people, lines, clock, money and cars - with the rain, the
+traffic, the camera's last few pixels or the wheel's last number apart. A few M014 shots are in
+`docs/screenshots/m014/`.
+
