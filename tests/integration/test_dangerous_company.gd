@@ -113,7 +113,7 @@ func test_a_night_of_dangerous_company() -> void:
 	assert_true(main.stage.singing() and music.playing, "the Bird sings")
 	assert_true(lefty.is_down(), "Lefty stays dead")
 	assert_false(main.officer.is_down())
-	assert_false(main.fleet.thefts.is_stolen(0), "the car is back with its owner")
+	assert_true(main.fleet.thefts.is_stolen(0), "M015: the car he took is still the car he took (nothing parks it again)")
 	# saved and loaded
 	var fees: int = r.doctor_fees
 	main.save_game()

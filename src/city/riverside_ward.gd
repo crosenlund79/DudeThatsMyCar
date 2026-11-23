@@ -424,6 +424,7 @@ func _cars_and_spawn() -> void:
 		{"type": "coupe", "paint": 0, "pos": Vector2(2600, 1432), "rot": PI, "owner": "somebody on Pruitt Street"},
 		{"type": "sedan", "paint": 1, "pos": Vector2(2585, 506), "rot": PI, "owner": "danny"},  # M003: outside your flat - yours
 		{"type": "police", "paint": 0, "pos": Vector2(1835, 1065), "rot": PI, "owner": "the police"},  # the squad car, in the alley behind Novak's
+		{"type": "lefty", "paint": 0, "pos": Vector2(1262, 1432), "rot": 0.0, "owner": "lefty"},  # M015: Lefty's speedster at the kerb by his corner
 	]
 	# The beat cop walks a short round on the north side of Marlowe Avenue by
 	# the Kessler Street corner, past the newsstand and his call box.

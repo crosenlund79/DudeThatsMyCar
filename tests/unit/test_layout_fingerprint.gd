@@ -8,7 +8,7 @@ extends GutTest
 ##
 ## Record (reference build only): GOLDEN_RECORD=1 godot ... -gtest=res://tests/unit/test_layout_fingerprint.gd
 
-const GOLDEN := "res://tests/golden/m013/layouts.json"
+const GOLDEN := "res://tests/golden/m015/layouts.json"  # (M013 recording kept in tests/golden/m013/)
 
 
 func _r(x: float) -> float:

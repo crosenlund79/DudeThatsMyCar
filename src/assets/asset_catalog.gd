@@ -26,6 +26,8 @@ const SPECS := {
 		"notes": "Roadster, top-down, nose right, centred, transparent background; front tyres left out. Headlamps at (32, +-7.6), tail lamps at (-35.5, +-7.2) display px."},
 	"cars/coupe_b": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
 		"notes": "Roadster, second paint scheme; same contract."},
+	"cars/lefty": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
+		"notes": "M015: Lefty Moran's own speedster (one of a kind): black, a closed cream roof, chrome exhaust pipes out of the hood sides, a trunk on the rack; top-down, nose right, front tyres left out. Headlamps at (32, +-7.6), tail lamps at (-35, +-7.4) display px."},
 	"cars/police": {"kind": "sprite", "template_size": Vector2i(176, 80), "display_size": Vector2(80, 36),
 		"notes": "Police squad car (sedan body): black, POLICE across the roof, siren, spotlight."},
 	"cars/dump_truck": {"kind": "sprite", "template_size": Vector2i(280, 110), "display_size": Vector2(112, 44),

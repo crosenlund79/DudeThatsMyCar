@@ -80,6 +80,7 @@ var errands: Errands
 var freight: FreightJobDirector
 var cafe: CafeJobDirector
 var last_song: LastSong
+var leftys_car: LeftysCarDirector  ## M015: Lefty Moran's speedster (src/rivals/)
 var modals: Modals
 var saves: Saves
 

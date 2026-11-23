@@ -82,9 +82,14 @@ func test_a_dead_cop_sees_nothing() -> void:
 	assert_eq(main.fleet.thefts_witnessed, 0)
 
 
-func test_a_new_night_the_cars_are_back_with_their_owners() -> void:
+## M015: the cars stay where they were left through the night, so a car
+## Danny took stays taken - getting back in the next evening is no new theft.
+func test_a_car_taken_stays_taken() -> void:
 	var c: Car = main.fleet.cars[0]
 	await _get_in(c)
+	assert_eq(main.fleet.theft_incidents, 1)
 	main.night.sleep()
 	await wait_physics_frames(3)
-	assert_false(main.fleet.thefts.is_stolen(0))
+	assert_true(main.fleet.thefts.is_stolen(0), "still the car he took")
+	await _get_in(c)
+	assert_eq(main.fleet.theft_incidents, 1, "one theft per car, ever")

@@ -47,8 +47,8 @@ func test_sleeping_brings_the_next_evening_and_keeps_what_he_carries() -> void:
 	var money: int = main.rackets.money
 	# the night goes on: a car moved, the copper on the hunt, the clock late
 	var c := roadster()
-	var home_spot: Vector2 = c.global_position
 	await park(c, Vector2(1000, 1500), 0.0)
+	var left_at: Vector2 = c.global_position
 	main.officer.hear_gunshot(main.officer.body.global_position, 500.0)
 	main.clock.set_time(main.night_rules.home_minute + 30)
 	await wait_physics_frames(2)
@@ -64,7 +64,7 @@ func test_sleeping_brings_the_next_evening_and_keeps_what_he_carries() -> void:
 	assert_eq(walker().gun.spare, 3, "rounds kept")
 	assert_false(main.rackets.has_paid("grocery"), "protection is due again")
 	assert_gt(main.rackets.barber_stock(), 0, "Sal's man brought more rye in the day")
-	assert_true(c.global_position.distance_to(home_spot) < 1.0, "the roadster is back at its curb")
+	assert_true(c.global_position.distance_to(left_at) < 1.0, "M015: the roadster is where he left it (nothing parks it again)")
 	assert_eq(main.officer.brain.state, OfficerBrain.State.PATROL, "the copper is back on his round")
 	assert_eq(main.interiors.current.id, "home", "waking at home")
 	assert_true(main.hud.wake_screen.visible, "a moment of black with the night's title")

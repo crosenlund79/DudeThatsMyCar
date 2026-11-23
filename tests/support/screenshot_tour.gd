@@ -619,6 +619,15 @@ func _run(shots: Array) -> void:
 				await _shot(s, false)
 				if s != "back_room":
 					main.back_rooms.leave_poker()
+			"m015_leftys_car":
+				# M015: Lefty Moran on his corner outside Doyle's Garage, his speedster at the kerb
+				main.weather.force("clear")
+				var lc: Car = main.leftys_car.car()
+				_teleport_walker(lc.global_position + Vector2(-170, 60), 0.0)
+				cmd = PlayerCommand.make(Vector2.ZERO, false, false, lc.global_position)
+				await _frames(40)
+				await _shot(s, false)
+				cmd = PlayerCommand.new()
 			"m013_gaming_room":
 				# M013: the gaming room near midnight - the regulars at the rail, at their machines and
 				# tables, Leo at the wheel, two of them passing the time

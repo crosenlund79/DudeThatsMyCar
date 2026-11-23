@@ -188,6 +188,7 @@ var errands: Errands
 var freight: FreightJobDirector
 var cafe: CafeJobDirector
 var last_song: LastSong
+var leftys_car: LeftysCarDirector  ## M015: Lefty's speedster (src/rivals/)
 var back_rooms: BackRooms  ## the card table, the wheel, the machines (src/gaming/)
 var fleet: Fleet  ## the parked cars (src/driving/)
 var police: PoliceForce  ## the beat cops of every built district (src/police/)
@@ -245,6 +246,7 @@ func _ready() -> void:
 	freight = missions.add(game.make(&"freight", FreightJobDirector))
 	cafe = missions.add(game.make(&"cafe", CafeJobDirector))
 	last_song = missions.add(game.make(&"last_song", LastSong))
+	leftys_car = missions.add(game.make(&"leftys_car", LeftysCarDirector))  # M015
 	_load_game()
 	layout = RiversideWard.create()
 	city = City.new()

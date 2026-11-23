@@ -14,7 +14,7 @@ extends "res://tests/support/city_test.gd"
 ## their places. (18-19) Saved and loaded in the gaming room: his money, the
 ## machines' state and his stakes as they were; a fresh round at the wheel.
 ## (20) Business as usual with Augie, then home to bed; the next night the
-## wheel turns again, the machines remember, the roadster is back with its owner.
+## wheel turns again, the machines remember, the roadster is where he left it (M015).
 
 const SAVE := "user://test_the_house_always_wins.json"
 
@@ -276,13 +276,13 @@ func test_two_nights_of_the_house_always_wins() -> void:
 	await talk_to("copper_owl", "augie")
 	assert_eq(main.dialogue.talking, "augie")
 	await answer_with("bye")
+	var roadster_at: Vector2 = main.fleet.cars[main.fleet.ids.find(id)].global_position
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(3)
 	assert_eq(main.rackets.night, 2)
 	assert_true(main.back_rooms.wheel.betting_open(), "the wheel turns again tonight")
 	assert_eq(main.back_rooms.slot_machines[0].stake, stake, "the machines remember")
-	var spec: Dictionary = main.fleet.specs[main.fleet.ids.find(id)]
-	assert_lt(main.fleet.cars[main.fleet.ids.find(id)].global_position.distance_to(spec.pos), 1.0, "the roadster back with its owner")
+	assert_lt(main.fleet.cars[main.fleet.ids.find(id)].global_position.distance_to(roadster_at), 1.0, "M015: the roadster where he left it (nothing parks it again)")
 	await _reload()
 	assert_eq(main.rackets.night, 2)

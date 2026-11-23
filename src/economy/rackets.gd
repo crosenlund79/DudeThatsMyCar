@@ -368,6 +368,8 @@ var freight := FreightJob.new()
 ## "truth", "kind", "guard", or "silent"), and the night it happened.
 var bird_scene := ""
 var bird_scene_night := -1
+## M015: what Lefty Moran knows about his car.
+var lefty_car := LeftysCar.new()
 
 
 ## M010: Danny takes Rourke's café job on: Eddie will sell him the parcel.
@@ -575,6 +577,19 @@ func _hear(person: String, r: Dictionary) -> void:
 
 ## The newest piece of talk a person can pass on to Danny (or {}).
 ## What a person has heard and will pass on to Danny: talk about Danny first,
+## M015: Lefty knows Danny took his car (`how`: he saw it taken, saw him
+## driving it, or heard): he remembers it, and the talk goes round from him.
+func lefty_car_taken(how: String) -> void:
+	memory.remember("lefty", "took_car", night, how)
+	rumours.start("lefty_car", "lefty", night, {"text": "Lefty's speedster"})
+
+
+## M015: his car stands at his kerb again: remembered, and talked about.
+func lefty_car_back() -> void:
+	memory.remember("lefty", "returned_car", night)
+	rumours.start("lefty_car_back", "lefty", night, {"text": "Lefty's speedster"})
+
+
 ## newest first; the city's own news (M009: a fight he had no part in, a show
 ## cancelled) only when there is nothing about him.
 func gossip(person: String) -> Dictionary:
@@ -587,7 +602,7 @@ func gossip(person: String) -> Dictionary:
 				news = r
 		elif r.kind in ["short", "threat", "favour", "lie", "shot", "job_deal", "job_backed_down",
 				"job_beaten", "job_killed", "job_lost", "job_returned", "job_still", "crate_run", "crate_dropped",
-				"reel_returned", "cafe_seen"] or String(r.kind).begins_with("street_"):
+				"reel_returned", "cafe_seen", "lefty_car", "lefty_car_back"] or String(r.kind).begins_with("street_"):
 			return r
 	return news
 
@@ -605,7 +620,8 @@ func to_dict() -> Dictionary:
 		"incidents": incidents.duplicate(true), "doctor_fees": doctor_fees, "job": job.to_dict(),
 		"opportunities": opportunities.to_dict(), "loan": loan.to_dict(), "parcels": parcels,
 		"parcel_wanted": parcel_wanted, "cafe": cafe.to_dict(), "callouts": callouts.to_dict(),
-		"freight": freight.to_dict(), "bird_scene": bird_scene, "bird_scene_night": bird_scene_night}
+		"freight": freight.to_dict(), "bird_scene": bird_scene, "bird_scene_night": bird_scene_night,
+		"lefty_car": lefty_car.to_dict()}
 
 
 ## Restores a saved game; a save from before M005 (no businesses yet) starts
@@ -629,6 +645,9 @@ func from_dict(d: Dictionary) -> void:
 	freight.from_dict(d.get("freight", {}))
 	bird_scene = String(d.get("bird_scene", ""))
 	bird_scene_night = int(d.get("bird_scene_night", -1))
+	lefty_car = LeftysCar.new()
+	if d.get("lefty_car") is Dictionary:
+		lefty_car.from_dict(d.lefty_car)
 	bottles = clampi(int(d.get("bottles", bottles)), 0, rules.carry_limit)
 	night = maxi(1, int(d.get("night", night)))
 	callouts.night = night

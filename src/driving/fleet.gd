@@ -5,7 +5,12 @@ extends RefCounted
 ## which Danny has taken tonight (M006 CarThefts), whether it is put away with
 ## an unloaded district (M008), what is in its boot (M009) - and the cars in the
 ## save (M013). The cars are children of the game's root, as they always were;
-## the fleet keeps the lists and the rules.
+## the fleet keeps the lists and the rules. M015: the cars stay where they
+## were left through the night and the day - nothing parks them again - and a
+## car Danny took stays taken (one theft per car, ever).
+
+## M015: Danny took a car not his (`index` in `cars`; `witnessed`: a copper saw it).
+signal car_taken(index: int, witnessed: bool)
 
 const CAR_SCENE := preload("res://src/driving/car.tscn")
 const VEHICLES := {
@@ -14,6 +19,7 @@ const VEHICLES := {
 	"police": preload("res://src/driving/vehicles/police.tres"),
 	"dump_truck": preload("res://src/driving/vehicles/dump_truck.tres"),  # M009
 	"school_bus": preload("res://src/driving/vehicles/school_bus.tres"),
+	"lefty": preload("res://src/driving/vehicles/lefty.tres"),  # M015: Lefty Moran's own speedster
 }
 ## M009: a car within this much of Novak's door counts as "out front" for Dutch's crate.
 const CRATE_DROP_REACH := 280.0
@@ -135,11 +141,13 @@ func entered(c: Car) -> void:
 	var i := cars.find(c)
 	if thefts.get_in(i):
 		theft_incidents += 1
-		if game.police.officers().any(func(o: PoliceOfficer) -> bool: return o.witness_theft(c.global_position)):
+		var seen := game.police.officers().any(func(o: PoliceOfficer) -> bool: return o.witness_theft(c.global_position))
+		if seen:
 			thefts_witnessed += 1
 			game.hud.show_notice("The beat cop saw you take it!")
 		else:
 			game.hud.show_notice("Not your car. Nobody saw you take it.")
+		car_taken.emit(i, seen)
 	game.camera.target = c
 	(c.get_node("Lights") as VehicleLights).set_on(true)
 	game.vehicle_audio.attach(c)
@@ -159,21 +167,21 @@ func prompt_for(c: Car) -> String:
 		else "E   Take the %s (%s)" % [c.vehicle.params.display_name, "taken" if thefts.is_stolen(i) else "not yours"]
 
 
-## A new night: every car back at its parking place with its owner, nothing in
-## a boot, put away where its district is not built.
+## A new night: nothing in a boot (M009: whatever was in one was fetched in
+## the night). M015: the cars are where they were left, and a car Danny took
+## stays taken (M006-M014 parked every car again and cleared the thefts).
 func new_night() -> void:
-	thefts.clear()  # the cars are back with their owners
 	for c in cars:
-		set_cargo(c, false)  # M009: whatever was in a boot was fetched in the night
+		set_cargo(c, false)
 
 
-## (after the night's other resets, as M013 had it)
+## (after the night's other resets, as M013 had it) M015: every car stays where
+## it stands - only at rest, and put away where its district is not built.
 func back_to_places() -> void:
-	for i in cars.size():
-		var spec: Dictionary = specs[i]
-		cars[i].place(Transform2D(spec.rot, spec.pos))
-		cars[i].driven = false
-		put_away(cars[i], not game.world.is_ready(game.world.district_at(spec.pos)))
+	for c in cars:
+		c.driven = false
+		c.place(Transform2D(c.global_rotation, c.global_position))  # at rest where it stands
+		put_away(c, not game.world.is_ready(game.world.district_at(c.global_position)))
 
 
 # ------------------------------------------------------------------ cargo (M009)

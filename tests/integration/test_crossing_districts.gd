@@ -39,7 +39,7 @@ func _drive_south(c: Car, from_y: float, to_y: float) -> Dictionary:
 func test_the_yards_are_not_built_at_the_start() -> void:
 	assert_false(yards_ready(), "Danny wakes at home: only the ward is built")
 	assert_eq(main.world.ready_ids(), ["riverside"] as Array[String])
-	assert_eq(main.fleet.cars.size(), 9, "the ward's cars only")
+	assert_eq(main.fleet.cars.size(), main.layout.cars.size(), "the ward's cars only")
 	assert_false(main.camera.limit_bottom > 2700, "the camera stays in the ward")
 
 
@@ -82,13 +82,13 @@ func test_until_the_yards_are_built_the_way_is_closed() -> void:
 
 func test_its_own_beat_cop_people_and_cars() -> void:
 	main.world.load_now("yards")
-	assert_eq(main.fleet.cars.size(), 12, "the yards' three parked cars join the list (M009: Brennan's truck too)")
+	assert_eq(main.fleet.cars.size(), main.layout.cars.size() + 3, "the yards' three parked cars join the list (M009: Brennan's truck too)")
 	var cops: Array[PoliceOfficer] = main.police.officers()
 	assert_eq(cops.size(), 2, "the ward's man and the yards' man")
 	var yards_cop: PoliceOfficer = cops[1]
 	assert_true(main.world.layouts.yards.play_area.has_point(yards_cop.body.global_position), "on his own beat")
 	assert_eq(yards_cop.navigator, main.world.navigator_of("yards"))
-	assert_true(main.fleet.thefts.owner(10).contains("tannery"), "whose car is whose, there too")
+	assert_true(main.fleet.thefts.owner(main.fleet.ids.find("yards/1")).contains("tannery"), "whose car is whose, there too")
 
 
 func test_freed_far_away_and_built_again_without_duplicates() -> void:
@@ -121,7 +121,7 @@ func test_freed_far_away_and_built_again_without_duplicates() -> void:
 		await wait_physics_frames(1)
 	assert_true(yards_ready())
 	assert_eq(main.world.stats.yards.builds, 2)
-	assert_eq(main.fleet.cars.size(), 12, "no car made twice")
+	assert_eq(main.fleet.cars.size(), main.layout.cars.size() + 3, "no car made twice")
 	assert_true(c.visible, "his sedan is back")
 	assert_eq(c.global_position, parked_at)
 	assert_eq(main.police.officers().size(), 2, "one beat cop, not two")

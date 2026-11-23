@@ -261,12 +261,16 @@ func test_an_old_save_with_a_crate_and_no_cars() -> void:
 	assert_eq(main.rackets.opportunities.crate, "taken", "the crate back on Dutch's kerb, not lost")
 
 
-func test_sleeping_still_brings_them_home() -> void:
+## M015: sleeping parks nothing again - his sedan is where he left it the
+## next evening, and after the game is loaded (M013 brought it home).
+func test_sleeping_leaves_them_where_they_stand() -> void:
 	var sedan: Car = main.fleet.my_car()
-	var spec: Dictionary = main.fleet.specs[main.fleet.cars.find(sedan)]
 	await park(sedan, Vector2(2300, 560), 0.0)
+	var left_at := sedan.global_position
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(3)
+	assert_lt(sedan.global_position.distance_to(left_at), 1.0, "where he left it the next evening")
 	await _reload()
-	assert_lt(main.fleet.my_car().global_position.distance_to(spec.pos), 1.0, "outside the flat the next evening")
+	assert_lt(main.fleet.my_car().global_position.distance_to(left_at), 1.0, "and after loading the game")
+	assert_eq(main.fleet.cars.filter(func(c: Car) -> bool: return main.fleet.thefts.is_dannys(main.fleet.cars.find(c))).size(), 1, "one sedan, never two")

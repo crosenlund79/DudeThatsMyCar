@@ -388,6 +388,11 @@ func _talk_line(t: Dictionary) -> String:
 			return "Word is the copper %s takes a dollar to look the other way. Somebody tried it." % t.text
 		"shot":
 			return "Word is you put a bullet in %s. People are scared of you, Dimes. Scared ain't the same as loyal." % speaker(t.text)
+		# M015: Lefty Moran's speedster
+		"lefty_car":
+			return "Word is somebody drove off in Lefty Moran's speedster. Lefty's asking around, Dimes - and he's asking about you."
+		"lefty_car_back":
+			return "Word is Lefty's speedster turned up back on his kerb, not a scratch on her. Lefty's cooled off some."
 	return ""
 
 
@@ -629,6 +634,10 @@ func _lefty(step: String, context: Dictionary) -> Dictionary:
 	var night: int = context.get("night", rackets.night)
 	match step:
 		"hello":
+			# M015: his car (gone, or back after Danny took it) comes first
+			var car_line := _lefty_car_line()
+			if car_line != "":
+				return _page("lefty", car_line, [{"id": "bye", "text": "I'll keep an eye out."}])
 			# M007: once Rourke's job has brought Danny to him
 			if job.outcome != "" and job.outcome != "killed":
 				return _job_page("lefty_after_" + job.outcome)
@@ -833,6 +842,16 @@ func _told(who: String, text: String, options: Array = [], effects: Dictionary =
 
 
 ## Danny's ways of settling it with Lefty (the talk, a threat, his fists, or leaving).
+## M015: what Lefty says about his car when Danny walks up ("" when nothing).
+func _lefty_car_line() -> String:
+	var m := rackets.lefty_car
+	if m.knows == "gone":
+		return "Somebody took my car off this kerb. Black speedster, cream top - you can't miss her. You hear anything, Mercer, you tell me first."
+	if m.knows == "danny" and m.returned and rackets.memory.recent("lefty", "returned_car", rackets.night, 2) > 0:
+		return "My car's back on the kerb. Smartest thing you ever did, Mercer. Don't do it again."
+	return ""
+
+
 func _lefty_choices(job: RourkeJob, night: int, with_talk: bool = true) -> Array:
 	var opts := []
 	if with_talk:

@@ -2,8 +2,9 @@ class_name CarThefts
 extends RefCounted
 ## Whose car is whose, and which ones Danny has taken tonight (pure). Danny
 ## owns one car; any other he drives off in is stolen - once: getting back
-## into a car he has already taken is not a new theft. The cars are back with
-## their owners by the next evening, so the record is kept for one night.
+## into a car he has already taken is not a new theft. M015: the cars stay
+## where they were left, so the record is kept from night to night (M006-M014
+## kept it for one night, when the cars went back to their owners).
 ## A theft only matters to the police if an officer could see it happen
 ## (in sight range, no building between): PoliceOfficer.witness_theft.
 

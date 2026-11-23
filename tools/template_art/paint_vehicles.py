@@ -215,6 +215,63 @@ def coupe(body="#e3d4ac", fend="#6a1d22", seat="#7b2420", seed=5):
     return finish(grain(img, 3, seed), CW, CH)
 
 
+def lefty_speedster(seed=81):
+    """M015: Lefty Moran's own car - a long-hooded black speedster with a closed cream roof, an ivory pinstripe,
+    chrome exhaust pipes coming out of the hood sides, twin spotlights at the windscreen and a strapped trunk at
+    the back: nothing else in the city looks like it. Nose right, front tyres left out (cars/wheel)."""
+    body, fend, roof = "#17171b", "#232328", "#d8caa4"
+    img = new(CW, CH)
+    tyre_top(img, 22, 3.5, 46, 11, seed)
+    tyre_top(img, 22, 69, 46, 76.5, seed + 1)
+    for y0, y1 in ((11.5, 18), (62, 68.5)):  # running boards
+        paint_shape(img, SP(rrect_pts(50, y0, 116, y1, 2)), "#2b2b30", seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.25)
+    body_pts = [(7, 33), (9, 27), (17, 22), (34, 18.5), (58, 16.5), (98, 17), (112, 19.5), (136, 23), (152, 26.5), (161, 30),
+                (161, 50), (152, 53.5), (136, 57), (112, 60.5), (98, 63), (58, 63.5), (34, 61.5), (17, 58), (9, 53), (7, 47)]
+    paint_shape(img, SP(body_pts), body, seed + 3, outline=OUT, ow=1.8, wob=0.3, tex=0.08, strokes_n=12,
+                stroke_cols=[shade(body, 1.4), shade(body, 0.9)], light=(0.2, -1, 0.5), inner_shadow=0.3)
+    front = [(100, 18.5), (108, 10.5), (122, 5.5), (140, 3.6), (154, 5.5), (164, 10), (171, 16.5), (172.5, 21.5),
+             (167, 23), (156, 21.5), (140, 20), (118, 19.5)]
+    rear = [(58, 17.5), (52, 10), (42, 5), (32, 3.6), (21, 5), (13, 9.5), (10, 15), (12, 19.5), (24, 20), (42, 19)]
+    wings(img, fend, seed + 9, front, rear)
+    # the ivory pinstripe along both sides of the body
+    for y in (19.6, 60.4):
+        line(img, [(S(20), S(y + (2 if y < 40 else -2))), (S(60), S(y)), (S(150), S(y + (6.8 if y < 40 else -6.8)))],
+             "#e9dcb8", 0.9 * SS, 230, blur=0.1)
+    # the strapped trunk on its rack at the back, the tail lamps either side
+    paint_shape(img, SP(rrect_pts(2.5, 27, 12.5, 53, 2)), "#5a3a22", seed + 31, outline=OUT, ow=1.0, wob=0.15, tex=0.3,
+                light=(0, -1, 0.4))
+    for y in (32, 48):
+        line(img, [(S(3), S(y)), (S(12), S(y))], CHROME_DARK, 1.2 * SS, 230)
+    for y in (23.5, 56.5):
+        paint_shape(img, SP(ellipse_pts(11, y, 2.8, 2.5)), "#b3221c", seed + 23, outline=OUT, ow=0.8, wob=0.1)
+        soft_blob(img, S(10.6), S(y - 0.5), S(1.0), S(0.8), "#ffb0a0", 160, 0.4 * SS)
+    # the closed cabin: a cream roof with a small back window, side windows dark
+    paint_shape(img, SP(rrect_pts(52, 21.5, 92, 58.5, 7)), "#1e2a33", seed + 4, outline=OUT, ow=1.2, wob=0.15, tex=0.1)
+    paint_shape(img, SP(rrect_pts(56, 24, 89, 56, 8)), roof, seed + 5, outline=OUT, ow=1.3, wob=0.2, tex=0.18,
+                light=(0.2, -1, 0.6), inner_shadow=0.2)
+    paint_shape(img, SP(rrect_pts(52.5, 32, 56.5, 48, 1.5)), "#3c5566", seed + 6, outline=None, wob=0.05)
+    sheen(img, [(60, 27), (86, 27), (86, 29.5), (60, 29.5)], 70, 1.2)
+    windscreen(img, 92, 99, 23.5, seed + 7, split=True)
+    # twin spotlights on the windscreen posts
+    for y in (22.5, 57.5):
+        paint_shape(img, SP(ellipse_pts(97, y, 2.4, 2.1)), CHROME, seed + 40 + y, outline=OUT, ow=0.7, wob=0.05, light=(1, -1, 0.5))
+    # three chrome exhaust pipes out of each side of the long hood, curving down into the wing
+    for k in range(3):
+        x = 124 + k * 7
+        for top in (True, False):
+            y0 = 25.5 if top else 54.5
+            y1 = 19.0 if top else 61.0
+            line(img, [(S(x), S(y0)), (S(x + 2.5), S((y0 + y1) / 2)), (S(x + 6), S(y1))], CHROME, 1.7 * SS, 250, blur=0.15)
+            line(img, [(S(x + 0.6), S(y0)), (S(x + 3), S((y0 + y1) / 2))], "#ffffff", 0.6 * SS, 160, blur=0.2)
+    line(img, [(S(100), S(40)), (S(157), S(40))], CHROME, 1.2 * SS, 230, blur=0.2)
+    radiator(img, seed + 20, x0=160, half=10)
+    lamp(img, 158, 23, 5.4, seed + 21)
+    lamp(img, 158, 57, 5.4, seed + 22)
+    front_bumper(img, seed + 18, top=22.5, x=170)
+    sheen(img, [(108, 30.5), (152, 32), (152, 34), (108, 33)], 60, 1.6)
+    return finish(grain(img, 3, seed), CW, CH)
+
+
 def wheel(seed=9):
     """Front tyre seen from above: whitewall sidewalls along both long edges, dark tread between."""
     W, H = 48, 20
@@ -401,4 +458,5 @@ ASSETS = {
     "cars/sedan_b": lambda: sedan("#4a1b1e", roof="#2a1213", seed=2),
     "cars/coupe": lambda: coupe("#e3d4ac", "#6a1d22", "#7b2420", seed=5),
     "cars/coupe_b": lambda: coupe("#2e4a3a", "#1c1c1e", "#a0794a", seed=6),
+    "cars/lefty": lambda: lefty_speedster(81),  # M015
 }

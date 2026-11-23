@@ -101,6 +101,17 @@
 			"stolen": false
 		},
 		{
+			"away": false,
+			"cargo": "",
+			"id": "riverside/9",
+			"pos": [
+				1262.0,
+				1432.0
+			],
+			"rot": 0.0,
+			"stolen": false
+		},
+		{
 			"away": true,
 			"cargo": "",
 			"id": "halloran/0",
@@ -303,6 +314,13 @@
 			"verdict": ""
 		},
 		"last_seq": {},
+		"lefty_car": {
+			"how": "",
+			"knows": "",
+			"returned": false,
+			"since": -1.0,
+			"word": false
+		},
 		"loan": {
 			"ammo": 0.0,
 			"lent": 0.0,
@@ -587,6 +605,13 @@
 				"verdict": ""
 			},
 			"last_seq": {},
+			"lefty_car": {
+				"how": "",
+				"knows": "",
+				"returned": false,
+				"since": -1.0,
+				"word": false
+			},
 			"loan": {
 				"ammo": 0.0,
 				"lent": 0.0,

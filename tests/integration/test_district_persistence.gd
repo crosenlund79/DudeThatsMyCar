@@ -66,7 +66,7 @@ func test_saved_in_each_district_and_loaded() -> void:
 		await wait_physics_frames(3)
 		assert_eq(main.hud.district_label.text, l.name.to_upper())
 		assert_true(main.world.is_ready(id), "%s built again" % l.name)
-		assert_eq(main.fleet.cars.size(), 9 + l.cars.size(), "no car twice")
+		assert_eq(main.fleet.cars.size(), main.layout.cars.size() + l.cars.size(), "no car twice")
 	main.save_path = ""
 
 
@@ -97,14 +97,15 @@ func test_a_beat_cop_shot_dead_stays_down_tonight() -> void:
 
 func test_sleeping_puts_every_district_back() -> void:
 	main.world.load_now("halloran")
-	var i: int = 9  # the square's first parked car
+	var i: int = main.fleet.ids.find("halloran/0")  # the square's first parked car
 	var c: Car = main.fleet.cars[i]
 	var spec: Dictionary = main.fleet.specs[i]
 	await park(c, spec.pos + Vector2(300, 0), 0.0)
+	var left_at := c.global_position
 	await talk_to("home", "bed")
 	await answer_with("sleep")
 	await wait_physics_frames(5)
-	assert_eq(c.global_position, spec.pos as Vector2, "back where its owner left it")
+	assert_lt(c.global_position.distance_to(left_at), 1.0, "M015: where Danny left it (nothing parks it again)")
 	assert_true(main.world.state.values().all(func(s: Dictionary) -> bool: return not s.has("officer")), "every beat has its man")
 
 

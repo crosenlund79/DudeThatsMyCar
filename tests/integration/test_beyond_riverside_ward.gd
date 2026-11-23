@@ -115,7 +115,7 @@ func test_a_night_beyond_the_ward() -> void:
 	await answer_with("sleep")
 	await wait_physics_frames(5)
 	assert_eq(main.rackets.night, 2)
-	assert_eq(sedan.global_position, main.fleet.specs[7].pos as Vector2, "his sedan back outside the flat")
+	assert_ne(sedan.global_position, main.fleet.specs[7].pos as Vector2, "M015: his sedan stays where he left it (nothing parks it again)")
 	assert_false(main.officer.brain.armed, "a new night, nothing on the beat cop's mind")
 	# saved and loaded
 	main.save_game()

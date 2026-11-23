@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="VehicleType" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/driving/vehicle_type.gd" id="1"]
+[ext_resource type="Script" path="res://src/driving/driving_params.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_handling"]
+script = ExtResource("2")
+display_name = "Speedster"
+max_speed = 390.0
+acceleration = 196.0
+coast_deceleration = 62.0
+brake_deceleration = 320.0
+reverse_max_speed = 115.0
+reverse_acceleration = 150.0
+turn_rate_degrees = 218.0
+full_steer_speed = 85.0
+grip = 4.1
+handbrake_deceleration = 270.0
+handbrake_grip_scale = 0.22
+handbrake_turn_scale = 2.4
+throttle_rise_time = 0.45
+throttle_fall_time = 0.3
+accel_falloff = 0.5
+steer_rise_time = 0.32
+steer_return_time = 0.24
+min_turn_radius = 58.0
+high_speed_turn_scale = 0.7
+wall_friction = 0.38
+wall_align = 0.65
+wall_glance_angle = 45.0
+wall_restitution = 0.15
+wall_align_rate = 2.6
+wheelbase = 48.0
+rear_axle = 24.5
+max_wheel_angle = 35.0
+crawl_wheel_angle = 38.0
+cornering_grip = 450.0
+tyre_grip = 820.0
+brake_rise_time = 0.18
+car_half_length = 38.0
+
+[resource]
+script = ExtResource("1")
+id = "lefty"
+params = SubResource("Resource_handling")
+paints = PackedStringArray("cars/lefty")
+size = Vector2(80, 36)
+collision = Vector2(76, 30)
+headlights = PackedVector2Array(31.8, -7.6, 31.8, 7.6)
+taillights = PackedVector2Array(-35.5, -7.2, -35.5, 7.2)
+front_axle_x = 23.6
+wheel_half_track = 14.0
+engine_pitch = 0.98
