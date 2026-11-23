@@ -581,14 +581,14 @@ func _run(shots: Array) -> void:
 				await _frames(40)
 				await _shot("truck_found", false)
 				cmd = PlayerCommand.new()
-			"back_room", "poker_game":
+			"back_room", "poker_game", "m015_poker_flop", "m015_poker_showdown":
 				# M010: the Copper Owl's back room - the regulars at the green-shaded lamp; poker_game:
 				# Danny sat in, a few hands on, his turn on the flop or later
 				main.weather.force("clear")
 				var bplan: InteriorPlan = main.interiors.view_of("back_room").plan
 				_teleport_walker(bplan.spots[0].pos + Vector2(30, 0), -PI / 2 - 0.5)
 				await _frames(30)
-				if s == "poker_game":
+				if s != "back_room":
 					main.rackets.money = 1500
 					_teleport_walker(bplan.spots[0].pos, -PI / 2)
 					await _frames(3)
@@ -602,17 +602,22 @@ func _run(shots: Array) -> void:
 						if tb == null:
 							break
 						var beat: Dictionary = pv.pacing.current
-						if main.back_rooms.poker.hands >= 3 and tb.street >= Holdem.FLOP and beat.get("kind", "") == "action":
+						if s == "poker_game" and main.back_rooms.poker.hands >= 3 and tb.street >= Holdem.FLOP and beat.get("kind", "") == "action":
 							break  # a card player's move on show, waiting for Space
+						if s == "m015_poker_flop" and main.back_rooms.poker.hands >= 1 and beat.get("kind", "") == "deal" and int(beat.get("street", 0)) == Holdem.FLOP:
+							break  # M015: the flop just dealt, its three cards marked until Space
+						if s == "m015_poker_showdown" and beat.get("kind", "") == "result" and tb.shown:
+							break  # M015: the showdown - the hands still in, the winner's five in gold
 						if pv.pacing.waiting():
 							pv.continue_step()
 						elif tb.running() and tb.to_act == main.back_rooms.poker.danny:
-							pv.act(2 if tb.legal(main.back_rooms.poker.danny).check else (2 if tb.legal(main.back_rooms.poker.danny).call <= 20 else 1))
+							var call_limit := 200 if s == "m015_poker_showdown" else 20  # (to the showdown: he calls along)
+							pv.act(2 if tb.legal(main.back_rooms.poker.danny).check else (2 if tb.legal(main.back_rooms.poker.danny).call <= call_limit else 1))
 						await _frames(1)
 					pv.think = Vector2(0.4, 0.8)
 					await _frames(10)
 				await _shot(s, false)
-				if s == "poker_game":
+				if s != "back_room":
 					main.back_rooms.leave_poker()
 			"m013_gaming_room":
 				# M013: the gaming room near midnight - the regulars at the rail, at their machines and

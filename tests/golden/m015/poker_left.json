@@ -161,7 +161,7 @@
 		],
 		"night": 1.0
 	},
-	"minute": 1531.18,
+	"minute": 1528.5,
 	"moments": [],
 	"night": 1.0,
 	"page": {
@@ -331,7 +331,7 @@
 				"stock": 6.0
 			},
 			"copper_owl": {
-				"carry": 0.216,
+				"carry": 0.181,
 				"cash": 4600.0,
 				"history": [],
 				"last_profit": 0.0,
@@ -363,7 +363,7 @@
 				"missed_delivery": 0.0,
 				"stock": 2.0
 			},
-			"night_done": 0.152
+			"night_done": 0.148
 		}
 	},
 	"rival": {
@@ -424,7 +424,7 @@
 		},
 		"place": {
 			"facing": -2.997,
-			"minute": 1531.183,
+			"minute": 1528.496,
 			"night": 1.0,
 			"x": 2062.0,
 			"y": 300.924
@@ -589,7 +589,7 @@
 					"stock": 6.0
 				},
 				"copper_owl": {
-					"carry": 0.216,
+					"carry": 0.181,
 					"cash": 4600.0,
 					"history": [],
 					"last_profit": 0.0,
@@ -621,7 +621,7 @@
 					"missed_delivery": 0.0,
 					"stock": 2.0
 				},
-				"night_done": 0.152
+				"night_done": 0.148
 			}
 		},
 		"slots": [

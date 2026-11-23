@@ -168,7 +168,8 @@ func test_holding_space_at_the_table_never_speeds_the_night() -> void:
 	cmd = PlayerCommand.make(Vector2.ZERO, false, true)  # Space held, as the controller reads it
 	var before: float = main.clock.minute
 	await wait_physics_frames(120)
-	assert_almost_eq(main.clock.minute - before, 2.0, 0.3, "a minute a second, as ever")
+	# M015: the table's own slow pace (a quarter, nothing while a beat waits) - never the bench's fast time
+	assert_lte(main.clock.minute - before, 2.0 * NightCycle.POKER_TIME + 0.05, "never faster than the table's slow night")
 	cmd = PlayerCommand.new()
 
 

@@ -9,6 +9,10 @@ extends RefCounted
 
 ## M010: how fast time passes while he sits with Space held (game minutes per game minute).
 const FAST_TIME := 20.0
+## M015: at the card table the night goes at a quarter of its pace while the
+## hand plays, and stands still while a beat waits for Space (the game still
+## breaks up at four).
+const POKER_TIME := 0.25
 
 var game: Game
 ## Reminders given tonight: 0 none, 1 "get home", 2 "dawn".
@@ -51,8 +55,11 @@ func update(delta: float, running: bool) -> void:
 
 ## M010: sitting with Space held, the night passes FAST_TIME times as fast -
 ## but never past the next moment that must not be missed (it slows to normal
-## a couple of minutes before).
+## a couple of minutes before). M015: at the card table, POKER_TIME (0 while
+## a beat waits for Space).
 func time_scale() -> float:
+	if game.back_rooms != null and game.back_rooms.playing_poker():
+		return 0.0 if game.hud.poker_view.pacing.waiting() else POKER_TIME
 	var player := game.player
 	if player.seat.is_empty() or not player.passing_time or game.films.of("cafe") != null:
 		return 1.0

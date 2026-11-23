@@ -643,8 +643,13 @@ func _draw_seat(t: Holdem, i: int) -> void:
 	var style_word: String = PokerNight.STYLE_WORDS.get(String(s.get("style", "")), "you" if mine else "")
 	_text(pr.position + Vector2(_s(10), _s(48)), style_word, 13, DIM, HORIZONTAL_ALIGNMENT_LEFT)
 	_text(pr.position + Vector2(_s(190), _s(48)), money_text(s.stack), 16, COPPER, HORIZONTAL_ALIGNMENT_RIGHT)
-	# what he did
-	if said.has(i):
+	# what he did - M015: at the showdown, what he holds (a winner's in gold)
+	var shown_hands := PokerShowdown.hands(t) if t.shown and pacing.hands_shown else {}
+	if shown_hands.has(i):
+		var h: Dictionary = shown_hands[i]
+		var words := ("Wins - %s" % h.name) if bool(h.winner) else String(h.name)
+		_text(pr.position + Vector2(_s(100), _s(-12)), words, 16, GOLD if bool(h.winner) else DIM)
+	elif said.has(i):
 		var c := RED if String(said[i]).begins_with("All") else (DIM if said[i] == "Folds" else GOLD)
 		_text(pr.position + Vector2(_s(100), _s(-12)), said[i], 16, c)
 	# the button and the blinds
@@ -667,7 +672,7 @@ func _draw_seat(t: Holdem, i: int) -> void:
 		for k in (s.hole as Array).size():
 			var r := Rect2(base + Vector2(k * (cs.x + _s(4)), 0), cs)
 			if show:
-				_card(r, s.hole[k], folded)
+				_card(r, s.hole[k], folded, PokerShowdown.card_mark(s.hole[k], shown_hands, i) if not shown_hands.is_empty() else "")
 			else:
 				draw_texture_rect(_back, r, false)
 	# the bet in front of him
@@ -685,7 +690,11 @@ func _chips(p: Vector2, amount: int) -> void:
 		draw_texture_rect(_chip, Rect2(p - cs * 0.5 - Vector2(0, k * _s(3)), cs), false, colour)
 
 
-func _card(r: Rect2, c: int, dim := false) -> void:
+func _card(r: Rect2, c: int, dim := false, mark := "") -> void:
+	if mark == PokerShowdown.WIN or mark == PokerShowdown.FRESH:  # M015: a glow behind the card
+		var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.005) if mark == PokerShowdown.FRESH else 1.0
+		draw_rect(r.grow(_s(7)), Color(GOLD, 0.22 * pulse))
+		draw_rect(r.grow(_s(4)), Color(GOLD, 0.35 * pulse))
 	var tint := Color(0.6, 0.6, 0.6) if dim else Color.WHITE
 	draw_texture_rect(_face, r, false, tint)
 	var red := Cards.suit(c) == 1 or Cards.suit(c) == 2
@@ -697,16 +706,28 @@ func _card(r: Rect2, c: int, dim := false) -> void:
 	draw_texture_rect(_suits[Cards.suit(c)], Rect2(r.get_center() + Vector2(-pip * 0.5, -pip * 0.25), Vector2(pip, pip)), false, tint)
 	var small := r.size.x * 0.22
 	draw_texture_rect(_suits[Cards.suit(c)], Rect2(r.position + Vector2(r.size.x * 0.1, r.size.y * 0.34), Vector2(small, small)), false, tint)
+	# M015: the winning five framed in gold, a loser's best five with a fine pale line, a new card in gold
+	match mark:
+		PokerShowdown.WIN:
+			draw_rect(r.grow(_s(2)), GOLD, false, _s(3))
+		PokerShowdown.FRESH:
+			draw_rect(r.grow(_s(2)), Color(GOLD, 0.95), false, _s(2.5))
+		PokerShowdown.BEST:
+			draw_rect(r.grow(_s(1.5)), Color(CREAM, 0.7), false, _s(1.2))
 
 
 func _draw_board(t: Holdem) -> void:
 	var cs := Vector2(_s(56), _s(78))
 	var gap := _s(8)
 	var start := centre - Vector2((cs.x * 5 + gap * 4) * 0.5, cs.y * 0.5 + _s(6))
+	# M015: the cards just dealt, until Space; at the showdown, the hands' best fives
+	var fresh := PokerShowdown.fresh_board(pacing.current) if pacing.waiting() else ([] as Array[int])
+	var marks: Array[String] = PokerShowdown.board_marks(t, PokerShowdown.hands(t)) if pacing.hands_shown else ([] as Array[String])
 	for k in 5:
 		var r := Rect2(start + Vector2(k * (cs.x + gap), 0), cs)
 		if k < mini(t.board.size(), pacing.revealed):
-			_card(r, t.board[k])
+			var mark := PokerShowdown.FRESH if k in fresh else (marks[k] if k < marks.size() else "")
+			_card(r, t.board[k], false, mark)
 		else:
 			draw_rect(r, Color(0, 0, 0, 0.18))
 			draw_rect(r, Color(CREAM, 0.12), false, 1.0)

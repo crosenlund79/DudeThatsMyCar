@@ -220,6 +220,12 @@ func _on_bought_in(amount: int) -> void:
 	game.save()
 
 
+## M015: Danny sits at the card table with his chips in play (the night slows there).
+func playing_poker() -> bool:
+	var pv := game.hud.poker_view if game.hud != null else null
+	return pv != null and pv.is_open() and pv.phase == "play"
+
+
 ## Danny gets up from the card table (mid-hand he folds): his chips back into his pocket.
 func leave_poker() -> void:
 	if not game.hud.poker_view.is_open():
