@@ -372,6 +372,34 @@ func _people_and_cars() -> void:
 		{"look": "characters/worker", "route": 4, "at": 0.4},
 		{"look": "characters/patron_woman", "route": 5, "at": 0.35},  # M010: a stroll through the park
 	]
+	# M015: the square's regulars, each out for their own hours of the night
+	d.locals = [
+		# the late show's crowd under the Bijou's marquee
+		{"look": "characters/patron_man", "kind": "stand", "pos": Vector2(2672, north - 10.0), "face": 0.3, "hours": [22 * 60 + 15, 23 * 60 + 5],
+			"group": "bijou", "lines": ["Is it the one with the gangsters in it?", "Two bits a ticket. Robbery.", "Shake a leg, Mabel."]},
+		{"look": "characters/patron_woman", "kind": "stand", "pos": Vector2(2696, north - 12.0), "face": 2.8, "hours": [22 * 60 + 15, 23 * 60 + 5],
+			"group": "bijou", "lines": ["I'll cry, I always cry.", "Hold my hand when it gets scary."]},
+		{"look": "characters/lady", "kind": "stand", "pos": Vector2(2722, north - 8.0), "face": PI, "hours": [22 * 60 + 25, 23 * 60 + 5],
+			"group": "bijou", "lines": ["The newsreel's the best part.", "Mr. Feeney's in a state again."]},
+		# two of the alderman's men having words on City Hall's steps
+		{"look": "characters/patron_man", "kind": "stand", "pos": Vector2(1882, 2908), "face": 0.2, "hours": [20 * 60, 23 * 60 + 30],
+			"group": "hall", "lines": ["The alderman wants every vote counted. Twice, if need be.", "Not so loud. Walls have ears."]},
+		{"look": "characters/clerk", "kind": "stand", "pos": Vector2(1906, 2914), "face": PI - 0.2, "hours": [20 * 60, 23 * 60 + 30],
+			"group": "hall", "lines": ["The Mayor's lamp is still lit. He never sleeps.", "A paving contract, a little something for the ward."]},
+		# a couple taking the air in the park
+		{"look": "characters/patron_man", "kind": "stroll", "route": 5, "at": 0.6, "hours": [20 * 60 + 30, 24 * 60],
+			"lines": ["Smell that? Lilacs.", "One day we'll have a place on this square."]},
+		{"look": "characters/lady", "kind": "stroll", "route": 5, "at": 0.6, "hours": [20 * 60 + 30, 24 * 60], "with": 5},
+		# a late drunk west of the church
+		{"look": "characters/patron_man", "kind": "drunk", "route": 4, "at": 0.3, "hours": [23 * 60 + 30, 29 * 60],
+			"lines": ["Father O'Malley's going to hear about this.", "Which way's Tuesday?"]},
+	]
+	# M015: Kowalski's van at the kerb before dawn, the bread carried in
+	d.deliveries = [
+		{"vehicle": "bakery_van", "paint": 0, "pos": Vector2(2560, MARLOWE + AVENUE_HALF - 22.0), "rot": 0.0,
+			"door": Vector2(2520, MARLOWE + AVENUE_HALF + SW - 6.0), "hours": [26 * 60 + 30, 28 * 60 + 30],
+			"looks": ["characters/worker", "characters/worker"], "lines": ["Rye, pumpernickel, twelve dozen rolls.", "Mind the step."]},
+	]
 	var lane := 28.0
 	var e := MARLOWE + 45.0
 	var w := MARLOWE - 45.0
@@ -386,6 +414,7 @@ func _people_and_cars() -> void:
 	d.traffic = [
 		{"type": "coupe", "paint": 0, "loop": 0, "segment": 0, "at": 0.5},
 		{"type": "sedan", "paint": 0, "loop": 1, "segment": 2, "at": 0.3},
+		{"type": "taxi", "paint": 0, "loop": 0, "segment": 2, "at": 0.5},  # M015: a cab cruising for fares
 	]
 	for x in [HALLORAN_AVE, GARRITY, ASHBY]:
 		for s in [[CALLOWAY, HALF], [MARLOWE, AVENUE_HALF], [PRUITT, HALF]]:
@@ -399,4 +428,7 @@ func _people_and_cars() -> void:
 	]
 	# the beat cop walks the avenue along the square's north side, by his call box
 	d.police_beat = PackedVector2Array([Vector2(1560, MARLOWE + AVENUE_HALF + 23.0), Vector2(1800, MARLOWE + AVENUE_HALF + 23.0)])
+	# M015: an hour at City Hall's door while the Mayor's lamp is lit
+	d.police_posts = [{"pos": Vector2(1790, 2918), "face": Vector2(1825, 2880), "from": 21 * 60, "until": 22 * 60,
+		"line": "Nobody goes up those steps after dark, Mac."}]
 	d.spawn = Vector2(1800, MARLOWE)

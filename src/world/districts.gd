@@ -26,6 +26,8 @@ func _init(p_game: Game) -> void:
 ## The ward's street life (made at start-up).
 func add_ward_street(s: StreetLife) -> void:
 	_street[game.layout.id] = s
+	if game.street_lines != null:
+		s.say = game.street_lines.say  # M015: the regulars' chatter
 
 
 ## The street life of the loaded districts (M008): the ward's first, then the
@@ -53,6 +55,8 @@ func _district_street(l: DistrictLayout, node: Node2D) -> void:
 		others.append(o.body)
 	s.setup(l, game.resolver, game.clock, Fleet.CAR_SCENE, Fleet.VEHICLES, game.fleet.cars, others)
 	s.gun_shown = game.armoury.shown  # M015
+	if game.street_lines != null:
+		s.say = game.street_lines.say  # M015: the regulars' chatter
 	s.name = "StreetLife"
 	if quiet_streets:
 		s.clear()

@@ -22,6 +22,8 @@ const VEHICLES := {
 	"dump_truck": preload("res://src/driving/vehicles/dump_truck.tres"),  # M009
 	"school_bus": preload("res://src/driving/vehicles/school_bus.tres"),
 	"lefty": preload("res://src/driving/vehicles/lefty.tres"),  # M015: Lefty Moran's own speedster
+	"taxi": preload("res://src/driving/vehicles/taxi.tres"),  # M015: a city cab
+	"bakery_van": preload("res://src/driving/vehicles/bakery_van.tres"),  # M015: a panel van (Kowalski's, or plain)
 }
 ## M009: a car within this much of Novak's door counts as "out front" for Dutch's crate.
 const CRATE_DROP_REACH := 280.0

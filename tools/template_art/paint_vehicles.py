@@ -449,7 +449,86 @@ def school_bus(body="#e3a12c", seed=71):
     return finish(grain(img, 3, seed), W, H)
 
 
+# ---------------------------------------------------------------- M015: traffic variety
+
+def taxi(seed=11):
+    """M015: a city cab - the sedan in cab yellow with a black roof, a band of
+    black-and-white checks along each side, the roof lamp with TAXI on it."""
+    img = sedan("#d6a52a", roof="#24221f", seed=seed)
+    big = img.resize((CW * SS, CH * SS), Image.LANCZOS)
+    for y0 in (14.6, 62.6):  # the checks along the belt line
+        for k, x in enumerate(range(56, 100, 3)):
+            col = "#141414" if k % 2 == 0 else "#efe9da"
+            paint_shape(big, SP(rrect_pts(x, y0, x + 3, y0 + 2.8, 0.2)), col, seed + k, outline=None, wob=0.02, tex=0.05)
+    paint_shape(big, SP(rrect_pts(70, 34, 86, 46, 2)), "#f2e8c8", seed + 3, outline=OUT, ow=0.9, wob=0.05, light=(0.4, -1, 0.6))
+    layer = new(CW, CH)
+    text(layer, (78, 40), "TAXI", 5.0, "#1a1a1a", font="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+    big.alpha_composite(layer)
+    soft_blob(big, S(78), S(40), S(9), S(5), "#fff4c0", 60, 2 * SS)
+    return finish(big, CW, CH)
+
+
+VW, VH = 196, 84
+
+
+def bakery_van(body="#2f4a3a", seed=13, plain=False):
+    """M015: Kowalski's Bakery's panel van, early 1930s, from above, nose right:
+    a tall square-backed body with KOWALSKI'S BAKERY on the roof in cream, a
+    short cab with a bright windscreen, a louvred bonnet between teardrop
+    wings, a chrome radiator and lamps; front tyres left out (cars/wheel)."""
+    W, H = VW, VH
+    img = new(W, H)
+    soft_blob(img, S(98), S(43), S(92), S(37), "#000000", 60, 5 * SS)
+    tyre_top(img, 26, 3.5, 52, 12, seed)
+    tyre_top(img, 26, H - 12, 52, H - 3.5, seed + 1)
+    for y0, y1 in ((11, 17), (H - 17, H - 11)):  # running boards
+        paint_shape(img, SP(rrect_pts(120, y0, 150, y1, 2)), "#1b1b1c", seed + 2, outline=OUT, ow=1, wob=0.2, tex=0.3)
+    # the box body: tall, square at the back, the roof with its lettering
+    paint_shape(img, SP(rrect_pts(4, 11, 132, 73, 6)), body, seed + 3, outline=OUT, ow=1.8, wob=0.2, tex=0.12, strokes_n=10,
+                stroke_cols=[shade(body, 1.08), shade(body, 0.92)], light=(0.2, -1, 0.42), inner_shadow=0.3)
+    paint_shape(img, SP(rrect_pts(10, 17, 126, 67, 4)), shade(body, 1.12), seed + 4, outline=(30, 40, 34), ow=1.0, wob=0.15,
+                tex=0.1, light=(0.1, -1, 0.5))
+    if not plain:
+        text(img, (68, 36), "KOWALSKI'S", 8.2, "#efe2b8", font=DECO)
+        text(img, (68, 48), "BAKERY", 7.0, "#d9b25c", font=DECO)
+    else:  # an unmarked van: a roof rack and a tarpaulin
+        paint_shape(img, SP(rrect_pts(30, 26, 104, 58, 3)), "#5a5444", seed + 40, outline=OUT, ow=0.9, wob=0.3, tex=0.35,
+                    light=(0.2, -1, 0.5))
+        for x in range(34, 104, 10):
+            line(img, [(S(x), S(26)), (S(x + 2), S(58))], "#3e3a30", 1.0 * SS, 180, blur=0.3)
+    line(img, [(S(5), S(42)), (S(10), S(42))], shade(body, 0.6), 1.2 * SS, 220)  # the back doors
+    for y in (15, H - 15):
+        paint_shape(img, SP(ellipse_pts(9, y, 3.2, 2.8)), "#b3221c", seed + 5, outline=OUT, ow=0.8, wob=0.1)
+        soft_blob(img, S(8.6), S(y - 0.5), S(1.2), S(1.0), "#ffb0a0", 160, 0.4 * SS)
+    # the cab: its roof, the windscreen, the bonnet and wings, the radiator, lamps and bumper
+    paint_shape(img, SP(rrect_pts(126, 18, 148, 66, 5)), shade(body, 1.15), seed + 6, outline=OUT, ow=1.5, wob=0.2, tex=0.1,
+                light=(0.1, -1, 0.5), inner_shadow=0.25)
+    paint_shape(img, SP([(146, 20), (154, 23), (154, 61), (146, 64)]), "#6f97b2", seed + 7, outline=OUT, ow=1.2, wob=0.1,
+                light=(1, -1, 0.6))
+    line(img, [(S(148), S(24)), (S(152.5), S(33))], "#e6f2fa", 1.3 * SS, 190, blur=0.4)
+    hood = [(154, 25), (172, 27), (184, 31), (184, 53), (172, 57), (154, 59)]
+    paint_shape(img, SP(hood), body, seed + 8, outline=OUT, ow=1.5, wob=0.2, tex=0.12, light=(0.2, -1, 0.45), inner_shadow=0.3)
+    for x in range(158, 180, 4):
+        for y0 in (29, 50):
+            line(img, [(S(x), S(y0)), (S(x + 2), S(y0 + 4.5))], "#0c100e", 1.2 * SS, 220, blur=0.2)
+    line(img, [(S(156), S(42)), (S(183), S(42))], CHROME, 1.2 * SS, 230, blur=0.2)
+    _wings_at(img, shade(body, 0.85), seed + 9, [(150, 20), (156, 11), (168, 5), (180, 4), (189, 7), (193, 13), (194, 19),
+                                                 (186, 21.5), (172, 21), (158, 20.5)], H)
+    paint_shape(img, SP(rrect_pts(183, 30, 190, 54, 1.5)), CHROME, seed + 10, outline=OUT, ow=1.0, wob=0.06, light=(1, -1, 0.45))
+    d = ImageDraw.Draw(img)
+    for y in range(33, 53, 2):
+        d.line([(S(184.5), S(y)), (S(188.5), S(y))], fill=rgba("#2e3234"), width=SS)
+    paint_shape(img, SP(rrect_pts(191, 18, 195, 66, 1.8)), CHROME, seed + 11, outline=OUT, ow=0.9, wob=0.05, light=(1, -1, 0.4))
+    lamp(img, 186, 17, 4.4, seed + 12)
+    lamp(img, 186, H - 17, 4.4, seed + 13)
+    sheen(img, [(18, 22), (118, 22), (118, 26), (18, 26)], 40, 2.0)
+    return finish(grain(img, 3, seed), W, H)
+
+
 ASSETS = {
+    "cars/taxi": lambda: taxi(11),  # M015
+    "cars/bakery_van": lambda: bakery_van("#2f4a3a", 13),  # M015
+    "cars/van_plain": lambda: bakery_van("#4a3626", 14, plain=True),
     "cars/dump_truck": dump_truck,
     "cars/school_bus": school_bus,
     "cars/police": lambda: police_car(7),

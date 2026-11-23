@@ -391,6 +391,41 @@ func _street_life() -> void:
 		{"look": "characters/worker", "route": 2, "at": 0.55},
 		{"look": "characters/lady", "route": 3, "at": 0.4},
 	]
+	# M015: the ward's regulars - each out for their own hours of the night (minutes on the night clock)
+	d.locals = [
+		# a knot of the Copper Owl's crowd on the pavement east of its door (clear of the canopy), from nine to half past three
+		{"look": "characters/patron_man", "kind": "stand", "pos": Vector2(2392, 462), "face": 0.5, "hours": [21 * 60, 27 * 60 + 30],
+			"group": "owl", "lines": ["So I says to him, Bill, that's no way to treat a lady.", "Another round inside? My shout.",
+				"Listen - that's the Bird. Hush a minute.", "Cold enough to freeze a bootlegger's heart."]},
+		{"look": "characters/lady", "kind": "stand", "pos": Vector2(2418, 458), "face": 2.8, "hours": [21 * 60, 27 * 60 + 30],
+			"group": "owl", "lines": ["Ha! You never.", "Bill, you're a scream.", "My feet are killing me, these shoes."]},
+		{"look": "characters/patron_woman", "kind": "stand", "pos": Vector2(2408, 477), "face": -2.0, "hours": [22 * 60, 26 * 60],
+			"group": "owl", "lines": ["Don't look now - Rourke's man.", "Somebody said there's cards in the back. Real money."]},
+		# a couple out walking the south side of the avenue, early in the evening
+		{"look": "characters/patron_man", "kind": "stroll", "route": 1, "at": 0.15, "hours": [20 * 60, 24 * 60 + 30],
+			"lines": ["Let's get a soda at Novak's.", "You look swell tonight, Edie."]},
+		{"look": "characters/lady", "kind": "stroll", "route": 1, "at": 0.15, "hours": [20 * 60, 24 * 60 + 30], "with": 3},
+		# a drunk on the north side, late on
+		{"look": "characters/patron_man", "kind": "drunk", "route": 2, "at": 0.5, "hours": [23 * 60, 29 * 60],
+			"lines": ["Prohibition, they call it. Hic.", "Evening, officer! ...oh. You're a lamp post.", "Where'd they put my house?",
+				"I'm not drunk. I'm *celebrating*."]},
+		# a smoker under the lamp at the corner of Kessler Street
+		{"look": "characters/worker", "kind": "stand", "pos": Vector2(1598, 752), "face": PI, "hours": [20 * 60 + 30, 26 * 60],
+			"lines": ["Got a light, mister?", "Slow night.", "You ain't seen me, I ain't seen you."]},
+		# the newsboy outside the Hotel Marlowe with the late edition
+		{"look": "characters/worker", "kind": "stand", "pos": Vector2(2640, 752), "face": -PI * 0.5, "hours": [19 * 60 + 30, 23 * 60],
+			"lines": ["Extra! Extra! Council fight at City Hall!", "Late edition! Read all about it!",
+				"Cubs drop another one! Paper, mister?"]},
+		# men off the late shift at the yards, hurrying home up Kessler Street
+		{"look": "characters/worker", "kind": "brisk", "route": 3, "at": 0.9, "hours": [23 * 60 + 40, 25 * 60]},
+		{"look": "characters/worker", "kind": "brisk", "route": 3, "at": 0.75, "hours": [23 * 60 + 45, 25 * 60]},
+	]
+	# M015: "ginger ale" for the Copper Owl, carried in at its alley door
+	d.deliveries = [
+		{"vehicle": "bakery_van", "paint": 1, "pos": Vector2(2500, 135), "rot": 0.0, "door": Vector2(2400, 144),
+			"hours": [21 * 60 + 30, 22 * 60 + 30], "looks": ["characters/worker", "characters/worker"],
+			"lines": ["Careful with that one - it clinks.", "Ginger ale. Forty cases of it. Sure."]},
+	]
 	var lane := 28.0  # from the middle of a side street; 45 on the avenue (clear of the tracks)
 	var e := MARLOWE + 45.0
 	var w := MARLOWE - 45.0
@@ -406,6 +441,7 @@ func _street_life() -> void:
 		{"type": "sedan", "paint": 0, "loop": 0, "segment": 0, "at": 0.15},
 		{"type": "coupe", "paint": 1, "loop": 1, "segment": 0, "at": 0.55},
 		{"type": "sedan", "paint": 1, "loop": 2, "segment": 2, "at": 0.4},
+		{"type": "taxi", "paint": 0, "loop": 0, "segment": 2, "at": 0.6},  # M015: a cab cruising for fares
 	]
 	for x in [DORSEY, KESSLER, WHARF]:
 		for s in [[MARLOWE, AVENUE_HALF], [PRUITT, STREET_HALF], [CALLOWAY, STREET_HALF]]:
@@ -429,6 +465,9 @@ func _cars_and_spawn() -> void:
 	# The beat cop walks a short round on the north side of Marlowe Avenue by
 	# the Kessler Street corner, past the newsstand and his call box.
 	d.police_beat = PackedVector2Array([Vector2(1872, 457), Vector2(1995, 457)])
+	# M015: at closing time he sees the Copper Owl's crowd off the pavement
+	d.police_posts = [{"pos": Vector2(2240, 474), "face": Vector2(2340, 474), "from": 26 * 60 + 45, "until": 27 * 60 + 30,
+		"line": "Closing time, folks. Home you go."}]
 	# M003: every night begins at home, in the ground-floor flat next door to
 	# the Copper Owl, by the bed (see RiversideInteriors.flat).
 	d.spawn = Vector2(2522, 384)

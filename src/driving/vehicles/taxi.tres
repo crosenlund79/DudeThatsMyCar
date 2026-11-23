@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="VehicleType" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/driving/vehicle_type.gd" id="1"]
+[ext_resource type="Script" path="res://src/driving/driving_params.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_handling"]
+script = ExtResource("2")
+display_name = "Taxi"
+max_speed = 330.0
+acceleration = 150.0
+coast_deceleration = 70.0
+brake_deceleration = 300.0
+reverse_max_speed = 105.0
+reverse_acceleration = 130.0
+turn_rate_degrees = 195.0
+full_steer_speed = 95.0
+grip = 4.9
+handbrake_deceleration = 260.0
+handbrake_grip_scale = 0.28
+handbrake_turn_scale = 2.2
+throttle_rise_time = 0.6
+throttle_fall_time = 0.35
+accel_falloff = 0.55
+steer_rise_time = 0.4
+steer_return_time = 0.28
+min_turn_radius = 68.0
+high_speed_turn_scale = 0.62
+wall_friction = 0.4
+wall_align = 0.6
+wall_glance_angle = 45.0
+wall_restitution = 0.15
+wall_align_rate = 2.4
+wheelbase = 44.5
+rear_axle = 22.5
+max_wheel_angle = 31.0
+crawl_wheel_angle = 35.0
+cornering_grip = 400.0
+tyre_grip = 900.0
+brake_rise_time = 0.22
+car_half_length = 38.0
+
+[resource]
+script = ExtResource("1")
+id = "taxi"
+params = SubResource("Resource_handling")
+paints = PackedStringArray("cars/taxi")
+size = Vector2(80, 36)
+collision = Vector2(76, 30)
+headlights = PackedVector2Array(31.4, -7.4, 31.4, 7.4)
+taillights = PackedVector2Array(-33.9, -11.3, -33.9, 11.3)
+front_axle_x = 21.8
+wheel_half_track = 14.0
+engine_pitch = 0.9

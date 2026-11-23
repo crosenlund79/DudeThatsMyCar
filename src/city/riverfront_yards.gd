@@ -262,6 +262,22 @@ func _people_and_cars() -> void:
 		{"look": "characters/worker", "route": 0, "at": 0.3},
 		{"look": "characters/worker", "route": 1, "at": 0.6},
 	]
+	# M015: the yards' regulars
+	d.locals = [
+		# dockers on their break by Dutch's counter
+		{"look": "characters/worker", "kind": "stand", "pos": Vector2(3150, FOUNDRY - HALF - 22.0), "face": 0.4, "hours": [23 * 60, 27 * 60],
+			"group": "lunch", "lines": ["Union says we hold out for the six dollars.", "Dutch's coffee would strip paint off a boxcar."]},
+		{"look": "characters/foreman", "kind": "stand", "pos": Vector2(3174, FOUNDRY - HALF - 30.0), "face": 2.9, "hours": [23 * 60, 27 * 60],
+			"group": "lunch", "lines": ["The company'll dock you for breathing.", "Two o'clock truck again. Always the two o'clock."]},
+		{"look": "characters/worker", "kind": "stand", "pos": Vector2(3168, FOUNDRY - HALF - 12.0), "face": -1.9, "hours": [23 * 60 + 30, 26 * 60],
+			"group": "lunch", "lines": ["My old lady thinks I'm on the night shift. I am!"]},
+		# the freight depot's night watchman at its yard gate
+		{"look": "characters/worker", "kind": "stand", "pos": Vector2(4480, FRONT + HALF + 26.0), "face": PI * 0.5,
+			"lines": ["Yard's closed, mister.", "Nothing to see here but boxcars."]},
+		# the shift change: men walking home along Front Street
+		{"look": "characters/worker", "kind": "brisk", "route": 0, "at": 0.1, "hours": [23 * 60 + 40, 24 * 60 + 40]},
+		{"look": "characters/worker", "kind": "brisk", "route": 0, "at": 0.2, "hours": [23 * 60 + 45, 24 * 60 + 45]},
+	]
 	var lane := 28.0
 	d.drive_loops = [
 		# round the freight block: east on Front, south on Wharf, west on Foundry, north on Kessler
@@ -282,4 +298,7 @@ func _people_and_cars() -> void:
 	]
 	# the beat cop walks Front Street by the Kessler Street corner, past the freight depot's gate
 	d.police_beat = PackedVector2Array([Vector2(3460, 193), Vector2(3700, 193)])
+	# M015: he sees the shift change through the freight depot's gate
+	d.police_posts = [{"pos": Vector2(4430, FRONT + HALF + 24.0), "face": Vector2(4480, FRONT + HALF + 60.0),
+		"from": 23 * 60 + 50, "until": 24 * 60 + 30, "line": "Shift's changing. Keep clear of the gate."}]
 	d.spawn = Vector2(3350, 600)

@@ -893,6 +893,26 @@ func _run(shots: Array) -> void:
 				await _frames(10)
 				await _shot(s, false)
 				main.modals.open_menu(false)
+			"m015_street_crowd":
+				# M015: half past ten on Marlowe Avenue: the Copper Owl's crowd on the pavement, a couple
+				# walking, the newsboy gone home, a cab going by
+				main.weather.force("clear")
+				main.clock.set_time(22 * 60 + 30.0)
+				main.street.recount_locals(true)
+				_teleport_walker(Vector2(2300, 600), -PI * 0.5)
+				for f in 60 * 6:
+					await _frames(1)
+					if main.street_lines.speaking() > 0 and f > 60 * 2:
+						break
+				await _shot(s, false)
+			"m015_delivery":
+				# M015: the "ginger ale" van at the Copper Owl's alley door, crates going in
+				main.weather.force("clear")
+				main.clock.set_time(21 * 60 + 40.0)
+				main.street.recount_locals(true)
+				_teleport_walker(Vector2(2440, 230), -PI * 0.5)
+				await _frames(60 * 3)
+				await _shot(s, false)
 			"m015_notebook":
 				# M015: the Notebook as case sheets - Rourke's job, Lefty found out, Eddie's tip
 				main.weather.force("clear")

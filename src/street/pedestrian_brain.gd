@@ -12,6 +12,12 @@ extends RefCounted
 ## at the last moment. A car that keeps coming for them (it turned after them)
 ## gets a cut back the other way, behind its turn, and then they run for it:
 ## nobody is run down in a straight line after a long chase.
+## M015: different people walk differently (`kind`): a stroll, a brisk walk
+## home from a shift, a drunk weaving and stopping, somebody standing about
+## at a spot (a doorway, a lamp, a group on the pavement), a delivery man
+## carrying crates between a van and a door; `brave` ones (a copper on point
+## duty) stand their ground at gunfire and a gun, though they still get out
+## of a car's way.
 
 enum State { WALK, PAUSE, DODGE, WATCH, FLEE, RETURN, WARY }
 
@@ -42,6 +48,9 @@ const CHASE_TURN := 0.12
 const SCARE_RANGE := 650.0
 ## M015: the pace of someone keeping their distance from a gun.
 const BRISK := 85.0
+## M015: the kinds of walker, and their paces.
+const KINDS := ["stroll", "brisk", "drunk", "stand", "carry"]
+const PACE := {"stroll": 46.0, "brisk": 70.0, "drunk": 30.0, "stand": 0.0, "carry": 58.0}
 
 var route := PackedVector2Array()
 ## Next route point, and which way along the route they walk.
@@ -64,6 +73,14 @@ var _threat_vel := Vector2.ZERO
 var _turned := 0.0
 var _wall_turned := false
 var _rng := RandomNumberGenerator.new()
+## M015: how this one walks (KINDS); where a standing one stands and faces;
+## whether gunfire moves them; a carrier has a crate on the way to the door.
+var kind := "stroll"
+var spot := Vector2.INF
+var face := Vector2.ZERO
+var brave := false
+var carrying := false
+var _clock := 0.0
 
 
 func _init(p_route: PackedVector2Array, seed: int = 0) -> void:
@@ -74,7 +91,7 @@ func _init(p_route: PackedVector2Array, seed: int = 0) -> void:
 
 ## A shot at `at`; they run if it was close enough.
 func hear_gunshot(me: Vector2, at: Vector2) -> bool:
-	if me.distance_to(at) > SCARE_RANGE:
+	if brave or me.distance_to(at) > SCARE_RANGE:
 		return false
 	state = State.FLEE
 	away = (me - at).normalized() if me.distance_to(at) > 1.0 else Vector2.RIGHT
@@ -86,7 +103,7 @@ func hear_gunshot(me: Vector2, at: Vector2) -> bool:
 ## M015: something frightening happened at `at` within `radius` (a car
 ## knocked somebody down): they run from it for `seconds` (a little longer each).
 func scare(me: Vector2, at: Vector2, radius: float, seconds := 3.0) -> bool:
-	if me.distance_to(at) > radius:
+	if brave or me.distance_to(at) > radius:
 		return false
 	state = State.FLEE
 	away = (me - at).normalized() if me.distance_to(at) > 1.0 else Vector2.RIGHT
@@ -143,7 +160,8 @@ static func danger(me: Vector2, cars: Array) -> Dictionary:
 ## zero), speed, look: Vector2}.
 func update(dt: float, me: Vector2, cars: Array, danny: Dictionary = {}) -> Dictionary:
 	timer -= dt
-	var level := int(danny.get("level", 0))
+	_clock += dt
+	var level := 0 if brave else int(danny.get("level", 0))
 	var dp: Vector2 = danny.get("pos", Vector2.INF)
 	if level > 0 and state != State.FLEE and state != State.DODGE:
 		match GunSight.passer(me.distance_to(dp), level):
@@ -191,7 +209,7 @@ func update(dt: float, me: Vector2, cars: Array, danny: Dictionary = {}) -> Dict
 				state = State.WALK
 			return {"dir": Vector2.ZERO, "speed": 0.0, "look": watch}
 		State.RETURN:
-			var back := nearest_on_route(me)
+			var back := spot if kind == "stand" else nearest_on_route(me)
 			if me.distance_to(back) < 8.0:
 				state = State.WALK
 			else:
@@ -259,6 +277,8 @@ func _kerb_side(me: Vector2, perp: Vector2) -> int:
 
 
 func _walk(me: Vector2) -> Dictionary:
+	if kind == "stand":
+		return _stand(me)
 	if route.size() < 2:
 		return {"dir": Vector2.ZERO, "speed": 0.0, "look": me}
 	var target := route[index]
@@ -267,12 +287,34 @@ func _walk(me: Vector2) -> Dictionary:
 		if next < 0 or next >= route.size():
 			dir = -dir
 			next = index + dir
-			_pause(me, target + (target - route[next]) * 0.2, _rng.randf_range(1.0, 2.5))
+			var rest := _rng.randf_range(1.0, 2.5)
+			if kind == "carry":  # at the door the crate goes in; at the van another comes out
+				carrying = index == 0
+				rest = _rng.randf_range(2.0, 3.5)
+			_pause(me, target + (target - route[next]) * 0.2, rest)
 		index = next
 		target = route[index]
-	elif _rng.randf() < 0.0015:  # now and then: a look in a shop window
+	elif kind == "drunk" and _rng.randf() < 0.006:  # a drunk stops to get his bearings
+		_pause(me, me + (target - me).orthogonal() * (1 if _rng.randf() < 0.5 else -1), _rng.randf_range(2.0, 4.5))
+	elif kind != "carry" and _rng.randf() < 0.0015:  # now and then: a look in a shop window
 		_pause(me, me + (target - me).orthogonal(), _rng.randf_range(1.5, 3.0))
-	return {"dir": (target - me).normalized(), "speed": STROLL, "look": target}
+	var go := (target - me).normalized()
+	if kind == "drunk":  # weaving along
+		go = go.rotated(sin(_clock * 1.3) * 0.55 + sin(_clock * 0.37) * 0.25)
+	return {"dir": go, "speed": float(PACE.get(kind, STROLL)), "look": me + go * 40.0 if kind == "drunk" else target}
+
+
+## M015: somebody standing about: on their spot, facing their way, a glance
+## round now and then; back to the spot if something moved them off it.
+func _stand(me: Vector2) -> Dictionary:
+	if spot == Vector2.INF:
+		spot = me
+	if me.distance_to(spot) > 6.0:
+		return {"dir": (spot - me).normalized(), "speed": STROLL, "look": spot}
+	var look := spot + (face if face != Vector2.ZERO else Vector2.DOWN) * 40.0
+	if fmod(_clock + float(_rng.seed % 7), 9.0) < 1.4:  # a glance down the street
+		look = spot + (face if face != Vector2.ZERO else Vector2.DOWN).rotated(0.9) * 40.0
+	return {"dir": Vector2.ZERO, "speed": 0.0, "look": look}
 
 
 ## M015: the way along their route that takes them away from `from` (straight

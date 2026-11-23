@@ -104,6 +104,17 @@ var interiors: Array = []
 ## ({type, paint, loop, segment, at}) and the street crossings (Rect2).
 var walk_routes: Array = []
 var walkers: Array = []
+## M015: the street's regulars, each out for their own hours: {look, kind
+## ("stroll", "brisk", "drunk", "stand"), route + at (walkers) or pos + face
+## (standing), hours: [from, until] (night-clock minutes), with (the index of
+## the one they walk beside), lines (what they say now and then), group,
+## brave (a copper on point duty)}; and the delivery vans: {vehicle, paint,
+## pos, rot, door, hours, looks (the carriers), lines}.
+var locals: Array = []
+var deliveries: Array = []
+## M015: where the district's beat cop takes up a post at certain hours: {pos,
+## face (a point he looks at), from, until (night-clock minutes), line}.
+var police_posts: Array = []
 var drive_loops: Array = []
 var traffic: Array = []
 var junctions: Array = []
@@ -284,6 +295,15 @@ func shift(offset: Vector2) -> DistrictLayout:
 	for list2 in [props, decals, spill, landmarks, smoke, cars, incident_spots, contacts, errands, cafe, locked_doors]:
 		for item in list2:
 			item.pos += offset
+	for lc in locals:  # M015: the regulars who stand at a spot
+		if lc.has("pos"):
+			lc.pos += offset
+	for dv in deliveries:  # M015: the vans and the doors they deliver to
+		dv.pos += offset
+		dv.door += offset
+	for pp in police_posts:  # M015: the beat cop's posts
+		pp.pos += offset
+		pp.face += offset
 	for e in exits:
 		e.rect = _moved(e.rect, offset)
 	for k in places:  # M014

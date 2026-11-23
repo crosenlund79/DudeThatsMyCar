@@ -23,6 +23,19 @@ var _report_left := 0.0
 var _report_who := ""
 ## The street life of the built districts (whose passers-by hear a copper's shots).
 var _streets: Callable
+## M015: each beat cop's mood tonight shows in what he says when Danny passes
+## (once in a while); at certain hours he takes up a post (DistrictLayout.police_posts)
+## - only when nothing else has him, and he leaves it when its hour is up.
+const MOODS := {
+	"keen": ["Evening. Keep it moving.", "Quiet night. Let's keep it that way.", "I've got my eye on you, Mercer."],
+	"weary": ["Long night, Mac.", "Twenty years on this beat. Twenty years.", "Go home, fella. I wish I could."],
+	"chatty": ["Cold one, eh?", "Hear the Cubs dropped another?", "My wife's sister's coming to stay. Pray for me."],
+	"sour": ["What are you looking at?", "Move along.", "Don't make me write you up."],
+}
+const MOOD_ORDER := ["keen", "weary", "chatty", "sour"]
+const WORD_NEAR := 150.0
+const WORD_EVERY := 70.0
+var _quiet := {}
 
 
 func _init(p_game: Game, streets: Callable) -> void:
@@ -176,6 +189,49 @@ func update_report(delta: float) -> void:
 func stand_down() -> void:
 	for o in officers():
 		o.stand_down()
+
+
+## M015: a district's beat cop's mood on night `night` (the same all night, a new one most nights).
+static func mood_of(district: String, night: int) -> String:
+	return MOOD_ORDER[absi(night * 3 + hash(district)) % MOOD_ORDER.size()]
+
+
+func _district_of(o: PoliceOfficer) -> String:
+	if o == officer:
+		return game.layout.id
+	for id in _beat:
+		if _beat[id] == o:
+			return id
+	return ""
+
+
+## M015: every frame of the night: the posts at their hours, and a word to Danny in passing.
+func beat_life(delta: float) -> void:
+	var minute := game.clock.minute
+	var danny := game.player.body().global_position
+	for o in officers():
+		if o.is_down():
+			continue
+		var id := _district_of(o)
+		var l: DistrictLayout = game.world.layouts.get(id) if game.world != null else null
+		var post := {}
+		if l != null:
+			for pp in l.police_posts:
+				if minute >= float(pp.from) and minute < float(pp.until):
+					post = pp
+		if not post.is_empty() and o.duty.is_empty() and not o.brain.is_hunting():
+			o.duty = {"pos": post.pos, "face": post.face, "post": true}
+		elif post.is_empty() and bool(o.duty.get("post", false)):
+			o.duty = {}
+		_quiet[o] = float(_quiet.get(o, 0.0)) - delta
+		if float(_quiet[o]) > 0.0 or o.brain.is_hunting() or game.street_lines == null:
+			continue
+		if o.body.global_position.distance_to(danny) > WORD_NEAR or not o.can_see(danny):
+			continue
+		_quiet[o] = WORD_EVERY
+		var words: Array = MOODS[mood_of(id, game.rackets.night)]
+		var line: String = String(post.line) if bool(o.duty.get("post", false)) else String(words[_luck.randi() % words.size()])
+		game.street_lines.say(o.body, line)
 
 
 ## A new night: every man back on his beat.

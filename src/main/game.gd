@@ -37,6 +37,8 @@ var markers: PlaceMarkers
 var plates: EntrancePlates
 var highlight: InteractionHighlight
 var overhead: OverheadLine
+## M015: a few words over the heads of the street's regulars (StreetLife chatter).
+var street_lines: RoomLines
 var world: DistrictStreamer
 ## M014: every district's named places, doors, rooms and spots by a stable id.
 var locations: CityLocations

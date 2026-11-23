@@ -103,6 +103,9 @@ var highlight: InteractionHighlight:
 var overhead: OverheadLine:
 	get: return game.overhead
 	set(v): game.overhead = v
+var street_lines: RoomLines:  # M015
+	get: return game.street_lines
+	set(v): game.street_lines = v
 ## M008: the districts of the city in one world: the Riverside Ward (built at
 ## start-up, pinned) and its neighbours, streamed in as Danny comes near.
 var world: DistrictStreamer:
@@ -282,6 +285,9 @@ func _ready() -> void:
 	overhead = OverheadLine.new()
 	add_child(overhead)
 	overhead.setup(load(Hud.FONT_PATH))
+	street_lines = RoomLines.new()  # M015: the street's chatter
+	add_child(street_lines)
+	street_lines.setup(load(Hud.FONT_PATH))
 	world = DistrictStreamer.new()
 	add_child(world)
 	world.setup(resolver, CityPlan.layouts(layout))
@@ -602,6 +608,7 @@ func _process(delta: float) -> void:
 	if not paused:
 		gun_watch.update(delta)  # M015: a gun in his hand, out in the open
 		casework.update(delta)  # M015: where the work points
+		police.beat_life(delta)  # M015: the beat cops' posts and moods
 
 
 func _update_view(delta: float) -> void:
