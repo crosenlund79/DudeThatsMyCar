@@ -62,7 +62,7 @@ func test_m_opens_and_closes_it() -> void:
 
 func test_every_district_in_its_true_place() -> void:
 	var m := cmap()
-	assert_eq(m.minimap.districts.size(), 3, "the ward and both its neighbours")
+	assert_eq(m.minimap.districts.size(), 5, "the ward, its two neighbours and the two M015 quarters")
 	for id in main.world.order:
 		var l: DistrictLayout = main.world.layouts[id]
 		assert_true(m.city_rect.encloses(l.bounds), "%s on the map" % l.name)

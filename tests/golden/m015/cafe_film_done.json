@@ -197,7 +197,7 @@
 				"kind": "exchange",
 				"mercer": "",
 				"outcome": "done",
-				"spot": "square_alley"
+				"spot": "owl_alley"
 			}
 		],
 		"night": 1.0
@@ -440,7 +440,7 @@
 					"kind": "exchange",
 					"mercer": "",
 					"outcome": "done",
-					"spot": "square_alley"
+					"spot": "owl_alley"
 				}
 			],
 			"night": 1.0

@@ -115,6 +115,8 @@ var deliveries: Array = []
 ## M015: where the district's beat cop takes up a post at certain hours: {pos,
 ## face (a point he looks at), from, until (night-clock minutes), line}.
 var police_posts: Array = []
+## M015: an elevated railway's line (Canal Market's El): the train runs between its two ends.
+var el_line := PackedVector2Array()
 var drive_loops: Array = []
 var traffic: Array = []
 var junctions: Array = []
@@ -321,6 +323,7 @@ func shift(offset: Vector2) -> DistrictLayout:
 	for i in drive_loops.size():
 		drive_loops[i] = _moved_points(drive_loops[i], offset)
 	police_beat = _moved_points(police_beat, offset)
+	el_line = _moved_points(el_line, offset)
 	return self
 
 

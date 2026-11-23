@@ -23,7 +23,9 @@ signal district_entered(id: String)
 const LOAD_DISTANCE := 1300.0
 ## Free a district when he is this far from it (and it is not where he is).
 const UNLOAD_DISTANCE := 1900.0
-const MAX_LOADED := 2
+## M015: three - the ward (pinned), the district Danny is in and the one he is nearing
+## (the new quarters touch the ward only at one end: Canal Market not at all).
+const MAX_LOADED := 3
 ## Work per frame while building a district (microseconds); at least one step runs.
 const BUDGET_USEC := 4000
 var budget_usec := BUDGET_USEC

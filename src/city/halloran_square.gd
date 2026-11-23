@@ -42,7 +42,8 @@ func _build() -> void:
 	d.id = "halloran"
 	d.name = "Halloran Square"
 	d.bounds = Rect2(0, 0, WIDTH, HEIGHT)
-	d.play_area = Rect2(WEST_EDGE, EMBANKMENT_Y, WIDTH - WEST_EDGE, SOUTH_EDGE - EMBANKMENT_Y)
+	# M015: Halloran Avenue, Garrity and Ashby Street run on south into Canal Market
+	d.play_area = Rect2(WEST_EDGE, EMBANKMENT_Y, WIDTH - WEST_EDGE, HEIGHT - EMBANKMENT_Y)
 	d.lamp_energy = 1.05
 	d.grime_level = 0.4  # M010: a residential quarter, swept now and then
 	_streets()
@@ -65,6 +66,9 @@ func _build() -> void:
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, CALLOWAY - HALF - SW, 6, (HALF + SW) * 2.0)})
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, MARLOWE - AVENUE_HALF - SW, 6, (AVENUE_HALF + SW) * 2.0)})
 	d.exits.append({"to": "riverside", "rect": Rect2(WIDTH - 6, PRUITT - HALF - SW, 6, (HALF + SW) * 2.0)})
+	# M015: the ways south into Canal Market
+	for x in [HALLORAN_AVE, GARRITY, ASHBY]:
+		d.exits.append({"to": "market", "rect": Rect2(x - HALF - SW, HEIGHT - 6, (HALF + SW) * 2.0, 6)})
 
 
 func _streets() -> void:
@@ -224,8 +228,7 @@ func _street_furniture() -> void:
 		_prop("props/trash_can", p, 0.0, 8.0)
 	for y in [CALLOWAY, MARLOWE, PRUITT]:
 		_barricade_line(Vector2(WEST_EDGE, y), Vector2.DOWN, 4 if y == MARLOWE else 3)
-	for x in [HALLORAN_AVE, GARRITY, ASHBY]:
-		_barricade_line(Vector2(x, SOUTH_EDGE), Vector2.RIGHT, 3)
+	# M015: (the barricades that closed the avenues at y 3450 are gone: Canal Market lies south)
 
 
 func _lamps() -> void:
@@ -244,7 +247,7 @@ func _lamps() -> void:
 		for side in [-1.0, 1.0]:
 			var x2: float = c + side * (HALF + 10.0)
 			var y2: float = EMBANKMENT_Y + 80.0 + (0.0 if side < 0 else 160.0)
-			while y2 < SOUTH_EDGE - 60:
+			while y2 < HEIGHT - 60:  # M015: on down to Canal Market
 				var clear := [CALLOWAY, MARLOWE, PRUITT].all(func(c2: float) -> bool: return absf(y2 - c2) > 170.0) \
 					and [1435.0, 2365.0].all(func(a: float) -> bool: return absf(y2 - a) > 60.0)
 				if clear and not d.is_in_building(Vector2(x2, y2), 4.0):

@@ -80,12 +80,18 @@ image is its window light at night and is replaced separately. Cars and people f
 | `facades/civic_lit` | `custom/graphics/facades/civic_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | M011: window light for City Hall (offices lit late). |
 | `facades/club` | `custom/graphics/facades/club.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | The Copper Owl jazz club. |
 | `facades/club_lit` | `custom/graphics/facades/club_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window and bulb light for club. |
+| `facades/deco` | `custom/graphics/facades/deco.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M015: the Belvedere Hotel (Lincoln Terrace) - Art Deco limestone piers between window bays, dark fluted spandrels, a zigzag band under the parapet; polished black granite and bronze shopfronts below. |
+| `facades/deco_lit` | `custom/graphics/facades/deco_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | M015: window light for the Belvedere (most rooms lit late). |
 | `facades/factory` | `custom/graphics/facades/factory.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M008: works building: sooty brick between pilasters, tall steel-framed windows, a sliding freight door. |
 | `facades/factory_lit` | `custom/graphics/facades/factory_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for factory. |
 | `facades/garage` | `custom/graphics/facades/garage.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Doyle's Garage: painted brick, garage doors. |
 | `facades/garage_lit` | `custom/graphics/facades/garage_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for garage. |
 | `facades/greystone` | `custom/graphics/facades/greystone.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Limestone greystone flats. |
 | `facades/greystone_lit` | `custom/graphics/facades/greystone_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window light for greystone. |
+| `facades/lantern` | `custom/graphics/facades/lantern.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M015: the Golden Lantern - oxblood-painted brick with green shutters above, a red-lacquered shopfront with gilt lattice and round moon windows below. |
+| `facades/lantern_lit` | `custom/graphics/facades/lantern_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | M015: the Golden Lantern's warm red-gold light. |
+| `facades/market` | `custom/graphics/facades/market.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | M015: the Canal Market hall - dark red brick, tall round-arched iron windows, wide arches below with iron shutters half down over the lit stalls. |
+| `facades/market_lit` | `custom/graphics/facades/market_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | M015: light in the market hall's windows and under its shutters. |
 | `facades/party` | `custom/graphics/facades/party.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Blank side wall between buildings. |
 | `facades/rear` | `custom/graphics/facades/rear.png` | 256x192 | facade (seamless left-right wall: top half one upper storey, bottom half the ground storey) | 128 px per repeat | Alley side with fire escapes. |
 | `facades/rear_lit` | `custom/graphics/facades/rear_lit.png` | 256x192 | light (additive night light; transparent where dark) | matches its facade | Window and bulb light for rear. |
@@ -185,6 +191,7 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/awning_green` | `custom/graphics/props/awning_green.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
 | `props/awning_red` | `custom/graphics/props/awning_red.png` | 160x64 | sprite (image, scaled to its display size) | 84x34 | Shop awning; wall side at the top. |
 | `props/barber_pole` | `custom/graphics/props/barber_pole.png` | 32x32 | sprite (image, scaled to its display size) | 14x14 | Barber's pole beside the shop door. |
+| `props/barge` | `custom/graphics/props/barge.png` | 480x120 | sprite (image, scaled to its display size) | 240x60 | M015: a coal barge on the canal from above, bow to the right. |
 | `props/barrel` | `custom/graphics/props/barrel.png` | 48x48 | sprite (image, scaled to its display size) | 20x20 | Barrel. |
 | `props/barricade` | `custom/graphics/props/barricade.png` | 192x64 | sprite (image, scaled to its display size) | 96x32 | Street-closed sawhorse. |
 | `props/boxcar` | `custom/graphics/props/boxcar.png` | 320x96 | sprite (image, scaled to its display size) | 150x46 | M008: a freight boxcar on the sidings from above, long axis along X. |
@@ -192,33 +199,51 @@ image is its window light at night and is replaced separately. Cars and people f
 | `props/car_wreck` | `custom/graphics/props/car_wreck.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | M010 the Packard burnt out: blackened shell, the glass gone, embers (nose right). |
 | `props/crate` | `custom/graphics/props/crate.png` | 64x64 | sprite (image, scaled to its display size) | 26x26 | Wooden crate. |
 | `props/crates` | `custom/graphics/props/crates.png` | 96x96 | sprite (image, scaled to its display size) | 44x44 | Stack of crates. |
+| `props/el_column` | `custom/graphics/props/el_column.png` | 64x64 | sprite (image, scaled to its display size) | 16x16 | M015: one of the El's steel columns, its cap from above (solid, at the kerbs). |
+| `props/el_deck` | `custom/graphics/props/el_deck.png` | 256x112 | sprite (image, scaled to its display size) | 256x112 | M015: a length of the El's deck from above, seamless along x (laid end to end over Market Street): riveted girders at both edges, two tracks on ties, a plank walk. Raised: cars and people pass under it. |
+| `props/el_train` | `custom/graphics/props/el_train.png` | 600x96 | sprite (image, scaled to its display size) | 300x48 | M015: two El cars coupled, from above, running along x; drawn over the deck. |
+| `props/el_train_lit` | `custom/graphics/props/el_train_lit.png` | 600x96 | light (additive night light; transparent where dark) | 300x48 | M015: the El cars' lit windows. |
 | `props/film_can` | `custom/graphics/props/film_can.png` | 48x48 | sprite (image, scaled to its display size) | 15x15 | M009: the Bijou's lost reel - a flat round tin film can from above. |
 | `props/fire_escape` | `custom/graphics/props/fire_escape.png` | 128x40 | sprite (image, scaled to its display size) | 64x20 | Iron fire-escape landing; wall side at the top. |
 | `props/flowerbed` | `custom/graphics/props/flowerbed.png` | 96x96 | sprite (image, scaled to its display size) | 54x54 | M010: a round stone-edged flowerbed in Halloran Park (low: not solid). |
+| `props/fountain` | `custom/graphics/props/fountain.png` | 192x192 | sprite (image, scaled to its display size) | 110x110 | M015: St. Casimir's fountain from above - a round stone basin, dark water, the saint on his pedestal. |
 | `props/gas_pump` | `custom/graphics/props/gas_pump.png` | 48x48 | sprite (image, scaled to its display size) | 22x22 | Gas pump. |
 | `props/hedge` | `custom/graphics/props/hedge.png` | 160x36 | sprite (image, scaled to its display size) | 110x24 | M010: a low clipped hedge from above, long along +X (not solid). |
 | `props/hydrant` | `custom/graphics/props/hydrant.png` | 40x40 | sprite (image, scaled to its display size) | 15x15 | Fire hydrant. |
 | `props/lamp_base` | `custom/graphics/props/lamp_base.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Street lamp base. |
 | `props/lamp_head` | `custom/graphics/props/lamp_head.png` | 64x64 | sprite (image, scaled to its display size) | 22x22 | Street lamp lantern seen from above. |
 | `props/lantern` | `custom/graphics/props/lantern.png` | 32x32 | sprite (image, scaled to its display size) | 12x12 | Red warning lantern. |
+| `props/lanterns` | `custom/graphics/props/lanterns.png` | 256x48 | sprite (image, scaled to its display size) | 140x26 | M015: a string of red paper lanterns across a shopfront (wall side at the top). |
+| `props/lanterns_lit` | `custom/graphics/props/lanterns_lit.png` | 256x48 | light (additive night light; transparent where dark) | 140x26 | M015: the lanterns' glow. |
 | `props/mailbox` | `custom/graphics/props/mailbox.png` | 40x40 | sprite (image, scaled to its display size) | 16x16 | Mailbox. |
 | `props/marquee` | `custom/graphics/props/marquee.png` | 256x96 | sprite (image, scaled to its display size) | 140x52 | Copper Owl canopy; wall side at the top. |
 | `props/marquee_bijou` | `custom/graphics/props/marquee_bijou.png` | 256x96 | sprite (image, scaled to its display size) | 140x52 | M008: the Bijou picture house's canopy (Halloran Square); wall side at the top. |
 | `props/marquee_bijou_lit` | `custom/graphics/props/marquee_bijou_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | M008: the Bijou canopy's bulbs and lettering. |
 | `props/marquee_lit` | `custom/graphics/props/marquee_lit.png` | 256x96 | light (additive night light; transparent where dark) | 140x52 | Canopy bulbs and lettering. |
+| `props/marquee_paradise` | `custom/graphics/props/marquee_paradise.png` | 320x96 | sprite (image, scaled to its display size) | 175x52 | M015: the Paradise Ballroom's marquee (wall side at the top): midnight blue, gilt stars, chaser bulbs. |
+| `props/marquee_paradise_lit` | `custom/graphics/props/marquee_paradise_lit.png` | 320x96 | light (additive night light; transparent where dark) | 175x52 | M015: the marquee's lettering and bulbs. |
 | `props/newsstand` | `custom/graphics/props/newsstand.png` | 96x64 | sprite (image, scaled to its display size) | 46x30 | Newsstand. |
 | `props/packard` | `custom/graphics/props/packard.png` | 176x80 | sprite (image, scaled to its display size) | 80x36 | M010 Vince Duggan's green Packard at the kerb outside Rosie's Café (scenery, never driven), nose right like the cars. |
 | `props/parcel` | `custom/graphics/props/parcel.png` | 48x40 | sprite (image, scaled to its display size) | 16x13 | M010 the parcel from above: a shoebox in brown paper and string (an abstract item). |
+| `props/porte_cochere` | `custom/graphics/props/porte_cochere.png` | 256x128 | sprite (image, scaled to its display size) | 150x75 | M015: the Belvedere's canopy over the pavement (wall side at the top): bronze edged in gilt, THE BELVEDERE along its front. |
+| `props/porte_cochere_lit` | `custom/graphics/props/porte_cochere_lit.png` | 256x128 | light (additive night light; transparent where dark) | 150x75 | M015: the canopy's lettering and bulbs. |
+| `props/pushcart` | `custom/graphics/props/pushcart.png` | 96x64 | sprite (image, scaled to its display size) | 40x27 | M015: a pushcart under a tarp, two wheels, handles to the right. |
+| `props/rail_bridge` | `custom/graphics/props/rail_bridge.png` | 272x352 | sprite (image, scaled to its display size) | 272x352 | M015: the railroad's bridge over the Wharf Street underpass from above - four tracks on ballast across it (along x), riveted girders between. Raised over the road. |
+| `props/stall_a` | `custom/graphics/props/stall_a.png` | 160x96 | sprite (image, scaled to its display size) | 76x46 | M015: a market stall shut for the night, red-striped canvas (wall side at the top). |
+| `props/stall_b` | `custom/graphics/props/stall_b.png` | 160x96 | sprite (image, scaled to its display size) | 76x46 | M015: a market stall shut for the night, green-striped canvas. |
 | `props/trash_can` | `custom/graphics/props/trash_can.png` | 48x48 | sprite (image, scaled to its display size) | 18x18 | Ash can. |
 | `props/tree` | `custom/graphics/props/tree.png` | 192x192 | sprite (image, scaled to its display size) | 96x96 | M008: a plane tree's crown from above (raised: its trunk is hidden beneath). |
 | `props/truck` | `custom/graphics/props/truck.png` | 224x96 | sprite (image, scaled to its display size) | 104x44 | M008: a parked 1930s stake truck from above, nose right (+X); static and solid (not drivable). |
 | `props/truck_b` | `custom/graphics/props/truck_b.png` | 224x96 | sprite (image, scaled to its display size) | 104x44 | M008: the same truck in another colour. |
 | `roof/chimney` | `custom/graphics/roof/chimney.png` | 48x48 | sprite (image, scaled to its display size) | 27x27 | Brick chimney stack. |
 | `roof/cupola` | `custom/graphics/roof/cupola.png` | 128x128 | sprite (image, scaled to its display size) | 84x84 | M011: City Hall's copper cupola from above: a verdigris dome on a drum of little columns, the lantern and a gilt finial. |
+| `roof/dome` | `custom/graphics/roof/dome.png` | 160x160 | sprite (image, scaled to its display size) | 120x120 | M015: the Paradise Ballroom's verdigris dome from above, a gilt lantern on top. |
+| `roof/glass` | `custom/graphics/roof/glass.png` | 192x96 | sprite (image, scaled to its display size) | 96x48 | M015: a ridge of glass in iron bars on the market hall's roof, lit from below. |
 | `roof/laundry` | `custom/graphics/roof/laundry.png` | 128x64 | sprite (image, scaled to its display size) | 70x35 | Washing lines. |
 | `roof/skylight` | `custom/graphics/roof/skylight.png` | 96x64 | sprite (image, scaled to its display size) | 54x36 | Skylight. |
 | `roof/skylight_lit` | `custom/graphics/roof/skylight_lit.png` | 96x64 | light (additive night light; transparent where dark) | 54x36 | Skylight light. |
 | `roof/stair_hut` | `custom/graphics/roof/stair_hut.png` | 96x96 | sprite (image, scaled to its display size) | 50x50 | Roof access stair hut, door on the right. |
+| `roof/turret` | `custom/graphics/roof/turret.png` | 128x128 | sprite (image, scaled to its display size) | 64x64 | M015: the old water tower's crenellated top and slate cap. |
 | `roof/vent` | `custom/graphics/roof/vent.png` | 32x32 | sprite (image, scaled to its display size) | 17x17 | Mushroom vent. |
 | `roof/water_tank` | `custom/graphics/roof/water_tank.png` | 112x112 | sprite (image, scaled to its display size) | 58x58 | Wooden water tank. |
 | `roofs/ballast` | `custom/graphics/roofs/ballast.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Railroad ballast with two tracks (runs left-right). |
@@ -229,8 +254,11 @@ image is its window light at night and is replaced separately. Cars and people f
 | `roofs/tin` | `custom/graphics/roofs/tin.png` | 256x256 | tile (seamless in both directions) | 256 px per repeat | Corrugated sheet roof. |
 | `signs/bakery` | `custom/graphics/signs/bakery.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Kowalski Bakery, painted roof lettering, transparent. |
 | `signs/barber` | `custom/graphics/signs/barber.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
+| `signs/baths` | `custom/graphics/signs/baths.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M015: CANAL STREET BATHS, painted roof lettering, transparent. |
+| `signs/belvedere` | `custom/graphics/signs/belvedere.png` | 384x64 | sprite (image, scaled to its display size) | 225x38 | M015: THE BELVEDERE, painted roof lettering, transparent. |
 | `signs/bijou` | `custom/graphics/signs/bijou.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: The Bijou picture house, painted roof lettering, transparent. |
 | `signs/cafe` | `custom/graphics/signs/cafe.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M010: Rosie's Café, painted roof lettering, transparent. |
+| `signs/casimir` | `custom/graphics/signs/casimir.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M015: ST. CASIMIR'S, painted roof lettering, transparent. |
 | `signs/church` | `custom/graphics/signs/church.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: St. Brendan's, painted roof lettering, transparent. |
 | `signs/city_hall` | `custom/graphics/signs/city_hall.png` | 320x64 | sprite (image, scaled to its display size) | 180x36 | M011: City Hall, painted roof lettering, transparent. |
 | `signs/coal` | `custom/graphics/signs/coal.png` | 384x64 | sprite (image, scaled to its display size) | 210x35 | M008: Brennan Coal & Ice, painted roof lettering, transparent. |
@@ -245,8 +273,12 @@ image is its window light at night and is replaced separately. Cars and people f
 | `signs/hardware` | `custom/graphics/signs/hardware.png` | 256x64 | sprite (image, scaled to its display size) | 130x33 | Painted roof lettering, transparent. |
 | `signs/hotel` | `custom/graphics/signs/hotel.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | Hotel Marlowe rooftop letters. |
 | `signs/hotel_lit` | `custom/graphics/signs/hotel_lit.png` | 256x64 | light (additive night light; transparent where dark) | 150x38 | Hotel Marlowe bulbs. |
+| `signs/lantern` | `custom/graphics/signs/lantern.png` | 384x64 | sprite (image, scaled to its display size) | 225x38 | M015: GOLDEN LANTERN - CHOP SUEY, painted roof lettering, transparent. |
 | `signs/lunch` | `custom/graphics/signs/lunch.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M008: Dutch's Night Lunch, painted roof lettering, transparent. |
+| `signs/market_hall` | `custom/graphics/signs/market_hall.png` | 384x64 | sprite (image, scaled to its display size) | 225x38 | M015: CANAL MARKET HALL, painted roof lettering, transparent. |
 | `signs/morgue` | `custom/graphics/signs/morgue.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M006: The Morgue, painted roof lettering, transparent. |
+| `signs/paradise` | `custom/graphics/signs/paradise.png` | 384x64 | sprite (image, scaled to its display size) | 225x38 | M015: PARADISE BALLROOM, painted roof lettering, transparent. |
+| `signs/pawn` | `custom/graphics/signs/pawn.png` | 256x64 | sprite (image, scaled to its display size) | 150x38 | M015: A. FELD - LOANS, painted roof lettering, transparent. |
 | `signs/quilty` | `custom/graphics/signs/quilty.png` | 384x64 | sprite (image, scaled to its display size) | 200x33 | M011: Alderman Quilty's ward office (Riverside Ward), painted roof lettering, transparent. |
 | `signs/regulars` | `custom/graphics/signs/regulars.png` | 320x64 | sprite (image, scaled to its display size) | 170x34 | M011: the Halloran Square Regulars' Club (the precinct men), painted roof lettering, transparent. |
 | `signs/tannery` | `custom/graphics/signs/tannery.png` | 384x64 | sprite (image, scaled to its display size) | 230x38 | M008: Great Lakes Tanning Co., painted roof lettering, transparent. |
@@ -330,6 +362,7 @@ shipped under their own names (originals untouched in `assets/audio/_inbox/`).
 | `fight/punch_landed` | `custom/audio/fight/punch_landed.ogg` (or .wav / .mp3) | `template_punch_landed.ogg` | no | Effects | M007: Danny's punch lands in a fistfight (under 0.5 s). |
 | `fight/punch_taken` | `custom/audio/fight/punch_taken.ogg` (or .wav / .mp3) | `template_punch_taken.ogg` | no | Effects | M007: Danny takes a punch (under 0.5 s; no voice). |
 | `fx/blast` | `custom/audio/fx/blast.ogg` (or .wav / .mp3) | `template_blast.ogg` | no | Effects | M010: the parcel going off under a parked car: crack, a rolling boom, glass and debris falling (about 4.5 s). |
+| `fx/el_train` | `custom/audio/fx/el_train.ogg` (or .wav / .mp3) | `template_el_train.ogg` | yes | Ambience | M015: the El going over Canal Market: a low steel roar, the deck drumming, wheels clattering over the rail joints two by two, a squeal now and then (6 s loop). Played from the train while it runs, by distance. |
 | `fx/fire` | `custom/audio/fx/fire.ogg` (or .wav / .mp3) | `template_fire.ogg` | yes | Effects | M010: a car burning at the kerb: flame roar and crackle (seamless loop). |
 | `gaming/chair` | `custom/audio/gaming/chair.ogg` (or .wav / .mp3) | `template_chair.ogg` | no | Ambience | M011: a chair pushed back on the boards, a creak (about 1 s). |
 | `gaming/chips_stack` | `custom/audio/gaming/chips_stack.ogg` (or .wav / .mp3) | `template_chips_stack.ogg` | no | Ambience | M011: someone stacking and riffling chips (under 1 s). |

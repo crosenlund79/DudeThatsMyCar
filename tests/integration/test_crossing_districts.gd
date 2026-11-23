@@ -155,17 +155,21 @@ func test_driving_west_along_marlowe_avenue_into_halloran_square() -> void:
 		st.work_usec / 1000.0, st.frames, st.worst_frame_usec / 1000.0, st.worst_step_usec / 1000.0])
 
 
-func test_never_more_than_two_districts() -> void:
+## M015: three at most (the ward, pinned, the district Danny is in and the one
+## he is nearing); a fourth wanted makes the one he needs least make room.
+func test_never_more_than_three_districts() -> void:
 	main.world.load_now("yards")
+	main.world.load_now("halloran")
 	assert_true(yards_ready())
-	# to the far west end of Pruitt Street: Halloran Square is wanted, so the yards make room
-	walker().place(Vector2(-1600, 1500), PI)
+	assert_eq(main.world.ready_ids(), ["riverside", "yards", "halloran"] as Array[String])
+	# down Halloran Avenue to the square's south edge: Canal Market is wanted, so the yards make room
+	walker().place(Vector2(-3500, 2400), PI / 2)
 	for i in 900:
-		assert_lte(main.world.loaded.size(), 2, "two districts at most")
-		if main.world.is_ready("halloran"):
+		assert_lte(main.world.loaded.size(), 3, "three districts at most")
+		if main.world.is_ready("market"):
 			break
 		await wait_physics_frames(1)
-	assert_true(main.world.is_ready("halloran"))
+	assert_true(main.world.is_ready("market"))
 	assert_false(yards_ready(), "the yards were let go to make room")
-	assert_eq(main.world.ready_ids(), ["riverside", "halloran"] as Array[String])
-	assert_eq(main.police.officers().size(), 2, "the ward's beat cop and the square's")
+	assert_eq(main.world.ready_ids(), ["riverside", "halloran", "market"] as Array[String])
+	assert_eq(main.police.officers().size(), 3, "the ward's beat cop, the square's and the market's")

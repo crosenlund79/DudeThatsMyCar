@@ -40,7 +40,8 @@ func _build() -> void:
 	d.id = "yards"
 	d.name = "Riverfront Yards"
 	d.bounds = Rect2(0, 0, WIDTH, HEIGHT)
-	d.play_area = Rect2(WEST_EDGE, 0, RIVER_X - WEST_EDGE, EMBANKMENT_Y)
+	# M015: Front and Foundry Street run on west into Canal Market (the barricades are gone)
+	d.play_area = Rect2(0, 0, RIVER_X, EMBANKMENT_Y)
 	d.lamp_energy = 0.78
 	d.grime_level = 1.0  # M010: coal dust, soot and debris: the dirtiest streets in the city
 	_streets()
@@ -63,6 +64,9 @@ func _build() -> void:
 	# the ways north into the Riverside Ward (Dorsey Street is closed by the ward's own barricade)
 	for x in [DORSEY, KESSLER, WHARF]:
 		d.exits.append({"to": "riverside", "rect": Rect2(x - HALF - 46.0, 0, HALF * 2.0 + 92.0, 6)})
+	# M015: the ways west into Canal Market
+	d.exits.append({"to": "market", "rect": Rect2(0, 0, 6, FRONT + HALF + 46.0)})
+	d.exits.append({"to": "market", "rect": Rect2(0, FOUNDRY - HALF - 46.0, 6, (HALF + 46.0) * 2.0)})
 
 
 func _streets() -> void:
@@ -181,8 +185,7 @@ func _street_furniture() -> void:
 	for p in [Vector2(DORSEY + 97, 197), Vector2(KESSLER + 97, 197), Vector2(WHARF - 97, FOUNDRY - HALF - 27), Vector2(DORSEY + 97, 1412)]:
 		_prop("props/hydrant", p, 0.0, 6.0)
 	_prop("props/call_box", Vector2(3470, 200), 0.0, 8.0)
-	_barricade_line(Vector2(WEST_EDGE, FRONT), Vector2.DOWN, 3)
-	_barricade_line(Vector2(WEST_EDGE, FOUNDRY), Vector2.DOWN, 3)
+	# M015: (the barricades that closed Front and Foundry Street at x 900 are gone: Canal Market lies west)
 
 
 func _lamps() -> void:

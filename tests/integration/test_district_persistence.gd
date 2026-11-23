@@ -52,7 +52,7 @@ func _victim(at: Vector2) -> Walker:
 
 func test_saved_in_each_district_and_loaded() -> void:
 	_save = OS.get_user_data_dir().path_join("test_districts_%d.json" % Time.get_ticks_usec())
-	for id in ["yards", "halloran"]:
+	for id in ["yards", "halloran", "market", "terrace"]:  # M015: and the two new quarters
 		main.save_path = _save
 		main.world.load_now(id)
 		var l: DistrictLayout = main.world.layouts[id]

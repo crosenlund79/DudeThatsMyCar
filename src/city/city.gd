@@ -77,6 +77,8 @@ func build_steps(p_layout: DistrictLayout, p_resolver: AssetResolver, primary: b
 		steps.append(_build_lamps_range.bind(k, mini(k + 8, p_layout.lamps.size())))
 	steps.append(_build_alley_lamps)
 	steps.append(_build_atmosphere.bind(primary))
+	if not p_layout.el_line.is_empty():
+		steps.append(_build_el_train)  # M015: Canal Market's El
 	return steps
 
 
@@ -751,6 +753,18 @@ func update_view(p_eye: Vector2, p_eye_height: float, view: Rect2) -> void:
 		node2.scale = Vector2(0.42, maxf(span + 26.0, 30.0) / node2.texture.get_height())
 	if atmosphere != null:
 		atmosphere.update_view(eye, eye_height, view)
+	if el_train != null:
+		el_train.update_view(eye, eye_height, view)
+
+
+## M015: the El's train, running along its line.
+var el_train: ElTrain
+
+
+func _build_el_train() -> void:
+	el_train = ElTrain.new()
+	add_child(el_train)
+	el_train.setup(layout.el_line, resolver)
 
 
 ## Solid footprints only (no physics query): true when a circle of `radius`

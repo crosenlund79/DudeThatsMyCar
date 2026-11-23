@@ -140,9 +140,9 @@ Followed the recommendation, with these choices:
   time, props and lamps in batches); the game adds steps for the district's street life and
   parked cars; its walking grid is built on a `WorkerThreadPool` thread; its graphics are
   prefetched with `ResourceLoader.load_threaded_request`. The district appears (and its frontier
-  wall opens) only when complete. At most two districts are loaded; the ward is built at start-up
-  and adopted as pinned, so with three districts it is always one of the two (every way between
-  the neighbours runs through it). A district left 1900 px behind is let go: the game forgets its
+  wall opens) only when complete. At most two districts were loaded until M015 (three since:
+  see the M015 section); the ward is built at start-up and adopted as pinned, so with three
+  districts it was always one of the two (every way between the neighbours ran through it). A district left 1900 px behind is let go: the game forgets its
   people at once, its node stops and vanishes and is taken apart about 2 ms a frame.
 - **Entities across borders.** Cars are never freed: a district's parked cars join the game's car
   list the first time it is built, and any car standing in a district that is let go (the

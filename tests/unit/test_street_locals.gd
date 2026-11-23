@@ -63,7 +63,7 @@ func test_every_police_post_is_on_open_ground_at_night() -> void:
 			assert_true(d.is_open_ground(pp.pos, 8.0), "%s post on open ground" % d.id)
 			assert_lt(float(pp.from), float(pp.until))
 			assert_ne(String(pp.line), "")
-	assert_eq(posts, 3, "one a district")
+	assert_eq(posts, layouts.size(), "one a district")
 
 
 func test_a_coppers_mood_holds_all_night_and_changes_between_nights() -> void:

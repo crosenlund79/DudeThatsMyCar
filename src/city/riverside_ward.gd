@@ -53,7 +53,8 @@ func _build() -> void:
 	# ward's ground reaches its southern border (Dorsey Street stays barricaded)
 	# ... and Marlowe Avenue and Pruitt Street run on west into Halloran Square
 	# (Calloway Street stays barricaded), so it reaches its western border too
-	d.play_area = Rect2(d.bounds.position.x, EMBANKMENT_Y, RIVER_X - d.bounds.position.x, d.bounds.end.y - EMBANKMENT_Y)
+	# M015: ... and Wharf Street runs north under the railroad into Lincoln Terrace (its underpass is ground too)
+	d.play_area = Rect2(d.bounds.position.x, d.bounds.position.y, RIVER_X - d.bounds.position.x, d.bounds.end.y - d.bounds.position.y)
 	_streets()
 	_blocks_and_alleys()
 	_river()
@@ -103,7 +104,9 @@ func _streets() -> void:
 	var top := EMBANKMENT_Y
 	var bottom := d.bounds.end.y
 	for s in [["Dorsey Street", DORSEY], ["Kessler Street", KESSLER], ["Wharf Street", WHARF]]:
-		d.streets.append({"name": s[0], "avenue": false, "rect": Rect2(s[1] - STREET_HALF, top, STREET_HALF * 2, bottom - top)})
+		# M015: Wharf Street passes under the railroad, north into Lincoln Terrace
+		var t := d.bounds.position.y if s[1] == WHARF else top
+		d.streets.append({"name": s[0], "avenue": false, "rect": Rect2(s[1] - STREET_HALF, t, STREET_HALF * 2, bottom - t)})
 	var left := d.bounds.position.x
 	for s in [["Calloway Street", CALLOWAY, STREET_HALF, false], ["Marlowe Avenue", MARLOWE, AVENUE_HALF, true],
 			["Pruitt Street", PRUITT, STREET_HALF, false]]:
@@ -229,9 +232,19 @@ func _landmarks() -> void:
 	# leaves stand straight up over the water.
 	_building(Rect2(3880, MARLOWE - 105, 60, 210), 6, "steel", "steel", Vector2.ZERO, {"name": "Marlowe Avenue Bridge", "bare": true})
 	_building(Rect2(FAR_BANK_X - 40, MARLOWE - 105, 60, 210), 6, "steel", "steel", Vector2.ZERO, {"bare": true})
-	# The railroad embankment closes the north end of every street.
-	_building(Rect2(d.bounds.position.x, d.bounds.position.y, RIVER_X - d.bounds.position.x, EMBANKMENT_Y - d.bounds.position.y),
+	# The railroad embankment closes the north end of every street - M015: but Wharf Street's,
+	# which passes under the tracks on a steel bridge into Lincoln Terrace.
+	var under := Rect2(WHARF - STREET_HALF - SW, d.bounds.position.y, (STREET_HALF + SW) * 2.0, EMBANKMENT_Y - d.bounds.position.y)
+	_building(Rect2(d.bounds.position.x, d.bounds.position.y, under.position.x - d.bounds.position.x, under.size.y),
 		2, "stone", "ballast", Vector2.ZERO, {"name": "Railroad embankment", "bare": true})
+	_building(Rect2(under.end.x, d.bounds.position.y, RIVER_X - under.end.x, under.size.y), 2, "stone", "ballast", Vector2.ZERO,
+		{"name": "Railroad embankment", "bare": true})
+	for side in [under.position.x, under.end.x - SW]:  # the underpass's pavements
+		d.lots.append({"rect": Rect2(side, under.position.y, SW, under.size.y), "kind": "concrete"})
+	_prop("props/rail_bridge", under.get_center(), 0.0, 0.0, 30.0)
+	d.alley_lamps.append(under.get_center() + Vector2(-STREET_HALF - 20.0, 60.0))
+	d.alley_lamps.append(under.get_center() + Vector2(STREET_HALF + 20.0, -60.0))
+	d.landmarks.append({"pos": under.get_center(), "label": "Wharf Street underpass"})
 
 
 # ------------------------------------------------------------------ roofs
@@ -310,6 +323,8 @@ func _street_furniture() -> void:
 	d.exits.append({"to": "yards", "rect": Rect2(1519, d.bounds.end.y - 6.0, 262, 6)})
 	d.exits.append({"to": "yards", "rect": Rect2(3169, d.bounds.end.y - 6.0, 262, 6)})
 	_barricade_line(Vector2(3830, MARLOWE), Vector2.DOWN, 3)
+	# M015: through the underpass, north into Lincoln Terrace
+	d.exits.append({"to": "terrace", "rect": Rect2(WHARF - STREET_HALF - SW, d.bounds.position.y, (STREET_HALF + SW) * 2.0, 6)})
 
 
 func _lamps() -> void:

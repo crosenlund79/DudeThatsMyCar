@@ -1,10 +1,11 @@
 extends GutTest
-## M008 district streaming on three made-up districts in a row (west to east:
-## a, b, c - each 3000 px wide): only what is near is built; a neighbour is
-## built ahead of its border, a slice a frame, and appears complete; until
-## then a frontier wall closes the way in; at most two are loaded; one left
-## far behind is freed (with hysteresis); turning back abandons a half-built
-## one; an adopted district is pinned.
+## M008 district streaming on made-up districts in a row (west to east:
+## a, b, c and, since M015, d - each 3000 px wide): only what is near is
+## built; a neighbour is built ahead of its border, a slice a frame, and
+## appears complete; until then a frontier wall closes the way in; at most
+## MAX_LOADED are loaded (two until M015, three since); one left far behind
+## is freed (with hysteresis); turning back abandons a half-built one; an
+## adopted district is pinned.
 
 const Toy := preload("res://tests/support/toy_district.gd")
 
@@ -19,7 +20,7 @@ func before_each() -> void:
 	streamer = DistrictStreamer.new()
 	add_child_autofree(streamer)
 	streamer.setup(AssetResolver.new(""), [Toy.make("a", Vector2(0, 0), "", "b"), Toy.make("b", Vector2(3000, 0), "a", "c"),
-		Toy.make("c", Vector2(6000, 0), "b", "")])
+		Toy.make("c", Vector2(6000, 0), "b", "d"), Toy.make("d", Vector2(9000, 0), "c", "")])
 	streamer.district_unloading.connect(func(id: String) -> void: unloaded.append(id))
 	streamer.district_ready.connect(func(id: String) -> void: readied.append(id))
 
@@ -28,7 +29,7 @@ func before_each() -> void:
 func _stream(p: Vector2, frames: int, cond: Callable = func() -> bool: return false) -> int:
 	for i in frames:
 		streamer.update(p)
-		assert_lte(streamer.loaded.size(), DistrictStreamer.MAX_LOADED, "never more than two districts")
+		assert_lte(streamer.loaded.size(), DistrictStreamer.MAX_LOADED, "never more than MAX_LOADED districts")
 		if cond.call():
 			return i + 1
 		await get_tree().process_frame
@@ -38,7 +39,7 @@ func _stream(p: Vector2, frames: int, cond: Callable = func() -> bool: return fa
 func test_only_what_is_near_is_built() -> void:
 	await _stream(Vector2(300, 600), 120)
 	assert_eq(streamer.ready_ids(), ["a"] as Array[String], "the district he is in, nothing else")
-	assert_eq(streamer.layouts.size(), 3, "every layout is known (data)")
+	assert_eq(streamer.layouts.size(), 4, "every layout is known (data)")
 	assert_eq(streamer.district_at(Vector2(4000, 600)), "b")
 	assert_false(streamer.is_open_ground(Vector2(4000, 600), 12.0), "b is not there to stand on yet")
 	assert_eq(streamer.bounds(), Rect2(0, 0, 3000, 1200), "the camera stays inside a")
@@ -65,7 +66,7 @@ func test_a_neighbour_is_built_ahead_of_its_border_a_slice_a_frame() -> void:
 	assert_gt(walls[0].position.x, 5900.0)
 
 
-func test_never_more_than_two_and_far_ones_are_freed() -> void:
+func test_far_ones_are_freed() -> void:
 	await _stream(Vector2(2000, 600), 600, func() -> bool: return streamer.is_ready("b"))
 	# into b and on towards c: a has to go to make room
 	await _stream(Vector2(5000, 600), 900, func() -> bool: return streamer.is_ready("c"))
@@ -99,9 +100,16 @@ func test_an_adopted_district_is_pinned() -> void:
 	city.build(streamer.layouts.a, streamer.resolver)
 	streamer.adopt("a", city, CityNavigator.new(streamer.layouts.a))
 	await _stream(Vector2(4000, 600), 600, func() -> bool: return streamer.is_ready("b"))
-	await _stream(Vector2(5800, 600), 30)
+	await _stream(Vector2(5800, 600), 600, func() -> bool: return streamer.is_ready("c"))
 	assert_true(streamer.is_ready("a"), "pinned: never let go")
-	assert_false(streamer.is_ready("c"), "so c waits (two at most)")
+	assert_eq(streamer.ready_ids(), ["a", "b", "c"] as Array[String], "three: the limit")
+	# into c near d's border, b still too close to be let go by distance: d is wanted,
+	# so b (not a, pinned) makes room
+	await _stream(Vector2(7800, 600), 900, func() -> bool: return streamer.is_ready("d"))
+	assert_true(streamer.is_ready("d"))
+	assert_true(streamer.is_ready("a"), "still pinned")
+	assert_false(streamer.is_ready("b"), "b made room")
+	assert_eq(streamer.loaded.size(), 3)
 	streamer.unload("a")
 	assert_true(streamer.is_ready("a"), "an adopted district cannot be unloaded")
 

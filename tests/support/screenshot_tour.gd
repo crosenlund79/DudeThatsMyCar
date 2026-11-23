@@ -913,6 +913,23 @@ func _run(shots: Array) -> void:
 				_teleport_walker(Vector2(2440, 230), -PI * 0.5)
 				await _frames(60 * 3)
 				await _shot(s, false)
+			"m015_market", "m015_market_plaza", "m015_terrace", "m015_paradise", "m015_underpass", "m015_canal":
+				# M015: the new quarters - Market Street under the El, St. Casimir's plaza, the Belvedere on
+				# Lincoln Boulevard, the Paradise on Lake Street, the Wharf Street underpass, the canal quay
+				main.weather.force("clear")
+				main.clock.set_time(22 * 60 + 15.0)
+				var spots := {"m015_market": ["market", Vector2(-3500, 3480), 0.0], "m015_market_plaza": ["market", Vector2(-3075, 3300), -PI * 0.5],
+					"m015_terrace": ["terrace", Vector2(2900, -2440), 0.0], "m015_paradise": ["terrace", Vector2(2750, -1500), 0.0],
+					"m015_underpass": ["riverside", Vector2(3300, -1000), -PI * 0.5], "m015_canal": ["market", Vector2(-2900, 4620), 0.0]}
+				var sp: Array = spots[s]
+				_teleport_walker(sp[1], sp[2])
+				if String(sp[0]) != "riverside":
+					main.world.load_now(String(sp[0]))
+				await _frames(10)
+				for st in main.districts.streets():
+					st.recount_locals(true)
+				await _frames(60 * 2)
+				await _shot(s, false)
 			"m015_notebook":
 				# M015: the Notebook as case sheets - Rourke's job, Lefty found out, Eddie's tip
 				main.weather.force("clear")

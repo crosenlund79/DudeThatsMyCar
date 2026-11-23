@@ -149,14 +149,21 @@
 	"incidents": {
 		"history": [
 			{
-				"id": "n1_0",
+				"id": "n1_2",
 				"kind": "exchange",
 				"mercer": "",
 				"outcome": "done",
 				"spot": "square_alley"
 			},
 			{
-				"id": "n1_1",
+				"id": "n1_3",
+				"kind": "argument",
+				"mercer": "",
+				"outcome": "blows",
+				"spot": "bakery_kerb"
+			},
+			{
+				"id": "n1_4",
 				"kind": "stop",
 				"mercer": "",
 				"outcome": "released",
@@ -167,7 +174,7 @@
 				"kind": "exchange",
 				"mercer": "",
 				"outcome": "done",
-				"spot": "churchyard"
+				"spot": "hotel_alley"
 			}
 		],
 		"night": 1.0
@@ -329,9 +336,22 @@
 					"origin": "feeney",
 					"seq": 0.0,
 					"text": ""
+				},
+				{
+					"business": "",
+					"cents": 0.0,
+					"id": 2.0,
+					"kind": "street_argument_blows",
+					"known": [
+						"feeney"
+					],
+					"night": 1.0,
+					"origin": "feeney",
+					"seq": 0.0,
+					"text": "outside Kowalski's bakery"
 				}
 			],
-			"next": 2.0
+			"next": 3.0
 		},
 		"seq": 0.0,
 		"skimmed": 0.0,
@@ -417,14 +437,21 @@
 		"incidents": {
 			"history": [
 				{
-					"id": "n1_0",
+					"id": "n1_2",
 					"kind": "exchange",
 					"mercer": "",
 					"outcome": "done",
 					"spot": "square_alley"
 				},
 				{
-					"id": "n1_1",
+					"id": "n1_3",
+					"kind": "argument",
+					"mercer": "",
+					"outcome": "blows",
+					"spot": "bakery_kerb"
+				},
+				{
+					"id": "n1_4",
 					"kind": "stop",
 					"mercer": "",
 					"outcome": "released",
@@ -435,7 +462,7 @@
 					"kind": "exchange",
 					"mercer": "",
 					"outcome": "done",
-					"spot": "churchyard"
+					"spot": "hotel_alley"
 				}
 			],
 			"night": 1.0
@@ -594,9 +621,22 @@
 						"origin": "feeney",
 						"seq": 0.0,
 						"text": ""
+					},
+					{
+						"business": "",
+						"cents": 0.0,
+						"id": 2.0,
+						"kind": "street_argument_blows",
+						"known": [
+							"feeney"
+						],
+						"night": 1.0,
+						"origin": "feeney",
+						"seq": 0.0,
+						"text": "outside Kowalski's bakery"
 					}
 				],
-				"next": 2.0
+				"next": 3.0
 			},
 			"seq": 0.0,
 			"skimmed": 0.0,

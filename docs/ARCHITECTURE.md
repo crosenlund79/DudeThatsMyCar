@@ -125,11 +125,12 @@ Rules for working on the project are in `docs/GODOT_CLAUDE_GUIDELINES.md`; tests
 
 ## 6. Districts and streaming
 
-- `DistrictStreamer` (unchanged) builds a neighbour a slice a frame as Danny nears it, keeps at most
-  two built, and frees what is let go a slice a frame. The ward is built at start-up and adopted
-  pinned. Which districts are near is a matter of geometry (`wanted`), not of a list of neighbours
-  of the ward: a district that joined another neighbour would be built the same way; only the
-  pin and `MAX_LOADED = 2` make the ward one of the two.
+- `DistrictStreamer` builds a neighbour a slice a frame as Danny nears it, keeps at most
+  `MAX_LOADED` built, and frees what is let go a slice a frame. The ward is built at start-up and
+  adopted pinned. Which districts are near is a matter of geometry (`wanted`), not of a list of
+  neighbours of the ward: M015's Canal Market joins Halloran Square and the yards, not the ward,
+  and is built the same way. `MAX_LOADED` went from 2 to 3 in M015 so that the pinned ward, the
+  district Danny is in and the one he is nearing can all be built.
 - `Districts` keeps each built district's street life (the ward's first, in the same list),
   registers its beat cop with `PoliceForce` and its contacts with the jobs (`Missions`), and on
   letting it go has every owner forget it. `test_district_lifecycle` builds, lets go and rebuilds
@@ -199,8 +200,9 @@ any refactoring and every M014 build reproduces it.
 - `BackRooms` (716 lines) holds three games' game sides; a split per table would be natural if they grow.
 - `Rackets` holds every job's state and much of the economy (a large pure class); the jobs' state
   could move into a jobs section of the save with a migration.
-- The ward stays pinned and `MAX_LOADED` is 2; a fourth district joining a neighbour needs the
-  ward to become unloadable (its rooms, music and people per district).
+- The ward stays pinned and `MAX_LOADED` is 3 (M015); keeping two districts plus the ward when
+  Danny is far from it would need the ward to become unloadable (its rooms, music and people per
+  district).
 - Ward-local constants in `RiversideInteriors` / `GamingRoomLife` (section 5).
 - The scene tests reach into many directors' fields directly (they are the game's test surface);
   a narrower test API would make future refactors cheaper.

@@ -197,21 +197,21 @@
 				"kind": "exchange",
 				"mercer": "",
 				"outcome": "done",
-				"spot": "square_alley"
+				"spot": "owl_alley"
 			},
 			{
 				"id": "n1_1",
 				"kind": "stop",
 				"mercer": "",
 				"outcome": "released",
-				"spot": "front_stop"
+				"spot": "marlowe_stop"
 			},
 			{
 				"id": "n1_3",
 				"kind": "argument",
 				"mercer": "",
 				"outcome": "blows",
-				"spot": "sal_kerb"
+				"spot": "bakery_kerb"
 			}
 		],
 		"night": 1.0
@@ -380,12 +380,12 @@
 					"id": 2.0,
 					"kind": "street_argument_blows",
 					"known": [
-						"sal"
+						"feeney"
 					],
 					"night": 1.0,
-					"origin": "sal",
+					"origin": "feeney",
 					"seq": 0.0,
-					"text": "outside Sal's"
+					"text": "outside Kowalski's bakery"
 				},
 				{
 					"business": "",
@@ -491,21 +491,21 @@
 					"kind": "exchange",
 					"mercer": "",
 					"outcome": "done",
-					"spot": "square_alley"
+					"spot": "owl_alley"
 				},
 				{
 					"id": "n1_1",
 					"kind": "stop",
 					"mercer": "",
 					"outcome": "released",
-					"spot": "front_stop"
+					"spot": "marlowe_stop"
 				},
 				{
 					"id": "n1_3",
 					"kind": "argument",
 					"mercer": "",
 					"outcome": "blows",
-					"spot": "sal_kerb"
+					"spot": "bakery_kerb"
 				}
 			],
 			"night": 1.0
@@ -671,12 +671,12 @@
 						"id": 2.0,
 						"kind": "street_argument_blows",
 						"known": [
-							"sal"
+							"feeney"
 						],
 						"night": 1.0,
-						"origin": "sal",
+						"origin": "feeney",
 						"seq": 0.0,
-						"text": "outside Sal's"
+						"text": "outside Kowalski's bakery"
 					},
 					{
 						"business": "",
